@@ -49,7 +49,12 @@ echo (First time: it will ask you to log in and confirm the project - accept the
 call npx vercel --prod
 if errorlevel 1 goto :fail
 echo.
-echo [DONE] Deployed to Vercel! The live URL is printed above.
+echo [DONE] Deployed to Vercel!
+echo.
+echo Your permanent link is:  https://myfamilytree-kdr6.vercel.app
+echo (It NEVER changes when you deploy. Ignore the random-looking
+echo myfamilytree-xxxxx URLs above - those are internal build addresses;
+echo the permanent link always shows the newest version automatically.)
 goto :end
 
 :github
@@ -75,6 +80,9 @@ if errorlevel 1 (
     echo After that, double-click this script again.
     goto :end
 )
+rem Every commit is authored by the site owner - nothing else, ever.
+git config user.name "Kadir Ravshanov"
+git config user.email "m.qodir99@gmail.com"
 git add -A
 git commit -m "Update family tree" >nul 2>nul
 git push origin main
@@ -82,6 +90,10 @@ if errorlevel 1 goto :fail
 echo.
 echo [DONE] Pushed to GitHub. The Pages workflow is building your site now -
 echo check the repository's Actions tab; the site updates in a minute or two.
+echo.
+echo Your permanent links (these NEVER change when you deploy):
+echo     https://myfamilytree-kdr6.vercel.app
+echo     https://kdrcoding.github.io/myfamilytree/
 goto :end
 
 :buildonly
