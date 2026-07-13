@@ -1,0 +1,43 @@
+name: Keep database awake + backup
+
+# Two jobs in one, running twice a week forever:
+#  1. Pings the Supabase database so the free-tier project never gets paused
+#     for inactivity (free projects pause after ~1 week without requests).
+#  2. Saves a copy of the family data into backups/ in this repository, so
+#     even if Supabase ever disappeared, nothing would be lost.
+on:
+  schedule:
+    - cron: '0 3 * * 1,4' # Mondays and Thursdays 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download family data (this request keeps Supabase active)
+        env:
+          # Public anon key — safe here, same one that ships in the website.
+          SUPABASE_URL: 'https://kasvrgqbmydypwvkqzju.supabase.co'
+          SUPABASE_KEY: 'sb_publishable_RBsUVm4RisIKnH8fEXA7Gw_wZeHiGja'
+        run: |
+          mkdir -p backups
+          curl -sf "$SUPABASE_URL/rest/v1/family_members?select=*&order=id" \
+            -H "apikey: $SUPABASE_KEY" | python3 -m json.tool > backups/family_members.json
+          curl -sf "$SUPABASE_URL/rest/v1/family_relationships?select=*&order=key" \
+            -H "apikey: $SUPABASE_KEY" | python3 -m json.tool > backups/family_relationships.json
+          date -u +"%Y-%m-%d %H:%M UTC" > backups/last-check.txt
+
+      - name: Commit the backup
+        run: |
+          git config user.name "Kadir Ravshanov"
+          git config user.email "m.qodir99@gmail.com"
+          git add backups
+          git diff --cached --quiet && echo "Nothing new" || {
+            git commit -m "Automatic data backup"
+            git push
+          }
