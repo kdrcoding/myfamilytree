@@ -42,12 +42,17 @@ the website changes, not when family information changes.
 
 ## Screenshots
 
-_Add screenshots here after your first deployment:_
+**Home** — family overview with live statistics:
 
-```md
+![Home page](docs/screenshot-home.png)
+
+**Family Tree** — interactive tree with marriage and descent lines:
+
 ![Family tree](docs/screenshot-tree.png)
+
+**Members** — searchable, filterable cards for everyone in the family:
+
 ![Members](docs/screenshot-members.png)
-```
 
 ## Features
 
