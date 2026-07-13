@@ -1,4 +1,5 @@
-import { FilterX } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, FilterX, SlidersHorizontal } from 'lucide-react';
 import type { Filters } from '../utils/filters';
 import { DEFAULT_FILTERS, hasActiveFilters } from '../utils/filters';
 import type { Gender } from '../types/family';
@@ -20,11 +21,41 @@ export function FilterPanel({
   compact,
 }: FilterPanelProps) {
   const t = useT();
-  const selectClass = compact ? 'input !w-auto !py-1.5 !text-xs' : 'input';
+  // On phones the four dropdowns would fill the whole screen, so they hide
+  // behind one small "Filters" button until needed. Desktop shows them inline.
+  const [open, setOpen] = useState(false);
+  const selectClass = compact ? 'input sm:!w-auto sm:!py-1.5 sm:!text-xs' : 'input';
   const active = hasActiveFilters(filters);
+  const activeCount = [
+    filters.gender !== 'all',
+    filters.status !== 'all',
+    filters.generation !== 'all',
+    filters.country !== 'all',
+  ].filter(Boolean).length;
 
   return (
     <div className={`flex flex-wrap items-end gap-2 ${compact ? '' : 'sm:gap-3'}`}>
+      <button
+        type="button"
+        className="btn-secondary !text-xs sm:hidden"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+      >
+        <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
+        {t('filters.title')}
+        {activeCount > 0 && (
+          <span className="rounded-full bg-emerald-700 px-1.5 text-[11px] font-bold text-white dark:bg-emerald-600">
+            {activeCount}
+          </span>
+        )}
+        <ChevronDown
+          className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`}
+          aria-hidden
+        />
+      </button>
+      <div
+        className={`${open ? 'grid' : 'hidden'} w-full grid-cols-2 items-end gap-2 sm:flex sm:w-auto sm:flex-wrap ${compact ? '' : 'sm:gap-3'}`}
+      >
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">
           {t('filters.gender')}
@@ -93,16 +124,17 @@ export function FilterPanel({
           ))}
         </select>
       </label>
-      {active && (
-        <button
-          type="button"
-          className="btn-secondary !py-1.5 !text-xs"
-          onClick={() => onChange(DEFAULT_FILTERS)}
-        >
-          <FilterX className="h-3.5 w-3.5" aria-hidden />
-          {t('filters.clear')}
-        </button>
-      )}
+        {active && (
+          <button
+            type="button"
+            className="btn-secondary col-span-2 !py-1.5 !text-xs"
+            onClick={() => onChange(DEFAULT_FILTERS)}
+          >
+            <FilterX className="h-3.5 w-3.5" aria-hidden />
+            {t('filters.clear')}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -52,8 +52,10 @@ export function Modal({ onClose, children, labelledBy, size = 'md' }: ModalProps
         aria-modal="true"
         aria-labelledby={labelledBy}
         tabIndex={-1}
-        className={`max-h-[92vh] w-full ${SIZES[size]} animate-modal-in overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl outline-none sm:rounded-2xl dark:bg-stone-900 dark:ring-1 dark:ring-stone-700`}
+        className={`max-h-[92vh] w-full ${SIZES[size]} animate-modal-in overflow-y-auto rounded-t-2xl bg-white p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl outline-none sm:rounded-2xl sm:pb-5 dark:bg-stone-900 dark:ring-1 dark:ring-stone-700`}
       >
+        {/* Bottom-sheet affordance on phones. */}
+        <div className="mx-auto -mt-1 mb-3 h-1.5 w-10 rounded-full bg-stone-200 sm:hidden dark:bg-stone-700" aria-hidden />
         {children}
       </div>
     </div>,

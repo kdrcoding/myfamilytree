@@ -585,7 +585,9 @@ export function PersonFormModal({
           </p>
         )}
 
-        <div className="mt-6 flex justify-end gap-2">
+        {/* Sticky action bar: Save is always reachable, even mid-scroll on a
+            long form — crucial on phones. */}
+        <div className="sticky bottom-0 z-10 -mx-5 -mb-5 mt-6 flex flex-wrap justify-end gap-2 border-t border-stone-200 bg-white/95 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:pb-3 dark:border-stone-700 dark:bg-stone-900/95">
           <button type="button" className="btn-secondary" onClick={onClose}>
             {t('common.cancel')}
           </button>
@@ -599,7 +601,7 @@ export function PersonFormModal({
               {t('form.saveAnother')}
             </button>
           )}
-          <button type="submit" className="btn-primary">
+          <button type="submit" className="btn-primary flex-1 sm:flex-none">
             {selfJoin ? t('form.addMe') : isEdit ? t('form.save') : t('form.add')}
           </button>
         </div>

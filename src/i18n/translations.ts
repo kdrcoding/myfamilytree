@@ -91,6 +91,7 @@ export const en = {
   'tree.openDetails': 'Open details for {name}',
 
   // Filters
+  'filters.title': 'Filters',
   'filters.gender': 'Gender',
   'filters.status': 'Status',
   'filters.generation': 'Generation',
@@ -495,6 +496,7 @@ export const uz: Record<TKey, string> = {
   'tree.quickParent': '{name}ga ota-ona qo‘shish',
   'tree.openDetails': '{name} haqida batafsil',
 
+  'filters.title': 'Filtrlar',
   'filters.gender': 'Jinsi',
   'filters.status': 'Holati',
   'filters.generation': 'Avlod',

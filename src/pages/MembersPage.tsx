@@ -104,7 +104,7 @@ export function MembersPage() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </label>
-        <label className="block">
+        <label className="block min-w-36 flex-1 sm:flex-none">
           <span className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">
             {t('members.sortBy')}
           </span>

@@ -344,7 +344,11 @@ export function TreePage() {
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2">
           <TreeSearch onSelect={focusPerson} />
 
-          <div className="flex flex-wrap items-center gap-1.5">
+          {/* On phones all controls live in one horizontally swipeable row
+              instead of stacking into a wall of buttons; ≥sm this wrapper
+              disappears (display:contents) and the groups wrap as before. */}
+          <div className="scrollbar-none flex w-full items-center gap-1.5 overflow-x-auto sm:contents">
+          <div className="flex shrink-0 items-center gap-1.5 sm:flex-wrap">
             <button type="button" className="btn-secondary" onClick={() => setCollapsedList([])}>
               <ChevronsUpDown className="h-4 w-4" aria-hidden />
               <span className="hidden sm:inline">{t('tree.expandAll')}</span>
@@ -397,7 +401,7 @@ export function TreePage() {
             )}
           </div>
 
-          <div className="ml-auto flex items-center gap-1.5">
+          <div className="ml-auto flex shrink-0 items-center gap-1.5">
             {!editMode && (
               <button
                 type="button"
@@ -447,6 +451,7 @@ export function TreePage() {
                 <LogOut className="h-4 w-4" aria-hidden />
               </button>
             )}
+          </div>
           </div>
         </div>
 
