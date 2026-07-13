@@ -43,8 +43,9 @@ export const en = {
   'home.foundersTitle': 'Where it all began',
   'home.born': 'Born {date}',
   'home.privacyStrong': 'A note on privacy:',
-  'home.privacyText':
-    'this is a family history site. Public family websites should never expose sensitive personal information — exact birth dates of living people, home addresses, phone numbers or documents. Use the privacy controls on the {settingsLink} before sharing this site publicly, and only publish details your relatives are comfortable with.',
+  'home.privacyBefore':
+    'this is a family history site. Public family websites should never expose sensitive personal information — exact birth dates of living people, home addresses, phone numbers or documents. Before sharing this site publicly, use the privacy controls on the ',
+  'home.privacyAfter': ', and only publish details your relatives are comfortable with.',
   'home.settingsLink': 'Settings page',
 
   // Tree page
@@ -77,7 +78,8 @@ export const en = {
   'tree.legendPartners': 'Partners (not married)',
   'tree.legendChildren': 'Their children — arrow points to the child',
   'tree.emptyTitle': 'Your family tree is empty',
-  'tree.emptyText': 'Add your first family member, or restore the built-in data from the Settings page.',
+  'tree.emptyText':
+    'Add your first family member, or restore the built-in data from the Settings page.',
   'tree.emptyBtn': 'Add the first person',
   'tree.roleOwner': 'owner',
   'tree.roleEditor': 'family editor',
@@ -157,7 +159,8 @@ export const en = {
   'form.titleEdit': 'Edit {name}',
   'form.titleAddKind': 'Add {kind} for {name}',
   'form.titleSelf': 'Add yourself to the family tree',
-  'form.oneNameHint': 'Only one name is needed — first name, last name or nickname. Everything else is optional.',
+  'form.oneNameHint':
+    'Only one name is needed — first name, last name or nickname. Everything else is optional.',
   'form.restrictedNote':
     "You're editing as a family editor: you can fill in missing information, but details that are already filled in — and all relationships — can only be changed by the owner. Locked fields are greyed out.",
   'form.firstName': 'First name',
@@ -184,7 +187,8 @@ export const en = {
   'form.otherParentNone': 'No second parent / not listed',
   'form.otherParentHint':
     "{name} has {count} partner(s) — pick which one is this child's other parent so the child appears under the right couple.",
-  'form.willBeAdded': 'This person will be added as a {kind} of {names}. You can adjust relationships later by editing the person.',
+  'form.willBeAdded':
+    'This person will be added as a {kind} of {names}. You can adjust relationships later by editing the person.',
   'form.relOwnerNote':
     'Parents and spouses of an existing person can only be changed by the owner. To add a new relative, use the “Add spouse / child / parent / sibling” buttons on their card instead.',
   'form.parents': 'Parents',
@@ -221,7 +225,8 @@ export const en = {
 
   // Unlock
   'unlock.title': 'Unlock editing',
-  'unlock.intro': 'Enter the family password to add or edit people. The owner password additionally allows deleting.',
+  'unlock.intro':
+    'Enter the family password to add or edit people. The owner password additionally allows deleting.',
   'unlock.password': 'Password',
   'unlock.enter': 'Enter a password.',
   'unlock.wrong': 'That password is not correct.',
@@ -252,7 +257,8 @@ export const en = {
 
   // Statistics page
   'stats.title': 'Family statistics',
-  'stats.subtitle': 'Calculated live from the current family data — every edit updates these numbers.',
+  'stats.subtitle':
+    'Calculated live from the current family data — every edit updates these numbers.',
   'stats.total': 'Total members',
   'stats.living': 'Living',
   'stats.deceased': 'Deceased',
@@ -350,7 +356,8 @@ export const en = {
   'data.joinConnNone': 'They chose no connection — edit them afterwards to place them in the tree.',
   'data.joinAddBtn': 'Add person',
   'data.joinAdded': '{name} was added to the family.',
-  'data.ownerOnlyReplace': 'Only the owner can replace the whole family data. You can still import join-request files.',
+  'data.ownerOnlyReplace':
+    'Only the owner can replace the whole family data. You can still import join-request files.',
   'data.replaceTitle': 'Replace family data?',
   'data.replaceMsg':
     'This will replace the current {current} people with the {next} people from "{file}". Consider exporting a backup first.',
@@ -405,7 +412,7 @@ export const uz: Record<TKey, string> = {
   'nav.menuClose': 'Menyuni yopish',
   'footer.note': "Shaxsiy oilaviy tarix loyihasi. Namunadagi odamlar to'qib chiqarilgan.",
 
-  'banner.updated': "Saytdagi oila shajarasi oxirgi tashrifingizdan keyin yangilangan.",
+  'banner.updated': 'Saytdagi oila shajarasi oxirgi tashrifingizdan keyin yangilangan.',
   'banner.load': "Yangi ma'lumotni yuklash",
   'banner.keep': 'Meniki qolsin',
   'banner.confirmTitle': "Eng so'nggi ma'lumotlar yuklansinmi?",
@@ -427,8 +434,10 @@ export const uz: Record<TKey, string> = {
   'home.foundersTitle': 'Hammasi shu yerdan boshlangan',
   'home.born': '{date}da tug‘ilgan',
   'home.privacyStrong': 'Maxfiylik haqida eslatma:',
-  'home.privacyText':
-    "bu oilaviy tarix sayti. Ochiq oilaviy saytlarda nozik shaxsiy ma'lumotlar — tiriklarning aniq tug'ilgan sanalari, uy manzillari, telefon raqamlari yoki hujjatlar — hech qachon ko'rsatilmasligi kerak. Saytni ochiq ulashishdan oldin {settingsLink}dagi maxfiylik sozlamalaridan foydalaning va faqat qarindoshlaringiz rozi bo'lgan ma'lumotlarni joylang.",
+  'home.privacyBefore':
+    "bu oilaviy tarix sayti. Ochiq oilaviy saytlarda nozik shaxsiy ma'lumotlar — tiriklarning aniq tug'ilgan sanalari, uy manzillari, telefon raqamlari yoki hujjatlar — hech qachon ko'rsatilmasligi kerak. Saytni ochiq ulashishdan oldin ",
+  'home.privacyAfter':
+    "dagi maxfiylik sozlamalaridan foydalaning va faqat qarindoshlaringiz rozi bo'lgan ma'lumotlarni joylang.",
   'home.settingsLink': 'Sozlamalar sahifasi',
 
   'tree.searchPlaceholder': 'Ism, shahar, kasb bo‘yicha qidiring…',
@@ -458,7 +467,7 @@ export const uz: Record<TKey, string> = {
   'tree.legendTitle': "Shajarani qanday o'qish kerak",
   'tree.legendMarried': 'Er-xotin',
   'tree.legendPartners': 'Sheriklar (nikohsiz)',
-  'tree.legendChildren': "Farzandlari — strelka farzandga qaraydi",
+  'tree.legendChildren': 'Farzandlari — strelka farzandga qaraydi',
   'tree.emptyTitle': "Shajarangiz hali bo'sh",
   'tree.emptyText':
     "Birinchi oila a'zosini qo'shing yoki Sozlamalar sahifasidan saytdagi ma'lumotlarni qayta tiklang.",
@@ -537,13 +546,14 @@ export const uz: Record<TKey, string> = {
   'form.titleAddKind': '{name} uchun {kind} qo‘shish',
   'form.titleSelf': "O'zingizni shajaraga qo'shing",
   'form.oneNameHint':
-    "Faqat bitta nom kifoya — ism, familiya yoki laqab. Qolgan hammasi ixtiyoriy.",
+    'Faqat bitta nom kifoya — ism, familiya yoki laqab. Qolgan hammasi ixtiyoriy.',
   'form.restrictedNote':
     "Siz oila tahrirchisi sifatida ishlayapsiz: faqat bo'sh kataklarni to'ldira olasiz. To'ldirilgan ma'lumotlarni va qarindoshlik aloqalarini faqat egasi o'zgartira oladi. Qulflangan kataklar xira ko'rinadi.",
   'form.firstName': 'Ismi',
   'form.lastName': 'Familiyasi',
   'form.gender': 'Jinsi',
-  'form.moreDetails': "Qo'shimcha ma'lumotlar (ixtiyoriy) — laqab, sanalar, joy, rasm, tarjimai hol",
+  'form.moreDetails':
+    "Qo'shimcha ma'lumotlar (ixtiyoriy) — laqab, sanalar, joy, rasm, tarjimai hol",
   'form.nickname': 'Laqabi',
   'form.birthDate': "Tug'ilgan sana",
   'form.deathDate': 'Vafot etgan sana',
@@ -557,7 +567,8 @@ export const uz: Record<TKey, string> = {
   'form.photoUpload': 'Rasm yuklash',
   'form.photoChange': "Rasmni o'zgartirish",
   'form.photoRemove': 'Olib tashlash',
-  'form.photoNote': "Ixtiyoriy. Brauzeringizda oila ma'lumotlari bilan birga saqlanadi (eng ko'pi 2 MB).",
+  'form.photoNote':
+    "Ixtiyoriy. Brauzeringizda oila ma'lumotlari bilan birga saqlanadi (eng ko'pi 2 MB).",
   'form.photoTooBig': 'Rasm juda katta — 2 MB dan kichik rasm tanlang.',
   'form.photoReadFail': "Bu rasm faylini o'qib bo'lmadi.",
   'form.otherParent': "Ikkinchi ota-ona ({name}ning turmush o'rtog'i)",
@@ -575,7 +586,7 @@ export const uz: Record<TKey, string> = {
   'form.save': 'Saqlash',
   'form.add': "Qo'shish",
   'form.saveAnother': "Saqlab, yana qo'shish",
-  'form.saveAnotherTitle': "Bu odamni saqlab, darhol keyingisini kiritish",
+  'form.saveAnotherTitle': 'Bu odamni saqlab, darhol keyingisini kiritish',
   'form.addMe': "Meni qo'shish va so'rov faylini yuklab olish",
   'form.addedToast': '{name} oilaga qo‘shildi.',
   'form.updatedToast': '{name} yangilandi.',
@@ -710,7 +721,7 @@ export const uz: Record<TKey, string> = {
   'settings.exportBackup': 'Nusxa yuklab olish',
   'settings.importBackup': 'Nusxadan yuklash',
   'settings.restore': "Sayt ma'lumotlarini tiklash",
-  'settings.unlockNote': "Import uchun tahrirlashni oching; tiklash faqat egasi uchun.",
+  'settings.unlockNote': 'Import uchun tahrirlashni oching; tiklash faqat egasi uchun.',
 
   'data.exported': "Oila ma'lumotlari JSON sifatida yuklab olindi.",
   'data.readFail': "Faylni o'qib bo'lmadi.",
@@ -723,8 +734,7 @@ export const uz: Record<TKey, string> = {
   'data.joinConnAs': 'U {name}ga {kind} sifatida qo‘shiladi.',
   'data.joinConnMissing':
     "Uning qarindoshi bu shajarada topilmadi, shuning uchun aloqasiz qo'shiladi — keyin tahrirlab ota-onasi yoki turmush o'rtog'ini belgilang.",
-  'data.joinConnNone':
-    "U hech qanday aloqa tanlamagan — keyin tahrirlab shajarada joylashtiring.",
+  'data.joinConnNone': 'U hech qanday aloqa tanlamagan — keyin tahrirlab shajarada joylashtiring.',
   'data.joinAddBtn': "Qo'shish",
   'data.joinAdded': '{name} oilaga qo‘shildi.',
   'data.ownerOnlyReplace':
@@ -768,10 +778,7 @@ export type Language = 'uz' | 'en';
 export const DICTIONARIES: Record<Language, Record<TKey, string>> = { en, uz };
 
 /** Replace {placeholders} in a translated string. */
-export function formatMessage(
-  template: string,
-  params?: Record<string, string | number>,
-): string {
+export function formatMessage(template: string, params?: Record<string, string | number>): string {
   if (!params) return template;
   return template.replace(/\{(\w+)\}/g, (match, key) =>
     key in params ? String(params[key]) : match,

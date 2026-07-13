@@ -62,8 +62,7 @@ const DEFAULT_DATA = (() => {
   const result = validateFamilyData(defaultFamilyJson);
   return result.ok && result.data ? normalizePeople(result.data.people) : samplePeople;
 })();
-const DEFAULT_STAMP =
-  (defaultFamilyJson as { exportedAt?: string }).exportedAt ?? 'initial';
+const DEFAULT_STAMP = (defaultFamilyJson as { exportedAt?: string }).exportedAt ?? 'initial';
 const DATASET_ACK_KEY = 'familytree.datasetAck.v1';
 
 export function FamilyProvider({ children }: { children: ReactNode }) {

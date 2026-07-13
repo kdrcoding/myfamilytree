@@ -33,6 +33,7 @@ import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
 import { useDataTransfer } from '../hooks/useDataTransfer';
 import { usePersistentState } from '../hooks/usePersistentState';
+import { useT } from '../i18n/useT';
 import { STORAGE_KEYS } from '../utils/storage';
 import { getAncestorIds, fullName } from '../utils/family';
 import { DEFAULT_FILTERS, hasActiveFilters, matchesFilters, matchesSearch } from '../utils/filters';
@@ -53,6 +54,7 @@ const nodeTypes: NodeTypes = { person: PersonNode, junction: JunctionNode };
 
 function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) {
   const { people, getLabel } = useFamily();
+  const t = useT();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
 
@@ -71,8 +73,8 @@ function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) 
         type="search"
         role="combobox"
         aria-expanded={open && results.length > 0}
-        aria-label="Search family members"
-        placeholder="Search name, city, occupation…"
+        aria-label={t('tree.searchLabel')}
+        placeholder={t('tree.searchPlaceholder')}
         className="input !pl-9"
         value={query}
         onChange={(e) => {
@@ -85,7 +87,7 @@ function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) 
       {open && query.trim() && (
         <ul className="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-stone-200 bg-white p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900">
           {results.length === 0 && (
-            <li className="px-3 py-2 text-sm text-stone-400">No one matches “{query}”.</li>
+            <li className="px-3 py-2 text-sm text-stone-400">{t('tree.noMatch', { q: query })}</li>
           )}
           {results.map((p) => (
             <li key={p.id}>
@@ -124,6 +126,7 @@ function TreeCanvas({
   onFocused: () => void;
 }) {
   const { setCenter } = useReactFlow();
+  const t = useT();
 
   useEffect(() => {
     if (!focusId) return;
@@ -174,7 +177,7 @@ function TreeCanvas({
         className="hidden rounded-xl border border-stone-200 bg-white/90 p-3 text-xs shadow-sm backdrop-blur sm:block dark:border-stone-700 dark:bg-stone-900/90"
       >
         <p className="mb-1.5 font-semibold text-stone-700 dark:text-stone-200">
-          How to read the tree
+          {t('tree.legendTitle')}
         </p>
         <ul className="space-y-1.5 text-stone-600 dark:text-stone-300">
           <li className="flex items-center gap-2">
@@ -182,7 +185,7 @@ function TreeCanvas({
               aria-hidden
               className="inline-block h-0.5 w-6 rounded bg-rose-400 dark:bg-rose-600"
             />
-            Married couple
+            {t('tree.legendMarried')}
           </li>
           <li className="flex items-center gap-2">
             <span
@@ -193,7 +196,7 @@ function TreeCanvas({
                   'repeating-linear-gradient(90deg, transparent 0 4px, var(--color-white) 4px 7px)',
               }}
             />
-            Partners (not married)
+            {t('tree.legendPartners')}
           </li>
           <li className="flex items-center gap-2">
             <span aria-hidden className="flex items-center">
@@ -201,7 +204,7 @@ function TreeCanvas({
               <span className="inline-block h-0.5 w-4 bg-emerald-500" />
               <span className="-ml-px inline-block border-y-4 border-l-[6px] border-y-transparent border-l-emerald-500" />
             </span>
-            Their children — arrow points to the child
+            {t('tree.legendChildren')}
           </li>
         </ul>
       </Panel>
@@ -225,6 +228,7 @@ export function TreePage() {
   const { toast } = useToast();
   const confirm = useConfirm();
   const { exportJson, importFromFile } = useDataTransfer();
+  const t = useT();
 
   const [collapsedList, setCollapsedList] = usePersistentState<string[]>(
     STORAGE_KEYS.collapsed,
@@ -290,32 +294,31 @@ export function TreePage() {
 
   const collapseAll = () => {
     setCollapsedList(people.filter((p) => p.childIds.length > 0).map((p) => p.id));
-    toast('Tree collapsed to the founding generation.', 'info');
+    toast(t('tree.collapsedToast'), 'info');
   };
 
   const handleDelete = useCallback(
     async (person: FamilyPerson) => {
       const proceed = await confirm({
-        title: `Delete ${fullName(person)}?`,
-        message:
-          'This removes the person and all their relationship links. Their relatives stay in the tree. This cannot be undone.',
-        confirmLabel: 'Delete person',
+        title: t('delete.title', { name: fullName(person) }),
+        message: t('delete.msg'),
+        confirmLabel: t('delete.btn'),
         danger: true,
       });
       if (!proceed) return;
       deletePerson(person.id);
       setDetailsId(null);
-      toast(`${fullName(person)} was removed from the tree.`);
+      toast(t('delete.done', { name: fullName(person) }));
     },
-    [confirm, deletePerson, toast],
+    [confirm, deletePerson, toast, t],
   );
 
   const handleExportPng = async () => {
     try {
       await exportTreeAsPng(flowNodes, settings.theme === 'dark');
-      toast('Tree image downloaded as PNG.');
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'PNG export failed.', 'error');
+      toast(t('tree.pngDone'));
+    } catch {
+      toast(t('tree.pngFail'), 'error');
     }
   };
 
@@ -344,29 +347,29 @@ export function TreePage() {
           <div className="flex flex-wrap items-center gap-1.5">
             <button type="button" className="btn-secondary" onClick={() => setCollapsedList([])}>
               <ChevronsUpDown className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Expand all</span>
+              <span className="hidden sm:inline">{t('tree.expandAll')}</span>
             </button>
             <button type="button" className="btn-secondary" onClick={collapseAll}>
               <ChevronsDownUp className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Collapse all</span>
+              <span className="hidden sm:inline">{t('tree.collapseAll')}</span>
             </button>
             <button
               type="button"
               className="btn-secondary"
               onClick={exportJson}
-              title="Export family data as JSON"
+              title={t('tree.exportTitle')}
             >
               <Download className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Export</span>
+              <span className="hidden sm:inline">{t('tree.export')}</span>
             </button>
             <button
               type="button"
               className="btn-secondary"
               onClick={handleExportPng}
-              title="Download the tree as a PNG image"
+              title={t('tree.pngTitle')}
             >
               <ImageIcon className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">PNG</span>
+              <span className="hidden sm:inline">{t('tree.png')}</span>
             </button>
             {canEdit && (
               <>
@@ -385,10 +388,10 @@ export function TreePage() {
                   type="button"
                   className="btn-secondary"
                   onClick={() => importInputRef.current?.click()}
-                  title="Import family data from a JSON file"
+                  title={t('tree.importTitle')}
                 >
                   <Upload className="h-4 w-4" aria-hidden />
-                  <span className="hidden sm:inline">Import</span>
+                  <span className="hidden sm:inline">{t('tree.import')}</span>
                 </button>
               </>
             )}
@@ -400,16 +403,16 @@ export function TreePage() {
                 type="button"
                 className="btn-secondary"
                 onClick={() => setJoinOpen(true)}
-                title="Add yourself to the tree — no password needed"
+                title={t('tree.addYourselfTitle')}
               >
                 <UserRoundPlus className="h-4 w-4" aria-hidden />
-                <span className="hidden sm:inline">Add yourself</span>
+                <span className="hidden sm:inline">{t('tree.addYourself')}</span>
               </button>
             )}
             {editMode && (
               <button type="button" className="btn-primary" onClick={() => setForm({})}>
                 <UserPlus className="h-4 w-4" aria-hidden />
-                Add person
+                {t('tree.addPerson')}
               </button>
             )}
             <button
@@ -426,7 +429,7 @@ export function TreePage() {
               ) : (
                 <Lock className="h-4 w-4" aria-hidden />
               )}
-              {editMode ? 'Editing' : 'Edit mode'}
+              {editMode ? t('tree.editing') : t('tree.editMode')}
             </button>
             {canEdit && (
               <button
@@ -434,10 +437,12 @@ export function TreePage() {
                 className="icon-btn"
                 onClick={() => {
                   signOut();
-                  toast('Editing locked again.', 'info');
+                  toast(t('tree.lockedToast'), 'info');
                 }}
-                title={`Signed in as ${role === 'owner' ? 'owner' : 'family editor'} — click to sign out`}
-                aria-label="Sign out of editing"
+                title={t('tree.signOutTitle', {
+                  role: role === 'owner' ? t('tree.roleOwner') : t('tree.roleEditor'),
+                })}
+                aria-label={t('tree.signOutLabel')}
               >
                 <LogOut className="h-4 w-4" aria-hidden />
               </button>
@@ -462,7 +467,7 @@ export function TreePage() {
               onClick={() => setHighlightedId(null)}
             >
               <X className="h-3.5 w-3.5" aria-hidden />
-              Clear highlight
+              {t('tree.clearHighlight')}
             </button>
           )}
         </div>
@@ -520,17 +525,16 @@ export function TreePage() {
 }
 
 function EmptyTreeState({ onAdd, children }: { onAdd: () => void; children?: React.ReactNode }) {
+  const t = useT();
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
       <span className="rounded-full bg-emerald-100 p-4 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
         <TreePine className="h-10 w-10" aria-hidden />
       </span>
-      <h1 className="text-xl font-semibold">Your family tree is empty</h1>
-      <p className="max-w-md text-sm text-stone-500 dark:text-stone-400">
-        Add your first family member, or restore the sample family from the Settings page.
-      </p>
+      <h1 className="text-xl font-semibold">{t('tree.emptyTitle')}</h1>
+      <p className="max-w-md text-sm text-stone-500 dark:text-stone-400">{t('tree.emptyText')}</p>
       <button type="button" className="btn-primary" onClick={onAdd}>
-        <UserPlus className="h-4 w-4" aria-hidden /> Add the first person
+        <UserPlus className="h-4 w-4" aria-hidden /> {t('tree.emptyBtn')}
       </button>
       {children}
     </div>

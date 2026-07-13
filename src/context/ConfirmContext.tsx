@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useRef, useState } from 'react'
 import type { ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Modal } from '../components/ui/Modal';
+import { useT } from '../i18n/useT';
 
 interface ConfirmOptions {
   title: string;
@@ -16,6 +17,7 @@ type ConfirmFn = (options: ConfirmOptions) => Promise<boolean>;
 const ConfirmContext = createContext<ConfirmFn | null>(null);
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const t = useT();
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
   const resolver = useRef<((value: boolean) => void) | null>(null);
 
@@ -55,7 +57,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           </div>
           <div className="mt-5 flex justify-end gap-2">
             <button type="button" className="btn-secondary" onClick={() => close(false)}>
-              {options.cancelLabel ?? 'Cancel'}
+              {options.cancelLabel ?? t('common.cancel')}
             </button>
             <button
               type="button"
@@ -63,7 +65,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               onClick={() => close(true)}
               autoFocus
             >
-              {options.confirmLabel ?? 'Confirm'}
+              {options.confirmLabel ?? t('common.confirm')}
             </button>
           </div>
         </Modal>

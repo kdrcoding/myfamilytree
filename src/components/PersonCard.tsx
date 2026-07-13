@@ -2,8 +2,8 @@ import { Baby, Briefcase, MapPin, Pencil, Trash2 } from 'lucide-react';
 import type { FamilyPerson } from '../types/family';
 import { useFamily } from '../context/FamilyContext';
 import { usePrivacy } from '../hooks/usePrivacy';
-import { calculateAge } from '../utils/dates';
-import { lifespan } from '../utils/dates';
+import { useT } from '../i18n/useT';
+import { calculateAge, lifespan } from '../utils/dates';
 import { displayName } from '../utils/family';
 import { Avatar } from './Avatar';
 import { DeceasedBadge, GenderBadge, GenerationBadge } from './badges';
@@ -19,12 +19,14 @@ interface PersonCardProps {
 export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps) {
   const { generations, getLabel } = useFamily();
   const privacy = usePrivacy();
+  const t = useT();
   const age = calculateAge(person.birthDate, person.deathDate);
   const years = privacy.showBirthDate()
     ? lifespan(
         person.birthDate,
         privacy.showDeathDate() ? person.deathDate : undefined,
         person.isDeceased,
+        t('common.bornAbbr'),
       )
     : '';
 
@@ -38,7 +40,7 @@ export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps
         type="button"
         onClick={() => onOpen(person.id)}
         className="absolute inset-0 rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500"
-        aria-label={`Open details for ${displayName(person)}`}
+        aria-label={t('tree.openDetails', { name: displayName(person) })}
       />
       <div className="flex items-start gap-3">
         <Avatar person={person} />
@@ -49,7 +51,10 @@ export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps
           <p className="text-xs text-stone-500 dark:text-stone-400">
             {getLabel(person)}
             {years && ` · ${years}`}
-            {age !== null && privacy.showAge(person) && !person.isDeceased && ` · ${age} yrs`}
+            {age !== null &&
+              privacy.showAge(person) &&
+              !person.isDeceased &&
+              ` · ${t('common.yearsOld', { n: age })}`}
           </p>
         </div>
       </div>
@@ -76,7 +81,8 @@ export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps
         {person.childIds.length > 0 && (
           <li className="flex items-center gap-1.5">
             <Baby className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {person.childIds.length} {person.childIds.length === 1 ? 'child' : 'children'}
+            {person.childIds.length}{' '}
+            {person.childIds.length === 1 ? t('person.child') : t('person.childrenPlural')}
           </li>
         )}
       </ul>
@@ -89,7 +95,7 @@ export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps
               className="btn-secondary flex-1 !py-1.5 !text-xs"
               onClick={() => onEdit(person)}
             >
-              <Pencil className="h-3.5 w-3.5" aria-hidden /> Edit
+              <Pencil className="h-3.5 w-3.5" aria-hidden /> {t('person.edit')}
             </button>
           )}
           {onDelete && (
@@ -98,7 +104,7 @@ export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps
               className="btn-danger flex-1 !py-1.5 !text-xs"
               onClick={() => onDelete(person)}
             >
-              <Trash2 className="h-3.5 w-3.5" aria-hidden /> Delete
+              <Trash2 className="h-3.5 w-3.5" aria-hidden /> {t('person.delete')}
             </button>
           )}
         </div>

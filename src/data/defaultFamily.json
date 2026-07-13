@@ -15,15 +15,8 @@
       "occupation": "Carpenter",
       "biography": "Founder of the Hartley family. Arthur ran a small joinery workshop in York for over forty years and built the oak dining table that still travels between family homes.",
       "parentIds": [],
-      "spouseIds": [
-        "margaret-hartley"
-      ],
-      "childIds": [
-        "david-hartley",
-        "patricia-moore",
-        "richard-hartley",
-        "carol-jensen"
-      ]
+      "spouseIds": ["margaret-hartley"],
+      "childIds": ["david-hartley", "patricia-moore", "richard-hartley", "carol-jensen"]
     },
     {
       "id": "margaret-hartley",
@@ -39,15 +32,8 @@
       "occupation": "Schoolteacher",
       "biography": "Taught primary school in York for three decades. Remembered for her Sunday roasts and for keeping the first handwritten version of this family tree.",
       "parentIds": [],
-      "spouseIds": [
-        "arthur-hartley"
-      ],
-      "childIds": [
-        "david-hartley",
-        "patricia-moore",
-        "richard-hartley",
-        "carol-jensen"
-      ]
+      "spouseIds": ["arthur-hartley"],
+      "childIds": ["david-hartley", "patricia-moore", "richard-hartley", "carol-jensen"]
     },
     {
       "id": "david-hartley",
@@ -61,18 +47,9 @@
       "country": "United Kingdom",
       "occupation": "Civil engineer",
       "biography": "Eldest of the four Hartley children. Worked on bridges across the north of England.",
-      "parentIds": [
-        "arthur-hartley",
-        "margaret-hartley"
-      ],
-      "spouseIds": [
-        "susan-hartley"
-      ],
-      "childIds": [
-        "michael-hartley",
-        "sarah-oconnor",
-        "emily-hartley"
-      ]
+      "parentIds": ["arthur-hartley", "margaret-hartley"],
+      "spouseIds": ["susan-hartley"],
+      "childIds": ["michael-hartley", "sarah-oconnor", "emily-hartley"]
     },
     {
       "id": "susan-hartley",
@@ -86,14 +63,8 @@
       "country": "United Kingdom",
       "occupation": "Nurse",
       "parentIds": [],
-      "spouseIds": [
-        "david-hartley"
-      ],
-      "childIds": [
-        "michael-hartley",
-        "sarah-oconnor",
-        "emily-hartley"
-      ]
+      "spouseIds": ["david-hartley"],
+      "childIds": ["michael-hartley", "sarah-oconnor", "emily-hartley"]
     },
     {
       "id": "patricia-moore",
@@ -107,18 +78,9 @@
       "country": "Canada",
       "occupation": "Accountant",
       "biography": "Emigrated to Canada in 1978 and built a career in accountancy in Toronto.",
-      "parentIds": [
-        "arthur-hartley",
-        "margaret-hartley"
-      ],
-      "spouseIds": [
-        "ronald-moore"
-      ],
-      "childIds": [
-        "jennifer-clark",
-        "andrew-moore",
-        "jordan-moore"
-      ]
+      "parentIds": ["arthur-hartley", "margaret-hartley"],
+      "spouseIds": ["ronald-moore"],
+      "childIds": ["jennifer-clark", "andrew-moore", "jordan-moore"]
     },
     {
       "id": "ronald-moore",
@@ -133,14 +95,8 @@
       "country": "Canada",
       "occupation": "Bank manager",
       "parentIds": [],
-      "spouseIds": [
-        "patricia-moore"
-      ],
-      "childIds": [
-        "jennifer-clark",
-        "andrew-moore",
-        "jordan-moore"
-      ]
+      "spouseIds": ["patricia-moore"],
+      "childIds": ["jennifer-clark", "andrew-moore", "jordan-moore"]
     },
     {
       "id": "richard-hartley",
@@ -154,10 +110,7 @@
       "country": "United Kingdom",
       "occupation": "Student",
       "biography": "Died in a motorcycle accident at 21. The family plants a rowan tree in his memory every decade.",
-      "parentIds": [
-        "arthur-hartley",
-        "margaret-hartley"
-      ],
+      "parentIds": ["arthur-hartley", "margaret-hartley"],
       "spouseIds": [],
       "childIds": []
     },
@@ -172,17 +125,9 @@
       "country": "Denmark",
       "occupation": "Architect",
       "biography": "Moved to Denmark after meeting Erik at architecture school in London.",
-      "parentIds": [
-        "arthur-hartley",
-        "margaret-hartley"
-      ],
-      "spouseIds": [
-        "erik-jensen"
-      ],
-      "childIds": [
-        "sofia-jensen",
-        "mads-jensen"
-      ]
+      "parentIds": ["arthur-hartley", "margaret-hartley"],
+      "spouseIds": ["erik-jensen"],
+      "childIds": ["sofia-jensen", "mads-jensen"]
     },
     {
       "id": "erik-jensen",
@@ -195,13 +140,8 @@
       "country": "Denmark",
       "occupation": "Airline pilot",
       "parentIds": [],
-      "spouseIds": [
-        "carol-jensen"
-      ],
-      "childIds": [
-        "sofia-jensen",
-        "mads-jensen"
-      ]
+      "spouseIds": ["carol-jensen"],
+      "childIds": ["sofia-jensen", "mads-jensen"]
     },
     {
       "id": "michael-hartley",
@@ -214,18 +154,9 @@
       "city": "London",
       "country": "United Kingdom",
       "occupation": "Software developer",
-      "parentIds": [
-        "david-hartley",
-        "susan-hartley"
-      ],
-      "spouseIds": [
-        "amara-hartley"
-      ],
-      "childIds": [
-        "oliver-hartley",
-        "zara-hartley",
-        "noah-hartley"
-      ]
+      "parentIds": ["david-hartley", "susan-hartley"],
+      "spouseIds": ["amara-hartley"],
+      "childIds": ["oliver-hartley", "zara-hartley", "noah-hartley"]
     },
     {
       "id": "amara-hartley",
@@ -239,14 +170,8 @@
       "occupation": "Doctor",
       "biography": "Born in Lagos, Nigeria. A consultant paediatrician in London since 2010.",
       "parentIds": [],
-      "spouseIds": [
-        "michael-hartley"
-      ],
-      "childIds": [
-        "oliver-hartley",
-        "zara-hartley",
-        "noah-hartley"
-      ]
+      "spouseIds": ["michael-hartley"],
+      "childIds": ["oliver-hartley", "zara-hartley", "noah-hartley"]
     },
     {
       "id": "sarah-oconnor",
@@ -258,17 +183,9 @@
       "city": "Dublin",
       "country": "Ireland",
       "occupation": "Marketing director",
-      "parentIds": [
-        "david-hartley",
-        "susan-hartley"
-      ],
-      "spouseIds": [
-        "liam-oconnor"
-      ],
-      "childIds": [
-        "aoife-oconnor",
-        "cian-oconnor"
-      ]
+      "parentIds": ["david-hartley", "susan-hartley"],
+      "spouseIds": ["liam-oconnor"],
+      "childIds": ["aoife-oconnor", "cian-oconnor"]
     },
     {
       "id": "liam-oconnor",
@@ -281,13 +198,8 @@
       "country": "Ireland",
       "occupation": "Chef",
       "parentIds": [],
-      "spouseIds": [
-        "sarah-oconnor"
-      ],
-      "childIds": [
-        "aoife-oconnor",
-        "cian-oconnor"
-      ]
+      "spouseIds": ["sarah-oconnor"],
+      "childIds": ["aoife-oconnor", "cian-oconnor"]
     },
     {
       "id": "emily-hartley",
@@ -301,18 +213,9 @@
       "country": "United Kingdom",
       "occupation": "Teacher",
       "biography": "Followed her grandmother Margaret into teaching. Married twice — Lily is from her first marriage to Daniel, Theo from her second to Marcus — a good example of how the tree shows blended families.",
-      "parentIds": [
-        "david-hartley",
-        "susan-hartley"
-      ],
-      "spouseIds": [
-        "daniel-foster",
-        "marcus-webb"
-      ],
-      "childIds": [
-        "lily-foster",
-        "theo-webb"
-      ]
+      "parentIds": ["david-hartley", "susan-hartley"],
+      "spouseIds": ["daniel-foster", "marcus-webb"],
+      "childIds": ["lily-foster", "theo-webb"]
     },
     {
       "id": "daniel-foster",
@@ -327,12 +230,8 @@
       "occupation": "Electrician",
       "biography": "Emily's first husband and Lily's father. They divorced in 2013 and stay friends.",
       "parentIds": [],
-      "spouseIds": [
-        "emily-hartley"
-      ],
-      "childIds": [
-        "lily-foster"
-      ]
+      "spouseIds": ["emily-hartley"],
+      "childIds": ["lily-foster"]
     },
     {
       "id": "marcus-webb",
@@ -346,12 +245,8 @@
       "occupation": "Pharmacist",
       "biography": "Emily's second husband and Theo's father.",
       "parentIds": [],
-      "spouseIds": [
-        "emily-hartley"
-      ],
-      "childIds": [
-        "theo-webb"
-      ]
+      "spouseIds": ["emily-hartley"],
+      "childIds": ["theo-webb"]
     },
     {
       "id": "jennifer-clark",
@@ -364,17 +259,9 @@
       "city": "Vancouver",
       "country": "Canada",
       "occupation": "Lawyer",
-      "parentIds": [
-        "patricia-moore",
-        "ronald-moore"
-      ],
-      "spouseIds": [
-        "thomas-clark"
-      ],
-      "childIds": [
-        "maya-clark",
-        "ethan-clark"
-      ]
+      "parentIds": ["patricia-moore", "ronald-moore"],
+      "spouseIds": ["thomas-clark"],
+      "childIds": ["maya-clark", "ethan-clark"]
     },
     {
       "id": "thomas-clark",
@@ -388,13 +275,8 @@
       "country": "Canada",
       "occupation": "Photographer",
       "parentIds": [],
-      "spouseIds": [
-        "jennifer-clark"
-      ],
-      "childIds": [
-        "maya-clark",
-        "ethan-clark"
-      ]
+      "spouseIds": ["jennifer-clark"],
+      "childIds": ["maya-clark", "ethan-clark"]
     },
     {
       "id": "andrew-moore",
@@ -407,10 +289,7 @@
       "city": "Toronto",
       "country": "Canada",
       "occupation": "Firefighter",
-      "parentIds": [
-        "patricia-moore",
-        "ronald-moore"
-      ],
+      "parentIds": ["patricia-moore", "ronald-moore"],
       "spouseIds": [],
       "childIds": []
     },
@@ -426,10 +305,7 @@
       "country": "Canada",
       "occupation": "Graphic designer",
       "biography": "Designs book covers and runs a small letterpress studio in Montreal.",
-      "parentIds": [
-        "patricia-moore",
-        "ronald-moore"
-      ],
+      "parentIds": ["patricia-moore", "ronald-moore"],
       "spouseIds": [],
       "childIds": []
     },
@@ -443,16 +319,9 @@
       "city": "Oslo",
       "country": "Norway",
       "occupation": "Marine biologist",
-      "parentIds": [
-        "carol-jensen",
-        "erik-jensen"
-      ],
-      "spouseIds": [
-        "lucas-berg"
-      ],
-      "childIds": [
-        "freja-berg"
-      ]
+      "parentIds": ["carol-jensen", "erik-jensen"],
+      "spouseIds": ["lucas-berg"],
+      "childIds": ["freja-berg"]
     },
     {
       "id": "lucas-berg",
@@ -465,12 +334,8 @@
       "country": "Norway",
       "occupation": "Journalist",
       "parentIds": [],
-      "spouseIds": [
-        "sofia-jensen"
-      ],
-      "childIds": [
-        "freja-berg"
-      ]
+      "spouseIds": ["sofia-jensen"],
+      "childIds": ["freja-berg"]
     },
     {
       "id": "mads-jensen",
@@ -483,10 +348,7 @@
       "country": "Denmark",
       "occupation": "Musician",
       "biography": "Plays double bass with a jazz quartet touring Scandinavia.",
-      "parentIds": [
-        "carol-jensen",
-        "erik-jensen"
-      ],
+      "parentIds": ["carol-jensen", "erik-jensen"],
       "spouseIds": [],
       "childIds": []
     },
@@ -500,10 +362,7 @@
       "city": "Leeds",
       "country": "United Kingdom",
       "occupation": "Student",
-      "parentIds": [
-        "daniel-foster",
-        "emily-hartley"
-      ],
+      "parentIds": ["daniel-foster", "emily-hartley"],
       "spouseIds": [],
       "childIds": []
     },
@@ -516,10 +375,7 @@
       "isDeceased": false,
       "city": "Leeds",
       "country": "United Kingdom",
-      "parentIds": [
-        "emily-hartley",
-        "marcus-webb"
-      ],
+      "parentIds": ["emily-hartley", "marcus-webb"],
       "spouseIds": [],
       "childIds": []
     },
@@ -534,10 +390,7 @@
       "city": "London",
       "country": "United Kingdom",
       "occupation": "Student",
-      "parentIds": [
-        "michael-hartley",
-        "amara-hartley"
-      ],
+      "parentIds": ["michael-hartley", "amara-hartley"],
       "spouseIds": [],
       "childIds": []
     },
@@ -550,10 +403,7 @@
       "isDeceased": false,
       "city": "London",
       "country": "United Kingdom",
-      "parentIds": [
-        "michael-hartley",
-        "amara-hartley"
-      ],
+      "parentIds": ["michael-hartley", "amara-hartley"],
       "spouseIds": [],
       "childIds": []
     },
@@ -566,10 +416,7 @@
       "isDeceased": false,
       "city": "London",
       "country": "United Kingdom",
-      "parentIds": [
-        "michael-hartley",
-        "amara-hartley"
-      ],
+      "parentIds": ["michael-hartley", "amara-hartley"],
       "spouseIds": [],
       "childIds": []
     },
@@ -583,10 +430,7 @@
       "city": "Dublin",
       "country": "Ireland",
       "occupation": "Student",
-      "parentIds": [
-        "sarah-oconnor",
-        "liam-oconnor"
-      ],
+      "parentIds": ["sarah-oconnor", "liam-oconnor"],
       "spouseIds": [],
       "childIds": []
     },
@@ -599,10 +443,7 @@
       "isDeceased": false,
       "city": "Dublin",
       "country": "Ireland",
-      "parentIds": [
-        "sarah-oconnor",
-        "liam-oconnor"
-      ],
+      "parentIds": ["sarah-oconnor", "liam-oconnor"],
       "spouseIds": [],
       "childIds": []
     },
@@ -615,10 +456,7 @@
       "isDeceased": false,
       "city": "Vancouver",
       "country": "Canada",
-      "parentIds": [
-        "jennifer-clark",
-        "thomas-clark"
-      ],
+      "parentIds": ["jennifer-clark", "thomas-clark"],
       "spouseIds": [],
       "childIds": []
     },
@@ -631,10 +469,7 @@
       "isDeceased": false,
       "city": "Vancouver",
       "country": "Canada",
-      "parentIds": [
-        "jennifer-clark",
-        "thomas-clark"
-      ],
+      "parentIds": ["jennifer-clark", "thomas-clark"],
       "spouseIds": [],
       "childIds": []
     },
@@ -647,10 +482,7 @@
       "isDeceased": false,
       "city": "Oslo",
       "country": "Norway",
-      "parentIds": [
-        "sofia-jensen",
-        "lucas-berg"
-      ],
+      "parentIds": ["sofia-jensen", "lucas-berg"],
       "spouseIds": [],
       "childIds": []
     }

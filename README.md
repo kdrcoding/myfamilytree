@@ -178,7 +178,7 @@ Everything you add in the browser is saved **only in that browser**. To make you
 
 1. In the browser where your family is (the live site or localhost), open **Family Tree → Export**. A `family-tree-YYYY-MM-DD.json` file lands in Downloads.
 2. Double-click **`tools\use-my-data.bat`**. It finds your newest export automatically (or drag the file onto the script), makes it the website's built-in data (`src/data/defaultFamily.json`), keeps a backup of the previous data in `password\data-backups`, and offers to deploy right away.
-3. Done — every **new** visitor now sees your family. Anyone who visited **before** gets a banner: *"The family tree on this website has been updated — Load latest data / Keep my version."*
+3. Done — every **new** visitor now sees your family. Anyone who visited **before** gets a banner: _"The family tree on this website has been updated — Load latest data / Keep my version."_
 
 "Restore website data" on the Settings page also restores this published data.
 

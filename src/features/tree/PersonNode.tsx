@@ -4,6 +4,7 @@ import type { NodeProps } from '@xyflow/react';
 import { Baby, ChevronDown, ChevronUp, Heart, UserRoundPlus } from 'lucide-react';
 import { useFamily } from '../../context/FamilyContext';
 import { usePrivacy } from '../../hooks/usePrivacy';
+import { useT } from '../../i18n/useT';
 import { lifespan } from '../../utils/dates';
 import { fullName } from '../../utils/family';
 import { Avatar } from '../../components/Avatar';
@@ -23,6 +24,7 @@ const HANDLE = '!h-1.5 !w-1.5 !min-h-0 !min-w-0 !border-0 !bg-transparent';
 function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
   const { getPerson, getLabel } = useFamily();
   const privacy = usePrivacy();
+  const t = useT();
   const { onOpen, onToggleCollapse, onQuickAdd, editMode, highlightedId, dimmedIds } =
     useTreeInteraction();
   const person = getPerson(data.personId);
@@ -35,9 +37,10 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
         person.birthDate,
         privacy.showDeathDate() ? person.deathDate : undefined,
         person.isDeceased,
+        t('common.bornAbbr'),
       )
     : person.isDeceased
-      ? 'Deceased'
+      ? t('common.deceasedShort')
       : '';
 
   return (
@@ -53,7 +56,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
       <button
         type="button"
         onClick={() => onOpen(person.id)}
-        aria-label={`Open details for ${fullName(person)}`}
+        aria-label={t('tree.openDetails', { name: fullName(person) })}
         className={`flex h-full w-full items-center gap-2.5 rounded-xl border border-l-4 bg-white px-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-500 dark:bg-stone-900 ${
           GENDER_ACCENT[person.gender]
         } ${
@@ -87,7 +90,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
           <button
             type="button"
             className="quick-add absolute -right-3 top-1/2 z-10 -translate-y-1/2"
-            title={`Add spouse/partner of ${fullName(person)}`}
+            title={t('tree.quickSpouse', { name: fullName(person) })}
             aria-label={`Add spouse of ${fullName(person)}`}
             onClick={(event) => {
               event.stopPropagation();
@@ -99,7 +102,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
           <button
             type="button"
             className="quick-add absolute -bottom-3 right-5 z-10"
-            title={`Add child of ${fullName(person)}`}
+            title={t('tree.quickChild', { name: fullName(person) })}
             aria-label={`Add child of ${fullName(person)}`}
             onClick={(event) => {
               event.stopPropagation();
@@ -112,7 +115,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
             <button
               type="button"
               className="quick-add absolute -top-3 left-1/2 z-10 -translate-x-1/2"
-              title={`Add parent of ${fullName(person)}`}
+              title={t('tree.quickParent', { name: fullName(person) })}
               aria-label={`Add parent of ${fullName(person)}`}
               onClick={(event) => {
                 event.stopPropagation();
@@ -133,7 +136,9 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
             onToggleCollapse(person.id);
           }}
           aria-label={
-            data.collapsed ? `Expand branch (${data.hiddenCount} hidden)` : 'Collapse this branch'
+            data.collapsed
+              ? t('tree.expandBranch', { n: data.hiddenCount })
+              : t('tree.collapseBranch')
           }
           className="absolute -bottom-3.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border border-stone-300 bg-white px-2 py-0.5 text-[10px] font-semibold text-stone-600 shadow-sm transition-colors hover:border-emerald-400 hover:text-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
         >

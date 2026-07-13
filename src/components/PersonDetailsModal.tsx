@@ -15,8 +15,8 @@ import type { ReactNode } from 'react';
 import type { FamilyPerson, RelationKind } from '../types/family';
 import { useFamily } from '../context/FamilyContext';
 import { usePrivacy } from '../hooks/usePrivacy';
-import { calculateAge } from '../utils/dates';
-import { formatDate } from '../utils/dates';
+import { useLanguage, useT } from '../i18n/useT';
+import { calculateAge, formatDate } from '../utils/dates';
 import { displayName, fullName, sortByBirth } from '../utils/family';
 import { Avatar } from './Avatar';
 import { DeceasedBadge, GenderBadge, GenerationBadge } from './badges';
@@ -88,6 +88,13 @@ function RelativeChips({
   );
 }
 
+const KIND_KEYS = {
+  spouse: 'relkind.spouse',
+  child: 'relkind.child',
+  parent: 'relkind.parent',
+  sibling: 'relkind.sibling',
+} as const;
+
 export function PersonDetailsModal({
   personId,
   onClose,
@@ -100,6 +107,8 @@ export function PersonDetailsModal({
 }: PersonDetailsModalProps) {
   const { index, generations, getLabel } = useFamily();
   const privacy = usePrivacy();
+  const t = useT();
+  const language = useLanguage();
   const person = index.get(personId);
   if (!person) return null;
 
@@ -141,35 +150,41 @@ export function PersonDetailsModal({
 
       <dl className="mt-4 grid grid-cols-1 gap-x-6 sm:grid-cols-2">
         {privacy.showBirthDate() && person.birthDate && (
-          <DetailRow icon={<Cake className="h-4 w-4" aria-hidden />} label="Born">
-            {formatDate(person.birthDate)}
+          <DetailRow icon={<Cake className="h-4 w-4" aria-hidden />} label={t('person.born')}>
+            {formatDate(person.birthDate, language)}
           </DetailRow>
         )}
         {privacy.showDeathDate() && person.deathDate && (
-          <DetailRow icon={<Flower2 className="h-4 w-4" aria-hidden />} label="Died">
-            {formatDate(person.deathDate)}
+          <DetailRow icon={<Flower2 className="h-4 w-4" aria-hidden />} label={t('person.died')}>
+            {formatDate(person.deathDate, language)}
           </DetailRow>
         )}
         {age !== null && privacy.showAge(person) && (
           <DetailRow
             icon={<Users className="h-4 w-4" aria-hidden />}
-            label={person.isDeceased ? 'Age at death' : 'Age'}
+            label={person.isDeceased ? t('person.ageAtDeath') : t('person.age')}
           >
-            {age} years
+            {t('person.years', { n: age })}
           </DetailRow>
         )}
         {location && (
-          <DetailRow icon={<MapPin className="h-4 w-4" aria-hidden />} label="Location">
+          <DetailRow icon={<MapPin className="h-4 w-4" aria-hidden />} label={t('person.location')}>
             {location}
           </DetailRow>
         )}
         {privacy.showOccupation() && person.occupation && (
-          <DetailRow icon={<Briefcase className="h-4 w-4" aria-hidden />} label="Occupation">
+          <DetailRow
+            icon={<Briefcase className="h-4 w-4" aria-hidden />}
+            label={t('person.occupation')}
+          >
             {person.occupation}
           </DetailRow>
         )}
         {children.length > 0 && (
-          <DetailRow icon={<Baby className="h-4 w-4" aria-hidden />} label="Children">
+          <DetailRow
+            icon={<Baby className="h-4 w-4" aria-hidden />}
+            label={t('person.childrenCount')}
+          >
             {children.length}
           </DetailRow>
         )}
@@ -178,7 +193,7 @@ export function PersonDetailsModal({
       {privacy.showBiography() && person.biography && (
         <div className="mt-3 rounded-xl bg-stone-50 p-3 dark:bg-stone-800/60">
           <h3 className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
-            <BookOpen className="h-3.5 w-3.5" aria-hidden /> Biography
+            <BookOpen className="h-3.5 w-3.5" aria-hidden /> {t('person.biography')}
           </h3>
           <p className="mt-1 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
             {person.biography}
@@ -187,32 +202,32 @@ export function PersonDetailsModal({
       )}
 
       <div className="mt-4 space-y-3">
-        <RelativeChips title="Parents" people={parents} onNavigate={onNavigate} />
+        <RelativeChips title={t('person.parents')} people={parents} onNavigate={onNavigate} />
         <RelativeChips
-          title={spouses.length > 1 ? 'Spouses' : 'Spouse'}
+          title={spouses.length > 1 ? t('person.spouses') : t('person.spouse')}
           people={spouses}
           onNavigate={onNavigate}
         />
-        <RelativeChips title="Siblings" people={siblings} onNavigate={onNavigate} />
+        <RelativeChips title={t('person.siblings')} people={siblings} onNavigate={onNavigate} />
         {spouses.length > 1 ? (
           // Blended family: show which children belong to which partner.
           <>
             {spouses.map((spouse) => (
               <RelativeChips
                 key={spouse.id}
-                title={`Children with ${fullName(spouse)}`}
+                title={t('person.childrenWith', { name: fullName(spouse) })}
                 people={children.filter((c) => c.parentIds.includes(spouse.id))}
                 onNavigate={onNavigate}
               />
             ))}
             <RelativeChips
-              title="Children (other parent not listed)"
+              title={t('person.childrenOther')}
               people={children.filter((c) => !spouses.some((s) => c.parentIds.includes(s.id)))}
               onNavigate={onNavigate}
             />
           </>
         ) : (
-          <RelativeChips title="Children" people={children} onNavigate={onNavigate} />
+          <RelativeChips title={t('person.children')} people={children} onNavigate={onNavigate} />
         )}
       </div>
 
@@ -228,17 +243,17 @@ export function PersonDetailsModal({
                   onClick={() => onAddRelative?.(kind, person)}
                 >
                   <UserPlus className="h-3.5 w-3.5" aria-hidden />
-                  Add {kind}
+                  {t('person.addKind', { kind: t(KIND_KEYS[kind]) })}
                 </button>
               ))}
             </div>
             <div className="flex gap-1.5">
               <button type="button" className="btn-secondary" onClick={() => onEdit?.(person)}>
-                <Pencil className="h-4 w-4" aria-hidden /> Edit
+                <Pencil className="h-4 w-4" aria-hidden /> {t('person.edit')}
               </button>
               {canDelete && (
                 <button type="button" className="btn-danger" onClick={() => onDelete?.(person)}>
-                  <Trash2 className="h-4 w-4" aria-hidden /> Delete
+                  <Trash2 className="h-4 w-4" aria-hidden /> {t('person.delete')}
                 </button>
               )}
             </div>
@@ -247,10 +262,10 @@ export function PersonDetailsModal({
           <>
             <span className="flex items-center gap-1.5 text-xs text-stone-400 dark:text-stone-500">
               <Heart className="h-3.5 w-3.5" aria-hidden />
-              Turn on edit mode on the Family Tree page to change this person.
+              {t('person.viewHint')}
             </span>
             <button type="button" className="btn-secondary" onClick={onClose}>
-              Close
+              {t('common.close')}
             </button>
           </>
         )}

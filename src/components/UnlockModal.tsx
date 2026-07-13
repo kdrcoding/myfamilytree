@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { KeyRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useT } from '../i18n/useT';
 import { Modal } from './ui/Modal';
 
 interface UnlockModalProps {
@@ -13,6 +14,7 @@ interface UnlockModalProps {
 export function UnlockModal({ onClose, onUnlocked }: UnlockModalProps) {
   const { signIn } = useAuth();
   const { toast } = useToast();
+  const t = useT();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -20,21 +22,17 @@ export function UnlockModal({ onClose, onUnlocked }: UnlockModalProps) {
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!password) {
-      setError('Enter a password.');
+      setError(t('unlock.enter'));
       return;
     }
     setBusy(true);
     const role = await signIn(password);
     setBusy(false);
     if (!role) {
-      setError('That password is not correct.');
+      setError(t('unlock.wrong'));
       return;
     }
-    toast(
-      role === 'owner'
-        ? 'Unlocked as owner — full access, including delete.'
-        : 'Unlocked as family editor — you can add people and fill in missing info, but not delete or change existing details.',
-    );
+    toast(role === 'owner' ? t('unlock.ownerToast') : t('unlock.editorToast'));
     onUnlocked?.();
     onClose();
   };
@@ -51,17 +49,14 @@ export function UnlockModal({ onClose, onUnlocked }: UnlockModalProps) {
               id="unlock-title"
               className="text-lg font-semibold text-stone-900 dark:text-stone-100"
             >
-              Unlock editing
+              {t('unlock.title')}
             </h2>
-            <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
-              Enter the family password to add or edit people. The owner password additionally
-              allows deleting.
-            </p>
+            <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">{t('unlock.intro')}</p>
           </div>
         </div>
         <label className="mt-4 block">
           <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
-            Password
+            {t('unlock.password')}
           </span>
           <input
             type="password"
@@ -82,10 +77,10 @@ export function UnlockModal({ onClose, onUnlocked }: UnlockModalProps) {
         </label>
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" className="btn-secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button type="submit" className="btn-primary" disabled={busy}>
-            {busy ? 'Checking…' : 'Unlock'}
+            {busy ? t('unlock.checking') : t('unlock.btn')}
           </button>
         </div>
       </form>

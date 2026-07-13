@@ -2,16 +2,17 @@ import { useMemo, useState } from 'react';
 import { Search, UserRoundPlus } from 'lucide-react';
 import type { FamilyPerson, RelationKind } from '../types/family';
 import { useFamily } from '../context/FamilyContext';
+import { useT } from '../i18n/useT';
 import { fullName, sortByBirth } from '../utils/family';
 import { Modal } from './ui/Modal';
 import { PersonFormModal } from './PersonFormModal';
 
-const KIND_LABELS: { kind: RelationKind; label: string }[] = [
-  { kind: 'child', label: 'a child of' },
-  { kind: 'spouse', label: 'the spouse / partner of' },
-  { kind: 'sibling', label: 'a sibling of' },
-  { kind: 'parent', label: 'a parent of' },
-];
+const KIND_KEYS = [
+  { kind: 'child', key: 'join.kindChild' },
+  { kind: 'spouse', key: 'join.kindSpouse' },
+  { kind: 'sibling', key: 'join.kindSibling' },
+  { kind: 'parent', key: 'join.kindParent' },
+] as const;
 
 interface JoinFamilyModalProps {
   onClose: () => void;
@@ -24,6 +25,7 @@ interface JoinFamilyModalProps {
  */
 export function JoinFamilyModal({ onClose }: JoinFamilyModalProps) {
   const { people, getLabel } = useFamily();
+  const t = useT();
   const [kind, setKind] = useState<RelationKind>('child');
   const [targetId, setTargetId] = useState<string>('');
   const [noConnection, setNoConnection] = useState(false);
@@ -54,29 +56,25 @@ export function JoinFamilyModal({ onClose }: JoinFamilyModalProps) {
         </span>
         <div>
           <h2 id="join-title" className="text-lg font-semibold text-stone-900 dark:text-stone-100">
-            Add yourself to the family tree
+            {t('join.title')}
           </h2>
-          <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
-            No password needed. You'll appear on the tree in this browser right away, and a small
-            request file will download for you to send to the family owner — once they import it,
-            everyone will see you.
-          </p>
+          <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">{t('join.intro')}</p>
         </div>
       </div>
 
       <fieldset className="mt-4" disabled={noConnection}>
         <legend className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
-          How are you related? I am…
+          {t('join.howRelated')}
         </legend>
         <select
           className="input"
           value={kind}
           onChange={(e) => setKind(e.target.value as RelationKind)}
-          aria-label="Relationship type"
+          aria-label={t('join.kindLabel')}
         >
-          {KIND_LABELS.map((k) => (
+          {KIND_KEYS.map((k) => (
             <option key={k.kind} value={k.kind}>
-              {k.label}
+              {t(k.key)}
             </option>
           ))}
         </select>
@@ -88,14 +86,14 @@ export function JoinFamilyModal({ onClose }: JoinFamilyModalProps) {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search for your relative…"
+              placeholder={t('join.searchRelative')}
               className="w-full bg-transparent text-sm outline-none placeholder:text-stone-400"
-              aria-label="Search for the person you are related to"
+              aria-label={t('join.searchLabel')}
             />
           </div>
           <ul className="max-h-44 overflow-y-auto p-1">
             {candidates.length === 0 && (
-              <li className="px-2 py-1.5 text-xs text-stone-400">No matching people.</li>
+              <li className="px-2 py-1.5 text-xs text-stone-400">{t('join.noMatches')}</li>
             )}
             {candidates.map((p: FamilyPerson) => (
               <li key={p.id}>
@@ -123,12 +121,12 @@ export function JoinFamilyModal({ onClose }: JoinFamilyModalProps) {
           onChange={(e) => setNoConnection(e.target.checked)}
           className="h-4 w-4 rounded border-stone-300 text-emerald-600 focus:ring-emerald-500"
         />
-        I'm not sure how I connect — let the owner place me
+        {t('join.notSure')}
       </label>
 
       <div className="mt-5 flex justify-end gap-2">
         <button type="button" className="btn-secondary" onClick={onClose}>
-          Cancel
+          {t('common.cancel')}
         </button>
         <button
           type="button"
@@ -136,7 +134,7 @@ export function JoinFamilyModal({ onClose }: JoinFamilyModalProps) {
           disabled={!noConnection && !targetId}
           onClick={() => setStep(2)}
         >
-          Continue to my details
+          {t('join.continue')}
         </button>
       </div>
     </Modal>

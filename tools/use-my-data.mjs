@@ -1,7 +1,15 @@
 // Makes YOUR exported family the website's built-in data.
 // Usage:  node tools/use-my-data.mjs [path-to-export.json]
 // Without an argument it picks the newest family-tree-*.json in Downloads.
-import { readFileSync, writeFileSync, readdirSync, statSync, copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import {
+  readFileSync,
+  writeFileSync,
+  readdirSync,
+  statSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+} from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
@@ -37,14 +45,18 @@ try {
 }
 const people = Array.isArray(data) ? data : data.people;
 if (!Array.isArray(people) || people.length === 0) {
-  console.error('[ERROR] That file has no "people" list. Export it from the website (Family Tree -> Export).');
+  console.error(
+    '[ERROR] That file has no "people" list. Export it from the website (Family Tree -> Export).',
+  );
   process.exit(1);
 }
 const bad = people.filter(
   (p) => !p || typeof p.id !== 'string' || !p.id || typeof p.isDeceased !== 'boolean',
 );
 if (bad.length > 0) {
-  console.error(`[ERROR] ${bad.length} entries in the file look broken - re-export from the website.`);
+  console.error(
+    `[ERROR] ${bad.length} entries in the file look broken - re-export from the website.`,
+  );
   process.exit(1);
 }
 

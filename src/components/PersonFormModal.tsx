@@ -6,6 +6,8 @@ import { JOIN_REQUEST_TYPE } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
+import { useT } from '../i18n/useT';
+import type { TKey } from '../i18n/translations';
 import { downloadJson } from '../utils/dataTransfer';
 import { fullName, generatePersonId, sortByBirth } from '../utils/family';
 import { validatePersonForm, canLink } from '../utils/validation';
@@ -28,6 +30,13 @@ interface PersonFormModalProps {
 }
 
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+
+const KIND_KEYS = {
+  spouse: 'relkind.spouse',
+  child: 'relkind.child',
+  parent: 'relkind.parent',
+  sibling: 'relkind.sibling',
+} as const;
 
 function Field({
   label,
@@ -71,6 +80,7 @@ function PeoplePicker({
   maxSelected?: number;
   disabledReason: (id: string) => string | null;
 }) {
+  const t = useT();
   const [query, setQuery] = useState('');
   const filtered = candidates.filter((p) =>
     fullName(p).toLowerCase().includes(query.trim().toLowerCase()),
@@ -94,13 +104,13 @@ function PeoplePicker({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={`Search ${label.toLowerCase()}…`}
+            placeholder={t('form.searchIn', { label })}
             className="w-full bg-transparent text-sm outline-none placeholder:text-stone-400"
           />
         </div>
         <ul className="max-h-36 overflow-y-auto p-1">
           {filtered.length === 0 && (
-            <li className="px-2 py-1.5 text-xs text-stone-400">No matching people.</li>
+            <li className="px-2 py-1.5 text-xs text-stone-400">{t('form.noMatches')}</li>
           )}
           {filtered.map((p) => {
             const checked = selected.includes(p.id);
@@ -114,7 +124,7 @@ function PeoplePicker({
                       ? 'cursor-not-allowed opacity-40'
                       : 'cursor-pointer hover:bg-stone-100 dark:hover:bg-stone-800'
                   }`}
-                  title={reason ?? undefined}
+                  title={reason ? t(reason as TKey) : undefined}
                 >
                   <input
                     type="checkbox"
@@ -144,6 +154,7 @@ export function PersonFormModal({
   const { people, index, getPerson, addPerson, updatePerson } = useFamily();
   const { canDelete: isOwner } = useAuth();
   const { toast } = useToast();
+  const t = useT();
   const isEdit = person !== undefined;
   // Family editors may only fill in MISSING info on existing people; fields
   // that already have a value are locked, and relationships are owner-only.
@@ -184,15 +195,17 @@ export function PersonFormModal({
   const set = <K extends keyof PersonFormValues>(key: K, value: PersonFormValues[K]) =>
     setValues((v) => ({ ...v, [key]: value }));
 
+  const err = (key?: string) => (key ? t(key as TKey) : undefined);
+
   const onPhotoFile = (file: File | undefined) => {
     if (!file) return;
     if (file.size > MAX_PHOTO_BYTES) {
-      toast('Photo is too large — please use an image under 2 MB.', 'error');
+      toast(t('form.photoTooBig'), 'error');
       return;
     }
     const reader = new FileReader();
     reader.onload = () => set('photo', String(reader.result ?? ''));
-    reader.onerror = () => toast('Could not read that image file.', 'error');
+    reader.onerror = () => toast(t('form.photoReadFail'), 'error');
     reader.readAsDataURL(file);
   };
 
@@ -232,14 +245,14 @@ export function PersonFormModal({
     const personLabel =
       [trimmed.firstName, trimmed.lastName].filter(Boolean).join(' ') ||
       trimmed.nickname ||
-      'This person';
+      t('form.thisPerson');
 
     if (isEdit) {
       updatePerson({ ...person, ...trimmed }, parentIds, spouseIds);
       toast(
         restricted
-          ? `${personLabel} was updated — only empty fields were filled in.`
-          : `${personLabel} was updated.`,
+          ? t('form.updatedRestrictedToast', { name: personLabel })
+          : t('form.updatedToast', { name: personLabel }),
       );
       onSaved?.(person.id);
     } else {
@@ -263,12 +276,9 @@ export function PersonFormModal({
           note: 'Send this file to the family tree owner so they can import you into the published tree.',
         };
         downloadJson(request, `join-request-${id}.json`);
-        toast(
-          'You are on the tree in this browser, and a request file was downloaded — send it to the family owner so everyone sees you.',
-          'info',
-        );
+        toast(t('form.selfJoinToast'), 'info');
       } else {
-        toast(`${personLabel} was added to the family.`);
+        toast(t('form.addedToast', { name: personLabel }));
       }
       onSaved?.(id);
     }
@@ -301,12 +311,12 @@ export function PersonFormModal({
   };
 
   const title = selfJoin
-    ? 'Add yourself to the family tree'
+    ? t('form.titleSelf')
     : isEdit
-      ? `Edit ${fullName(person)}`
+      ? t('form.titleEdit', { name: fullName(person) })
       : linkTarget
-        ? `Add ${link!.kind} of ${fullName(linkTarget)}`
-        : 'Add a family member';
+        ? t('form.titleAddKind', { kind: t(KIND_KEYS[link!.kind]), name: fullName(linkTarget) })
+        : t('form.titleAdd');
 
   return (
     <Modal onClose={onClose} labelledBy="person-form-title" size="lg">
@@ -318,21 +328,16 @@ export function PersonFormModal({
           {title}
         </h2>
         {!isEdit && (
-          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-            Only one name is needed — first name, last name or nickname. Everything else is
-            optional.
-          </p>
+          <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{t('form.oneNameHint')}</p>
         )}
         {restricted && (
           <p className="mt-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-            You're editing as a <strong>family editor</strong>: you can fill in missing information,
-            but details that are already filled in — and all relationships — can only be changed by
-            the owner. Locked fields are greyed out.
+            {t('form.restrictedNote')}
           </p>
         )}
 
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="First name" error={errors.firstName}>
+          <Field label={t('form.firstName')} error={err(errors.firstName)}>
             <input
               type="text"
               className="input"
@@ -343,7 +348,7 @@ export function PersonFormModal({
               autoFocus
             />
           </Field>
-          <Field label="Last name" error={errors.lastName}>
+          <Field label={t('form.lastName')} error={err(errors.lastName)}>
             <input
               type="text"
               className="input"
@@ -352,16 +357,16 @@ export function PersonFormModal({
               disabled={lockText(person?.lastName)}
             />
           </Field>
-          <Field label="Gender">
+          <Field label={t('form.gender')}>
             <select
               className="input"
               value={values.gender}
               onChange={(e) => set('gender', e.target.value as Gender)}
               disabled={restricted && person!.gender !== 'unspecified'}
             >
-              <option value="unspecified">Unspecified</option>
-              <option value="female">Female</option>
-              <option value="male">Male</option>
+              <option value="unspecified">{t('filters.unspecified')}</option>
+              <option value="female">{t('filters.female')}</option>
+              <option value="male">{t('filters.male')}</option>
             </select>
           </Field>
         </div>
@@ -373,10 +378,10 @@ export function PersonFormModal({
           open={isEdit}
         >
           <summary className="cursor-pointer select-none rounded-xl px-4 py-3 text-sm font-medium text-stone-700 hover:bg-stone-50 dark:text-stone-300 dark:hover:bg-stone-800/60">
-            More details (optional) — nickname, dates, place, photo, biography
+            {t('form.moreDetails')}
           </summary>
           <div className="grid grid-cols-1 gap-4 border-t border-stone-200 p-4 sm:grid-cols-2 dark:border-stone-700">
-            <Field label="Nickname">
+            <Field label={t('form.nickname')}>
               <input
                 type="text"
                 className="input"
@@ -385,11 +390,11 @@ export function PersonFormModal({
                 disabled={lockText(person?.nickname)}
               />
             </Field>
-            <Field label="Birth date" error={errors.birthDate}>
+            <Field label={t('form.birthDate')} error={err(errors.birthDate)}>
               <input
                 type="text"
                 className="input"
-                placeholder="YYYY-MM-DD or YYYY"
+                placeholder={t('form.datePlaceholder')}
                 value={values.birthDate}
                 onChange={(e) => set('birthDate', e.target.value)}
                 disabled={lockText(person?.birthDate)}
@@ -407,22 +412,22 @@ export function PersonFormModal({
                     if (!e.target.checked) set('deathDate', '');
                   }}
                 />
-                This person is deceased
+                {t('form.deceasedCheck')}
               </label>
             </div>
             {values.isDeceased && (
-              <Field label="Death date" error={errors.deathDate}>
+              <Field label={t('form.deathDate')} error={err(errors.deathDate)}>
                 <input
                   type="text"
                   className="input"
-                  placeholder="YYYY-MM-DD or YYYY"
+                  placeholder={t('form.datePlaceholder')}
                   value={values.deathDate}
                   onChange={(e) => set('deathDate', e.target.value)}
                   disabled={lockText(person?.deathDate)}
                 />
               </Field>
             )}
-            <Field label="City">
+            <Field label={t('form.city')}>
               <input
                 type="text"
                 className="input"
@@ -431,7 +436,7 @@ export function PersonFormModal({
                 disabled={lockText(person?.city)}
               />
             </Field>
-            <Field label="Country">
+            <Field label={t('form.country')}>
               <input
                 type="text"
                 className="input"
@@ -440,7 +445,7 @@ export function PersonFormModal({
                 disabled={lockText(person?.country)}
               />
             </Field>
-            <Field label="Occupation">
+            <Field label={t('form.occupation')}>
               <input
                 type="text"
                 className="input"
@@ -449,7 +454,7 @@ export function PersonFormModal({
                 disabled={lockText(person?.occupation)}
               />
             </Field>
-            <Field label="Short biography" className="sm:col-span-2">
+            <Field label={t('form.bio')} className="sm:col-span-2">
               <textarea
                 className="input min-h-20"
                 value={values.biography}
@@ -459,13 +464,13 @@ export function PersonFormModal({
             </Field>
             <div className="sm:col-span-2">
               <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
-                Profile photo
+                {t('form.photo')}
               </span>
               <div className="flex items-center gap-3">
                 {values.photo ? (
                   <img
                     src={values.photo}
-                    alt="Selected profile"
+                    alt=""
                     className="h-14 w-14 rounded-full object-cover ring-2 ring-white shadow dark:ring-stone-700"
                   />
                 ) : person ? (
@@ -489,31 +494,28 @@ export function PersonFormModal({
                   disabled={lockText(person?.photo)}
                 >
                   <ImagePlus className="h-4 w-4" aria-hidden />
-                  {values.photo ? 'Change photo' : 'Upload photo'}
+                  {values.photo ? t('form.photoChange') : t('form.photoUpload')}
                 </button>
                 {values.photo && !lockText(person?.photo) && (
                   <button type="button" className="btn-secondary" onClick={() => set('photo', '')}>
-                    <X className="h-4 w-4" aria-hidden /> Remove
+                    <X className="h-4 w-4" aria-hidden /> {t('form.photoRemove')}
                   </button>
                 )}
               </div>
-              <p className="mt-1 text-xs text-stone-400">
-                Optional. Stored in your browser as part of the family data (max 2 MB).
-              </p>
+              <p className="mt-1 text-xs text-stone-400">{t('form.photoNote')}</p>
             </div>
           </div>
         </details>
 
         {isEdit && restricted && (
           <p className="mt-5 border-t border-stone-200 pt-4 text-xs text-stone-500 dark:border-stone-700 dark:text-stone-400">
-            Parents and spouses of an existing person can only be changed by the owner. To add a new
-            relative, use the “Add spouse / child / parent / sibling” buttons on their card instead.
+            {t('form.relOwnerNote')}
           </p>
         )}
         {isEdit && !restricted && (
           <div className="mt-5 grid grid-cols-1 gap-4 border-t border-stone-200 pt-4 sm:grid-cols-2 dark:border-stone-700">
             <PeoplePicker
-              label="Parents"
+              label={t('form.parents')}
               candidates={candidates}
               selected={parentIds}
               maxSelected={2}
@@ -525,7 +527,7 @@ export function PersonFormModal({
               disabledReason={(id) => canLink(people, 'parent-child', id, person.id)}
             />
             <PeoplePicker
-              label="Spouses"
+              label={t('form.spouses')}
               candidates={candidates}
               selected={spouseIds}
               onToggle={(id) =>
@@ -537,7 +539,7 @@ export function PersonFormModal({
             />
             {errors.relationships && (
               <p role="alert" className="text-xs text-red-600 sm:col-span-2 dark:text-red-400">
-                {errors.relationships}
+                {t(errors.relationships as TKey)}
               </p>
             )}
           </div>
@@ -545,7 +547,7 @@ export function PersonFormModal({
 
         {askOtherParent && linkTarget && (
           <div className="mt-4 rounded-xl bg-emerald-50 p-3 dark:bg-emerald-950/50">
-            <Field label={`Other parent (${fullName(linkTarget)}'s partner)`}>
+            <Field label={t('form.otherParent', { name: fullName(linkTarget) })}>
               <select
                 className="input"
                 value={otherParentId}
@@ -559,44 +561,46 @@ export function PersonFormModal({
                       {fullName(p)}
                     </option>
                   ))}
-                <option value="">No second parent / not listed</option>
+                <option value="">{t('form.otherParentNone')}</option>
               </select>
             </Field>
             <p className="mt-1 text-xs text-emerald-900/80 dark:text-emerald-200/80">
-              {fullName(linkTarget)} has {linkTarget.spouseIds.length} partner
-              {linkTarget.spouseIds.length > 1 ? 's' : ''} — pick which one is this child's other
-              parent so the child appears under the right couple.
+              {t('form.otherParentHint', {
+                name: fullName(linkTarget),
+                count: linkTarget.spouseIds.length,
+              })}
             </p>
           </div>
         )}
 
         {!isEdit && linkTarget && (
           <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200">
-            This person will be added as a <strong>{link!.kind}</strong> of{' '}
-            <strong>{fullName(linkTarget)}</strong>
-            {askOtherParent && otherParentId && index.get(otherParentId)
-              ? ` and ${fullName(index.get(otherParentId)!)}`
-              : ''}
-            . You can adjust relationships later by editing the person.
+            {t('form.willBeAdded', {
+              kind: t(KIND_KEYS[link!.kind]),
+              names:
+                askOtherParent && otherParentId && index.get(otherParentId)
+                  ? `${fullName(linkTarget)} + ${fullName(index.get(otherParentId)!)}`
+                  : fullName(linkTarget),
+            })}
           </p>
         )}
 
         <div className="mt-6 flex justify-end gap-2">
           <button type="button" className="btn-secondary" onClick={onClose}>
-            Cancel
+            {t('common.cancel')}
           </button>
           {!isEdit && !selfJoin && (
             <button
               type="button"
               className="btn-secondary"
               onClick={saveAndAddAnother}
-              title="Save this person and immediately start the next one"
+              title={t('form.saveAnotherTitle')}
             >
-              Save & add another
+              {t('form.saveAnother')}
             </button>
           )}
           <button type="submit" className="btn-primary">
-            {selfJoin ? 'Add me & download request file' : isEdit ? 'Save changes' : 'Add person'}
+            {selfJoin ? t('form.addMe') : isEdit ? t('form.save') : t('form.add')}
           </button>
         </div>
       </form>

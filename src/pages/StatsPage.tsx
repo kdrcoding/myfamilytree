@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useFamily } from '../context/FamilyContext';
+import { useT } from '../i18n/useT';
 import { computeStats } from '../utils/stats';
 import { fullName } from '../utils/family';
 
@@ -78,90 +79,95 @@ function BarChart({ title, data }: { title: string; data: { label: string; count
 
 export function StatsPage() {
   const { people } = useFamily();
+  const t = useT();
   const stats = useMemo(() => computeStats(people), [people]);
+
+  const genderData = [
+    { label: t('stats.men'), count: stats.men },
+    { label: t('stats.women'), count: stats.women },
+    { label: t('stats.unspecified'), count: stats.unspecified },
+  ];
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold tracking-tight">Family statistics</h1>
-      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-        Calculated live from the current family data — every edit updates these numbers.
-      </p>
+      <h1 className="text-2xl font-bold tracking-tight">{t('stats.title')}</h1>
+      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('stats.subtitle')}</p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={<Sigma className="h-5 w-5" aria-hidden />}
-          label="Total members"
+          label={t('stats.total')}
           value={stats.total}
         />
         <StatCard
           icon={<HeartPulse className="h-5 w-5" aria-hidden />}
-          label="Living"
+          label={t('stats.living')}
           value={stats.living}
         />
         <StatCard
           icon={<Flower2 className="h-5 w-5" aria-hidden />}
-          label="Deceased"
+          label={t('stats.deceased')}
           value={stats.deceased}
         />
         <StatCard
           icon={<Layers className="h-5 w-5" aria-hidden />}
-          label="Generations"
+          label={t('stats.generations')}
           value={stats.generations}
         />
         <StatCard
           icon={<Earth className="h-5 w-5" aria-hidden />}
-          label="Countries"
+          label={t('stats.countries')}
           value={stats.countries.length}
           hint={stats.countries.slice(0, 4).join(', ')}
         />
         <StatCard
           icon={<MapPin className="h-5 w-5" aria-hidden />}
-          label="Cities"
+          label={t('stats.cities')}
           value={stats.cities.length}
         />
         <StatCard
           icon={<Cake className="h-5 w-5" aria-hidden />}
-          label="Oldest living"
-          value={stats.oldestLiving ? `${stats.oldestLiving.age} yrs` : '—'}
-          hint={stats.oldestLiving ? fullName(stats.oldestLiving.person) : 'No data'}
+          label={t('stats.oldest')}
+          value={stats.oldestLiving ? t('common.yearsOld', { n: stats.oldestLiving.age }) : '—'}
+          hint={stats.oldestLiving ? fullName(stats.oldestLiving.person) : t('stats.noData')}
         />
         <StatCard
           icon={<Baby className="h-5 w-5" aria-hidden />}
-          label="Youngest living"
-          value={stats.youngestLiving ? `${stats.youngestLiving.age} yrs` : '—'}
-          hint={stats.youngestLiving ? fullName(stats.youngestLiving.person) : 'No data'}
+          label={t('stats.youngest')}
+          value={stats.youngestLiving ? t('common.yearsOld', { n: stats.youngestLiving.age }) : '—'}
+          hint={stats.youngestLiving ? fullName(stats.youngestLiving.person) : t('stats.noData')}
         />
         <StatCard
           icon={<TrendingUp className="h-5 w-5" aria-hidden />}
-          label="Average age (living)"
-          value={stats.averageAge !== null ? `${stats.averageAge} yrs` : '—'}
-          hint={stats.averageAge === null ? 'Needs more birth dates' : undefined}
+          label={t('stats.avgAge')}
+          value={stats.averageAge !== null ? t('common.yearsOld', { n: stats.averageAge }) : '—'}
+          hint={stats.averageAge === null ? t('stats.needsMore') : undefined}
         />
         <StatCard
           icon={<Users className="h-5 w-5" aria-hidden />}
-          label="Most children"
+          label={t('stats.mostChildren')}
           value={stats.mostChildren ? stats.mostChildren.count : '—'}
           hint={stats.mostChildren ? fullName(stats.mostChildren.person) : undefined}
         />
         <StatCard
           icon={<Users className="h-5 w-5" aria-hidden />}
-          label="Most descendants"
+          label={t('stats.mostDescendants')}
           value={stats.mostDescendants ? stats.mostDescendants.count : '—'}
           hint={stats.mostDescendants ? fullName(stats.mostDescendants.person) : undefined}
         />
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <BarChart title="Gender" data={stats.genderSplit} />
+        <BarChart title={t('stats.gender')} data={genderData} />
         <BarChart
-          title="People per generation"
+          title={t('stats.perGeneration')}
           data={stats.perGeneration.map((g) => ({
-            label: `Generation ${g.generation}`,
+            label: t('filters.generationN', { n: g.generation }),
             count: g.count,
           }))}
         />
         <BarChart
-          title="People per country"
+          title={t('stats.perCountry')}
           data={stats.perCountry.map((c) => ({ label: c.country, count: c.count }))}
         />
       </div>

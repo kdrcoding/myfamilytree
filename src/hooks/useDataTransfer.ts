@@ -3,29 +3,31 @@ import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useToast } from '../context/ToastContext';
+import { useT } from '../i18n/useT';
 import { downloadJson, exportFileName, readJsonFile } from '../utils/dataTransfer';
 import { fullName, generatePersonId } from '../utils/family';
 import { validateFamilyData, validateJoinRequest } from '../utils/validation';
 
-/** Export / import / reset flows shared by the Tree and Settings pages. */
+/** Export / import / restore flows shared by the Tree and Settings pages. */
 export function useDataTransfer() {
   const { people, addPerson, exportData, replaceAll, resetToSample } = useFamily();
   const { canDelete: isOwner } = useAuth();
   const confirm = useConfirm();
   const { toast } = useToast();
+  const t = useT();
 
   const exportJson = useCallback(() => {
     downloadJson(exportData(), exportFileName('family-tree'));
-    toast('Family data exported as JSON.');
-  }, [exportData, toast]);
+    toast(t('data.exported'));
+  }, [exportData, toast, t]);
 
   const importFromFile = useCallback(
     async (file: File) => {
       let parsed: unknown;
       try {
         parsed = await readJsonFile(file);
-      } catch (error) {
-        toast(error instanceof Error ? error.message : 'Could not read the file.', 'error');
+      } catch {
+        toast(t('data.readFail'), 'error');
         return;
       }
       // A join-request file (from "Add yourself") merges one person into the
@@ -34,7 +36,7 @@ export function useDataTransfer() {
       if (joinRequest.isJoinRequest) {
         if (!joinRequest.ok || !joinRequest.person) {
           toast(
-            `This join request is invalid: ${joinRequest.errors[0] ?? 'unknown error.'}`,
+            t('data.joinInvalid', { err: joinRequest.errors[0] ?? t('data.joinUnknown') }),
             'error',
           );
           return;
@@ -54,66 +56,69 @@ export function useDataTransfer() {
           ? people.find((p) => p.id === joinRequest.link!.targetId)
           : undefined;
         const connection = target
-          ? `They will be added as a ${joinRequest.link!.kind} of ${fullName(target)}.`
+          ? t('data.joinConnAs', {
+              kind: t(`relkind.${joinRequest.link!.kind}`),
+              name: fullName(target),
+            })
           : joinRequest.link
-            ? 'Their relative was not found in this tree, so they will be added unconnected — edit them afterwards to set their parents or spouse.'
-            : 'They chose no connection — edit them afterwards to place them in the tree.';
+            ? t('data.joinConnMissing')
+            : t('data.joinConnNone');
         const proceed = await confirm({
-          title: `Add ${fullName(person)} to the family?`,
-          message: `This join request adds one person without touching anyone else. ${connection}`,
-          confirmLabel: 'Add person',
+          title: t('data.joinTitle', { name: fullName(person) }),
+          message: t('data.joinMsg', { connection }),
+          confirmLabel: t('data.joinAddBtn'),
         });
         if (!proceed) return;
         addPerson(person, target ? joinRequest.link! : undefined);
-        toast(`${fullName(person)} was added to the family.`);
+        toast(t('data.joinAdded', { name: fullName(person) }));
         return;
       }
 
       // Replacing the entire dataset is destructive — owner only. (Join
       // requests above are additive, so family editors may import those.)
       if (!isOwner) {
-        toast(
-          'Only the owner can replace the whole family data. You can still import join-request files.',
-          'error',
-        );
+        toast(t('data.ownerOnlyReplace'), 'error');
         return;
       }
 
       const result = validateFamilyData(parsed);
       if (!result.ok || !result.data) {
         const detail = result.errors.slice(0, 2).join(' ');
-        toast(`Import failed: ${detail || 'invalid family data.'}`, 'error');
+        toast(t('data.importFailed', { detail: detail || t('data.invalidData') }), 'error');
         return;
       }
       const proceed = await confirm({
-        title: 'Replace family data?',
-        message: `This will replace the current ${people.length} people with the ${result.data.people.length} people from "${file.name}". Consider exporting a backup first.`,
-        confirmLabel: 'Replace data',
+        title: t('data.replaceTitle'),
+        message: t('data.replaceMsg', {
+          current: people.length,
+          next: result.data.people.length,
+          file: file.name,
+        }),
+        confirmLabel: t('data.replaceBtn'),
         danger: true,
       });
       if (!proceed) return;
       replaceAll(result.data.people);
-      toast(`Imported ${result.data.people.length} people.`);
+      toast(t('data.imported', { n: result.data.people.length }));
     },
-    [addPerson, confirm, isOwner, people, replaceAll, toast],
+    [addPerson, confirm, isOwner, people, replaceAll, toast, t],
   );
 
   const resetSample = useCallback(async () => {
     if (!isOwner) {
-      toast('Only the owner can reset the family data.', 'error');
+      toast(t('data.ownerOnlyReset'), 'error');
       return;
     }
     const proceed = await confirm({
-      title: 'Restore the website’s built-in data?',
-      message:
-        'All changes saved in this browser will be discarded and the family data that ships with the website will be restored. Export a backup first if you want to keep your work.',
-      confirmLabel: 'Restore data',
+      title: t('data.restoreTitle'),
+      message: t('data.restoreMsg'),
+      confirmLabel: t('data.restoreBtn'),
       danger: true,
     });
     if (!proceed) return;
     resetToSample();
-    toast('Website’s built-in family data restored.');
-  }, [confirm, isOwner, resetToSample, toast]);
+    toast(t('data.restored'));
+  }, [confirm, isOwner, resetToSample, toast, t]);
 
   return { exportJson, importFromFile, resetSample };
 }
