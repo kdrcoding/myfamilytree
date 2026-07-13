@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exportedAt": "2026-07-13T08:11:43.033Z",
+  "exportedAt": "2026-07-13T14:10:37.387Z",
   "people": [
     {
       "id": "buvam",
@@ -374,8 +374,12 @@
         "nurxon",
         "omonjon"
       ],
-      "spouseIds": [],
-      "childIds": []
+      "spouseIds": [
+        "abrorbek"
+      ],
+      "childIds": [
+        "nazira"
+      ]
     },
     {
       "id": "m-kadir",
@@ -716,6 +720,30 @@
         "buvami-dadasi"
       ],
       "spouseIds": [],
+      "childIds": []
+    },
+    {
+      "id": "nazira",
+      "firstName": "Nazira",
+      "lastName": "",
+      "gender": "female",
+      "isDeceased": false,
+      "parentIds": [
+        "aziza"
+      ],
+      "spouseIds": [],
+      "childIds": []
+    },
+    {
+      "id": "abrorbek",
+      "firstName": "ABRORBEK",
+      "lastName": "",
+      "gender": "male",
+      "isDeceased": false,
+      "parentIds": [],
+      "spouseIds": [
+        "aziza"
+      ],
       "childIds": []
     }
   ]
