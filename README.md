@@ -1,5 +1,3 @@
-https://imgur.com/a/5cWEiLi
-
 # Oq-Ariq OILASI — Family Tree
 
 **Created and maintained by Kadir Ravshanov.**
