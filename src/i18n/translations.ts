@@ -5,7 +5,7 @@
  */
 export const en = {
   // Site & navigation
-  'site.title': 'Family Tree',
+  'site.title': 'Oq-Ariq OILASI',
   'nav.home': 'Home',
   'nav.tree': 'Family Tree',
   'nav.members': 'Members',
@@ -30,7 +30,7 @@ export const en = {
 
   // Home page
   'home.kicker': 'Generations of one family',
-  'home.title': 'Our Family Tree',
+  'home.title': 'Oq-Ariq OILASI Family Tree',
   'home.intro':
     'Explore every branch of our family — the people, the places and the stories that connect us across {countries} countries.',
   'home.explore': 'Explore Family Tree',
@@ -400,7 +400,7 @@ export type TKey = keyof typeof en;
 
 export const uz: Record<TKey, string> = {
   // Sayt va navigatsiya
-  'site.title': 'Oila shajarasi',
+  'site.title': 'Oq-Ariq OILASI',
   'nav.home': 'Bosh sahifa',
   'nav.tree': 'Shajara',
   'nav.members': "Oila a'zolari",
@@ -423,7 +423,7 @@ export const uz: Record<TKey, string> = {
   'banner.loaded': "Eng so'nggi oila ma'lumotlari yuklandi.",
 
   'home.kicker': 'Bir oilaning avlodlari',
-  'home.title': 'Oilamiz shajarasi',
+  'home.title': 'Oq-Ariq OILASI shajarasi',
   'home.intro':
     "Oilamizning har bir shoxini o'rganing — {countries} mamlakatda yashovchi insonlarimiz, joylarimiz va bizni bog'lab turgan hikoyalar.",
   'home.explore': "Shajarani ko'rish",

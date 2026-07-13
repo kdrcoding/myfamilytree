@@ -2,6 +2,11 @@ export const STORAGE_KEYS = {
   data: 'familytree.data.v1',
   settings: 'familytree.settings.v1',
   collapsed: 'familytree.collapsed.v1',
+  auth: 'familytree.auth.v1',
+  /** Set once this browser makes its own edits (add/update/delete/import). */
+  localEdits: 'familytree.localEdits.v1',
+  /** Copy of the previous data taken before newer site data is adopted. */
+  dataBackup: 'familytree.dataBackup.v1',
 } as const;
 
 /**

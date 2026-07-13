@@ -2,9 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react';
 import { ACCESS, hashPassword } from '../config/access';
 import type { Role } from '../config/access';
-import { loadJson, saveJson, removeKey } from '../utils/storage';
+import { loadJson, saveJson, removeKey, STORAGE_KEYS } from '../utils/storage';
 
-const AUTH_KEY = 'familytree.auth.v1';
+const AUTH_KEY = STORAGE_KEYS.auth;
 
 interface AuthContextValue {
   role: Role;

@@ -9,7 +9,7 @@ import { useAuth } from './AuthContext';
 import { useSettings } from './SettingsContext';
 import { useToast } from './ToastContext';
 import { usePersistentState } from '../hooks/usePersistentState';
-import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
+import { loadJson, removeKey, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { validateFamilyData } from '../utils/validation';
 import {
   applyRelationLink,
@@ -66,12 +66,40 @@ const DEFAULT_DATA = (() => {
 const DEFAULT_STAMP = (defaultFamilyJson as { exportedAt?: string }).exportedAt ?? 'initial';
 const DATASET_ACK_KEY = 'familytree.datasetAck.v1';
 
+const isString = (v: unknown): v is string => typeof v === 'string';
+
+/**
+ * Pure viewers should always see the latest published family, even when an
+ * older copy got saved in their browser (e.g. by clicking "Add yourself" or
+ * by an older version of the app). If this browser never made its own edits
+ * and holds no editing password, silently replace the stale saved copy with
+ * the site's current data before the app reads it. Browsers WITH local edits
+ * or a saved password keep their copy and get the update banner instead.
+ */
+function adoptSiteDataForPureViewers(): void {
+  const saved = loadJson<FamilyData>(STORAGE_KEYS.data, isStoredData);
+  if (saved === null) return;
+  const acknowledged = loadJson<string>(DATASET_ACK_KEY, isString);
+  if (acknowledged === DEFAULT_STAMP) return;
+  const hasLocalEdits = loadJson<boolean>(
+    STORAGE_KEYS.localEdits,
+    (v): v is boolean => typeof v === 'boolean',
+  );
+  const hasCredential = loadJson<string>(STORAGE_KEYS.auth, isString) !== null;
+  if (hasLocalEdits || hasCredential) return;
+  saveJson(STORAGE_KEYS.dataBackup, saved);
+  saveJson(STORAGE_KEYS.data, { version: FAMILY_DATA_VERSION, people: DEFAULT_DATA });
+  saveJson(DATASET_ACK_KEY, DEFAULT_STAMP);
+}
+
 export function FamilyProvider({ children }: { children: ReactNode }) {
   // Owner edits are unrestricted; family editors may only ADD information.
   const { canDelete: isOwner } = useAuth();
   const { settings } = useSettings();
   const { toast } = useToast();
   const language = settings.language;
+  // Must run before the persistent-state hook below reads LocalStorage.
+  useState(adoptSiteDataForPureViewers);
   const [data, setData] = usePersistentState<FamilyData>(
     STORAGE_KEYS.data,
     { version: FAMILY_DATA_VERSION, people: DEFAULT_DATA },
@@ -125,6 +153,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         return translate(language, 'rel.genN', { n: rel.generation });
       },
       addPerson: (person, link) => {
+        saveJson(STORAGE_KEYS.localEdits, true);
         setPeople((current) => {
           let next = [...current, person];
           if (link) next = applyRelationLink(next, person.id, link);
@@ -132,6 +161,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         });
       },
       updatePerson: (person, parentIds, spouseIds) => {
+        saveJson(STORAGE_KEYS.localEdits, true);
         setPeople((current) => {
           const existing = current.find((p) => p.id === person.id);
           if (!existing) return current;
@@ -145,11 +175,21 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           return setRelationships(replaced, person.id, parentIds, spouseIds);
         });
       },
-      deletePerson: (id) => setPeople((current) => removePerson(current, id)),
-      replaceAll: (newPeople) => setPeople(() => normalizePeople(newPeople)),
-      resetToSample: () => setPeople(() => DEFAULT_DATA),
+      deletePerson: (id) => {
+        saveJson(STORAGE_KEYS.localEdits, true);
+        setPeople((current) => removePerson(current, id));
+      },
+      replaceAll: (newPeople) => {
+        saveJson(STORAGE_KEYS.localEdits, true);
+        setPeople(() => normalizePeople(newPeople));
+      },
+      resetToSample: () => {
+        removeKey(STORAGE_KEYS.localEdits);
+        setPeople(() => DEFAULT_DATA);
+      },
       datasetUpdateAvailable,
       adoptSiteData: () => {
+        removeKey(STORAGE_KEYS.localEdits);
         setPeople(() => DEFAULT_DATA);
         saveJson(DATASET_ACK_KEY, DEFAULT_STAMP);
         setDatasetUpdateAvailable(false);
