@@ -22,12 +22,13 @@ if not exist node_modules (
 
 echo Where do you want to deploy?
 echo.
-echo   [1] Vercel  (recommended - free, automatic URL)
-echo   [2] GitHub  (push to GitHub - triggers the GitHub Pages workflow)
-echo   [3] Build only  (creates the dist folder, deploy it yourself)
+echo   [1] Both - Vercel AND GitHub  (recommended, one click publishes everywhere)
+echo   [2] Vercel only
+echo   [3] GitHub only  (push - triggers the GitHub Pages workflow)
+echo   [4] Build only  (creates the dist folder, deploy it yourself)
 echo.
 set "choice=1"
-set /p choice="Type 1, 2 or 3 and press Enter [1]: "
+set /p choice="Type 1, 2, 3 or 4 and press Enter [1]: "
 rem Tolerate stray spaces around the typed answer.
 set "choice=%choice: =%"
 
@@ -40,8 +41,10 @@ if errorlevel 1 goto :fail
 echo Build OK.
 echo.
 
-if "%choice%"=="3" goto :buildonly
-if "%choice%"=="2" goto :github
+set "also_github="
+if "%choice%"=="4" goto :buildonly
+if "%choice%"=="3" goto :github
+if "%choice%"=="1" set "also_github=1"
 
 :vercel
 echo Deploying to Vercel...
@@ -55,6 +58,7 @@ echo Your permanent link is:  https://myfamilytree-kdr6.vercel.app
 echo (It NEVER changes when you deploy. Ignore the random-looking
 echo myfamilytree-xxxxx URLs above - those are internal build addresses;
 echo the permanent link always shows the newest version automatically.)
+if "%also_github%"=="1" goto :github
 goto :end
 
 :github
@@ -86,7 +90,14 @@ git config user.email "m.qodir99@gmail.com"
 git add -A
 git commit -m "Update family tree" >nul 2>nul
 git push origin main
-if errorlevel 1 goto :fail
+if errorlevel 1 (
+    echo.
+    echo [HINT] If the push was rejected because the histories differ,
+    echo open a terminal in this folder, run this ONCE, then deploy again:
+    echo.
+    echo     git push --force-with-lease origin main
+    goto :fail
+)
 echo.
 echo [DONE] Pushed to GitHub. The Pages workflow is building your site now -
 echo check the repository's Actions tab; the site updates in a minute or two.
