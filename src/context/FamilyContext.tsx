@@ -7,6 +7,7 @@ import defaultFamilyJson from '../data/defaultFamily.json';
 import { translate } from '../i18n/translations';
 import { useAuth } from './AuthContext';
 import { useSettings } from './SettingsContext';
+import { useToast } from './ToastContext';
 import { usePersistentState } from '../hooks/usePersistentState';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { validateFamilyData } from '../utils/validation';
@@ -69,11 +70,15 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   // Owner edits are unrestricted; family editors may only ADD information.
   const { canDelete: isOwner } = useAuth();
   const { settings } = useSettings();
+  const { toast } = useToast();
   const language = settings.language;
   const [data, setData] = usePersistentState<FamilyData>(
     STORAGE_KEYS.data,
     { version: FAMILY_DATA_VERSION, people: DEFAULT_DATA },
     isStoredData,
+    // A change that cannot be written to LocalStorage would silently vanish
+    // on the next reload — warn instead of pretending it was saved.
+    () => toast(translate(language, 'storage.saveFailed'), 'error'),
   );
 
   // Detect returning visitors whose saved copy predates the currently

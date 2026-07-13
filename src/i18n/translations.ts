@@ -392,6 +392,8 @@ export const en = {
   'error.text':
     'An unexpected error occurred. Your family data is stored in your browser and is not lost. Reloading the page usually fixes this.',
   'error.reload': 'Reload page',
+  'storage.saveFailed':
+    'Saving to this browser failed — storage may be full or blocked. Recent changes will be lost on reload. Try removing large photos or export your data as a backup.',
 } as const;
 
 export type TKey = keyof typeof en;
@@ -771,6 +773,8 @@ export const uz: Record<TKey, string> = {
   'error.text':
     "Kutilmagan xato yuz berdi. Oila ma'lumotlaringiz brauzeringizda saqlangan va yo'qolmagan. Sahifani qayta yuklash odatda muammoni hal qiladi.",
   'error.reload': 'Sahifani qayta yuklash',
+  'storage.saveFailed':
+    "Brauzerga saqlash amalga oshmadi — xotira to'lgan yoki bloklangan bo'lishi mumkin. Sahifa qayta yuklansa, oxirgi o'zgarishlar yo'qoladi. Katta rasmlarni olib tashlang yoki ma'lumotlaringizni eksport qilib zaxira nusxa oling.",
 };
 
 export type Language = 'uz' | 'en';
