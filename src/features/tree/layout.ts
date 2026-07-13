@@ -1,7 +1,7 @@
 import { MarkerType } from '@xyflow/react';
 import type { Edge, Node } from '@xyflow/react';
 import type { FamilyPerson } from '../../types/family';
-import { buildIndex, findFounders, sortByBirth } from '../../utils/family';
+import { buildIndex, findFounders, isDivorced, sortByBirth } from '../../utils/family';
 import type { PersonIndex } from '../../utils/family';
 
 export const CARD_W = 224;
@@ -179,13 +179,17 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
     for (let i = 0; i < unit.memberIds.length - 1; i++) {
       const left = unit.memberIds[i];
       const right = unit.memberIds[i + 1];
-      const married = index.get(left)!.spouseIds.includes(right);
-      const sharedChildren = index
-        .get(left)!
-        .childIds.filter((id) => index.get(right)!.childIds.includes(id));
-      // Solid line for a marriage, dashed for unmarried co-parents. Adjacent
-      // members that are neither (e.g. the two partners of a twice-married
-      // anchor standing on either side of them) get no line at all.
+      const leftPerson = index.get(left)!;
+      const rightPerson = index.get(right)!;
+      const married = leftPerson.spouseIds.includes(right);
+      const divorced = married && isDivorced(leftPerson, rightPerson);
+      const sharedChildren = leftPerson.childIds.filter((id) =>
+        rightPerson.childIds.includes(id),
+      );
+      // Solid line for a marriage, dashed rose for unmarried co-parents,
+      // broken grey for a divorced couple. Adjacent members that are none of
+      // these (e.g. the two partners of a twice-married anchor standing on
+      // either side of them) get no line at all.
       if (married || sharedChildren.length > 0) {
         edges.push({
           id: `spouse-${left}-${right}`,
@@ -194,7 +198,7 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
           target: right,
           targetHandle: 'left',
           type: 'straight',
-          className: married ? 'edge-spouse' : 'edge-partner',
+          className: divorced ? 'edge-divorced' : married ? 'edge-spouse' : 'edge-partner',
           focusable: false,
         });
       }

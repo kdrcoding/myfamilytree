@@ -166,7 +166,33 @@ function clone(person: FamilyPerson): FamilyPerson {
     parentIds: [...person.parentIds],
     spouseIds: [...person.spouseIds],
     childIds: [...person.childIds],
+    divorcedIds: person.divorcedIds ? [...person.divorcedIds] : undefined,
   };
+}
+
+/** Whether the couple is recorded as divorced (checks either side). */
+export function isDivorced(a: FamilyPerson, b: FamilyPerson): boolean {
+  return Boolean(a.divorcedIds?.includes(b.id) || b.divorcedIds?.includes(a.id));
+}
+
+/** Mark or unmark a couple as divorced. They stay linked as (ex-)spouses. */
+export function setDivorced(
+  people: FamilyPerson[],
+  aId: string,
+  bId: string,
+  divorced: boolean,
+): FamilyPerson[] {
+  if (aId === bId) return people;
+  return people.map((p) => {
+    if (p.id !== aId && p.id !== bId) return p;
+    const otherId = p.id === aId ? bId : aId;
+    if (!p.spouseIds.includes(otherId)) return p;
+    const current = p.divorcedIds ?? [];
+    const next = divorced
+      ? addUnique(current, otherId)
+      : current.filter((id) => id !== otherId);
+    return { ...clone(p), divorcedIds: next.length > 0 ? next : undefined };
+  });
 }
 
 function addUnique(list: string[], id: string): string[] {
@@ -201,11 +227,13 @@ export function stripReferences(people: FamilyPerson[], id: string): FamilyPerso
     if (!p.parentIds.includes(id) && !p.spouseIds.includes(id) && !p.childIds.includes(id)) {
       return p;
     }
+    const divorcedIds = p.divorcedIds?.filter((x) => x !== id);
     return {
       ...clone(p),
       parentIds: p.parentIds.filter((x) => x !== id),
       spouseIds: p.spouseIds.filter((x) => x !== id),
       childIds: p.childIds.filter((x) => x !== id),
+      divorcedIds: divorcedIds?.length ? divorcedIds : undefined,
     };
   });
 }
@@ -244,13 +272,17 @@ export function setRelationships(
   }
   for (const oldSpouse of current.spouseIds) {
     if (!spouseIds.includes(oldSpouse)) {
-      next = next.map((p) =>
-        p.id === oldSpouse
-          ? { ...clone(p), spouseIds: p.spouseIds.filter((x) => x !== personId) }
-          : p.id === personId
-            ? { ...clone(p), spouseIds: p.spouseIds.filter((x) => x !== oldSpouse) }
-            : p,
-      );
+      // Unlinking a spouse also clears any divorced marker on both sides.
+      next = next.map((p) => {
+        if (p.id !== oldSpouse && p.id !== personId) return p;
+        const removeId = p.id === oldSpouse ? personId : oldSpouse;
+        const divorcedIds = p.divorcedIds?.filter((x) => x !== removeId);
+        return {
+          ...clone(p),
+          spouseIds: p.spouseIds.filter((x) => x !== removeId),
+          divorcedIds: divorcedIds?.length ? divorcedIds : undefined,
+        };
+      });
     }
   }
   for (const parentId of parentIds) next = linkParentChild(next, parentId, personId);
@@ -328,16 +360,25 @@ export function mergeAdditiveEdit(existing: FamilyPerson, updates: FamilyPerson)
  */
 export function normalizePeople(people: FamilyPerson[]): FamilyPerson[] {
   const ids = new Set(people.map((p) => p.id));
-  let next: FamilyPerson[] = people.map((p) => ({
-    ...clone(p),
-    parentIds: [...new Set(p.parentIds.filter((id) => ids.has(id) && id !== p.id))],
-    spouseIds: [...new Set(p.spouseIds.filter((id) => ids.has(id) && id !== p.id))],
-    childIds: [...new Set(p.childIds.filter((id) => ids.has(id) && id !== p.id))],
-  }));
+  let next: FamilyPerson[] = people.map((p) => {
+    const spouseIds = [...new Set(p.spouseIds.filter((id) => ids.has(id) && id !== p.id))];
+    const divorcedIds = [
+      ...new Set((p.divorcedIds ?? []).filter((id) => spouseIds.includes(id))),
+    ];
+    return {
+      ...clone(p),
+      parentIds: [...new Set(p.parentIds.filter((id) => ids.has(id) && id !== p.id))],
+      spouseIds,
+      childIds: [...new Set(p.childIds.filter((id) => ids.has(id) && id !== p.id))],
+      divorcedIds: divorcedIds.length > 0 ? divorcedIds : undefined,
+    };
+  });
   for (const person of next) {
     for (const spouseId of person.spouseIds) next = linkSpouses(next, person.id, spouseId);
     for (const childId of person.childIds) next = linkParentChild(next, person.id, childId);
     for (const parentId of person.parentIds) next = linkParentChild(next, parentId, person.id);
+    // Divorce markers are symmetric: one side recording it is enough.
+    for (const exId of person.divorcedIds ?? []) next = setDivorced(next, person.id, exId, true);
   }
   return next;
 }

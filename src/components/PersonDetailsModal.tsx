@@ -5,6 +5,7 @@ import {
   Cake,
   Flower2,
   Heart,
+  HeartCrack,
   MapPin,
   Pencil,
   Trash2,
@@ -17,7 +18,7 @@ import { useFamily } from '../context/FamilyContext';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { useLanguage, useT } from '../i18n/useT';
 import { calculateAge, formatDate } from '../utils/dates';
-import { displayName, fullName, sortByBirth } from '../utils/family';
+import { displayName, fullName, isDivorced, sortByBirth } from '../utils/family';
 import { Avatar } from './Avatar';
 import { DeceasedBadge, GenderBadge, GenerationBadge } from './badges';
 import { Modal } from './ui/Modal';
@@ -83,6 +84,89 @@ function RelativeChips({
             {p.isDeceased ? ' †' : ''}
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Spouse list with divorce status: a "divorced" badge on ex-partners and,
+ * in edit mode, a per-spouse button to mark / unmark the divorce.
+ */
+function SpouseChips({
+  title,
+  person,
+  spouses,
+  editMode,
+  onNavigate,
+}: {
+  title: string;
+  person: FamilyPerson;
+  spouses: FamilyPerson[];
+  editMode: boolean;
+  onNavigate: (id: string) => void;
+}) {
+  const { setDivorcedStatus } = useFamily();
+  const t = useT();
+  if (spouses.length === 0) return null;
+  return (
+    <div>
+      <h3 className="text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+        {title}
+      </h3>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {spouses.map((spouse) => {
+          const divorced = isDivorced(person, spouse);
+          return (
+            <span key={spouse.id} className="inline-flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => onNavigate(spouse.id)}
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  divorced
+                    ? 'border-stone-300 bg-stone-100 text-stone-500 dark:border-stone-600 dark:bg-stone-800/60 dark:text-stone-400'
+                    : 'border-stone-300 bg-stone-50 text-stone-700 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-emerald-950/60'
+                }`}
+              >
+                {fullName(spouse)}
+                {spouse.isDeceased ? ' †' : ''}
+                {divorced && (
+                  <span className="ml-1 text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                    · {t('person.divorced')}
+                  </span>
+                )}
+              </button>
+              {editMode && (
+                <button
+                  type="button"
+                  onClick={() => setDivorcedStatus(person.id, spouse.id, !divorced)}
+                  title={
+                    divorced
+                      ? t('person.unmarkDivorced', { name: fullName(spouse) })
+                      : t('person.markDivorced', { name: fullName(spouse) })
+                  }
+                  aria-label={
+                    divorced
+                      ? t('person.unmarkDivorced', { name: fullName(spouse) })
+                      : t('person.markDivorced', { name: fullName(spouse) })
+                  }
+                  aria-pressed={divorced}
+                  className={`rounded-full border p-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                    divorced
+                      ? 'border-amber-400 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
+                      : 'border-stone-300 bg-white text-stone-400 hover:border-amber-400 hover:text-amber-600 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-500 dark:hover:text-amber-400'
+                  }`}
+                >
+                  {divorced ? (
+                    <Heart className="h-3.5 w-3.5" aria-hidden />
+                  ) : (
+                    <HeartCrack className="h-3.5 w-3.5" aria-hidden />
+                  )}
+                </button>
+              )}
+            </span>
+          );
+        })}
       </div>
     </div>
   );
@@ -203,9 +287,11 @@ export function PersonDetailsModal({
 
       <div className="mt-4 space-y-3">
         <RelativeChips title={t('person.parents')} people={parents} onNavigate={onNavigate} />
-        <RelativeChips
+        <SpouseChips
           title={spouses.length > 1 ? t('person.spouses') : t('person.spouse')}
-          people={spouses}
+          person={person}
+          spouses={spouses}
+          editMode={editMode}
           onNavigate={onNavigate}
         />
         <RelativeChips title={t('person.siblings')} people={siblings} onNavigate={onNavigate} />

@@ -21,6 +21,7 @@ import {
   normalizePeople,
   relationshipDescriptor,
   removePerson,
+  setDivorced,
   setRelationships,
 } from '../utils/family';
 import type { PersonIndex } from '../utils/family';
@@ -39,6 +40,8 @@ interface FamilyContextValue {
   addPerson: (person: FamilyPerson, link?: RelationLink) => void;
   /** Update fields and replace the person's parent/spouse relationships. */
   updatePerson: (person: FamilyPerson, parentIds: string[], spouseIds: string[]) => void;
+  /** Mark or unmark a couple as divorced (they stay linked as ex-spouses). */
+  setDivorcedStatus: (aId: string, bId: string, divorced: boolean) => void;
   deletePerson: (id: string) => void;
   replaceAll: (people: FamilyPerson[]) => void;
   /** Explicit setup action: fill the database with the bundled dataset. */
@@ -157,6 +160,9 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           const replaced = current.map((p) => (p.id === person.id ? person : p));
           return setRelationships(replaced, person.id, parentIds, spouseIds);
         });
+      },
+      setDivorcedStatus: (aId, bId, divorced) => {
+        void mutate((current) => setDivorced(current, aId, bId, divorced));
       },
       deletePerson: (id) => mutate((current) => removePerson(current, id)),
       replaceAll: (newPeople) => mutate(() => normalizePeople(newPeople)),

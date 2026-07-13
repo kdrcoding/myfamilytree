@@ -177,11 +177,13 @@ function TreeCanvas({
   // Start centered on the founding couple at a readable zoom, instead of
   // squeezing the whole tree into view (which makes every card unreadably
   // small on large families and phones). "Fit view" in the controls still
-  // shows everything.
+  // shows everything. Phones get a closer zoom — at 0.75 the card text is
+  // too small to read on a pocket screen.
   const handleInit = useCallback(() => {
     const first = nodes.find((n) => n.type === 'person');
     if (first) {
-      setCenter(first.position.x + CARD_W + 24, first.position.y + CARD_H * 1.8, { zoom: 0.75 });
+      const zoom = window.innerWidth < 640 ? 1 : 0.75;
+      setCenter(first.position.x + CARD_W + 24, first.position.y + CARD_H * 1.8, { zoom });
     }
   }, [nodes, setCenter]);
 
@@ -234,6 +236,20 @@ function TreeCanvas({
               />
             </svg>
             {t('tree.legendPartners')}
+          </li>
+          <li className="flex items-center gap-2">
+            <svg width="24" height="2" aria-hidden className="shrink-0">
+              <line
+                x1="0"
+                y1="1"
+                x2="24"
+                y2="1"
+                strokeWidth="2"
+                strokeDasharray="2 5"
+                className="stroke-stone-400 dark:stroke-stone-500"
+              />
+            </svg>
+            {t('tree.legendDivorced')}
           </li>
           <li className="flex items-center gap-2">
             <span aria-hidden className="flex items-center">

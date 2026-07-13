@@ -20,6 +20,12 @@ export interface FamilyPerson {
   parentIds: string[];
   spouseIds: string[];
   childIds: string[];
+  /**
+   * Spouses this person is divorced from — always a subset of `spouseIds`
+   * (an ex-partner still appears in the tree, just with a divorced line).
+   * Optional so data exported before this field existed stays importable.
+   */
+  divorcedIds?: string[];
 }
 
 /** Versioned wrapper stored in LocalStorage and used for import/export. */

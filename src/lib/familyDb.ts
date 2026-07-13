@@ -20,7 +20,7 @@ export interface MemberRow {
 
 export interface RelationshipRow {
   key: string;
-  kind: 'spouse' | 'parent-child';
+  kind: 'spouse' | 'divorced' | 'parent-child';
   person_a: string;
   person_b: string;
 }
@@ -58,10 +58,22 @@ export function parentKey(parentId: string, childId: string): string {
 /** The canonical relationship rows implied by a people array. */
 export function relationshipRowsFor(people: FamilyPerson[]): Map<string, RelationshipRow> {
   const rows = new Map<string, RelationshipRow>();
+  const divorcedPairs = new Set<string>();
+  for (const person of people) {
+    for (const exId of person.divorcedIds ?? []) {
+      divorcedPairs.add(spouseKey(person.id, exId));
+    }
+  }
   for (const person of people) {
     for (const spouseId of person.spouseIds) {
       const [a, b] = [person.id, spouseId].sort();
-      rows.set(spouseKey(a, b), { key: spouseKey(a, b), kind: 'spouse', person_a: a, person_b: b });
+      const key = spouseKey(a, b);
+      rows.set(key, {
+        key,
+        kind: divorcedPairs.has(key) ? 'divorced' : 'spouse',
+        person_a: a,
+        person_b: b,
+      });
     }
     for (const childId of person.childIds) {
       const key = parentKey(person.id, childId);
@@ -99,9 +111,15 @@ export function peopleFromRows(members: MemberRow[], rels: RelationshipRow[]): F
     const a = people.get(rel.person_a);
     const b = people.get(rel.person_b);
     if (!a || !b) continue; // orphan row: ignore rather than crash
-    if (rel.kind === 'spouse') {
+    if (rel.kind === 'spouse' || rel.kind === 'divorced') {
       if (!a.spouseIds.includes(b.id)) a.spouseIds.push(b.id);
       if (!b.spouseIds.includes(a.id)) b.spouseIds.push(a.id);
+      if (rel.kind === 'divorced') {
+        a.divorcedIds = a.divorcedIds ?? [];
+        b.divorcedIds = b.divorcedIds ?? [];
+        if (!a.divorcedIds.includes(b.id)) a.divorcedIds.push(b.id);
+        if (!b.divorcedIds.includes(a.id)) b.divorcedIds.push(a.id);
+      }
     } else {
       if (!a.childIds.includes(b.id)) a.childIds.push(b.id);
       if (!b.parentIds.includes(a.id)) b.parentIds.push(a.id);
@@ -157,7 +175,11 @@ export function diffFamily(prev: FamilyPerson[], next: FamilyPerson[]): FamilyDi
 
   const prevRels = relationshipRowsFor(prev);
   const nextRels = relationshipRowsFor(next);
-  const insertRelationships = [...nextRels.values()].filter((r) => !prevRels.has(r.key));
+  // New rows AND rows whose kind changed (spouse <-> divorced) — the upsert
+  // updates the kind in place because the key stays the same.
+  const insertRelationships = [...nextRels.values()].filter(
+    (r) => prevRels.get(r.key)?.kind !== r.kind,
+  );
   const deleteRelationshipKeys = [...prevRels.keys()].filter((key) => {
     if (nextRels.has(key)) return false;
     // Relationships of deleted people are removed by ON DELETE CASCADE.

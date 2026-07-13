@@ -124,6 +124,11 @@ function validatePersonShape(
       ok = false;
     }
   }
+  // Optional — only present since the divorce feature was added.
+  if (p.divorcedIds !== undefined && p.divorcedIds !== null && !isStringArray(p.divorcedIds)) {
+    errors.push(`Person ${where}: "divorcedIds" must be an array of ids.`);
+    ok = false;
+  }
   for (const key of ['birthDate', 'deathDate']) {
     const v = p[key];
     if (v !== undefined && v !== null && (typeof v !== 'string' || !isValidDateString(v))) {

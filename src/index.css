@@ -99,6 +99,15 @@
 .dark .edge-partner .react-flow__edge-path {
   stroke: var(--color-rose-600);
 }
+/* Divorced couples: a broken grey line instead of the rose marriage line. */
+.edge-divorced .react-flow__edge-path {
+  stroke: var(--color-stone-400);
+  stroke-width: 2;
+  stroke-dasharray: 2 5;
+}
+.dark .edge-divorced .react-flow__edge-path {
+  stroke: var(--color-stone-500);
+}
 /* Parent -> child ("birth") lines: green with an arrow pointing at the child. */
 .edge-child .react-flow__edge-path {
   stroke: var(--color-emerald-500);
@@ -106,6 +115,28 @@
 }
 .dark .edge-child .react-flow__edge-path {
   stroke: var(--color-emerald-500);
+}
+
+/* Touch screens: thicker relationship lines and finger-sized zoom controls
+   so the tree stays readable and usable on phones. */
+@media (pointer: coarse) {
+  .react-flow__edge-path {
+    stroke-width: 2.5;
+  }
+  .edge-spouse .react-flow__edge-path,
+  .edge-partner .react-flow__edge-path,
+  .edge-divorced .react-flow__edge-path,
+  .edge-child .react-flow__edge-path {
+    stroke-width: 3;
+  }
+  .react-flow__controls-button {
+    height: 40px;
+    width: 40px;
+  }
+  .react-flow__controls-button svg {
+    max-height: 16px;
+    max-width: 16px;
+  }
 }
 
 /* React Flow chrome in dark mode */

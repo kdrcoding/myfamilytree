@@ -30,7 +30,7 @@ create table public.family_members (
 --   parent|<parentId>|<childId>
 create table public.family_relationships (
   key text primary key,
-  kind text not null check (kind in ('spouse', 'parent-child')),
+  kind text not null check (kind in ('spouse', 'divorced', 'parent-child')),
   person_a text not null references public.family_members (id) on delete cascade,
   person_b text not null references public.family_members (id) on delete cascade,
   created_at timestamptz not null default now(),
