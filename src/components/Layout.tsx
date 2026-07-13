@@ -1,51 +1,8 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Download, Languages, Menu, Moon, RefreshCw, Sun, TreePine, X } from 'lucide-react';
-import { useConfirm } from '../context/ConfirmContext';
-import { useFamily } from '../context/FamilyContext';
+import { Languages, Menu, Moon, Sun, TreePine, X } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
-import { useToast } from '../context/ToastContext';
 import { useT } from '../i18n/useT';
-
-/**
- * Shown to returning visitors when the deployed website ships newer family
- * data than the copy saved in their browser.
- */
-function DatasetUpdateBanner() {
-  const { datasetUpdateAvailable, adoptSiteData, dismissSiteData } = useFamily();
-  const confirm = useConfirm();
-  const { toast } = useToast();
-  const t = useT();
-  if (!datasetUpdateAvailable) return null;
-
-  const load = async () => {
-    const proceed = await confirm({
-      title: t('banner.confirmTitle'),
-      message: t('banner.confirmMsg'),
-      confirmLabel: t('banner.load'),
-    });
-    if (!proceed) return;
-    adoptSiteData();
-    toast(t('banner.loaded'));
-  };
-
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-2 border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-100">
-      <RefreshCw className="h-4 w-4 shrink-0" aria-hidden />
-      <span>{t('banner.updated')}</span>
-      <button type="button" className="btn-primary !px-3 !py-1 !text-xs" onClick={load}>
-        <Download className="h-3.5 w-3.5" aria-hidden /> {t('banner.load')}
-      </button>
-      <button
-        type="button"
-        className="btn-secondary !px-3 !py-1 !text-xs"
-        onClick={dismissSiteData}
-      >
-        {t('banner.keep')}
-      </button>
-    </div>
-  );
-}
 
 export function Layout() {
   const { settings, toggleTheme, setLanguage } = useSettings();
@@ -156,8 +113,6 @@ export function Layout() {
           </nav>
         )}
       </header>
-
-      <DatasetUpdateBanner />
 
       <main id="main" className="flex flex-1 flex-col">
         <Outlet />

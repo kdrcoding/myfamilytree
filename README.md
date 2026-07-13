@@ -1,6 +1,6 @@
-# Hartley Family Tree
+# Oq-Ariq OILASI — Family Tree
 
-An interactive family tree website built with React, TypeScript, Vite, Tailwind CSS and React Flow. It runs entirely in the browser — no backend, no accounts, no paid services — and deploys as a static site to Vercel or GitHub Pages.
+An interactive family tree website built with React, TypeScript, Vite, Tailwind CSS and React Flow. Family data is shared through a free Supabase database, so edits are visible to every visitor on every device; the site itself deploys as a static app to Vercel or GitHub Pages.
 
 > The sample family (the Hartleys) is entirely fictional. Replace it with your own family using the built-in editor or by editing one data file.
 
@@ -29,7 +29,7 @@ _Add screenshots here after your first deployment:_
 - **One-click Windows scripts** — `tools\start.bat` runs the site locally, `tools\deploy.bat` builds and deploys (Vercel or GitHub) with a double-click.
 - **Privacy mode** — switches to hide exact dates, minors' ages, cities, occupations, biographies and photos before you share the site publicly.
 - **Polished UI** — light/dark theme, responsive layout, keyboard-accessible controls, focus states, toasts, confirmation dialogs, error boundary.
-- **Persistence** — everything you change is saved to your browser's LocalStorage (versioned, with corruption-safe fallbacks).
+- **Persistence** — family data lives in a shared Supabase database (free tier): every edit is saved there and visible to all visitors. Theme, language, privacy switches and collapsed branches stay per-browser in LocalStorage.
 
 ## Quick tour — how to use the site
 
@@ -51,7 +51,7 @@ _Add screenshots here after your first deployment:_
 | Tree       | React Flow (`@xyflow/react`) + custom layout  |
 | Icons      | Lucide React                                  |
 | PNG export | `html-to-image`                               |
-| Storage    | Browser LocalStorage (no server, no API keys) |
+| Storage    | Supabase (free tier) for family data; LocalStorage for UI preferences |
 
 ## Installation
 
@@ -62,6 +62,66 @@ git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
 cd YOUR_REPOSITORY
 npm install
 ```
+
+## Shared data with Supabase
+
+Family data is stored in a shared [Supabase](https://supabase.com) database (free
+tier), so an edit made by the owner is immediately visible to **every visitor on
+every device**. LocalStorage is only used for per-browser preferences (theme,
+language, privacy switches, collapsed branches) and the remembered password.
+
+### 1. Create the Supabase project
+
+1. Sign up at [supabase.com](https://supabase.com) (free) and click **New project**.
+2. Pick any name/region, set a strong database password (you won't need it in the app), and wait for the project to be created.
+
+### 2. Run the SQL migrations
+
+1. In the Supabase dashboard open **SQL Editor → New query**.
+2. Paste the contents of [`supabase/migrations/20260713000001_init.sql`](supabase/migrations/20260713000001_init.sql) and click **Run**.
+3. Do the same with [`supabase/migrations/20260713000002_policies.sql`](supabase/migrations/20260713000002_policies.sql).
+
+(If you use the Supabase CLI instead: `supabase link` then `supabase db push`.)
+
+### 3. Configure the environment variables
+
+1. In the dashboard open **Project Settings → API** and copy the **Project URL** and the **anon public** key.
+2. Copy `.env.example` to `.env` and fill both values in:
+
+   ```bash
+   VITE_SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
+   VITE_SUPABASE_ANON_KEY=YOUR-ANON-PUBLIC-KEY
+   ```
+
+`.env` is git-ignored — **never commit real keys**. The anon key is public by
+design (it ends up in the browser bundle); table access is controlled by the
+RLS policies from step 2. Never use the `service_role` key in this app.
+
+### 4. Seed the family data (explicit, one time)
+
+The database starts empty and the app never fills it automatically. Choose one:
+
+- **Restore the bundled dataset:** open the site, sign in with the owner
+  password, go to **Settings → Restore sample data**.
+- **Import your own export:** Tree page → **Import** and pick a JSON export
+  (e.g. from the previous LocalStorage version of this site — export it there
+  first via Tree → Export).
+
+### 5. Vercel (and other hosts)
+
+Set the same two environment variables wherever the site is built:
+
+- **Vercel:** Project → **Settings → Environment Variables** → add
+  `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (Production, and Preview if
+  you use previews) → **Redeploy**.
+- **GitHub Pages:** repository **Settings → Secrets and variables → Actions →
+  Variables** — add both, then pass them in the build step of
+  `.github/workflows/deploy.yml` if you deploy there.
+- **Local one-click deploy (`tools\deploy.bat`):** works as-is; the local
+  `.env` file is picked up by the build.
+
+Without these variables the site shows a "Database is not configured" screen
+instead of silently falling back to sample data.
 
 ## Running locally
 
@@ -245,7 +305,8 @@ This site is designed for public hosting, so treat it like anything public:
 | "Import failed"                     | The file must be a JSON export from this app (or match its schema). The error message lists what's wrong.  |
 | Forgot a password                   | Generate a new hash (Settings → Editing access) and replace it in `src/config/access.ts`, then redeploy.   |
 | Tree looks tangled after many edits | Impossible links are blocked, but double-check parent assignments on the people involved (Edit → Parents). |
-| LocalStorage corrupted              | The app falls back to sample data automatically; import your latest backup.                                |
+| "Database is not configured" screen | Set `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` (locally in `.env`, on Vercel in Project Settings → Environment Variables) and rebuild.  |
+| "Could not load the family data"    | Supabase is unreachable or the tables are missing — re-run the SQL in `supabase/migrations/` and check the project is not paused.           |
 
 ## Future improvements
 

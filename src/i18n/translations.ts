@@ -390,10 +390,22 @@ export const en = {
   'notfound.back': 'Back to the home page',
   'error.title': 'Something went wrong',
   'error.text':
-    'An unexpected error occurred. Your family data is stored in your browser and is not lost. Reloading the page usually fixes this.',
+    'An unexpected error occurred. Your family data is stored safely in the shared database and is not lost. Reloading the page usually fixes this.',
   'error.reload': 'Reload page',
   'storage.saveFailed':
     'Saving to this browser failed — storage may be full or blocked. Recent changes will be lost on reload. Try removing large photos or export your data as a backup.',
+
+  // Shared database (Supabase)
+  'db.loading': 'Loading family data…',
+  'db.errorTitle': 'Could not load the family data',
+  'db.errorText':
+    'The shared database did not respond. Check your internet connection and try again.',
+  'db.retry': 'Try again',
+  'db.unconfiguredTitle': 'Database is not configured',
+  'db.unconfiguredText':
+    'This site needs the VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables. See the "Shared data with Supabase" section of the README.',
+  'db.saveFailed':
+    'Could not save to the shared database — this change is only visible here until it is saved. Check your connection and try again.',
 } as const;
 
 export type TKey = keyof typeof en;
@@ -771,10 +783,22 @@ export const uz: Record<TKey, string> = {
   'notfound.back': 'Bosh sahifaga qaytish',
   'error.title': 'Xatolik yuz berdi',
   'error.text':
-    "Kutilmagan xato yuz berdi. Oila ma'lumotlaringiz brauzeringizda saqlangan va yo'qolmagan. Sahifani qayta yuklash odatda muammoni hal qiladi.",
+    "Kutilmagan xato yuz berdi. Oila ma'lumotlaringiz umumiy ma'lumotlar bazasida xavfsiz saqlangan va yo'qolmagan. Sahifani qayta yuklash odatda muammoni hal qiladi.",
   'error.reload': 'Sahifani qayta yuklash',
   'storage.saveFailed':
     "Brauzerga saqlash amalga oshmadi — xotira to'lgan yoki bloklangan bo'lishi mumkin. Sahifa qayta yuklansa, oxirgi o'zgarishlar yo'qoladi. Katta rasmlarni olib tashlang yoki ma'lumotlaringizni eksport qilib zaxira nusxa oling.",
+
+  // Umumiy ma'lumotlar bazasi (Supabase)
+  'db.loading': "Oila ma'lumotlari yuklanmoqda…",
+  'db.errorTitle': "Oila ma'lumotlarini yuklab bo'lmadi",
+  'db.errorText':
+    "Umumiy ma'lumotlar bazasi javob bermadi. Internet aloqasini tekshirib, qayta urinib ko'ring.",
+  'db.retry': 'Qayta urinish',
+  'db.unconfiguredTitle': "Ma'lumotlar bazasi sozlanmagan",
+  'db.unconfiguredText':
+    "Bu saytga VITE_SUPABASE_URL va VITE_SUPABASE_ANON_KEY muhit o'zgaruvchilari kerak. README dagi \"Shared data with Supabase\" bo'limiga qarang.",
+  'db.saveFailed':
+    "Umumiy ma'lumotlar bazasiga saqlab bo'lmadi — bu o'zgarish saqlanmaguncha faqat shu yerda ko'rinadi. Aloqani tekshirib, qayta urinib ko'ring.",
 };
 
 export type Language = 'uz' | 'en';
