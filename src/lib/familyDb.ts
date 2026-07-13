@@ -200,7 +200,8 @@ export async function pushDiff(diff: FamilyDiff): Promise<void> {
 /** Record when/how the database was seeded (explicit setup action). */
 export async function markSeeded(source: string): Promise<void> {
   if (!supabase) return;
-  await supabase
+  const { error } = await supabase
     .from('app_settings')
     .upsert({ key: 'seededAt', value: { at: new Date().toISOString(), source } });
+  if (error) console.error('Failed to record seed marker in Supabase:', error);
 }

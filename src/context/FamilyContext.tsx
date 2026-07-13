@@ -70,6 +70,10 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   // Mutations need the exact previous array to compute a database diff, even
   // when several land in the same render cycle.
   const peopleRef = useRef<FamilyPerson[]>(people);
+  // Pushes run one at a time, in mutation order — concurrent multi-step
+  // request chains could otherwise land out of order (e.g. a delete
+  // completing before the add it depends on).
+  const pushQueue = useRef<Promise<unknown>>(Promise.resolve());
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) return;
@@ -89,19 +93,25 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     void load();
   }, [load]);
 
-  /** Apply a change locally, then persist exactly that change to Supabase. */
+  /**
+   * Apply a change locally, then persist exactly that change to Supabase.
+   * Resolves with whether the database write succeeded.
+   */
   const mutate = useCallback(
-    (updater: (current: FamilyPerson[]) => FamilyPerson[]) => {
+    (updater: (current: FamilyPerson[]) => FamilyPerson[]): Promise<boolean> => {
       const prev = peopleRef.current;
       const next = updater(prev);
-      if (next === prev) return;
+      if (next === prev) return Promise.resolve(true);
       peopleRef.current = next;
       setPeopleState(next);
       const diff = diffFamily(prev, next);
-      if (isEmptyDiff(diff)) return;
-      void pushDiff(diff).catch((error: unknown) => {
+      if (isEmptyDiff(diff)) return Promise.resolve(true);
+      const pushed = pushQueue.current.then(() => pushDiff(diff).then(() => true));
+      pushQueue.current = pushed.catch(() => undefined);
+      return pushed.catch((error: unknown) => {
         console.error('Failed to save family data to Supabase:', error);
         toast(translate(language, 'db.saveFailed'), 'error');
+        return false;
       });
     },
     [toast, language],
@@ -151,8 +161,9 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       deletePerson: (id) => mutate((current) => removePerson(current, id)),
       replaceAll: (newPeople) => mutate(() => normalizePeople(newPeople)),
       resetToSample: () => {
-        mutate(() => DEFAULT_DATA);
-        void markSeeded('default-dataset');
+        void mutate(() => DEFAULT_DATA).then((saved) => {
+          if (saved) void markSeeded('default-dataset');
+        });
       },
       exportData: () => ({
         version: FAMILY_DATA_VERSION,

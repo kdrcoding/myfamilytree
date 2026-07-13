@@ -22,6 +22,9 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const resolver = useRef<((value: boolean) => void) | null>(null);
 
   const confirm = useCallback<ConfirmFn>((opts) => {
+    // A dialog replacing an open one cancels it — otherwise the earlier
+    // caller's `await` would never settle.
+    resolver.current?.(false);
     setOptions(opts);
     return new Promise<boolean>((resolve) => {
       resolver.current = resolve;

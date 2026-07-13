@@ -39,6 +39,7 @@ import { getAncestorIds, fullName } from '../utils/family';
 import { DEFAULT_FILTERS, hasActiveFilters, matchesFilters, matchesSearch } from '../utils/filters';
 import type { Filters } from '../utils/filters';
 import { FilterPanel } from '../components/FilterPanel';
+import { MadeByKadir } from '../components/MadeByKadir';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { PersonDetailsModal } from '../components/PersonDetailsModal';
 import { PersonFormModal } from '../components/PersonFormModal';
@@ -57,14 +58,32 @@ function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) 
   const t = useT();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   const results = useMemo(() => {
     if (!query.trim()) return [];
     return people.filter((p) => matchesSearch(p, query)).slice(0, 8);
   }, [people, query]);
 
+  const select = (person: FamilyPerson) => {
+    onSelect(person);
+    setQuery('');
+    setOpen(false);
+    setActiveIndex(-1);
+  };
+
   return (
-    <div className="relative w-full sm:w-72">
+    <div
+      className="relative w-full sm:w-72"
+      onBlur={(e) => {
+        // Close only when focus leaves the whole widget, so tabbing from the
+        // input into a result keeps the list open.
+        if (!e.currentTarget.contains(e.relatedTarget as Element | null)) {
+          setOpen(false);
+          setActiveIndex(-1);
+        }
+      }}
+    >
       <Search
         className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400"
         aria-hidden
@@ -80,26 +99,41 @@ function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) 
         onChange={(e) => {
           setQuery(e.target.value);
           setOpen(true);
+          setActiveIndex(-1);
         }}
         onFocus={() => setOpen(true)}
-        onBlur={() => window.setTimeout(() => setOpen(false), 150)}
+        onKeyDown={(e) => {
+          if (!results.length) return;
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setOpen(true);
+            setActiveIndex((i) => (i + 1) % results.length);
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActiveIndex((i) => (i <= 0 ? results.length - 1 : i - 1));
+          } else if (e.key === 'Enter' && open) {
+            e.preventDefault();
+            select(results[activeIndex >= 0 ? activeIndex : 0]);
+          } else if (e.key === 'Escape') {
+            setOpen(false);
+            setActiveIndex(-1);
+          }
+        }}
       />
       {open && query.trim() && (
         <ul className="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-stone-200 bg-white p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900">
           {results.length === 0 && (
             <li className="px-3 py-2 text-sm text-stone-400">{t('tree.noMatch', { q: query })}</li>
           )}
-          {results.map((p) => (
+          {results.map((p, i) => (
             <li key={p.id}>
               <button
                 type="button"
-                className="flex w-full items-baseline justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                className={`flex w-full items-baseline justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/50 ${
+                  i === activeIndex ? 'bg-emerald-50 dark:bg-emerald-950/50' : ''
+                }`}
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => {
-                  onSelect(p);
-                  setQuery('');
-                  setOpen(false);
-                }}
+                onClick={() => select(p)}
               >
                 <span className="truncate font-medium text-stone-800 dark:text-stone-200">
                   {fullName(p)}
@@ -188,14 +222,17 @@ function TreeCanvas({
             {t('tree.legendMarried')}
           </li>
           <li className="flex items-center gap-2">
-            <span
-              aria-hidden
-              className="inline-block h-0.5 w-6 rounded bg-rose-400 dark:bg-rose-600"
-              style={{
-                backgroundImage:
-                  'repeating-linear-gradient(90deg, transparent 0 4px, var(--color-white) 4px 7px)',
-              }}
-            />
+            <svg width="24" height="2" aria-hidden className="shrink-0">
+              <line
+                x1="0"
+                y1="1"
+                x2="24"
+                y2="1"
+                strokeWidth="2"
+                strokeDasharray="4 3"
+                className="stroke-rose-400 dark:stroke-rose-600"
+              />
+            </svg>
             {t('tree.legendPartners')}
           </li>
           <li className="flex items-center gap-2">
@@ -207,6 +244,9 @@ function TreeCanvas({
             {t('tree.legendChildren')}
           </li>
         </ul>
+      </Panel>
+      <Panel position="bottom-left" className="!m-3">
+        <MadeByKadir align="left" />
       </Panel>
       <Controls showInteractive={false} position="bottom-right" />
       <MiniMap
@@ -284,7 +324,13 @@ export function TreePage() {
   const focusPerson = useCallback(
     (person: FamilyPerson) => {
       // Expand every collapsed branch between the founders and this person.
+      // Married-in people have no ancestors of their own, so their spouses'
+      // branches must open too — otherwise their node stays hidden.
       const ancestors = getAncestorIds(person.id, index);
+      for (const spouseId of person.spouseIds) {
+        ancestors.add(spouseId);
+        for (const id of getAncestorIds(spouseId, index)) ancestors.add(id);
+      }
       setCollapsedList((list) => list.filter((id) => !ancestors.has(id) && id !== person.id));
       setHighlightedId(person.id);
       setFocusId(person.id);

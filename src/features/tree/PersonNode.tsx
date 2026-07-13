@@ -91,7 +91,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
             type="button"
             className="quick-add absolute -right-3 top-1/2 z-10 -translate-y-1/2"
             title={t('tree.quickSpouse', { name: fullName(person) })}
-            aria-label={`Add spouse of ${fullName(person)}`}
+            aria-label={t('tree.quickSpouse', { name: fullName(person) })}
             onClick={(event) => {
               event.stopPropagation();
               onQuickAdd('spouse', person.id);
@@ -103,7 +103,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
             type="button"
             className="quick-add absolute -bottom-3 right-5 z-10"
             title={t('tree.quickChild', { name: fullName(person) })}
-            aria-label={`Add child of ${fullName(person)}`}
+            aria-label={t('tree.quickChild', { name: fullName(person) })}
             onClick={(event) => {
               event.stopPropagation();
               onQuickAdd('child', person.id);
@@ -116,7 +116,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
               type="button"
               className="quick-add absolute -top-3 left-1/2 z-10 -translate-x-1/2"
               title={t('tree.quickParent', { name: fullName(person) })}
-              aria-label={`Add parent of ${fullName(person)}`}
+              aria-label={t('tree.quickParent', { name: fullName(person) })}
               onClick={(event) => {
                 event.stopPropagation();
                 onQuickAdd('parent', person.id);

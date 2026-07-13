@@ -36,13 +36,19 @@ export function computeGenerations(people: FamilyPerson[]): Map<string, number> 
     }
   }
 
+  // No valid tree has more generations than people; the cap keeps a
+  // parent-child cycle in imported/remote data from looping forever.
+  const maxGen = Math.max(people.length, 1);
+
   while (queue.length > 0) {
     const id = queue.shift()!;
     const person = index.get(id);
     if (!person) continue;
     const gen = generations.get(id)!;
     for (const spouseId of person.spouseIds) {
-      if (!generations.has(spouseId) && index.has(spouseId)) {
+      // Spouses share the higher of the couple's generations, so a partner
+      // bumped later by a longer parent path drags the other one along.
+      if (index.has(spouseId) && (generations.get(spouseId) ?? 0) < gen) {
         generations.set(spouseId, gen);
         queue.push(spouseId);
       }
@@ -50,7 +56,7 @@ export function computeGenerations(people: FamilyPerson[]): Map<string, number> 
     for (const childId of person.childIds) {
       if (index.has(childId)) {
         const next = gen + 1;
-        if (!generations.has(childId) || generations.get(childId)! < next) {
+        if (next <= maxGen && (!generations.has(childId) || generations.get(childId)! < next)) {
           generations.set(childId, next);
           queue.push(childId);
         }

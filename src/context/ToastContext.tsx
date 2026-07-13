@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { CheckCircle2, Info, XCircle, X } from 'lucide-react';
+import { useT } from '../i18n/useT';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -31,6 +32,7 @@ const STYLES: Record<ToastType, string> = {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextId = useRef(1);
+  const t = useT();
 
   const dismiss = useCallback((id: number) => {
     setToasts((current) => current.filter((t) => t.id !== id));
@@ -52,21 +54,21 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         aria-live="polite"
         className="pointer-events-none fixed bottom-4 left-1/2 z-[80] flex w-full max-w-sm -translate-x-1/2 flex-col gap-2 px-4 sm:left-auto sm:right-4 sm:translate-x-0"
       >
-        {toasts.map((t) => {
-          const Icon = ICONS[t.type];
+        {toasts.map((item) => {
+          const Icon = ICONS[item.type];
           return (
             <div
-              key={t.id}
+              key={item.id}
               role="status"
-              className={`pointer-events-auto flex items-start gap-2 rounded-xl border bg-white/95 p-3 text-sm shadow-lg backdrop-blur dark:bg-stone-900/95 ${STYLES[t.type]}`}
+              className={`pointer-events-auto flex items-start gap-2 rounded-xl border bg-white/95 p-3 text-sm shadow-lg backdrop-blur dark:bg-stone-900/95 ${STYLES[item.type]}`}
             >
               <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              <span className="flex-1">{t.message}</span>
+              <span className="flex-1">{item.message}</span>
               <button
                 type="button"
-                onClick={() => dismiss(t.id)}
+                onClick={() => dismiss(item.id)}
                 className="rounded p-0.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
-                aria-label="Dismiss notification"
+                aria-label={t('toast.dismiss')}
               >
                 <X className="h-4 w-4" aria-hidden />
               </button>

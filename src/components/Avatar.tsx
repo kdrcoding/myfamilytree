@@ -2,6 +2,7 @@ import { User, UserRound, CircleUser } from 'lucide-react';
 import type { FamilyPerson } from '../types/family';
 import { fullName, initials } from '../utils/family';
 import { usePrivacy } from '../hooks/usePrivacy';
+import { useT } from '../i18n/useT';
 
 interface AvatarProps {
   person: FamilyPerson;
@@ -32,13 +33,14 @@ const GENDER_ICONS = {
  */
 export function Avatar({ person, size = 'md' }: AvatarProps) {
   const { showPhoto } = usePrivacy();
+  const t = useT();
   const Icon = GENDER_ICONS[person.gender];
 
   if (person.photo && showPhoto()) {
     return (
       <img
         src={person.photo}
-        alt={`Photo of ${fullName(person)}`}
+        alt={t('avatar.photoOf', { name: fullName(person) })}
         className={`${SIZES[size]} shrink-0 rounded-full object-cover ring-2 ring-white shadow dark:ring-stone-700 ${
           person.isDeceased ? 'grayscale' : ''
         }`}

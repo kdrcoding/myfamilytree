@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Languages, Menu, Moon, Sun, TreePine, X } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { useT } from '../i18n/useT';
+import { MadeByKadir } from './MadeByKadir';
 
 export function Layout() {
   const { settings, toggleTheme, setLanguage } = useSettings();
@@ -121,6 +122,9 @@ export function Layout() {
       {!isTreePage && (
         <footer className="border-t border-stone-200 py-6 text-center text-xs text-stone-500 dark:border-stone-800 dark:text-stone-400">
           <p>{t('footer.note')}</p>
+          <div className="mt-3">
+            <MadeByKadir />
+          </div>
         </footer>
       )}
     </div>

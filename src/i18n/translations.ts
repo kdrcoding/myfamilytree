@@ -19,6 +19,15 @@ export const en = {
   'nav.menuClose': 'Close menu',
   'footer.note': 'A private family history project. All sample people are fictional.',
 
+  // Author credit
+  'credit.madeBy': 'App made by Kadir',
+  'credit.contactTitle': 'Get in touch',
+  'credit.close': 'Close contact options',
+
+  // Shared accessibility labels
+  'toast.dismiss': 'Dismiss notification',
+  'avatar.photoOf': 'Photo of {name}',
+
   // Dataset update banner
   'banner.updated': 'The family tree on this website has been updated since your last visit.',
   'banner.load': 'Load latest data',
@@ -426,6 +435,13 @@ export const uz: Record<TKey, string> = {
   'nav.menuOpen': 'Menyuni ochish',
   'nav.menuClose': 'Menyuni yopish',
   'footer.note': "Shaxsiy oilaviy tarix loyihasi. Namunadagi odamlar to'qib chiqarilgan.",
+
+  'credit.madeBy': 'Ilova muallifi — Kadir',
+  'credit.contactTitle': "Bog'lanish",
+  'credit.close': "Bog'lanish oynasini yopish",
+
+  'toast.dismiss': 'Bildirishnomani yopish',
+  'avatar.photoOf': '{name} surati',
 
   'banner.updated': 'Saytdagi oila shajarasi oxirgi tashrifingizdan keyin yangilangan.',
   'banner.load': "Yangi ma'lumotni yuklash",

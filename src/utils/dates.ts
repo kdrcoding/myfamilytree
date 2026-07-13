@@ -9,6 +9,9 @@ export function parseDateParts(
   const month = match[2] ? Number(match[2]) : 1;
   const day = match[3] ? Number(match[3]) : 1;
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  // Reject impossible calendar days (Feb 30, Apr 31, leap years) — the Date
+  // constructor would silently roll them into the next month otherwise.
+  if (match[3] && new Date(year, month - 1, day).getDate() !== day) return null;
   return { year, month, day };
 }
 

@@ -159,6 +159,10 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
         id: memberId,
         type: 'person',
         position: { x: memberX, y },
+        // Explicit dimensions let getNodesBounds (PNG export) measure the
+        // tree before React Flow has rendered the nodes.
+        width: CARD_W,
+        height: CARD_H,
         data: {
           personId: memberId,
           collapsible: memberId === unit.anchorId && (unit.children.length > 0 || unit.collapsed),
@@ -203,6 +207,8 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
           id: junctionId,
           type: 'junction',
           position: { x: gapCenter - JUNCTION / 2, y: y + CARD_H / 2 - JUNCTION / 2 },
+          width: JUNCTION,
+          height: JUNCTION,
           data: {},
           draggable: false,
           selectable: false,
