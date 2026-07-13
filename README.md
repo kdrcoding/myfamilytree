@@ -1,8 +1,42 @@
 # Oq-Ariq OILASI — Family Tree
 
-An interactive family tree website built with React, TypeScript, Vite, Tailwind CSS and React Flow. Family data is shared through a free Supabase database, so edits are visible to every visitor on every device; the site itself deploys as a static app to Vercel or GitHub Pages.
+**Created and maintained by Kadir Ravshanov.**
 
-> The sample family (the Hartleys) is entirely fictional. Replace it with your own family using the built-in editor or by editing one data file.
+An interactive family tree website for the Oq-Ariq family, built with React,
+TypeScript, Vite, Tailwind CSS and React Flow. Family data is shared through a
+free Supabase database, so an edit made by the owner is visible to every
+visitor on every device.
+
+**Live site:** https://myfamilytree-kdr6.vercel.app
+(mirror: https://kdrcoding.github.io/myfamilytree/)
+
+Both addresses are permanent — redeploying the site never changes them, so
+links shared with family members always keep working.
+
+## How the website works
+
+The site has two halves:
+
+1. **The website itself** (what you see) is a static app. It is built once and
+   served by Vercel and GitHub Pages. It contains no family data of its own.
+2. **The family data** (people, relationships, photos) lives in one shared
+   [Supabase](https://supabase.com) database in the cloud. When anyone opens
+   the site, their browser loads the family straight from that database — so
+   everyone always sees the same, current tree.
+
+What happens when you edit:
+
+- You sign in on the website with the **owner password** (or a relative uses
+  the **member password**, which can only fill in missing information — it can
+  never delete or overwrite anything).
+- Every add / edit / delete is saved to the shared database **immediately**.
+  There is nothing to export, rebuild or redeploy — refreshing on any other
+  phone or computer shows the change right away.
+- Each visitor's browser only remembers personal preferences (language, theme,
+  privacy switches) — never the family data itself.
+
+Redeploying (`tools\deploy.bat`) is only needed when the **code or design** of
+the website changes, not when family information changes.
 
 ## Screenshots
 
@@ -313,5 +347,25 @@ This site is designed for public hosting, so treat it like anything public:
 - PDF export (extension point: `src/features/tree/exportPng.ts` — swap `toPng` for a PDF pipeline).
 - Timeline view and anniversaries.
 - GEDCOM import/export for genealogy software interoperability.
-- Optional cloud sync backend (e.g. a tiny API + database) for true multi-user editing with real authentication.
 - Photo galleries per person.
+
+## Author
+
+This project was created and is maintained by **Kadir Ravshanov**.
+
+## License & Legal
+
+Copyright © 2026 **Kadir Ravshanov**. All rights reserved. See [LICENSE](LICENSE).
+
+- The **family information** shown on the website (names, dates, photos,
+  biographies and relationships) is personal data of the Oq-Ariq family. It
+  may not be copied, scraped, republished, sold or used for any purpose
+  without the written permission of Kadir Ravshanov.
+- The **source code** is published for transparency and personal reference.
+  If you would like to reuse it for your own family website, please ask the
+  author for permission first.
+- The website and software are provided **"as is"**, without warranty of any
+  kind. The author is not liable for any damages arising from their use.
+- Takedown requests: if you are a family member and want your information
+  changed or removed from the site, contact Kadir Ravshanov and it will be
+  handled promptly.
