@@ -10,16 +10,18 @@
     />
     <title>Oq-Ariq OILASI</title>
     <script>
-      // Apply the saved theme before React mounts to avoid a flash of the wrong theme.
+      // Apply the saved theme before React mounts to avoid a flash of the wrong
+      // theme. Dark is the default: the page starts dark unless the visitor has
+      // explicitly chosen the light theme.
       (function () {
         try {
           var raw = localStorage.getItem('familytree.settings.v1');
           var theme = raw ? JSON.parse(raw).theme : null;
-          if (theme === 'dark' || (!theme && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          if (theme !== 'light') {
             document.documentElement.classList.add('dark');
           }
         } catch (e) {
-          /* corrupted settings are handled by the app itself */
+          document.documentElement.classList.add('dark');
         }
       })();
     </script>

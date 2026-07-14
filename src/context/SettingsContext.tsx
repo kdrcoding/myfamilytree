@@ -15,10 +15,6 @@ interface SettingsContextValue {
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
-function systemTheme(): Theme {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
 function isSettings(value: unknown): value is AppSettings {
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
@@ -32,8 +28,10 @@ function isSettings(value: unknown): value is AppSettings {
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = usePersistentState<AppSettings>(
     STORAGE_KEYS.settings,
-    // Uzbek is the site's default language; English is the second option.
-    { theme: systemTheme(), language: 'uz', privacy: DEFAULT_PRIVACY },
+    // Dark is the default for everyone (it reads best on phones and is what the
+    // family prefers); a visitor can still switch to light in Settings. Uzbek
+    // is the default language; English is the second option.
+    { theme: 'dark', language: 'uz', privacy: DEFAULT_PRIVACY },
     isSettings,
   );
 
