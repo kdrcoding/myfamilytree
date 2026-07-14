@@ -159,10 +159,6 @@ export function MembersPage() {
             setForm({ person });
           }}
           onDelete={handleDelete}
-          onAddRelative={(kind, person) => {
-            setDetailsId(null);
-            setForm({ link: { kind, targetId: person.id } });
-          }}
         />
       )}
       {form && <PersonFormModal {...form} onClose={() => setForm(null)} />}

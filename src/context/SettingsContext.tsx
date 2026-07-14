@@ -42,6 +42,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', settings.theme === 'dark');
+    // Keep the mobile browser's address bar in step with the app theme so a
+    // light-theme page doesn't sit under a dark (or mismatched) chrome bar.
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      document.head.appendChild(meta);
+    }
+    meta.content = settings.theme === 'dark' ? '#0c0a09' : '#ffffff';
   }, [settings.theme]);
 
   useEffect(() => {

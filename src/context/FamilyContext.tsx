@@ -130,10 +130,23 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       return pushed.catch((error: unknown) => {
         console.error('Failed to save family data to Supabase:', error);
         toast(translate(language, 'db.saveFailed'), 'error');
+        // Roll back the optimistic change so the screen — and the diff for the
+        // next edit — reflect what actually reached the database. Without this
+        // a failed save (common on a flaky phone connection) keeps showing as
+        // saved, and because the next mutation diffs against this un-persisted
+        // state the lost change is never re-sent: it silently vanishes on
+        // reload. If a later edit already applied on top, a plain revert would
+        // clobber it, so re-sync from the server instead.
+        if (peopleRef.current === next) {
+          peopleRef.current = prev;
+          setPeopleState(prev);
+        } else {
+          void load();
+        }
         return false;
       });
     },
-    [toast, language],
+    [toast, language, load],
   );
 
   const index = useMemo(() => buildIndex(people), [people]);

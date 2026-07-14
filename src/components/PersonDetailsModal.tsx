@@ -10,10 +10,9 @@ import {
   Pencil,
   Trash2,
   Users,
-  UserPlus,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { FamilyPerson, RelationKind } from '../types/family';
+import type { FamilyPerson } from '../types/family';
 import { useFamily } from '../context/FamilyContext';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { useLanguage, useT } from '../i18n/useT';
@@ -32,7 +31,13 @@ interface PersonDetailsModalProps {
   canDelete?: boolean;
   onEdit?: (person: FamilyPerson) => void;
   onDelete?: (person: FamilyPerson) => void;
-  onAddRelative?: (kind: RelationKind, person: FamilyPerson) => void;
+  /**
+   * View-mode "Edit" button: lets a viewer jump straight into editing this
+   * person (prompting for the password first if needed), so they don't have
+   * to hunt for the edit-mode toggle in the toolbar — which is easy to miss
+   * on phones where it scrolls off the right edge.
+   */
+  onRequestEdit?: (person: FamilyPerson) => void;
 }
 
 function DetailRow({
@@ -172,13 +177,6 @@ function SpouseChips({
   );
 }
 
-const KIND_KEYS = {
-  spouse: 'relkind.spouse',
-  child: 'relkind.child',
-  parent: 'relkind.parent',
-  sibling: 'relkind.sibling',
-} as const;
-
 export function PersonDetailsModal({
   personId,
   onClose,
@@ -187,7 +185,7 @@ export function PersonDetailsModal({
   canDelete = false,
   onEdit,
   onDelete,
-  onAddRelative,
+  onRequestEdit,
 }: PersonDetailsModalProps) {
   const { index, generations, getLabel } = useFamily();
   const privacy = usePrivacy();
@@ -319,44 +317,36 @@ export function PersonDetailsModal({
 
       <div className="mt-5 border-t border-stone-200 pt-4 dark:border-stone-700">
         {editMode ? (
-          <>
-            {/* Quick "add relative" buttons in a tidy 2-column grid, with the
-                edit/delete actions on their own row below. */}
-            <div className="grid grid-cols-2 gap-1.5">
-              {(['spouse', 'child', 'parent', 'sibling'] as RelationKind[]).map((kind) => (
-                <button
-                  key={kind}
-                  type="button"
-                  className="btn-secondary justify-start !px-2.5 !py-1.5 !text-xs"
-                  onClick={() => onAddRelative?.(kind, person)}
-                >
-                  <UserPlus className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span className="truncate">
-                    {t('person.addKind', { kind: t(KIND_KEYS[kind]) })}
-                  </span>
-                </button>
-              ))}
-            </div>
-            <div className="mt-3 flex justify-end gap-1.5">
-              <button type="button" className="btn-secondary" onClick={() => onEdit?.(person)}>
-                <Pencil className="h-4 w-4" aria-hidden /> {t('person.edit')}
+          // Relatives are added straight from the tree cards (the heart / baby
+          // / parent icons), so this popup only needs Edit and Delete.
+          <div className="flex justify-end gap-1.5">
+            <button type="button" className="btn-secondary" onClick={() => onEdit?.(person)}>
+              <Pencil className="h-4 w-4" aria-hidden /> {t('person.edit')}
+            </button>
+            {canDelete && (
+              <button type="button" className="btn-danger" onClick={() => onDelete?.(person)}>
+                <Trash2 className="h-4 w-4" aria-hidden /> {t('person.delete')}
               </button>
-              {canDelete && (
-                <button type="button" className="btn-danger" onClick={() => onDelete?.(person)}>
-                  <Trash2 className="h-4 w-4" aria-hidden /> {t('person.delete')}
-                </button>
-              )}
-            </div>
-          </>
+            )}
+          </div>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-xs text-stone-400 dark:text-stone-500">
-              <Heart className="h-3.5 w-3.5" aria-hidden />
+              <Pencil className="h-3.5 w-3.5" aria-hidden />
               {t('person.viewHint')}
             </span>
-            <button type="button" className="btn-secondary" onClick={onClose}>
-              {t('common.close')}
-            </button>
+            <div className="flex gap-1.5">
+              <button type="button" className="btn-secondary" onClick={onClose}>
+                {t('common.close')}
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => onRequestEdit?.(person)}
+              >
+                <Pencil className="h-4 w-4" aria-hidden /> {t('person.edit')}
+              </button>
+            </div>
           </div>
         )}
       </div>

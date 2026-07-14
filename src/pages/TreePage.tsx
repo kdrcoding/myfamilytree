@@ -25,7 +25,7 @@ import {
   UserRoundPlus,
   X,
 } from 'lucide-react';
-import type { FamilyPerson, RelationKind, RelationLink } from '../types/family';
+import type { FamilyPerson, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useFamily } from '../context/FamilyContext';
@@ -36,9 +36,7 @@ import { usePersistentState } from '../hooks/usePersistentState';
 import { useT } from '../i18n/useT';
 import { STORAGE_KEYS } from '../utils/storage';
 import { getAncestorIds, fullName } from '../utils/family';
-import { DEFAULT_FILTERS, hasActiveFilters, matchesFilters, matchesSearch } from '../utils/filters';
-import type { Filters } from '../utils/filters';
-import { FilterPanel } from '../components/FilterPanel';
+import { matchesSearch } from '../utils/filters';
 import { MadeByKadir } from '../components/MadeByKadir';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { PersonDetailsModal } from '../components/PersonDetailsModal';
@@ -264,7 +262,7 @@ function TreeCanvas({
 }
 
 export function TreePage() {
-  const { people, index, generations, deletePerson } = useFamily();
+  const { people, index, deletePerson } = useFamily();
   const { canEdit, canDelete, role, signOut } = useAuth();
   const { settings } = useSettings();
   const { toast } = useToast();
@@ -279,11 +277,11 @@ export function TreePage() {
   );
   const collapsed = useMemo(() => new Set(collapsedList), [collapsedList]);
 
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [editMode, setEditMode] = useState(false);
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [detailsId, setDetailsId] = useState<string | null>(null);
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [form, setForm] = useState<{ person?: FamilyPerson; link?: RelationLink } | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -297,10 +295,9 @@ export function TreePage() {
   const layout = useMemo(() => computeTreeLayout(people, collapsed), [people, collapsed]);
   const flowNodes = useMemo(() => [...layout.nodes, ...layout.junctionNodes] as Node[], [layout]);
 
-  const dimmedIds = useMemo(() => {
-    if (!hasActiveFilters(filters)) return new Set<string>();
-    return new Set(people.filter((p) => !matchesFilters(p, filters, generations)).map((p) => p.id));
-  }, [people, filters, generations]);
+  // Filtering was removed from the tree toolbar, so no node is ever dimmed.
+  // Kept as a stable empty set so the node-interaction contract is unchanged.
+  const dimmedIds = useMemo(() => new Set<string>(), []);
 
   const toggleCollapse = useCallback(
     (anchorId: string) => {
@@ -370,9 +367,20 @@ export function TreePage() {
     }
   };
 
-  const addRelative = (kind: RelationKind, person: FamilyPerson) => {
+  // "Edit" tapped from a person's details popup. Editors who are already
+  // unlocked go straight to the form; everyone else gets the password prompt
+  // first and lands on the form once they unlock. This is the discoverable
+  // path to editing on phones, where the toolbar's edit-mode toggle is easy
+  // to miss.
+  const requestEdit = (person: FamilyPerson) => {
     setDetailsId(null);
-    setForm({ link: { kind, targetId: person.id } });
+    if (canEdit) {
+      setEditMode(true);
+      setForm({ person });
+    } else {
+      setPendingEditId(person.id);
+      setUnlockOpen(true);
+    }
   };
 
   if (people.length === 0) {
@@ -449,7 +457,11 @@ export function TreePage() {
             )}
           </div>
 
-          <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          {/* Edit / Add stay pinned to the right edge while the utility
+              buttons scroll underneath, so the way into editing is never
+              hidden off-screen on a phone. On ≥sm the toolbar wraps normally
+              and this group just floats right as before. */}
+          <div className="sticky right-0 z-10 ml-auto flex shrink-0 items-center gap-1.5 bg-white pl-2 shadow-[-10px_0_8px_-6px_rgba(0,0,0,0.08)] sm:static sm:bg-transparent sm:pl-0 sm:shadow-none dark:bg-stone-900 sm:dark:bg-transparent">
             {!editMode && (
               <button
                 type="button"
@@ -503,17 +515,8 @@ export function TreePage() {
           </div>
         </div>
 
-        <div className="mx-auto mt-2 flex max-w-[1600px] flex-wrap items-center gap-2">
-          <FilterPanel
-            compact
-            filters={filters}
-            onChange={setFilters}
-            generationCount={Math.max(...[...generations.values(), 1])}
-            countries={
-              [...new Set(people.map((p) => p.country?.trim()).filter(Boolean))] as string[]
-            }
-          />
-          {highlightedId && (
+        {highlightedId && (
+          <div className="mx-auto mt-2 flex max-w-[1600px] flex-wrap items-center gap-2">
             <button
               type="button"
               className="btn-secondary !py-1.5 !text-xs"
@@ -522,8 +525,8 @@ export function TreePage() {
               <X className="h-3.5 w-3.5" aria-hidden />
               {t('tree.clearHighlight')}
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="relative min-h-[420px] flex-1" style={{ height: 'calc(100dvh - 12rem)' }}>
@@ -556,7 +559,7 @@ export function TreePage() {
             setForm({ person });
           }}
           onDelete={handleDelete}
-          onAddRelative={addRelative}
+          onRequestEdit={requestEdit}
         />
       )}
       {form && (
@@ -570,7 +573,20 @@ export function TreePage() {
         />
       )}
       {unlockOpen && (
-        <UnlockModal onClose={() => setUnlockOpen(false)} onUnlocked={() => setEditMode(true)} />
+        <UnlockModal
+          onClose={() => {
+            setUnlockOpen(false);
+            setPendingEditId(null);
+          }}
+          onUnlocked={() => {
+            setEditMode(true);
+            // If the user reached the password prompt by tapping "Edit" on a
+            // person, drop them straight into that person's edit form.
+            const pending = pendingEditId ? index.get(pendingEditId) : null;
+            if (pending) setForm({ person: pending });
+            setPendingEditId(null);
+          }}
+        />
       )}
       {joinOpen && <JoinFamilyModal onClose={() => setJoinOpen(false)} />}
     </div>

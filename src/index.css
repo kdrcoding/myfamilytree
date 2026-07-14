@@ -24,6 +24,15 @@
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    /* Tell the browser which palette native controls (select dropdowns, date
+       pickers, checkboxes, scrollbars, form autofill) should use. Without
+       this, a phone whose OS is in dark mode renders those native bits dark
+       even while the app is on the light theme — producing dark-on-white or
+       invisible text. Bound to the app's own theme, not the OS preference. */
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
   }
   body {
     @apply antialiased;
