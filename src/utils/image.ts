@@ -5,7 +5,7 @@
  * details modal sharp at ~100–250 KB.
  */
 export async function downscalePhoto(
-  file: File,
+  file: Blob,
   maxDim = 800,
   quality = 0.85,
 ): Promise<string> {

@@ -9,9 +9,12 @@ import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
 import type { TKey } from '../i18n/translations';
 import { downloadJson } from '../utils/dataTransfer';
-import { fullName, generatePersonId, sortByBirth } from '../utils/family';
+import { fullName, generatePersonId, marriageDateOf, sortByBirth } from '../utils/family';
+import { uploadPhoto } from '../lib/photoStorage';
+import { usePhotoUrl } from '../context/PhotoUrlsContext';
 import { downscalePhoto } from '../utils/image';
 import { validatePersonForm, canLink } from '../utils/validation';
+import { isValidDateString } from '../utils/dates';
 import type { PersonFormValues } from '../utils/validation';
 import { loadJson, removeKey, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { Avatar } from './Avatar';
@@ -49,6 +52,8 @@ interface FormDraft {
   parentIds: string[];
   spouseIds: string[];
   otherParentId: string;
+  /** Marriage date per selected spouse (owner-only fields). */
+  marriageDates?: Record<string, string>;
 }
 
 function isFormDraft(value: unknown): value is FormDraft {
@@ -369,7 +374,25 @@ export function PersonFormModal({
   );
   const [parentIds, setParentIds] = useState<string[]>(restored?.parentIds ?? person?.parentIds ?? []);
   const [spouseIds, setSpouseIds] = useState<string[]>(restored?.spouseIds ?? person?.spouseIds ?? []);
+  // Marriage date per spouse (owner-only). Pre-filled from whichever partner's
+  // record carries the couple's date.
+  const [marriageDates, setMarriageDates] = useState<Record<string, string>>(() => {
+    if (restored?.marriageDates) return restored.marriageDates;
+    if (!person) return {};
+    const initial: Record<string, string> = {};
+    for (const spouseId of person.spouseIds) {
+      const spouse = getPerson(spouseId);
+      const date = spouse ? marriageDateOf(person, spouse) : person.marriageDates?.[spouseId];
+      if (date) initial[spouseId] = date;
+    }
+    return initial;
+  });
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
+  // Guards double-submits while the photo upload / save is in flight.
+  const [saving, setSaving] = useState(false);
+  // Storage-path photos (already-migrated members) resolve to a signed URL
+  // for the preview; fresh uploads are data-URLs and pass through.
+  const photoPreviewUrl = usePhotoUrl(values.photo || undefined);
 
   // When adding a child of someone who has (or had) more than one partner,
   // the child's other parent must be chosen explicitly. '' = no second parent.
@@ -413,10 +436,17 @@ export function PersonFormModal({
   useEffect(() => {
     if (!dirtyRef.current) return;
     const handle = window.setTimeout(() => {
-      saveJson(STORAGE_KEYS.formDraft, { id: draftId, values, parentIds, spouseIds, otherParentId });
+      const draft = { id: draftId, values, parentIds, spouseIds, otherParentId, marriageDates };
+      const saved = saveJson(STORAGE_KEYS.formDraft, draft);
+      if (!saved && values.photo) {
+        // localStorage is full (the embedded photo can be a few hundred KB).
+        // A draft without the photo still rescues everything typed — the
+        // photo itself is one tap to re-add.
+        saveJson(STORAGE_KEYS.formDraft, { ...draft, values: { ...values, photo: '' } });
+      }
     }, 400);
     return () => window.clearTimeout(handle);
-  }, [draftId, values, parentIds, spouseIds, otherParentId]);
+  }, [draftId, values, parentIds, spouseIds, otherParentId, marriageDates]);
 
   const onPhotoFile = (file: File | undefined) => {
     if (!file) return;
@@ -436,7 +466,7 @@ export function PersonFormModal({
   };
 
   /** Validate and save. Returns true on success; does NOT close the modal. */
-  const doSave = (): boolean => {
+  const doSave = async (): Promise<boolean> => {
     const fieldErrors = validatePersonForm(values);
 
     if (isEdit && !restricted) {
@@ -447,15 +477,35 @@ export function PersonFormModal({
       for (const spouseId of spouseIds) {
         const problem = canLink(people, 'spouse', person.id, spouseId);
         if (problem && !person.spouseIds.includes(spouseId)) fieldErrors.relationships = problem;
+        const marriageDate = (marriageDates[spouseId] ?? '').trim();
+        if (marriageDate && !isValidDateString(marriageDate)) {
+          fieldErrors[`marriage:${spouseId}`] = 'val.dateFormat';
+        }
       }
     }
 
     setErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) return false;
 
-    // The change is now committed to app state (FamilyContext handles the
-    // database write, retry and rollback); the recovery draft has done its job.
-    clearDraft();
+    const personId = isEdit
+      ? person.id
+      : generatePersonId(
+          values.firstName.trim() || values.nickname.trim() || '',
+          values.lastName.trim(),
+          new Set(people.map((p) => p.id)),
+        );
+
+    // A freshly picked photo is a data-URL: upload it to Storage and keep
+    // just the object path. If the upload fails (offline, or the bucket
+    // isn't set up yet) the data-URL is stored as before — never lose it.
+    let photo = values.photo || undefined;
+    if (photo?.startsWith('data:')) {
+      try {
+        photo = await uploadPhoto(personId, photo);
+      } catch (error) {
+        console.error('Photo upload to Storage failed; embedding instead:', error);
+      }
+    }
 
     const trimmed = {
       firstName: values.firstName.trim(),
@@ -465,12 +515,16 @@ export function PersonFormModal({
       birthDate: values.birthDate.trim() || undefined,
       deathDate: values.deathDate.trim() || undefined,
       isDeceased: values.isDeceased,
-      photo: values.photo || undefined,
+      photo,
       city: values.city.trim() || undefined,
       country: values.country.trim() || undefined,
       occupation: values.occupation.trim() || undefined,
       biography: values.biography.trim() || undefined,
     };
+
+    // The change is about to be committed to app state (FamilyContext handles
+    // the database write, retry and rollback); the recovery draft is done.
+    clearDraft();
 
     const personLabel =
       [trimmed.firstName, trimmed.lastName].filter(Boolean).join(' ') ||
@@ -478,15 +532,27 @@ export function PersonFormModal({
       t('form.thisPerson');
 
     if (isEdit) {
-      updatePerson({ ...person, ...trimmed }, parentIds, spouseIds);
+      // Marriage dates ride on the edited person; FamilyContext mirrors them
+      // onto the spouse so both records agree (owner-only — editors' saves
+      // have relationship data force-restored anyway).
+      const cleanedMarriage: Record<string, string> = {};
+      for (const spouseId of spouseIds) {
+        const date = (marriageDates[spouseId] ?? '').trim();
+        if (date) cleanedMarriage[spouseId] = date;
+      }
+      updatePerson(
+        {
+          ...person,
+          ...trimmed,
+          marriageDates: Object.keys(cleanedMarriage).length > 0 ? cleanedMarriage : undefined,
+        },
+        parentIds,
+        spouseIds,
+      );
       toast(t('form.updatedToast', { name: personLabel }));
       onSaved?.(person.id);
     } else {
-      const id = generatePersonId(
-        trimmed.firstName || trimmed.nickname || '',
-        trimmed.lastName,
-        new Set(people.map((p) => p.id)),
-      );
+      const id = personId;
       const effectiveLink =
         link && link.kind === 'child' ? { ...link, secondParentId: otherParentId || null } : link;
       const newPerson = { id, ...trimmed, parentIds: [], spouseIds: [], childIds: [] };
@@ -518,14 +584,26 @@ export function PersonFormModal({
     onClose();
   };
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (doSave()) handleClose();
+    if (saving) return;
+    setSaving(true);
+    try {
+      if (await doSave()) handleClose();
+    } finally {
+      setSaving(false);
+    }
   };
 
   /** Save this person, then clear the form for the next one (same family). */
-  const saveAndAddAnother = () => {
-    if (!doSave()) return;
+  const saveAndAddAnother = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      if (!(await doSave())) return;
+    } finally {
+      setSaving(false);
+    }
     setValues((v) => ({
       ...v,
       firstName: '',
@@ -683,9 +761,9 @@ export function PersonFormModal({
                 {t('form.photo')}
               </span>
               <div className="flex items-center gap-3">
-                {values.photo ? (
+                {values.photo && photoPreviewUrl ? (
                   <img
-                    src={values.photo}
+                    src={photoPreviewUrl}
                     alt=""
                     className="h-14 w-14 rounded-full object-cover ring-2 ring-white shadow dark:ring-stone-700"
                   />
@@ -754,6 +832,30 @@ export function PersonFormModal({
               }}
               disabledReason={(id) => canLink(people, 'spouse', person.id, id)}
             />
+            {spouseIds.length > 0 && (
+              <div className="space-y-3 sm:col-span-2">
+                {spouseIds.map((spouseId) => {
+                  const spouse = getPerson(spouseId);
+                  if (!spouse) return null;
+                  return (
+                    <DateField
+                      key={spouseId}
+                      label={t('form.marriageDate', { name: fullName(spouse) })}
+                      value={marriageDates[spouseId] ?? ''}
+                      onChange={(v) => {
+                        markDirty();
+                        setMarriageDates((m) => ({ ...m, [spouseId]: v }));
+                      }}
+                      error={
+                        errors[`marriage:${spouseId}`]
+                          ? t(errors[`marriage:${spouseId}`] as TKey)
+                          : undefined
+                      }
+                    />
+                  );
+                })}
+              </div>
+            )}
             {errors.relationships && (
               <p role="alert" className="text-xs text-red-600 sm:col-span-2 dark:text-red-400">
                 {t(errors.relationships as TKey)}
@@ -818,13 +920,14 @@ export function PersonFormModal({
             <button
               type="button"
               className="btn-secondary"
-              onClick={saveAndAddAnother}
+              onClick={() => void saveAndAddAnother()}
+              disabled={saving}
               title={t('form.saveAnotherTitle')}
             >
               {t('form.saveAnother')}
             </button>
           )}
-          <button type="submit" className="btn-primary flex-1 sm:flex-none">
+          <button type="submit" className="btn-primary flex-1 sm:flex-none" disabled={saving}>
             {selfJoin ? t('form.addMe') : isEdit ? t('form.save') : t('form.add')}
           </button>
         </div>

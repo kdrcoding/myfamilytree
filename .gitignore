@@ -38,3 +38,6 @@ password/
 
 .vercel
 .env*
+
+# Internal notes - never publish
+README-CLAUDE.md

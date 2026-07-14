@@ -4,6 +4,7 @@ import {
   Database,
   Download,
   Eye,
+  Images,
   KeyRound,
   Languages,
   LogOut,
@@ -28,6 +29,9 @@ import { listAuditLog } from '../lib/auditLog';
 import type { AuditEntry } from '../lib/auditLog';
 import { downloadBackup, forceBackup, listBackups } from '../lib/backups';
 import type { BackupMeta } from '../lib/backups';
+import { useFamily } from '../context/FamilyContext';
+import { uploadPhoto } from '../lib/photoStorage';
+import { downscalePhoto } from '../utils/image';
 import { ToggleSwitch } from '../components/ui/ToggleSwitch';
 import { UnlockModal } from '../components/UnlockModal';
 
@@ -60,12 +64,16 @@ const ACTION_LABEL_KEYS: Record<string, TKey> = {
   reset: 'log.reset',
 };
 
+/** How many change-log entries the compact (default) view shows. */
+const LOG_PREVIEW_COUNT = 8;
+
 /** Owner-only card: who changed what and when. */
 function ChangeLogCard() {
   const t = useT();
   const language = useLanguage();
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [unavailable, setUnavailable] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     listAuditLog().then(setEntries, (error: unknown) => {
@@ -76,6 +84,8 @@ function ChangeLogCard() {
 
   const fieldLabel = (field: string) =>
     FIELD_LABEL_KEYS[field] ? t(FIELD_LABEL_KEYS[field]) : field;
+
+  const visible = showAll ? entries : entries.slice(0, LOG_PREVIEW_COUNT);
 
   return (
     <section className="card mt-4 p-6">
@@ -93,7 +103,7 @@ function ChangeLogCard() {
         <p className="mt-3 text-sm text-stone-400">{t('settings.logEmpty')}</p>
       ) : unavailable ? null : (
         <ul className="mt-3 divide-y divide-stone-100 text-sm dark:divide-stone-800">
-          {entries.map((entry) => (
+          {visible.map((entry) => (
             <li key={entry.id} className="py-2.5">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="font-medium text-stone-800 dark:text-stone-200">
@@ -108,6 +118,11 @@ function ChangeLogCard() {
                 >
                   {entry.actor === AUTH_EMAILS.owner ? t('log.actorOwner') : t('log.actorFamily')}
                 </span>
+                {entry.actor_name && (
+                  <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                    {t('log.by')} {entry.actor_name}
+                  </span>
+                )}
                 <span className="ml-auto text-xs text-stone-400">
                   {new Date(entry.at).toLocaleString(language === 'uz' ? 'uz-UZ' : 'en-GB')}
                 </span>
@@ -138,6 +153,15 @@ function ChangeLogCard() {
             </li>
           ))}
         </ul>
+      )}
+      {!unavailable && entries.length > LOG_PREVIEW_COUNT && (
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          className="btn-secondary mt-3 w-full text-sm"
+        >
+          {showAll ? t('log.showLess') : t('log.showAll', { count: entries.length })}
+        </button>
       )}
     </section>
   );
@@ -228,6 +252,83 @@ function BackupsCard() {
             </li>
           ))}
         </ul>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Owner-only card: moves photos still embedded in the database (base64) to
+ * Supabase Storage — the database rows shrink from hundreds of KB to a short
+ * path, which makes every load faster for the whole family.
+ */
+function PhotosCard() {
+  const t = useT();
+  const { toast } = useToast();
+  const { people, bulkSetPhotos } = useFamily();
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+
+  const embedded = people.filter((p) => p.photo?.startsWith('data:'));
+  // Base64 is ~4/3 of the binary size.
+  const totalMb = embedded.reduce((sum, p) => sum + (p.photo?.length ?? 0) * 0.75, 0) / 1024 / 1024;
+
+  const migrate = async () => {
+    if (embedded.length === 0 || progress) return;
+    setProgress({ done: 0, total: embedded.length });
+    const updates: Record<string, string> = {};
+    let failed = 0;
+    for (const person of embedded) {
+      try {
+        // Re-downscale on the way out: pre-optimizer rows can hold >1 MB
+        // camera originals.
+        const blob = await (await fetch(person.photo!)).blob();
+        const small = await downscalePhoto(blob);
+        updates[person.id] = await uploadPhoto(person.id, small);
+      } catch (error) {
+        console.error(`Photo migration failed for ${person.id}:`, error);
+        failed += 1;
+      }
+      setProgress((prev) => (prev ? { ...prev, done: prev.done + 1 } : prev));
+    }
+    if (Object.keys(updates).length > 0) {
+      const saved = await bulkSetPhotos(updates);
+      if (!saved) failed += Object.keys(updates).length;
+    }
+    setProgress(null);
+    if (failed > 0) {
+      toast(t('settings.photosPartial', { n: failed }), 'error');
+    } else {
+      toast(t('settings.photosDone'));
+    }
+  };
+
+  return (
+    <section className="card mt-4 p-6">
+      <h2 className="flex items-center gap-2 font-semibold">
+        <Images className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.photosTitle')}
+      </h2>
+      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('settings.photosIntro')}</p>
+      {embedded.length === 0 ? (
+        <p className="mt-3 text-sm text-emerald-700 dark:text-emerald-400">
+          {t('settings.photosNone')}
+        </p>
+      ) : (
+        <>
+          <p className="mt-3 text-sm text-stone-600 dark:text-stone-300">
+            {t('settings.photosEmbedded', { n: embedded.length, mb: totalMb.toFixed(1) })}
+          </p>
+          <button
+            type="button"
+            className="btn-primary mt-3"
+            disabled={progress !== null}
+            onClick={() => void migrate()}
+          >
+            <Upload className="h-4 w-4" aria-hidden />
+            {progress
+              ? t('settings.photosMigrating', { done: progress.done, total: progress.total })
+              : t('settings.photosMigrate')}
+          </button>
+        </>
       )}
     </section>
   );
@@ -480,6 +581,7 @@ export function SettingsPage() {
 
       {canDelete && <ChangeLogCard />}
       {canDelete && <BackupsCard />}
+      {canDelete && <PhotosCard />}
 
       {unlockOpen && <UnlockModal onClose={() => setUnlockOpen(false)} />}
     </div>

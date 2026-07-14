@@ -9,7 +9,7 @@ import { translate } from '../i18n/translations';
 import { useAuth } from './AuthContext';
 import { useSettings } from './SettingsContext';
 import { useToast } from './ToastContext';
-import { isSupabaseConfigured } from '../lib/supabase';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { logChange, summarizeFamilyChange } from '../lib/auditLog';
 import type { AuditAction } from '../lib/auditLog';
 import { autoBackup } from '../lib/backups';
@@ -25,6 +25,7 @@ import {
   removePerson,
   setDivorced,
   setRelationships,
+  syncMarriageDates,
 } from '../utils/family';
 import type { PersonIndex } from '../utils/family';
 
@@ -46,6 +47,8 @@ interface FamilyContextValue {
   setDivorcedStatus: (aId: string, bId: string, divorced: boolean) => void;
   deletePerson: (id: string) => void;
   replaceAll: (people: FamilyPerson[]) => void;
+  /** Owner tool: replace many members' photo values in one save (migration). */
+  bulkSetPhotos: (updates: Record<string, string>) => Promise<boolean>;
   /** Explicit setup action: fill the database with the bundled dataset. */
   resetToSample: () => void;
   exportData: () => FamilyData;
@@ -126,6 +129,53 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     void load();
   }, [load]);
 
+  // Our own writes that are still in flight. Live-sync reloads wait for these
+  // so a stale server snapshot never clobbers an optimistic local change.
+  const pendingPushes = useRef(0);
+
+  // Live sync: edits made by other family members appear on this screen
+  // without a manual refresh. Any change to the two family tables triggers a
+  // debounced BACKGROUND reload (hasLoadedRef keeps the UI mounted). Our own
+  // saves also fire events — reloading after them is harmless (identical
+  // data). Requires the tables in the `supabase_realtime` publication; until
+  // the owner runs the upgrade SQL the channel simply receives nothing.
+  useEffect(() => {
+    const client = supabase;
+    if (!client) return;
+    let timer: number | null = null;
+    let disposed = false;
+    const scheduleReload = () => {
+      if (disposed) return;
+      if (timer !== null) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        timer = null;
+        if (pendingPushes.current > 0) {
+          scheduleReload();
+          return;
+        }
+        void load();
+      }, 1200);
+    };
+    const channel = client
+      .channel('family-live-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'family_members' },
+        scheduleReload,
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'family_relationships' },
+        scheduleReload,
+      )
+      .subscribe();
+    return () => {
+      disposed = true;
+      if (timer !== null) window.clearTimeout(timer);
+      void client.removeChannel(channel);
+    };
+  }, [load]);
+
   /**
    * Apply a change locally, then persist exactly that change to Supabase.
    * Resolves with whether the database write succeeded. Saved changes are
@@ -144,13 +194,18 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       const diff = diffFamily(prev, next);
       if (isEmptyDiff(diff)) return Promise.resolve(true);
       const summary = summarizeFamilyChange(prev, next);
+      pendingPushes.current += 1;
       const pushed = pushQueue.current.then(() =>
         pushDiff(diff).then(() => {
           if (summary) logChange(action, summary);
           return true;
         }),
       );
-      pushQueue.current = pushed.catch(() => undefined);
+      pushQueue.current = pushed
+        .catch(() => undefined)
+        .finally(() => {
+          pendingPushes.current -= 1;
+        });
       return pushed.catch((error: unknown) => {
         console.error('Failed to save family data to Supabase:', error);
         toast(translate(language, 'db.saveFailed'), 'error');
@@ -216,18 +271,34 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
               spouseIds: existing.spouseIds,
               childIds: existing.childIds,
               divorcedIds: existing.divorcedIds,
+              marriageDates: existing.marriageDates,
             };
             return current.map((p) => (p.id === person.id ? updated : p));
           }
           const replaced = current.map((p) => (p.id === person.id ? person : p));
-          return setRelationships(replaced, person.id, parentIds, spouseIds);
+          // Mirror marriage dates onto each spouse so both records agree —
+          // the relationship row is derived from either side.
+          return syncMarriageDates(
+            setRelationships(replaced, person.id, parentIds, spouseIds),
+            person.id,
+          );
         }, 'edit');
       },
       setDivorcedStatus: (aId, bId, divorced) => {
+        // Divorce is a relationship change — owner-only, like all structure edits.
+        if (!isOwner) return;
         void mutate((current) => setDivorced(current, aId, bId, divorced), 'divorce');
       },
       deletePerson: (id) => void mutate((current) => removePerson(current, id), 'delete'),
       replaceAll: (newPeople) => void mutate(() => normalizePeople(newPeople), 'import'),
+      bulkSetPhotos: (updates) =>
+        mutate(
+          (current) =>
+            current.map((p) =>
+              updates[p.id] !== undefined ? { ...p, photo: updates[p.id] || undefined } : p,
+            ),
+          'edit',
+        ),
       resetToSample: () => {
         void mutate(() => DEFAULT_DATA, 'reset').then((saved) => {
           if (saved) void markSeeded('default-dataset');

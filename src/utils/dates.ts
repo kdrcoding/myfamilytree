@@ -1,7 +1,7 @@
 /** Parse a partial ISO date ("YYYY", "YYYY-MM" or "YYYY-MM-DD") into year/month/day parts. */
 export function parseDateParts(
   value?: string,
-): { year: number; month: number; day: number } | null {
+): { year: number; month: number; day: number; hasMonth: boolean; hasDay: boolean } | null {
   if (!value) return null;
   const match = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/.exec(value.trim());
   if (!match) return null;
@@ -12,7 +12,23 @@ export function parseDateParts(
   // Reject impossible calendar days (Feb 30, Apr 31, leap years) — the Date
   // constructor would silently roll them into the next month otherwise.
   if (match[3] && new Date(year, month - 1, day).getDate() !== day) return null;
-  return { year, month, day };
+  return { year, month, day, hasMonth: Boolean(match[2]), hasDay: Boolean(match[3]) };
+}
+
+/**
+ * True only when partial date `a` is DEFINITELY before partial date `b`,
+ * comparing at the coarsest precision the two share. "1985" vs "1985-06" is
+ * NOT definitely before — the year-only date could be any day of 1985.
+ */
+export function isDefinitelyBefore(a?: string, b?: string): boolean {
+  const pa = parseDateParts(a);
+  const pb = parseDateParts(b);
+  if (!pa || !pb) return false;
+  if (pa.year !== pb.year) return pa.year < pb.year;
+  if (!pa.hasMonth || !pb.hasMonth) return false;
+  if (pa.month !== pb.month) return pa.month < pb.month;
+  if (!pa.hasDay || !pb.hasDay) return false;
+  return pa.day < pb.day;
 }
 
 export function isValidDateString(value: string): boolean {
@@ -39,7 +55,8 @@ export function calculateAge(birthDate?: string, deathDate?: string): number | n
     until.getMonth() < born.getMonth() ||
     (until.getMonth() === born.getMonth() && until.getDate() < born.getDate());
   if (beforeBirthday) age -= 1;
-  return age >= 0 && age < 130 ? age : null;
+  // Reject only clearly-impossible values; documented long lives reach ~122.
+  return age >= 0 && age <= 150 ? age : null;
 }
 
 export function isMinor(birthDate?: string, deathDate?: string): boolean {

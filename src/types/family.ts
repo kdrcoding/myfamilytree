@@ -26,6 +26,12 @@ export interface FamilyPerson {
    * Optional so data exported before this field existed stays importable.
    */
   divorcedIds?: string[];
+  /**
+   * Marriage date per spouse (partial ISO like birthDate), keyed by spouse
+   * id. Stored on the couple's relationship row in the database, so either
+   * partner's record may carry it; read it through `marriageDateOf`.
+   */
+  marriageDates?: Record<string, string>;
 }
 
 /** Versioned wrapper stored in LocalStorage and used for import/export. */

@@ -4,6 +4,7 @@ import { Languages, Loader2, LockKeyhole, TreePine } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useT } from '../i18n/useT';
+import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 
 /**
  * The whole site sits behind a password: without the family or owner
@@ -14,7 +15,11 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   const { role, ready, signIn } = useAuth();
   const { settings, setLanguage } = useSettings();
   const t = useT();
+  const [name, setName] = useState(
+    () => loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string') ?? '',
+  );
   const [password, setPassword] = useState('');
+  const [nameError, setNameError] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -22,6 +27,11 @@ export function AppLockGate({ children }: { children: ReactNode }) {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    const trimmedName = name.trim().slice(0, 40);
+    if (trimmedName.length < 2) {
+      setNameError(t('gate.nameRequired'));
+      return;
+    }
     if (!password) {
       setError(t('gate.enter'));
       return;
@@ -29,7 +39,13 @@ export function AppLockGate({ children }: { children: ReactNode }) {
     setBusy(true);
     try {
       const found = await signIn(password);
-      if (!found) setError(t('gate.wrong'));
+      if (!found) {
+        setError(t('gate.wrong'));
+      } else {
+        // Remember who this is: every change-log entry is stamped with this
+        // name so the owner can see who on the shared password edited what.
+        saveJson(STORAGE_KEYS.displayName, trimmedName);
+      }
     } catch (err) {
       console.error('Sign-in failed:', err);
       setError(t('gate.wrong'));
@@ -56,7 +72,32 @@ export function AppLockGate({ children }: { children: ReactNode }) {
             <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">{t('gate.intro')}</p>
           </div>
 
-          <form onSubmit={submit} className="mt-6">
+          <form onSubmit={submit} className="mt-6 space-y-4">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+                {t('gate.yourName')}
+              </span>
+              <input
+                type="text"
+                className="input"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setNameError('');
+                }}
+                autoComplete="name"
+                maxLength={40}
+                autoFocus={!name}
+              />
+              <span className="mt-1 block text-xs text-stone-400 dark:text-stone-500">
+                {t('gate.nameHint')}
+              </span>
+              {nameError && (
+                <span role="alert" className="mt-1 block text-xs text-red-600 dark:text-red-400">
+                  {nameError}
+                </span>
+              )}
+            </label>
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
                 {t('gate.password')}
@@ -70,7 +111,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
                   setError('');
                 }}
                 autoComplete="current-password"
-                autoFocus
+                autoFocus={Boolean(name)}
               />
               {error && (
                 <span role="alert" className="mt-1 block text-xs text-red-600 dark:text-red-400">
@@ -78,7 +119,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
                 </span>
               )}
             </label>
-            <button type="submit" className="btn-primary mt-4 w-full" disabled={busy}>
+            <button type="submit" className="btn-primary w-full" disabled={busy}>
               {busy ? t('gate.checking') : t('gate.btn')}
             </button>
           </form>

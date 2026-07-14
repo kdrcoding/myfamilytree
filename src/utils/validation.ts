@@ -1,6 +1,6 @@
 import type { FamilyData, FamilyPerson, Gender, RelationKind, RelationLink } from '../types/family';
 import { FAMILY_DATA_VERSION, JOIN_REQUEST_TYPE } from '../types/family';
-import { isValidDateString, toDate } from './dates';
+import { isDefinitelyBefore, isValidDateString } from './dates';
 import { buildIndex, getAncestorIds, getDescendantIds } from './family';
 
 const GENDERS: Gender[] = ['male', 'female', 'unspecified'];
@@ -38,9 +38,11 @@ export function validatePersonForm(values: PersonFormValues): Partial<Record<str
     errors.deathDate = 'val.dateFormat';
   }
   if (!errors.birthDate && !errors.deathDate && values.birthDate && values.deathDate) {
-    const born = toDate(values.birthDate);
-    const died = toDate(values.deathDate);
-    if (born && died && died < born) errors.deathDate = 'val.deathBeforeBirth';
+    // Precision-aware: "1985" (year only) is NOT before "1985-06" — comparing
+    // padded Dates here used to reject legitimate partial dates.
+    if (isDefinitelyBefore(values.deathDate, values.birthDate)) {
+      errors.deathDate = 'val.deathBeforeBirth';
+    }
   }
   if (values.deathDate && !values.isDeceased) {
     errors.deathDate = 'val.deathNeedsDeceased';

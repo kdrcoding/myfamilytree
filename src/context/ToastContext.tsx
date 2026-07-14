@@ -41,7 +41,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const toast = useCallback(
     (message: string, type: ToastType = 'success') => {
       const id = nextId.current++;
-      setToasts((current) => [...current.slice(-3), { id, type, message }]);
+      setToasts((current) => [...current.slice(-2), { id, type, message }]);
       window.setTimeout(() => dismiss(id), 4000);
     },
     [dismiss],
@@ -50,10 +50,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div
-        aria-live="polite"
-        className="pointer-events-none fixed bottom-4 left-1/2 z-[80] flex w-full max-w-sm -translate-x-1/2 flex-col gap-2 px-4 sm:left-auto sm:right-4 sm:translate-x-0"
-      >
+      {/* Each toast is its own role="status" live region — no aria-live here,
+          nested live regions double-announce on some screen readers. */}
+      <div className="pointer-events-none fixed bottom-4 left-1/2 z-[80] flex w-full max-w-sm -translate-x-1/2 flex-col gap-2 px-4 sm:left-auto sm:right-4 sm:translate-x-0">
         {toasts.map((item) => {
           const Icon = ICONS[item.type];
           return (

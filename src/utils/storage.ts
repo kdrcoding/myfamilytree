@@ -12,6 +12,12 @@ export const STORAGE_KEYS = {
   // Last date (YYYY-MM-DD) we showed the "birthday today" toast, so it fires
   // at most once per day per browser.
   birthdayNotified: 'familytree.birthdayNotified.v1',
+  // The person's own name, asked at sign-in, attached to change-log entries
+  // so the owner can see WHO on the shared family password edited what.
+  displayName: 'familytree.displayName.v1',
+  // Signed URLs for Storage-hosted photos, reused until near expiry so the
+  // browser cache keeps working across visits.
+  photoUrls: 'familytree.photoUrls.v1',
 } as const;
 
 /**

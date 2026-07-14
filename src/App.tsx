@@ -5,6 +5,7 @@ import { Layout } from './components/Layout';
 import { AuthProvider } from './context/AuthContext';
 import { ConfirmProvider } from './context/ConfirmContext';
 import { FamilyProvider } from './context/FamilyContext';
+import { PhotoUrlsProvider } from './context/PhotoUrlsContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { ToastProvider } from './context/ToastContext';
 
@@ -36,7 +37,8 @@ export default function App() {
                 after unlocking with the family or owner password. */}
             <AppLockGate>
               <FamilyProvider>
-                <BrowserRouter basename={import.meta.env.BASE_URL}>
+                <PhotoUrlsProvider>
+                  <BrowserRouter basename={import.meta.env.BASE_URL}>
                   <Routes>
                     <Route element={<Layout />}>
                       <Route index element={<HomePage />} />
@@ -49,7 +51,8 @@ export default function App() {
                       <Route path="*" element={<NotFoundPage />} />
                     </Route>
                   </Routes>
-                </BrowserRouter>
+                  </BrowserRouter>
+                </PhotoUrlsProvider>
               </FamilyProvider>
             </AppLockGate>
           </AuthProvider>

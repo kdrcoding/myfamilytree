@@ -23,6 +23,8 @@ export interface RelationshipRow {
   kind: 'spouse' | 'divorced' | 'parent-child';
   person_a: string;
   person_b: string;
+  /** Marriage date for spouse/divorced rows ("YYYY[-MM[-DD]]"), else null. */
+  married_on?: string | null;
 }
 
 const GENDERS: Gender[] = ['male', 'female', 'unspecified'];
@@ -58,6 +60,7 @@ export function parentKey(parentId: string, childId: string): string {
 /** The canonical relationship rows implied by a people array. */
 export function relationshipRowsFor(people: FamilyPerson[]): Map<string, RelationshipRow> {
   const rows = new Map<string, RelationshipRow>();
+  const byId = new Map(people.map((p) => [p.id, p]));
   const divorcedPairs = new Set<string>();
   for (const person of people) {
     for (const exId of person.divorcedIds ?? []) {
@@ -68,16 +71,27 @@ export function relationshipRowsFor(people: FamilyPerson[]): Map<string, Relatio
     for (const spouseId of person.spouseIds) {
       const [a, b] = [person.id, spouseId].sort();
       const key = spouseKey(a, b);
+      // Either partner's record may carry the marriage date.
+      const other = byId.get(spouseId);
+      const marriedOn =
+        person.marriageDates?.[spouseId] ?? other?.marriageDates?.[person.id] ?? null;
       rows.set(key, {
         key,
         kind: divorcedPairs.has(key) ? 'divorced' : 'spouse',
         person_a: a,
         person_b: b,
+        married_on: marriedOn,
       });
     }
     for (const childId of person.childIds) {
       const key = parentKey(person.id, childId);
-      rows.set(key, { key, kind: 'parent-child', person_a: person.id, person_b: childId });
+      rows.set(key, {
+        key,
+        kind: 'parent-child',
+        person_a: person.id,
+        person_b: childId,
+        married_on: null,
+      });
     }
   }
   return rows;
@@ -114,6 +128,10 @@ export function peopleFromRows(members: MemberRow[], rels: RelationshipRow[]): F
     if (rel.kind === 'spouse' || rel.kind === 'divorced') {
       if (!a.spouseIds.includes(b.id)) a.spouseIds.push(b.id);
       if (!b.spouseIds.includes(a.id)) b.spouseIds.push(a.id);
+      if (rel.married_on) {
+        a.marriageDates = { ...a.marriageDates, [b.id]: rel.married_on };
+        b.marriageDates = { ...b.marriageDates, [a.id]: rel.married_on };
+      }
       if (rel.kind === 'divorced') {
         a.divorcedIds = a.divorcedIds ?? [];
         b.divorcedIds = b.divorcedIds ?? [];
@@ -175,11 +193,12 @@ export function diffFamily(prev: FamilyPerson[], next: FamilyPerson[]): FamilyDi
 
   const prevRels = relationshipRowsFor(prev);
   const nextRels = relationshipRowsFor(next);
-  // New rows AND rows whose kind changed (spouse <-> divorced) — the upsert
-  // updates the kind in place because the key stays the same.
-  const insertRelationships = [...nextRels.values()].filter(
-    (r) => prevRels.get(r.key)?.kind !== r.kind,
-  );
+  // New rows AND rows whose kind or marriage date changed — the upsert
+  // updates them in place because the key stays the same.
+  const insertRelationships = [...nextRels.values()].filter((r) => {
+    const before = prevRels.get(r.key);
+    return !before || before.kind !== r.kind || (before.married_on ?? null) !== (r.married_on ?? null);
+  });
   const deleteRelationshipKeys = [...prevRels.keys()].filter((key) => {
     if (nextRels.has(key)) return false;
     // Relationships of deleted people are removed by ON DELETE CASCADE.
@@ -211,7 +230,22 @@ export async function pushDiff(diff: FamilyDiff): Promise<void> {
     const { error } = await supabase
       .from('family_relationships')
       .upsert(diff.insertRelationships);
-    if (error) throw error;
+    if (error) {
+      // The married_on column arrives with the upgrade SQL. Until the owner
+      // has run it, retry without the field so saves keep working.
+      if (/married_on/i.test(error.message ?? '')) {
+        const stripped = diff.insertRelationships.map((row) => {
+          const { key, kind, person_a, person_b } = row;
+          return { key, kind, person_a, person_b };
+        });
+        const { error: retryError } = await supabase
+          .from('family_relationships')
+          .upsert(stripped);
+        if (retryError) throw retryError;
+      } else {
+        throw error;
+      }
+    }
   }
   if (diff.deleteMemberIds.length > 0) {
     const { error } = await supabase.from('family_members').delete().in('id', diff.deleteMemberIds);

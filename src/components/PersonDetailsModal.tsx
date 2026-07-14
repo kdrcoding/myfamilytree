@@ -289,7 +289,9 @@ export function PersonDetailsModal({
           title={spouses.length > 1 ? t('person.spouses') : t('person.spouse')}
           person={person}
           spouses={spouses}
-          editMode={editMode}
+          // Divorce is a relationship change, so the toggle is owner-only —
+          // family editors only edit detail fields.
+          editMode={editMode && canDelete}
           onNavigate={onNavigate}
         />
         <RelativeChips title={t('person.siblings')} people={siblings} onNavigate={onNavigate} />

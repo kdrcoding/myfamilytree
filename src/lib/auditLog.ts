@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type { FamilyPerson } from '../types/family';
 import { fullName } from '../utils/family';
+import { loadJson, STORAGE_KEYS } from '../utils/storage';
 
 /** What kind of operation produced a change (set by the calling action). */
 export type AuditAction = 'add' | 'edit' | 'delete' | 'divorce' | 'import' | 'reset';
@@ -15,6 +16,8 @@ export interface AuditEntry {
   id: number;
   at: string;
   actor: string;
+  /** The name typed at sign-in — who on the shared password did it. */
+  actor_name?: string | null;
   action: AuditAction | string;
   details: AuditDetails;
 }
@@ -89,19 +92,33 @@ export function summarizeFamilyChange(
  */
 export function logChange(action: AuditAction, details: AuditDetails): void {
   if (!supabase) return;
-  void supabase
-    .rpc('log_family_change', { p_action: action, p_details: details })
+  const client = supabase;
+  const actorName =
+    loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string')?.trim() ||
+    null;
+  void client
+    .rpc('log_family_change', { p_action: action, p_details: details, p_actor_name: actorName })
     .then(({ error }) => {
-      if (error) console.error('Failed to record change in the log:', error);
+      if (!error) return;
+      // The 3-argument function only exists after the owner runs the upgrade
+      // SQL; until then fall back to the original signature so nothing is lost.
+      void client
+        .rpc('log_family_change', { p_action: action, p_details: details })
+        .then(({ error: fallbackError }) => {
+          if (fallbackError)
+            console.error('Failed to record change in the log:', fallbackError);
+        });
     });
 }
 
 /** Owner-only: newest entries first. */
-export async function listAuditLog(limit = 50): Promise<AuditEntry[]> {
+export async function listAuditLog(limit = 200): Promise<AuditEntry[]> {
   if (!supabase) return [];
+  // select('*') keeps this working whether or not the actor_name column
+  // exists yet (it arrives with the upgrade SQL).
   const { data, error } = await supabase
     .from('family_audit_log')
-    .select('id, at, actor, action, details')
+    .select('*')
     .order('at', { ascending: false })
     .limit(limit);
   if (error) throw error;

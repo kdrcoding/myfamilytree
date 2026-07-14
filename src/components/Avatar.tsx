@@ -1,6 +1,7 @@
 import { User, UserRound, CircleUser } from 'lucide-react';
 import type { FamilyPerson } from '../types/family';
 import { fullName, initials } from '../utils/family';
+import { usePhotoUrl } from '../context/PhotoUrlsContext';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { useT } from '../i18n/useT';
 
@@ -35,11 +36,14 @@ export function Avatar({ person, size = 'md' }: AvatarProps) {
   const { showPhoto } = usePrivacy();
   const t = useT();
   const Icon = GENDER_ICONS[person.gender];
+  // Storage-hosted photos resolve to a signed URL (null until resolved —
+  // the initials avatar shows meanwhile); data-URLs pass straight through.
+  const photoUrl = usePhotoUrl(person.photo);
 
-  if (person.photo && showPhoto()) {
+  if (photoUrl && showPhoto()) {
     return (
       <img
-        src={person.photo}
+        src={photoUrl}
         alt={t('avatar.photoOf', { name: fullName(person) })}
         className={`${SIZES[size]} shrink-0 rounded-full object-cover ring-2 ring-white shadow dark:ring-stone-700 ${
           person.isDeceased ? 'grayscale' : ''

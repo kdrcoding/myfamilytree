@@ -189,6 +189,36 @@ export function isDivorced(a: FamilyPerson, b: FamilyPerson): boolean {
   return Boolean(a.divorcedIds?.includes(b.id) || b.divorcedIds?.includes(a.id));
 }
 
+/** The couple's marriage date, whichever partner's record carries it. */
+export function marriageDateOf(a: FamilyPerson, b: FamilyPerson): string | undefined {
+  return a.marriageDates?.[b.id] ?? b.marriageDates?.[a.id];
+}
+
+/** Set or clear (empty string) a couple's marriage date on one record. */
+export function withMarriageDate(
+  person: FamilyPerson,
+  spouseId: string,
+  date: string,
+): FamilyPerson {
+  const current = { ...(person.marriageDates ?? {}) };
+  if (date) current[spouseId] = date;
+  else delete current[spouseId];
+  return { ...person, marriageDates: Object.keys(current).length > 0 ? current : undefined };
+}
+
+/**
+ * Mirror `personId`'s marriage dates onto each of their spouses so both
+ * records agree — the database relationship row is derived from either side.
+ */
+export function syncMarriageDates(people: FamilyPerson[], personId: string): FamilyPerson[] {
+  const person = people.find((p) => p.id === personId);
+  if (!person) return people;
+  return people.map((p) => {
+    if (p.id === personId || !person.spouseIds.includes(p.id)) return p;
+    return withMarriageDate(p, personId, person.marriageDates?.[p.id] ?? '');
+  });
+}
+
 /** Mark or unmark a couple as divorced. They stay linked as (ex-)spouses. */
 export function setDivorced(
   people: FamilyPerson[],
@@ -291,8 +321,9 @@ export function setRelationships(
         if (p.id !== oldSpouse && p.id !== personId) return p;
         const removeId = p.id === oldSpouse ? personId : oldSpouse;
         const divorcedIds = p.divorcedIds?.filter((x) => x !== removeId);
+        const stripped = withMarriageDate(clone(p), removeId, '');
         return {
-          ...clone(p),
+          ...stripped,
           spouseIds: p.spouseIds.filter((x) => x !== removeId),
           divorcedIds: divorcedIds?.length ? divorcedIds : undefined,
         };
@@ -351,12 +382,16 @@ export function normalizePeople(people: FamilyPerson[]): FamilyPerson[] {
     const divorcedIds = [
       ...new Set((p.divorcedIds ?? []).filter((id) => ids.has(id) && id !== p.id)),
     ];
+    const marriageDates = Object.fromEntries(
+      Object.entries(p.marriageDates ?? {}).filter(([id]) => ids.has(id) && id !== p.id),
+    );
     return {
       ...clone(p),
       parentIds: [...new Set(p.parentIds.filter((id) => ids.has(id) && id !== p.id))],
       spouseIds: [...new Set(p.spouseIds.filter((id) => ids.has(id) && id !== p.id))],
       childIds: [...new Set(p.childIds.filter((id) => ids.has(id) && id !== p.id))],
       divorcedIds: divorcedIds.length > 0 ? divorcedIds : undefined,
+      marriageDates: Object.keys(marriageDates).length > 0 ? marriageDates : undefined,
     };
   });
   const divorcedPairs = next.flatMap((p) =>
