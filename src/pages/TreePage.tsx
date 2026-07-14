@@ -180,8 +180,15 @@ function TreeCanvas({
   const handleInit = useCallback(() => {
     const first = nodes.find((n) => n.type === 'person');
     if (first) {
-      const zoom = window.innerWidth < 640 ? 1 : 0.75;
-      setCenter(first.position.x + CARD_W + 24, first.position.y + CARD_H * 1.8, { zoom });
+      const isPhone = window.innerWidth < 640;
+      const zoom = isPhone ? 1 : 0.75;
+      // On a phone the screen is too narrow to frame the whole founding couple,
+      // so centre on the first founder's card (fully visible) rather than the
+      // gap between the pair, which chopped the first card off the left edge.
+      const centerX = isPhone
+        ? first.position.x + CARD_W / 2
+        : first.position.x + CARD_W + 24;
+      setCenter(centerX, first.position.y + CARD_H * 1.8, { zoom });
     }
   }, [nodes, setCenter]);
 
@@ -198,13 +205,12 @@ function TreeCanvas({
       nodesFocusable={false}
       edgesFocusable={false}
       zoomOnDoubleClick={false}
-      className="bg-stone-50 dark:bg-stone-950"
     >
       <Background
         variant={BackgroundVariant.Dots}
         gap={28}
         size={1.5}
-        className="!text-stone-300 dark:!text-stone-700"
+        className="!text-slate-500 dark:!text-stone-700"
       />
       <Panel
         position="top-left"
@@ -532,8 +538,11 @@ export function TreePage() {
       <div className="relative min-h-[420px] flex-1" style={{ height: 'calc(100dvh - 12rem)' }}>
         {/* Absolute positioning gives React Flow a rock-solid 100% height;
             percentage heights against flex-grown parents resolve to 0 in
-            some browsers, which rendered the whole tree invisible. */}
-        <div className="absolute inset-0">
+            some browsers, which rendered the whole tree invisible.
+            The canvas colour lives here (not on <ReactFlow>) because React
+            Flow forces its own root background to transparent, which would
+            otherwise let the page colour show through and wash the tree out. */}
+        <div className="absolute inset-0 bg-slate-300 dark:bg-stone-950">
           <TreeInteractionContext.Provider value={interaction}>
             <ReactFlowProvider>
               <TreeCanvas
