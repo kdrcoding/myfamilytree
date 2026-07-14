@@ -70,6 +70,20 @@ export function computeGenerations(people: FamilyPerson[]): Map<string, number> 
   return generations;
 }
 
+/**
+ * Anchors to fold on a family's first view so a large tree opens compact
+ * instead of sprawling sideways. Every branch deeper than `openGenerations`
+ * whole generations is collapsed behind its nearest visible ancestor's ▸
+ * badge; the viewer expands the branches they care about. Only used to seed a
+ * brand-new browser — a saved collapse choice is always respected.
+ */
+export function defaultCollapsedIds(people: FamilyPerson[], openGenerations: number): string[] {
+  const generations = computeGenerations(people);
+  return people
+    .filter((p) => p.childIds.length > 0 && (generations.get(p.id) ?? 1) >= openGenerations)
+    .map((p) => p.id);
+}
+
 /** Ids of founders plus everyone descended from them ("blood line"). */
 export function computeBloodline(people: FamilyPerson[]): Set<string> {
   const index = buildIndex(people);

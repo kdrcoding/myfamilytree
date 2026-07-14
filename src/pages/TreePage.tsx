@@ -34,15 +34,20 @@ import { useToast } from '../context/ToastContext';
 import { useDataTransfer } from '../hooks/useDataTransfer';
 import { usePersistentState } from '../hooks/usePersistentState';
 import { useT } from '../i18n/useT';
-import { STORAGE_KEYS } from '../utils/storage';
-import { getAncestorIds, fullName } from '../utils/family';
+import { STORAGE_KEYS, loadJson } from '../utils/storage';
+import { defaultCollapsedIds, getAncestorIds, fullName } from '../utils/family';
 import { matchesSearch } from '../utils/filters';
 import { MadeByKadir } from '../components/MadeByKadir';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { PersonDetailsModal } from '../components/PersonDetailsModal';
 import { PersonFormModal } from '../components/PersonFormModal';
 import { UnlockModal } from '../components/UnlockModal';
-import { computeTreeLayout, CARD_H, CARD_W } from '../features/tree/layout';
+import {
+  computeTreeLayout,
+  CARD_H,
+  CARD_W,
+  DEFAULT_OPEN_GENERATIONS,
+} from '../features/tree/layout';
 import { exportTreeAsPng } from '../features/tree/exportPng';
 import { JunctionNode } from '../features/tree/JunctionNode';
 import { PersonNode } from '../features/tree/PersonNode';
@@ -282,6 +287,23 @@ export function TreePage() {
     (v): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string'),
   );
   const collapsed = useMemo(() => new Set(collapsedList), [collapsedList]);
+
+  // First view of a large tree opens compact: fold everything past the top few
+  // generations so it doesn't sprawl sideways. Runs once, and only when this
+  // browser has no saved collapse choice yet (null key) — a stored preference,
+  // including a deliberate "Expand all", is always left untouched.
+  const didSeedCollapse = useRef(false);
+  useEffect(() => {
+    if (didSeedCollapse.current || people.length === 0) return;
+    didSeedCollapse.current = true;
+    const saved = loadJson<string[]>(
+      STORAGE_KEYS.collapsed,
+      (v): v is string[] => Array.isArray(v),
+    );
+    if (saved === null) {
+      setCollapsedList(defaultCollapsedIds(people, DEFAULT_OPEN_GENERATIONS));
+    }
+  }, [people, setCollapsedList]);
 
   const [editMode, setEditMode] = useState(false);
   const [unlockOpen, setUnlockOpen] = useState(false);

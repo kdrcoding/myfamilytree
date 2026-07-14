@@ -6,11 +6,21 @@ import type { PersonIndex } from '../../utils/family';
 
 export const CARD_W = 224;
 export const CARD_H = 112;
-const SPOUSE_GAP = 48;
-const SIBLING_GAP = 40;
-const LEVEL_GAP = 120;
-const ROOT_GAP = 120;
+const SPOUSE_GAP = 44;
+// Tighter than the spouse gap so sibling branches pack in and the tree stays
+// as narrow as possible; the extra LEVEL_GAP keeps the green child lines from
+// crowding the card rows above and below them.
+const SIBLING_GAP = 28;
+const LEVEL_GAP = 148;
+const ROOT_GAP = 72;
 const JUNCTION = 10;
+
+/**
+ * How many whole generations open on a family's first view before deeper
+ * branches auto-collapse (see defaultCollapsedIds). Two keeps even a large
+ * tree narrow on load; the viewer expands from there.
+ */
+export const DEFAULT_OPEN_GENERATIONS = 2;
 
 export interface PersonNodeData extends Record<string, unknown> {
   personId: string;
