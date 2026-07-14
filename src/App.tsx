@@ -8,6 +8,7 @@ import { SettingsProvider } from './context/SettingsContext';
 import { ToastProvider } from './context/ToastContext';
 import { AboutPage } from './pages/AboutPage';
 import { HomePage } from './pages/HomePage';
+import { MapPage } from './pages/MapPage';
 import { MembersPage } from './pages/MembersPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -30,6 +31,7 @@ export default function App() {
                       <Route index element={<HomePage />} />
                       <Route path="tree" element={<TreePage />} />
                       <Route path="members" element={<MembersPage />} />
+                      <Route path="map" element={<MapPage />} />
                       <Route path="statistics" element={<StatsPage />} />
                       <Route path="about" element={<AboutPage />} />
                       <Route path="settings" element={<SettingsPage />} />

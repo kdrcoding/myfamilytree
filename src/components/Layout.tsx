@@ -16,6 +16,7 @@ export function Layout() {
     { to: '/', label: t('nav.home') },
     { to: '/tree', label: t('nav.tree') },
     { to: '/members', label: t('nav.members') },
+    { to: '/map', label: t('nav.map') },
     { to: '/statistics', label: t('nav.stats') },
     { to: '/about', label: t('nav.about') },
     { to: '/settings', label: t('nav.settings') },

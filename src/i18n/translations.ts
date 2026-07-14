@@ -9,6 +9,7 @@ export const en = {
   'nav.home': 'Home',
   'nav.tree': 'Family Tree',
   'nav.members': 'Members',
+  'nav.map': 'Map',
   'nav.stats': 'Statistics',
   'nav.about': 'About',
   'nav.settings': 'Settings',
@@ -27,6 +28,25 @@ export const en = {
   // Shared accessibility labels
   'toast.dismiss': 'Dismiss notification',
   'avatar.photoOf': 'Photo of {name}',
+
+  // Family map
+  'map.title': 'Family map',
+  'map.intro': 'Where the family lives — every circle is a place with family members.',
+  'map.locating': 'Finding places on the map… {done}/{total}',
+  'map.count': '{n} family member(s)',
+  'map.empty':
+    'No cities or countries are filled in yet. Add a city or country to people and they will appear on the map.',
+
+  // Backups
+  'settings.backupsTitle': 'Automatic backups',
+  'settings.backupsIntro':
+    'The site saves a snapshot of the whole family automatically about once a day and keeps the last 30. You can also take one now, or download any snapshot — it can be restored with the Import button above.',
+  'settings.backupNow': 'Back up now',
+  'settings.backupTaken': 'Backup saved.',
+  'settings.backupFailed': 'Backup failed — try again.',
+  'settings.backupDownload': 'Download',
+  'settings.backupCounts': '{m} people · {r} relationships',
+  'settings.backupsEmpty': 'No backups yet — one will be taken automatically.',
 
   // Site password gate
   'gate.title': 'This is a private family website',
@@ -439,6 +459,7 @@ export const uz: Record<TKey, string> = {
   'nav.home': 'Bosh sahifa',
   'nav.tree': 'Shajara',
   'nav.members': "Oila a'zolari",
+  'nav.map': 'Xarita',
   'nav.stats': 'Statistika',
   'nav.about': 'Loyiha haqida',
   'nav.settings': 'Sozlamalar',
@@ -455,6 +476,23 @@ export const uz: Record<TKey, string> = {
 
   'toast.dismiss': 'Bildirishnomani yopish',
   'avatar.photoOf': '{name} surati',
+
+  'map.title': 'Oila xaritasi',
+  'map.intro': "Oila qayerlarda yashaydi — har bir doira oila a'zolari yashaydigan joy.",
+  'map.locating': 'Joylar xaritadan topilmoqda… {done}/{total}',
+  'map.count': "{n} oila a'zosi",
+  'map.empty':
+    "Hozircha shahar yoki mamlakat kiritilmagan. Odamlarga shahar yoki mamlakat qo'shsangiz, ular xaritada ko'rinadi.",
+
+  'settings.backupsTitle': 'Avtomatik zaxira nusxalar',
+  'settings.backupsIntro':
+    "Sayt taxminan kuniga bir marta butun oilaning nusxasini avtomatik saqlaydi va oxirgi 30 tasini saqlab qoladi. Hozir ham nusxa olishingiz yoki istalgan nusxani yuklab olishingiz mumkin — u yuqoridagi Import tugmasi bilan tiklanadi.",
+  'settings.backupNow': 'Hozir nusxa olish',
+  'settings.backupTaken': 'Zaxira nusxa saqlandi.',
+  'settings.backupFailed': "Zaxira nusxa olinmadi — qayta urinib ko'ring.",
+  'settings.backupDownload': 'Yuklab olish',
+  'settings.backupCounts': '{m} kishi · {r} aloqa',
+  'settings.backupsEmpty': "Hozircha zaxira nusxalar yo'q — birinchisi avtomatik olinadi.",
 
   'gate.title': 'Bu shaxsiy oilaviy sayt',
   'gate.intro':

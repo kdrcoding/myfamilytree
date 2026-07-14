@@ -1,5 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  Archive,
   Database,
   Download,
   Eye,
@@ -14,11 +15,90 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
+import { useToast } from '../context/ToastContext';
 import { useDataTransfer } from '../hooks/useDataTransfer';
-import { useT } from '../i18n/useT';
+import { useLanguage, useT } from '../i18n/useT';
 import { hashPassword } from '../config/access';
+import { downloadBackup, forceBackup, listBackups } from '../lib/backups';
+import type { BackupMeta } from '../lib/backups';
 import { ToggleSwitch } from '../components/ui/ToggleSwitch';
 import { UnlockModal } from '../components/UnlockModal';
+
+/** Owner-only card: shows the automatic database snapshots. */
+function BackupsCard() {
+  const t = useT();
+  const language = useLanguage();
+  const { toast } = useToast();
+  const [backups, setBackups] = useState<BackupMeta[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const refresh = () => {
+    listBackups().then(setBackups, (error: unknown) => {
+      console.error('Failed to list backups:', error);
+    });
+  };
+  useEffect(refresh, []);
+
+  const takeNow = async () => {
+    setBusy(true);
+    try {
+      await forceBackup();
+      toast(t('settings.backupTaken'));
+      refresh();
+    } catch (error) {
+      console.error('Backup failed:', error);
+      toast(t('settings.backupFailed'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="card mt-4 p-6">
+      <h2 className="flex items-center gap-2 font-semibold">
+        <Archive className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.backupsTitle')}
+      </h2>
+      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+        {t('settings.backupsIntro')}
+      </p>
+      <div className="mt-3">
+        <button type="button" className="btn-secondary" onClick={() => void takeNow()} disabled={busy}>
+          <Archive className="h-4 w-4" aria-hidden /> {t('settings.backupNow')}
+        </button>
+      </div>
+      {backups.length === 0 ? (
+        <p className="mt-3 text-sm text-stone-400">{t('settings.backupsEmpty')}</p>
+      ) : (
+        <ul className="mt-3 divide-y divide-stone-100 text-sm dark:divide-stone-800">
+          {backups.map((b) => (
+            <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+              <span className="min-w-0">
+                <span className="block font-medium text-stone-800 dark:text-stone-200">
+                  {new Date(b.taken_at).toLocaleString(language === 'uz' ? 'uz-UZ' : 'en-GB')}
+                </span>
+                <span className="block text-xs text-stone-500 dark:text-stone-400">
+                  {t('settings.backupCounts', { m: b.member_count, r: b.relationship_count })}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="btn-secondary !px-2.5 !py-1.5 !text-xs"
+                onClick={() => {
+                  downloadBackup(b.id).catch((error: unknown) => {
+                    console.error('Backup download failed:', error);
+                    toast(t('settings.backupFailed'), 'error');
+                  });
+                }}
+              >
+                <Download className="h-3.5 w-3.5" aria-hidden /> {t('settings.backupDownload')}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 export function SettingsPage() {
   const { settings, setTheme, setLanguage, setPrivacy } = useSettings();
@@ -252,6 +332,8 @@ export function SettingsPage() {
         </div>
         {!canEdit && <p className="mt-2 text-xs text-stone-400">{t('settings.unlockNote')}</p>}
       </section>
+
+      {canDelete && <BackupsCard />}
 
       {unlockOpen && <UnlockModal onClose={() => setUnlockOpen(false)} />}
     </div>

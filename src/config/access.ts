@@ -29,6 +29,19 @@ export const ACCESS = {
   editorHash: '7fcc57f15a0a35995b1ef5fe78808863346e806aa2b86128c48c0133749c7586',
 } as const;
 
+/**
+ * Supabase Auth accounts backing the two passwords. These users must exist
+ * in the Supabase dashboard (Authentication → Users, auto-confirmed) with
+ * the same passwords as password/passwords.txt, and public sign-ups must be
+ * DISABLED. The RLS policies only grant access to these two emails, so
+ * without one of the passwords the database itself refuses to answer —
+ * not just the UI.
+ */
+export const AUTH_EMAILS = {
+  owner: 'owner@oqariq.family',
+  editor: 'family@oqariq.family',
+} as const;
+
 export type Role = 'viewer' | 'editor' | 'owner';
 
 /** SHA-256 hex digest of a password, computed in the browser. */

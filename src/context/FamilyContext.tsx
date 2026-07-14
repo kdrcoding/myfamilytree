@@ -10,6 +10,7 @@ import { useAuth } from './AuthContext';
 import { useSettings } from './SettingsContext';
 import { useToast } from './ToastContext';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { autoBackup } from '../lib/backups';
 import { diffFamily, fetchFamily, isEmptyDiff, markSeeded, pushDiff } from '../lib/familyDb';
 import { validateFamilyData } from '../utils/validation';
 import {
@@ -86,6 +87,9 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       peopleRef.current = loaded;
       setPeopleState(loaded);
       setStatus('ready');
+      // Every visit keeps the daily database snapshot fresh (no-op when a
+      // recent backup already exists).
+      autoBackup();
     } catch (error) {
       console.error('Failed to load family data from Supabase:', error);
       setStatus('error');
