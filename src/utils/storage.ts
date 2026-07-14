@@ -18,6 +18,9 @@ export const STORAGE_KEYS = {
   // Signed URLs for Storage-hosted photos, reused until near expiry so the
   // browser cache keeps working across visits.
   photoUrls: 'familytree.photoUrls.v1',
+  // Tree view preferences.
+  treeOrientation: 'familytree.treeOrientation.v1',
+  treeSpacing: 'familytree.treeSpacing.v1',
 } as const;
 
 /**

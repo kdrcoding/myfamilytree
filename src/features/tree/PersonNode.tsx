@@ -12,11 +12,25 @@ import { DeceasedBadge, GenderBadge } from '../../components/badges';
 import { CARD_H, CARD_W } from './layout';
 import type { PersonFlowNode } from './layout';
 import { useTreeInteraction } from './TreeInteractionContext';
+import type { SelectionRole } from './TreeInteractionContext';
 
+// Softer left-border accents: the gender is still signalled, but the strong
+// saturated bar is toned down so a wall of cards reads calmly. The clear
+// gender ICON on the card carries the primary signal.
 const GENDER_ACCENT = {
-  male: 'border-l-sky-400 dark:border-l-sky-600',
-  female: 'border-l-rose-400 dark:border-l-rose-600',
-  unspecified: 'border-l-violet-400 dark:border-l-violet-600',
+  male: 'border-l-sky-300 dark:border-l-sky-700/70',
+  female: 'border-l-rose-300 dark:border-l-rose-700/70',
+  unspecified: 'border-l-violet-300 dark:border-l-violet-700/70',
+};
+
+// Ring colour per relationship to the selected person.
+const ROLE_RING: Record<SelectionRole, string> = {
+  selected: 'ring-4 ring-amber-400 dark:ring-amber-500',
+  ancestor: 'ring-2 ring-sky-400 dark:ring-sky-500',
+  descendant: 'ring-2 ring-emerald-400 dark:ring-emerald-500',
+  spouse: 'ring-2 ring-rose-400 dark:ring-rose-500',
+  unrelated: '',
+  none: '',
 };
 
 const HANDLE = '!h-1.5 !w-1.5 !min-h-0 !min-w-0 !border-0 !bg-transparent';
@@ -25,13 +39,14 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
   const { getPerson, getLabel } = useFamily();
   const privacy = usePrivacy();
   const t = useT();
-  const { onOpen, onToggleCollapse, onQuickAdd, editMode, highlightedId, dimmedIds } =
+  const { onOpen, onToggleCollapse, onQuickAdd, editMode, selectedId, roleOf } =
     useTreeInteraction();
   const person = getPerson(data.personId);
   if (!person) return null;
 
-  const highlighted = highlightedId === person.id;
-  const dimmed = dimmedIds.has(person.id) && !highlighted;
+  const role = roleOf(person.id);
+  const dimmed = selectedId !== null && role === 'unrelated';
+  const name = fullName(person);
   const years = privacy.showBirthDate()
     ? lifespan(
         person.birthDate,
@@ -46,7 +61,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
   return (
     <div
       style={{ width: CARD_W, height: CARD_H }}
-      className={`relative transition-opacity duration-300 ${dimmed ? 'opacity-25' : ''}`}
+      className={`relative transition-opacity duration-300 ${dimmed ? 'opacity-20' : ''}`}
     >
       <Handle type="target" position={Position.Top} id="top" className={HANDLE} />
       <Handle type="target" position={Position.Left} id="left" className={HANDLE} />
@@ -56,19 +71,28 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
       <button
         type="button"
         onClick={() => onOpen(person.id)}
-        aria-label={t('tree.openDetails', { name: fullName(person) })}
+        aria-label={t('tree.openDetails', { name })}
+        title={name}
         className={`flex h-full w-full items-center gap-2.5 rounded-xl border border-l-4 bg-white px-3 text-left shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-emerald-500 dark:bg-stone-900 ${
           GENDER_ACCENT[person.gender]
         } ${
           person.isDeceased
             ? 'border-dashed border-stone-400 dark:border-stone-600'
             : 'border-stone-300 dark:border-stone-700'
-        } ${highlighted ? 'ring-4 ring-amber-400 dark:ring-amber-500' : ''}`}
+        } ${ROLE_RING[role]}`}
       >
         <Avatar person={person} size="sm" />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold text-stone-900 dark:text-stone-100">
-            {fullName(person)}
+          <span
+            className="block text-sm font-semibold leading-tight text-stone-900 dark:text-stone-100"
+            style={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+            }}
+          >
+            {name}
           </span>
           {person.nickname && (
             <span className="block truncate text-xs text-stone-400">“{person.nickname}”</span>
@@ -90,8 +114,8 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
           <button
             type="button"
             className="quick-add absolute -right-3 top-1/2 z-10 -translate-y-1/2"
-            title={t('tree.quickSpouse', { name: fullName(person) })}
-            aria-label={t('tree.quickSpouse', { name: fullName(person) })}
+            title={t('tree.quickSpouse', { name })}
+            aria-label={t('tree.quickSpouse', { name })}
             onClick={(event) => {
               event.stopPropagation();
               onQuickAdd('spouse', person.id);
@@ -102,8 +126,8 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
           <button
             type="button"
             className="quick-add absolute -bottom-3 right-5 z-10"
-            title={t('tree.quickChild', { name: fullName(person) })}
-            aria-label={t('tree.quickChild', { name: fullName(person) })}
+            title={t('tree.quickChild', { name })}
+            aria-label={t('tree.quickChild', { name })}
             onClick={(event) => {
               event.stopPropagation();
               onQuickAdd('child', person.id);
@@ -115,8 +139,8 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
             <button
               type="button"
               className="quick-add absolute -top-3 left-1/2 z-10 -translate-x-1/2"
-              title={t('tree.quickParent', { name: fullName(person) })}
-              aria-label={t('tree.quickParent', { name: fullName(person) })}
+              title={t('tree.quickParent', { name })}
+              aria-label={t('tree.quickParent', { name })}
               onClick={(event) => {
                 event.stopPropagation();
                 onQuickAdd('parent', person.id);

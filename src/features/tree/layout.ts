@@ -4,22 +4,32 @@ import type { FamilyPerson } from '../../types/family';
 import { buildIndex, findFounders, isDivorced, sortByBirth } from '../../utils/family';
 import type { PersonIndex } from '../../utils/family';
 
-export const CARD_W = 224;
-export const CARD_H = 112;
-const SPOUSE_GAP = 44;
-// Tighter than the spouse gap so sibling branches pack in and the tree stays
-// as narrow as possible; the extra LEVEL_GAP keeps the green child lines from
-// crowding the card rows above and below them.
-const SIBLING_GAP = 28;
-const LEVEL_GAP = 148;
-const ROOT_GAP = 72;
+// Cards are wide enough to show a full "First Last" name across two lines and
+// tall enough for the name, nickname, dates and the gender/deceased badges.
+export const CARD_W = 248;
+export const CARD_H = 124;
+
+export type TreeOrientation = 'vertical' | 'horizontal';
+export type TreeSpacing = 'comfortable' | 'compact';
+
+/** Gap sizes per spacing mode (comfortable = airy, compact = dense). */
+const SPACING: Record<
+  TreeSpacing,
+  { spouse: number; sibling: number; level: number; root: number }
+> = {
+  comfortable: { spouse: 44, sibling: 36, level: 150, root: 80 },
+  compact: { spouse: 32, sibling: 20, level: 112, root: 56 },
+};
+
 const JUNCTION = 10;
-// Child connectors run along a horizontal "bus" just above the children. Each
-// couple gets its own lane height so a long cross-family link crosses other
-// buses instead of running on top of them (see ChildEdge).
+// Child connectors run along a "bus" just before the children. Each couple
+// gets its own lane so a long cross-family link crosses other buses instead
+// of running on top of them (see ChildEdge).
 const BUS_BASE = 34;
 const BUS_STEP = 22;
 const BUS_LANES = 3;
+// Room reserved before each generation row for its label chip.
+const GEN_LABEL_GAP = 132;
 
 /**
  * How many whole generations open on a family's first view before deeper
@@ -33,9 +43,20 @@ export interface PersonNodeData extends Record<string, unknown> {
   collapsible: boolean;
   collapsed: boolean;
   hiddenCount: number;
+  generation: number;
 }
 
 export type PersonFlowNode = Node<PersonNodeData, 'person'>;
+
+export interface GenLabelData extends Record<string, unknown> {
+  generation: number;
+  orientation: TreeOrientation;
+}
+
+export interface TreeLayoutOptions {
+  orientation?: TreeOrientation;
+  spacing?: TreeSpacing;
+}
 
 /**
  * A layout unit: one "anchor" person (usually a blood descendant) plus the
@@ -111,10 +132,10 @@ function buildUnit(
   return { anchorId, memberIds, children, collapsed, hiddenCount, width: 0 };
 }
 
-function measure(unit: Unit): number {
-  const clusterW = unit.memberIds.length * CARD_W + (unit.memberIds.length - 1) * SPOUSE_GAP;
+function measure(unit: Unit, spouseGap: number, siblingGap: number): number {
+  const clusterW = unit.memberIds.length * CARD_W + (unit.memberIds.length - 1) * spouseGap;
   const childrenW = unit.children.reduce(
-    (sum, child, i) => sum + measure(child) + (i > 0 ? SIBLING_GAP : 0),
+    (sum, child, i) => sum + measure(child, spouseGap, siblingGap) + (i > 0 ? siblingGap : 0),
     0,
   );
   unit.width = Math.max(clusterW, childrenW);
@@ -124,12 +145,29 @@ function measure(unit: Unit): number {
 export interface TreeLayout {
   nodes: PersonFlowNode[];
   junctionNodes: Node[];
+  genLabelNodes: Node<GenLabelData, 'genLabel'>[];
   edges: Edge[];
   positions: Map<string, { x: number; y: number }>;
 }
 
+// Reflecting positions across the main diagonal (x,y)->(y,x) turns the
+// top-down layout into a left-to-right one. Handles must be remapped to match
+// their new geometric side.
+const HANDLE_REFLECT: Record<string, string> = {
+  top: 'left',
+  left: 'top',
+  right: 'bottom',
+  bottom: 'right',
+};
+
 /** Compute node positions and relationship edges for the whole family. */
-export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<string>): TreeLayout {
+export function computeTreeLayout(
+  people: FamilyPerson[],
+  collapsedIds: Set<string>,
+  options: TreeLayoutOptions = {},
+): TreeLayout {
+  const orientation = options.orientation ?? 'vertical';
+  const gap = SPACING[options.spacing ?? 'comfortable'];
   const index = buildIndex(people);
   const visited = new Set<string>();
   const suppressed = new Set<string>();
@@ -162,15 +200,17 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
   const edges: Edge[] = [];
   const positions = new Map<string, { x: number; y: number }>();
   const junctionByPair = new Map<string, string>();
+  const depthByNode = new Map<string, number>();
 
   function place(unit: Unit, x: number, depth: number): void {
-    const y = depth * (CARD_H + LEVEL_GAP);
-    const clusterW = unit.memberIds.length * CARD_W + (unit.memberIds.length - 1) * SPOUSE_GAP;
+    const y = depth * (CARD_H + gap.level);
+    const clusterW = unit.memberIds.length * CARD_W + (unit.memberIds.length - 1) * gap.spouse;
     const clusterX = x + (unit.width - clusterW) / 2;
 
     unit.memberIds.forEach((memberId, i) => {
-      const memberX = clusterX + i * (CARD_W + SPOUSE_GAP);
+      const memberX = clusterX + i * (CARD_W + gap.spouse);
       positions.set(memberId, { x: memberX, y });
+      depthByNode.set(memberId, depth);
       nodes.push({
         id: memberId,
         type: 'person',
@@ -184,6 +224,7 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
           collapsible: memberId === unit.anchorId && (unit.children.length > 0 || unit.collapsed),
           collapsed: unit.collapsed,
           hiddenCount: unit.hiddenCount,
+          generation: depth + 1,
         },
         draggable: false,
         connectable: false,
@@ -202,10 +243,6 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
       const sharedChildren = leftPerson.childIds.filter((id) =>
         rightPerson.childIds.includes(id),
       );
-      // Every couple is either married (solid line) or divorced (broken grey
-      // line) — co-parents count as married unless marked divorced. Adjacent
-      // members that are neither (e.g. the two spouses of a twice-married
-      // anchor standing on either side of them) get no line at all.
       if (married || sharedChildren.length > 0) {
         edges.push({
           id: `spouse-${left}-${right}`,
@@ -222,14 +259,14 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
         const pairKey = [left, right].sort().join('|');
         const junctionId = `junction-${pairKey}`;
         junctionByPair.set(pairKey, junctionId);
-        const gapCenter = positions.get(left)!.x + CARD_W + SPOUSE_GAP / 2;
+        const gapCenter = positions.get(left)!.x + CARD_W + gap.spouse / 2;
         junctionNodes.push({
           id: junctionId,
           type: 'junction',
           position: { x: gapCenter - JUNCTION / 2, y: y + CARD_H / 2 - JUNCTION / 2 },
           width: JUNCTION,
           height: JUNCTION,
-          data: {},
+          data: { orientation },
           draggable: false,
           selectable: false,
           connectable: false,
@@ -240,23 +277,23 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
     let childX =
       x +
       (unit.width -
-        unit.children.reduce((sum, c, i) => sum + c.width + (i > 0 ? SIBLING_GAP : 0), 0)) /
+        unit.children.reduce((sum, c, i) => sum + c.width + (i > 0 ? gap.sibling : 0), 0)) /
         2;
     for (const child of unit.children) {
       place(child, childX, depth + 1);
-      childX += child.width + SIBLING_GAP;
+      childX += child.width + gap.sibling;
     }
   }
 
   let rootX = 0;
   for (const root of roots) {
-    measure(root);
+    measure(root, gap.spouse, gap.sibling);
     place(root, rootX, 0);
-    rootX += root.width + ROOT_GAP;
+    rootX += root.width + gap.root;
   }
 
-  // Each child connector's source (a couple's junction, or a lone parent) keeps
-  // a stable bus lane so all siblings share one trunk while neighbouring
+  // Each child connector's source (a couple's junction, or a lone parent)
+  // keeps a stable bus lane so all siblings share one trunk while neighbouring
   // couples sit at different heights.
   const laneBySource = new Map<string, number>();
   const busOffsetFor = (sourceId: string): number => {
@@ -286,7 +323,7 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
         target: person.id,
         targetHandle: 'top',
         type: 'child',
-        data: { busOffset: busOffsetFor(junctionId) },
+        data: { busOffset: busOffsetFor(junctionId), orientation },
         className: 'edge-child',
         markerEnd: childMarker,
         focusable: false,
@@ -300,7 +337,7 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
           target: person.id,
           targetHandle: 'top',
           type: 'child',
-          data: { busOffset: busOffsetFor(parentId) },
+          data: { busOffset: busOffsetFor(parentId), orientation },
           className: 'edge-child',
           markerEnd: childMarker,
           focusable: false,
@@ -309,5 +346,52 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
     }
   }
 
-  return { nodes, junctionNodes, edges, positions };
+  // One label chip per generation row, placed just before the row's first card.
+  const genLabelNodes: Node<GenLabelData, 'genLabel'>[] = [];
+  const rowMinX = new Map<number, number>();
+  for (const node of nodes) {
+    const depth = depthByNode.get(node.id) ?? 0;
+    rowMinX.set(depth, Math.min(rowMinX.get(depth) ?? Infinity, node.position.x));
+  }
+  for (const [depth, minX] of rowMinX) {
+    genLabelNodes.push({
+      id: `gen-${depth}`,
+      type: 'genLabel',
+      position: { x: minX - GEN_LABEL_GAP, y: depth * (CARD_H + gap.level) + CARD_H / 2 - 16 },
+      width: GEN_LABEL_GAP - 24,
+      height: 32,
+      data: { generation: depth + 1, orientation },
+      draggable: false,
+      selectable: false,
+      connectable: false,
+    });
+  }
+
+  // Horizontal orientation: reflect every position across the main diagonal
+  // and remap edge handles to their new sides. The layout maths above always
+  // runs top-down; this projects it to left-to-right when requested.
+  if (orientation === 'horizontal') {
+    // Reflect positions across the main diagonal (x<->y) in place.
+    const swap = (n: Node) => {
+      n.position = { x: n.position.y, y: n.position.x };
+    };
+    for (const n of nodes) swap(n);
+    for (const n of junctionNodes) swap(n);
+    for (const n of genLabelNodes) swap(n);
+    for (const [, pos] of positions) {
+      const px = pos.y;
+      pos.y = pos.x;
+      pos.x = px;
+    }
+    for (const edge of edges) {
+      if (edge.sourceHandle && HANDLE_REFLECT[edge.sourceHandle]) {
+        edge.sourceHandle = HANDLE_REFLECT[edge.sourceHandle];
+      }
+      if (edge.targetHandle && HANDLE_REFLECT[edge.targetHandle]) {
+        edge.targetHandle = HANDLE_REFLECT[edge.targetHandle];
+      }
+    }
+  }
+
+  return { nodes, junctionNodes, genLabelNodes, edges, positions };
 }

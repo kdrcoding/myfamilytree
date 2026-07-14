@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Background,
   BackgroundVariant,
@@ -9,14 +10,20 @@ import {
   ReactFlowProvider,
   useReactFlow,
 } from '@xyflow/react';
-import type { Edge, EdgeTypes, Node, NodeTypes } from '@xyflow/react';
+import type { Edge, EdgeTypes, Node, NodeTypes, ReactFlowInstance } from '@xyflow/react';
 import {
   ChevronsDownUp,
   ChevronsUpDown,
   Image as ImageIcon,
+  Link as LinkIcon,
   Lock,
   LockOpen,
   LogOut,
+  Maximize,
+  MoreHorizontal,
+  Rows3,
+  Columns3,
+  Scan,
   Search,
   TreePine,
   UserPlus,
@@ -32,21 +39,28 @@ import { useToast } from '../context/ToastContext';
 import { usePersistentState } from '../hooks/usePersistentState';
 import { useT } from '../i18n/useT';
 import { STORAGE_KEYS } from '../utils/storage';
-import { getAncestorIds, fullName } from '../utils/family';
+import { getAncestorIds, getDescendantIds, fullName } from '../utils/family';
 import { matchesSearch } from '../utils/filters';
 import { MadeByKadir } from '../components/MadeByKadir';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { PersonDetailsModal } from '../components/PersonDetailsModal';
 import { PersonFormModal } from '../components/PersonFormModal';
 import { UnlockModal } from '../components/UnlockModal';
-import { computeTreeLayout, CARD_H, CARD_W } from '../features/tree/layout';
+import {
+  computeTreeLayout,
+  CARD_H,
+  CARD_W,
+  type TreeOrientation,
+  type TreeSpacing,
+} from '../features/tree/layout';
 import { JunctionNode } from '../features/tree/JunctionNode';
+import { GenLabelNode } from '../features/tree/GenLabelNode';
 import { ChildEdge } from '../features/tree/ChildEdge';
 import { PersonNode } from '../features/tree/PersonNode';
 import { TreeInteractionContext } from '../features/tree/TreeInteractionContext';
-import type { TreeInteraction } from '../features/tree/TreeInteractionContext';
+import type { SelectionRole, TreeInteraction } from '../features/tree/TreeInteractionContext';
 
-const nodeTypes: NodeTypes = { person: PersonNode, junction: JunctionNode };
+const nodeTypes: NodeTypes = { person: PersonNode, junction: JunctionNode, genLabel: GenLabelNode };
 const edgeTypes: EdgeTypes = { child: ChildEdge };
 
 function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) {
@@ -70,10 +84,8 @@ function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) 
 
   return (
     <div
-      className="relative w-full sm:w-72"
+      className="relative min-w-0 flex-1 sm:w-72 sm:flex-none"
       onBlur={(e) => {
-        // Close only when focus leaves the whole widget, so tabbing from the
-        // input into a result keeps the list open.
         if (!e.currentTarget.contains(e.relatedTarget as Element | null)) {
           setOpen(false);
           setActiveIndex(-1);
@@ -144,16 +156,99 @@ function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) 
   );
 }
 
+/** Small dropdown holding the secondary / view actions so the bar never clips. */
+function MoreMenu({ children, label }: { children: React.ReactNode; label: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      // `Node` is shadowed by React Flow's Node type in this module; use the
+      // element type for the DOM containment check.
+      if (ref.current && !ref.current.contains(e.target as HTMLElement)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        className="btn-secondary"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <MoreHorizontal className="h-4 w-4" aria-hidden />
+        <span className="hidden sm:inline">{label}</span>
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 z-40 mt-1 w-60 overflow-hidden rounded-xl border border-stone-200 bg-white p-1 shadow-xl dark:border-stone-700 dark:bg-stone-900"
+          onClick={() => setOpen(false)}
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MenuItem({
+  icon,
+  label,
+  onClick,
+  disabled,
+  active,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  active?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      disabled={disabled}
+      onClick={onClick}
+      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors disabled:opacity-40 ${
+        active
+          ? 'bg-emerald-50 font-semibold text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
+          : 'text-stone-700 hover:bg-stone-100 dark:text-stone-200 dark:hover:bg-stone-800'
+      }`}
+    >
+      <span className="shrink-0 text-stone-500 dark:text-stone-400">{icon}</span>
+      {label}
+    </button>
+  );
+}
+
+function MenuSeparator() {
+  return <div className="my-1 border-t border-stone-200 dark:border-stone-700" />;
+}
+
 function TreeCanvas({
   nodes,
   edges,
   focusId,
   onFocused,
+  onReady,
 }: {
   nodes: Node[];
   edges: Edge[];
   focusId: string | null;
   onFocused: () => void;
+  onReady: (instance: ReactFlowInstance) => void;
 }) {
   const { setCenter } = useReactFlow();
   const t = useT();
@@ -171,24 +266,20 @@ function TreeCanvas({
   }, [focusId, nodes, setCenter, onFocused]);
 
   // Start centered on the founding couple at a readable zoom, instead of
-  // squeezing the whole tree into view (which makes every card unreadably
-  // small on large families and phones). "Fit view" in the controls still
-  // shows everything. Phones get a closer zoom — at 0.75 the card text is
-  // too small to read on a pocket screen.
-  const handleInit = useCallback(() => {
-    const first = nodes.find((n) => n.type === 'person');
-    if (first) {
-      const isPhone = window.innerWidth < 640;
-      // Pull back a little on phones so the founding couple AND the start of
-      // their children show at once, instead of filling the screen with a
-      // single card. 0.8 keeps the card text legible while giving context —
-      // and at this zoom the left card is no longer chopped off, which was the
-      // only reason phones used to centre on a single card.
-      const zoom = isPhone ? 0.8 : 0.75;
-      const centerX = first.position.x + CARD_W + 24;
-      setCenter(centerX, first.position.y + CARD_H * 1.4, { zoom });
-    }
-  }, [nodes, setCenter]);
+  // squeezing the whole tree into view (unreadable on large families/phones).
+  const handleInit = useCallback(
+    (instance: ReactFlowInstance) => {
+      onReady(instance);
+      const first = nodes.find((n) => n.type === 'person');
+      if (first) {
+        const isPhone = window.innerWidth < 640;
+        const zoom = isPhone ? 0.8 : 0.75;
+        const centerX = first.position.x + CARD_W + 24;
+        setCenter(centerX, first.position.y + CARD_H * 1.4, { zoom });
+      }
+    },
+    [nodes, setCenter, onReady],
+  );
 
   return (
     <ReactFlow
@@ -204,6 +295,7 @@ function TreeCanvas({
       nodesFocusable={false}
       edgesFocusable={false}
       zoomOnDoubleClick={false}
+      proOptions={{ hideAttribution: true }}
     >
       <Background
         variant={BackgroundVariant.Dots}
@@ -268,15 +360,13 @@ function TreeCanvas({
 
 export function TreePage() {
   const { people, index, deletePerson } = useFamily();
-  const { canEdit, canDelete, role, signOut } = useAuth();
+  const { canEdit, canDelete, signOut } = useAuth();
   const { settings } = useSettings();
   const { toast } = useToast();
   const confirm = useConfirm();
   const t = useT();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // The tree defaults to fully expanded so every family member is shown on
-  // load. Collapsing is opt-in: the owner's toolbar buttons, or the per-card
-  // chevron anyone can tap. The choice persists per browser.
   const [collapsedList, setCollapsedList] = usePersistentState<string[]>(
     STORAGE_KEYS.collapsed,
     [],
@@ -284,26 +374,39 @@ export function TreePage() {
   );
   const collapsed = useMemo(() => new Set(collapsedList), [collapsedList]);
 
+  const [orientation, setOrientation] = usePersistentState<TreeOrientation>(
+    STORAGE_KEYS.treeOrientation,
+    'vertical',
+    (v): v is TreeOrientation => v === 'vertical' || v === 'horizontal',
+  );
+  const [spacing, setSpacing] = usePersistentState<TreeSpacing>(
+    STORAGE_KEYS.treeSpacing,
+    'comfortable',
+    (v): v is TreeSpacing => v === 'comfortable' || v === 'compact',
+  );
+
   const [editMode, setEditMode] = useState(false);
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [detailsId, setDetailsId] = useState<string | null>(null);
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [form, setForm] = useState<{ person?: FamilyPerson; link?: RelationLink } | null>(null);
-  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
+  const rfRef = useRef<ReactFlowInstance | null>(null);
 
-  // Signing out (or a password change) always leaves edit mode.
   useEffect(() => {
     if (!canEdit && editMode) setEditMode(false);
   }, [canEdit, editMode]);
 
-  const layout = useMemo(() => computeTreeLayout(people, collapsed), [people, collapsed]);
-  const flowNodes = useMemo(() => [...layout.nodes, ...layout.junctionNodes] as Node[], [layout]);
-
-  // Filtering was removed from the tree toolbar, so no node is ever dimmed.
-  // Kept as a stable empty set so the node-interaction contract is unchanged.
-  const dimmedIds = useMemo(() => new Set<string>(), []);
+  const layout = useMemo(
+    () => computeTreeLayout(people, collapsed, { orientation, spacing }),
+    [people, collapsed, orientation, spacing],
+  );
+  const flowNodes = useMemo(
+    () => [...layout.genLabelNodes, ...layout.nodes, ...layout.junctionNodes] as Node[],
+    [layout],
+  );
 
   const toggleCollapse = useCallback(
     (anchorId: string) => {
@@ -314,38 +417,110 @@ export function TreePage() {
     [setCollapsedList],
   );
 
+  // Relatives of the selected person, for highlight + dimming.
+  const selection = useMemo(() => {
+    if (!selectedId || !index.get(selectedId)) return null;
+    const person = index.get(selectedId)!;
+    return {
+      ancestors: getAncestorIds(selectedId, index),
+      descendants: getDescendantIds(selectedId, index),
+      spouses: new Set(person.spouseIds),
+    };
+  }, [selectedId, index]);
+
+  const roleOf = useCallback(
+    (personId: string): SelectionRole => {
+      if (!selectedId || !selection) return 'none';
+      if (personId === selectedId) return 'selected';
+      if (selection.spouses.has(personId)) return 'spouse';
+      if (selection.ancestors.has(personId)) return 'ancestor';
+      if (selection.descendants.has(personId)) return 'descendant';
+      return 'unrelated';
+    },
+    [selectedId, selection],
+  );
+
+  const openDetails = useCallback((id: string) => {
+    setDetailsId(id);
+    setSelectedId(id); // opening a card highlights their relatives too
+  }, []);
+
   const interaction = useMemo<TreeInteraction>(
     () => ({
-      onOpen: (id) => setDetailsId(id),
+      onOpen: openDetails,
       onToggleCollapse: toggleCollapse,
       onQuickAdd: (kind, personId) => setForm({ link: { kind, targetId: personId } }),
       editMode,
-      highlightedId,
-      dimmedIds,
+      selectedId,
+      roleOf,
     }),
-    [toggleCollapse, editMode, highlightedId, dimmedIds],
+    [openDetails, toggleCollapse, editMode, selectedId, roleOf],
   );
 
   const focusPerson = useCallback(
     (person: FamilyPerson) => {
       // Expand every collapsed branch between the founders and this person.
-      // Married-in people have no ancestors of their own, so their spouses'
-      // branches must open too — otherwise their node stays hidden.
       const ancestors = getAncestorIds(person.id, index);
       for (const spouseId of person.spouseIds) {
         ancestors.add(spouseId);
         for (const id of getAncestorIds(spouseId, index)) ancestors.add(id);
       }
       setCollapsedList((list) => list.filter((id) => !ancestors.has(id) && id !== person.id));
-      setHighlightedId(person.id);
+      setSelectedId(person.id);
       setFocusId(person.id);
     },
     [index, setCollapsedList],
   );
 
+  // Deep link: ?person=<id> centers and highlights that person on load.
+  const appliedParamRef = useRef<string | null>(null);
+  useEffect(() => {
+    const personParam = searchParams.get('person');
+    if (!personParam || appliedParamRef.current === personParam) return;
+    const person = index.get(personParam);
+    if (person) {
+      appliedParamRef.current = personParam;
+      focusPerson(person);
+    }
+  }, [searchParams, index, focusPerson]);
+
   const collapseAll = () => {
     setCollapsedList(people.filter((p) => p.childIds.length > 0).map((p) => p.id));
     toast(t('tree.collapsedToast'), 'info');
+  };
+
+  // ---- View controls (need the live React Flow instance) --------------------
+  const fitEntireTree = () => rfRef.current?.fitView({ padding: 0.12, duration: 600 });
+
+  const fitSelectedBranch = () => {
+    if (!rfRef.current || !selectedId || !selection) return;
+    const branch = new Set<string>([selectedId, ...selection.descendants, ...selection.spouses]);
+    const nodes = flowNodes.filter((n) => branch.has(n.id));
+    if (nodes.length === 0) return;
+    rfRef.current.fitView({ nodes: nodes.map((n) => ({ id: n.id })), padding: 0.2, duration: 600 });
+  };
+
+  const resetView = () => {
+    const first = flowNodes.find((n) => n.type === 'person');
+    if (!rfRef.current || !first) return;
+    const isPhone = window.innerWidth < 640;
+    rfRef.current.setCenter(first.position.x + CARD_W + 24, first.position.y + CARD_H * 1.4, {
+      zoom: isPhone ? 0.8 : 0.75,
+      duration: 600,
+    });
+  };
+
+  const copyShareLink = async () => {
+    if (!selectedId) return;
+    const url = `${window.location.origin}${window.location.pathname}?person=${encodeURIComponent(selectedId)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast(t('tree.linkCopied'), 'success');
+    } catch {
+      // Reflect the id in the address bar as a fallback the user can copy.
+      setSearchParams({ person: selectedId });
+      toast(t('tree.linkCopyFail'), 'info');
+    }
   };
 
   const handleDelete = useCallback(
@@ -366,7 +541,6 @@ export function TreePage() {
 
   const handleExportPng = async () => {
     try {
-      // Loaded on demand — html-to-image is heavy and only needed on export.
       const { exportTreeAsPng } = await import('../features/tree/exportPng');
       await exportTreeAsPng(flowNodes, settings.theme === 'dark');
       toast(t('tree.pngDone'));
@@ -375,11 +549,6 @@ export function TreePage() {
     }
   };
 
-  // "Edit" tapped from a person's details popup. Editors who are already
-  // unlocked go straight to the form; everyone else gets the password prompt
-  // first and lands on the form once they unlock. This is the discoverable
-  // path to editing on phones, where the toolbar's edit-mode toggle is easy
-  // to miss.
   const requestEdit = (person: FamilyPerson) => {
     setDetailsId(null);
     if (canEdit) {
@@ -405,43 +574,13 @@ export function TreePage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-stone-200 bg-white px-4 py-3 dark:border-stone-800 dark:bg-stone-900">
+        {/* One flex row that wraps cleanly at any width — no horizontal scroll,
+            no clipping. Search grows; the actions stay grouped on the right. */}
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2">
           <TreeSearch onSelect={focusPerson} />
 
-          {/* On phones all controls live in one horizontally swipeable row
-              instead of stacking into a wall of buttons; ≥sm this wrapper
-              disappears (display:contents) and the groups wrap as before. */}
-          <div className="scrollbar-none flex w-full items-center gap-1.5 overflow-x-auto sm:contents">
-          {/* Tree-wide controls are owner-only. Export/Import of the whole
-              dataset live on the Settings page (also owner-only); the toolbar
-              keeps just the view controls + on-canvas PNG here. */}
-          {canDelete && (
-            <div className="flex shrink-0 items-center gap-1.5 sm:flex-wrap">
-              <button type="button" className="btn-secondary" onClick={() => setCollapsedList([])}>
-                <ChevronsUpDown className="h-4 w-4" aria-hidden />
-                <span className="hidden sm:inline">{t('tree.expandAll')}</span>
-              </button>
-              <button type="button" className="btn-secondary" onClick={collapseAll}>
-                <ChevronsDownUp className="h-4 w-4" aria-hidden />
-                <span className="hidden sm:inline">{t('tree.collapseAll')}</span>
-              </button>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={handleExportPng}
-                title={t('tree.pngTitle')}
-              >
-                <ImageIcon className="h-4 w-4" aria-hidden />
-                <span className="hidden sm:inline">{t('tree.png')}</span>
-              </button>
-            </div>
-          )}
-
-          {/* Edit / Add stay pinned to the right edge while the utility
-              buttons scroll underneath, so the way into editing is never
-              hidden off-screen on a phone. On ≥sm the toolbar wraps normally
-              and this group just floats right as before. */}
-          <div className="sticky right-0 z-10 ml-auto flex shrink-0 items-center gap-1.5 bg-white pl-2 shadow-[-10px_0_8px_-6px_rgba(0,0,0,0.08)] sm:static sm:bg-transparent sm:pl-0 sm:shadow-none dark:bg-stone-900 sm:dark:bg-transparent">
+          <div className="ml-auto flex items-center gap-1.5">
+            {/* Essential actions stay visible. */}
             {!editMode && (
               <button
                 type="button"
@@ -473,49 +612,120 @@ export function TreePage() {
               ) : (
                 <Lock className="h-4 w-4" aria-hidden />
               )}
-              {editMode ? t('tree.editing') : t('tree.editMode')}
+              <span className="hidden sm:inline">
+                {editMode ? t('tree.editing') : t('tree.editMode')}
+              </span>
             </button>
-            {canEdit && (
-              <button
-                type="button"
-                className="icon-btn"
-                onClick={() => {
-                  signOut();
-                  toast(t('tree.lockedToast'), 'info');
-                }}
-                title={t('tree.signOutTitle', {
-                  role: role === 'owner' ? t('tree.roleOwner') : t('tree.roleEditor'),
-                })}
-                aria-label={t('tree.signOutLabel')}
-              >
-                <LogOut className="h-4 w-4" aria-hidden />
-              </button>
-            )}
-          </div>
+
+            {/* Secondary + view actions live in the More menu so the bar never
+                overflows on small screens. */}
+            <MoreMenu label={t('tree.more')}>
+              <MenuItem
+                icon={<Maximize className="h-4 w-4" />}
+                label={t('tree.fitTree')}
+                onClick={fitEntireTree}
+              />
+              <MenuItem
+                icon={<Scan className="h-4 w-4" />}
+                label={t('tree.fitBranch')}
+                onClick={fitSelectedBranch}
+                disabled={!selectedId}
+              />
+              <MenuItem
+                icon={<TreePine className="h-4 w-4" />}
+                label={t('tree.resetView')}
+                onClick={resetView}
+              />
+              <MenuItem
+                icon={<LinkIcon className="h-4 w-4" />}
+                label={t('tree.copyLink')}
+                onClick={() => void copyShareLink()}
+                disabled={!selectedId}
+              />
+              <MenuSeparator />
+              <MenuItem
+                icon={<Rows3 className="h-4 w-4" />}
+                label={t('tree.layoutVertical')}
+                onClick={() => setOrientation('vertical')}
+                active={orientation === 'vertical'}
+              />
+              <MenuItem
+                icon={<Columns3 className="h-4 w-4" />}
+                label={t('tree.layoutHorizontal')}
+                onClick={() => setOrientation('horizontal')}
+                active={orientation === 'horizontal'}
+              />
+              <MenuSeparator />
+              <MenuItem
+                icon={<ChevronsUpDown className="h-4 w-4" />}
+                label={t('tree.spacingComfortable')}
+                onClick={() => setSpacing('comfortable')}
+                active={spacing === 'comfortable'}
+              />
+              <MenuItem
+                icon={<ChevronsDownUp className="h-4 w-4" />}
+                label={t('tree.spacingCompact')}
+                onClick={() => setSpacing('compact')}
+                active={spacing === 'compact'}
+              />
+              {canDelete && (
+                <>
+                  <MenuSeparator />
+                  <MenuItem
+                    icon={<ChevronsUpDown className="h-4 w-4" />}
+                    label={t('tree.expandAll')}
+                    onClick={() => setCollapsedList([])}
+                  />
+                  <MenuItem
+                    icon={<ChevronsDownUp className="h-4 w-4" />}
+                    label={t('tree.collapseAll')}
+                    onClick={collapseAll}
+                  />
+                  <MenuItem
+                    icon={<ImageIcon className="h-4 w-4" />}
+                    label={t('tree.png')}
+                    onClick={() => void handleExportPng()}
+                  />
+                </>
+              )}
+              {canEdit && (
+                <>
+                  <MenuSeparator />
+                  <MenuItem
+                    icon={<LogOut className="h-4 w-4" />}
+                    label={t('tree.signOutLabel')}
+                    onClick={() => {
+                      signOut();
+                      toast(t('tree.lockedToast'), 'info');
+                    }}
+                  />
+                </>
+              )}
+            </MoreMenu>
           </div>
         </div>
 
-        {highlightedId && (
+        {selectedId && (
           <div className="mx-auto mt-2 flex max-w-[1600px] flex-wrap items-center gap-2">
             <button
               type="button"
               className="btn-secondary !py-1.5 !text-xs"
-              onClick={() => setHighlightedId(null)}
+              onClick={() => setSelectedId(null)}
             >
               <X className="h-3.5 w-3.5" aria-hidden />
               {t('tree.clearHighlight')}
             </button>
+            <span className="hidden items-center gap-2 text-xs text-stone-500 sm:flex dark:text-stone-400">
+              <LegendDot className="bg-amber-400" /> {t('tree.hlSelected')}
+              <LegendDot className="bg-sky-400" /> {t('tree.hlAncestors')}
+              <LegendDot className="bg-emerald-400" /> {t('tree.hlDescendants')}
+              <LegendDot className="bg-rose-400" /> {t('tree.hlSpouses')}
+            </span>
           </div>
         )}
       </div>
 
       <div className="relative min-h-[420px] flex-1" style={{ height: 'calc(100dvh - 12rem)' }}>
-        {/* Absolute positioning gives React Flow a rock-solid 100% height;
-            percentage heights against flex-grown parents resolve to 0 in
-            some browsers, which rendered the whole tree invisible.
-            The canvas colour lives here (not on <ReactFlow>) because React
-            Flow forces its own root background to transparent, which would
-            otherwise let the page colour show through and wash the tree out. */}
         <div className="absolute inset-0 bg-slate-300 dark:bg-stone-950">
           <TreeInteractionContext.Provider value={interaction}>
             <ReactFlowProvider>
@@ -524,6 +734,7 @@ export function TreePage() {
                 edges={layout.edges}
                 focusId={focusId}
                 onFocused={() => setFocusId(null)}
+                onReady={(instance) => (rfRef.current = instance)}
               />
             </ReactFlowProvider>
           </TreeInteractionContext.Provider>
@@ -534,7 +745,7 @@ export function TreePage() {
         <PersonDetailsModal
           personId={detailsId}
           onClose={() => setDetailsId(null)}
-          onNavigate={(id) => setDetailsId(id)}
+          onNavigate={(id) => openDetails(id)}
           editMode={editMode}
           canDelete={canDelete}
           onEdit={(person) => {
@@ -550,7 +761,7 @@ export function TreePage() {
           {...form}
           onClose={() => setForm(null)}
           onSaved={(id) => {
-            setHighlightedId(id);
+            setSelectedId(id);
             setFocusId(id);
           }}
         />
@@ -563,8 +774,6 @@ export function TreePage() {
           }}
           onUnlocked={() => {
             setEditMode(true);
-            // If the user reached the password prompt by tapping "Edit" on a
-            // person, drop them straight into that person's edit form.
             const pending = pendingEditId ? index.get(pendingEditId) : null;
             if (pending) setForm({ person: pending });
             setPendingEditId(null);
@@ -574,6 +783,10 @@ export function TreePage() {
       {joinOpen && <JoinFamilyModal onClose={() => setJoinOpen(false)} />}
     </div>
   );
+}
+
+function LegendDot({ className }: { className: string }) {
+  return <span aria-hidden className={`inline-block h-2.5 w-2.5 rounded-full ${className}`} />;
 }
 
 function EmptyTreeState({ onAdd, children }: { onAdd: () => void; children?: React.ReactNode }) {
