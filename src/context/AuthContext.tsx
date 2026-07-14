@@ -36,44 +36,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (supabase) {
-      // Real authentication: the role comes from the signed-in Supabase
-      // account. Sessions persist and refresh automatically; signing out
-      // (or the account password changing) locks the site again.
-      removeKey(AUTH_KEY); // clean up the legacy hash credential
-      void supabase.auth.getSession().then(({ data }) => {
-        setRole(roleForEmail(data.session?.user.email));
-        setReady(true);
-      });
-      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-        setRole(roleForEmail(session?.user.email));
-      });
-      return () => sub.subscription.unsubscribe();
-    }
-
-    // No Supabase configured (local demo mode): fall back to the hash check.
+    // Restore the remembered credential: a legacy hash always restores
+    // (harmless when the database is locked down — data access still needs
+    // a real session), and a Supabase session upgrades/overrides it.
     const stored = loadJson<string>(AUTH_KEY, (v): v is string => typeof v === 'string');
     if (stored) {
       const restored = roleForHash(stored);
       if (restored === 'viewer') removeKey(AUTH_KEY);
-      setRole(restored);
+      else setRole(restored);
     }
-    setReady(true);
+    if (!supabase) {
+      setReady(true);
+      return;
+    }
+    void supabase.auth.getSession().then(({ data }) => {
+      const fromSession = roleForEmail(data.session?.user.email);
+      if (fromSession !== 'viewer') setRole(fromSession);
+      setReady(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      const fromSession = roleForEmail(session?.user.email);
+      if (fromSession !== 'viewer') setRole(fromSession);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   const signIn = useCallback(async (password: string): Promise<Role | null> => {
     if (supabase) {
-      // One shared password per role: try the owner account first, then the
-      // family account. Only these two accounts exist (sign-ups disabled).
+      // Real authentication first: one shared password per role, so try the
+      // owner account, then the family account (sign-ups are disabled).
       for (const email of [AUTH_EMAILS.owner, AUTH_EMAILS.editor]) {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (!error && data.session) {
           const found = roleForEmail(data.session.user.email);
-          setRole(found);
-          return found === 'viewer' ? null : found;
+          if (found !== 'viewer') {
+            setRole(found);
+            return found;
+          }
         }
       }
-      return null;
+      // The auth accounts may not exist yet (one-time dashboard setup not
+      // done). Fall back to the built-in hash check so the site keeps
+      // working until then; real auth takes over once the accounts exist.
     }
     const hash = await hashPassword(password);
     const found = roleForHash(hash);

@@ -10,6 +10,8 @@ import { useAuth } from './AuthContext';
 import { useSettings } from './SettingsContext';
 import { useToast } from './ToastContext';
 import { isSupabaseConfigured } from '../lib/supabase';
+import { logChange, summarizeFamilyChange } from '../lib/auditLog';
+import type { AuditAction } from '../lib/auditLog';
 import { autoBackup } from '../lib/backups';
 import { diffFamily, fetchFamily, isEmptyDiff, markSeeded, pushDiff } from '../lib/familyDb';
 import { validateFamilyData } from '../utils/validation';
@@ -102,10 +104,14 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
 
   /**
    * Apply a change locally, then persist exactly that change to Supabase.
-   * Resolves with whether the database write succeeded.
+   * Resolves with whether the database write succeeded. Saved changes are
+   * recorded in the owner-only change log with the given action.
    */
   const mutate = useCallback(
-    (updater: (current: FamilyPerson[]) => FamilyPerson[]): Promise<boolean> => {
+    (
+      updater: (current: FamilyPerson[]) => FamilyPerson[],
+      action: AuditAction = 'edit',
+    ): Promise<boolean> => {
       const prev = peopleRef.current;
       const next = updater(prev);
       if (next === prev) return Promise.resolve(true);
@@ -113,7 +119,13 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       setPeopleState(next);
       const diff = diffFamily(prev, next);
       if (isEmptyDiff(diff)) return Promise.resolve(true);
-      const pushed = pushQueue.current.then(() => pushDiff(diff).then(() => true));
+      const summary = summarizeFamilyChange(prev, next);
+      const pushed = pushQueue.current.then(() =>
+        pushDiff(diff).then(() => {
+          if (summary) logChange(action, summary);
+          return true;
+        }),
+      );
       pushQueue.current = pushed.catch(() => undefined);
       return pushed.catch((error: unknown) => {
         console.error('Failed to save family data to Supabase:', error);
@@ -145,14 +157,14 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         return translate(language, 'rel.genN', { n: rel.generation });
       },
       addPerson: (person, link) => {
-        mutate((current) => {
+        void mutate((current) => {
           let next = [...current, person];
           if (link) next = applyRelationLink(next, person.id, link);
           return next;
-        });
+        }, 'add');
       },
       updatePerson: (person, parentIds, spouseIds) => {
-        mutate((current) => {
+        void mutate((current) => {
           const existing = current.find((p) => p.id === person.id);
           if (!existing) return current;
           if (!isOwner) {
@@ -163,15 +175,15 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           }
           const replaced = current.map((p) => (p.id === person.id ? person : p));
           return setRelationships(replaced, person.id, parentIds, spouseIds);
-        });
+        }, 'edit');
       },
       setDivorcedStatus: (aId, bId, divorced) => {
-        void mutate((current) => setDivorced(current, aId, bId, divorced));
+        void mutate((current) => setDivorced(current, aId, bId, divorced), 'divorce');
       },
-      deletePerson: (id) => mutate((current) => removePerson(current, id)),
-      replaceAll: (newPeople) => mutate(() => normalizePeople(newPeople)),
+      deletePerson: (id) => void mutate((current) => removePerson(current, id), 'delete'),
+      replaceAll: (newPeople) => void mutate(() => normalizePeople(newPeople), 'import'),
       resetToSample: () => {
-        void mutate(() => DEFAULT_DATA).then((saved) => {
+        void mutate(() => DEFAULT_DATA, 'reset').then((saved) => {
           if (saved) void markSeeded('default-dataset');
         });
       },

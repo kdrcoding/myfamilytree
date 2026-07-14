@@ -48,6 +48,20 @@ export const en = {
   'settings.backupCounts': '{m} people · {r} relationships',
   'settings.backupsEmpty': 'No backups yet — one will be taken automatically.',
 
+  // Change log (owner only)
+  'settings.logTitle': 'Change log',
+  'settings.logIntro':
+    'Who changed what, and when — recorded automatically on every save. Only you can see this.',
+  'settings.logEmpty': 'Nothing recorded yet.',
+  'log.actorOwner': 'Owner',
+  'log.actorFamily': 'Family',
+  'log.add': 'Added',
+  'log.edit': 'Edited',
+  'log.delete': 'Deleted',
+  'log.divorce': 'Divorce status',
+  'log.import': 'Imported data',
+  'log.reset': 'Restored default data',
+
   // Site password gate
   'gate.title': 'This is a private family website',
   'gate.intro':
@@ -493,6 +507,19 @@ export const uz: Record<TKey, string> = {
   'settings.backupDownload': 'Yuklab olish',
   'settings.backupCounts': '{m} kishi · {r} aloqa',
   'settings.backupsEmpty': "Hozircha zaxira nusxalar yo'q — birinchisi avtomatik olinadi.",
+
+  'settings.logTitle': "O'zgarishlar tarixi",
+  'settings.logIntro':
+    "Kim, qachon va nimani o'zgartirgani — har bir saqlashda avtomatik yoziladi. Buni faqat siz ko'rasiz.",
+  'settings.logEmpty': "Hozircha hech narsa yozilmagan.",
+  'log.actorOwner': 'Egasi',
+  'log.actorFamily': "Oila a'zosi",
+  'log.add': "Qo'shildi",
+  'log.edit': 'Tahrirlandi',
+  'log.delete': "O'chirildi",
+  'log.divorce': 'Ajrashuv holati',
+  'log.import': "Ma'lumot import qilindi",
+  'log.reset': "Boshlang'ich ma'lumotlar tiklandi",
 
   'gate.title': 'Bu shaxsiy oilaviy sayt',
   'gate.intro':

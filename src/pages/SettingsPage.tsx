@@ -8,21 +8,132 @@ import {
   Languages,
   LogOut,
   Moon,
+  Pencil,
   RotateCcw,
+  ScrollText,
   ShieldCheck,
   Sun,
+  Trash2,
   Upload,
+  UserPlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
 import { useDataTransfer } from '../hooks/useDataTransfer';
 import { useLanguage, useT } from '../i18n/useT';
+import type { TKey } from '../i18n/translations';
 import { hashPassword } from '../config/access';
+import { listAuditLog } from '../lib/auditLog';
+import type { AuditEntry } from '../lib/auditLog';
 import { downloadBackup, forceBackup, listBackups } from '../lib/backups';
 import type { BackupMeta } from '../lib/backups';
 import { ToggleSwitch } from '../components/ui/ToggleSwitch';
 import { UnlockModal } from '../components/UnlockModal';
+
+/** Translated label for a changed field in the change log. */
+const FIELD_LABEL_KEYS: Record<string, TKey> = {
+  firstName: 'form.firstName',
+  lastName: 'form.lastName',
+  nickname: 'form.nickname',
+  gender: 'form.gender',
+  birthDate: 'form.birthDate',
+  deathDate: 'form.deathDate',
+  isDeceased: 'badge.deceased',
+  photo: 'form.photo',
+  city: 'form.city',
+  country: 'form.country',
+  occupation: 'form.occupation',
+  biography: 'form.bio',
+  parents: 'form.parents',
+  spouses: 'form.spouses',
+  children: 'person.children',
+  divorced: 'person.divorced',
+};
+
+const ACTION_LABEL_KEYS: Record<string, TKey> = {
+  add: 'log.add',
+  edit: 'log.edit',
+  delete: 'log.delete',
+  divorce: 'log.divorce',
+  import: 'log.import',
+  reset: 'log.reset',
+};
+
+/** Owner-only card: who changed what and when. */
+function ChangeLogCard() {
+  const t = useT();
+  const language = useLanguage();
+  const [entries, setEntries] = useState<AuditEntry[]>([]);
+
+  useEffect(() => {
+    listAuditLog().then(setEntries, (error: unknown) => {
+      console.error('Failed to load the change log:', error);
+    });
+  }, []);
+
+  const fieldLabel = (field: string) =>
+    FIELD_LABEL_KEYS[field] ? t(FIELD_LABEL_KEYS[field]) : field;
+
+  return (
+    <section className="card mt-4 p-6">
+      <h2 className="flex items-center gap-2 font-semibold">
+        <ScrollText className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.logTitle')}
+      </h2>
+      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('settings.logIntro')}</p>
+      {entries.length === 0 ? (
+        <p className="mt-3 text-sm text-stone-400">{t('settings.logEmpty')}</p>
+      ) : (
+        <ul className="mt-3 divide-y divide-stone-100 text-sm dark:divide-stone-800">
+          {entries.map((entry) => (
+            <li key={entry.id} className="py-2.5">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="font-medium text-stone-800 dark:text-stone-200">
+                  {ACTION_LABEL_KEYS[entry.action] ? t(ACTION_LABEL_KEYS[entry.action]) : entry.action}
+                </span>
+                <span
+                  className={`badge ${
+                    entry.actor.startsWith('owner@')
+                      ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                      : 'border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300'
+                  }`}
+                >
+                  {entry.actor.startsWith('owner@') ? t('log.actorOwner') : t('log.actorFamily')}
+                </span>
+                <span className="ml-auto text-xs text-stone-400">
+                  {new Date(entry.at).toLocaleString(language === 'uz' ? 'uz-UZ' : 'en-GB')}
+                </span>
+              </div>
+              <div className="mt-1 space-y-0.5 text-stone-600 dark:text-stone-300">
+                {entry.details.added && (
+                  <p className="flex items-start gap-1.5">
+                    <UserPlus className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden />
+                    <span>{entry.details.added.join(', ')}</span>
+                  </p>
+                )}
+                {entry.details.deleted && (
+                  <p className="flex items-start gap-1.5">
+                    <Trash2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" aria-hidden />
+                    <span>{entry.details.deleted.join(', ')}</span>
+                  </p>
+                )}
+                {entry.details.updated?.map((u, i) => (
+                  <p key={i} className="flex items-start gap-1.5">
+                    <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden />
+                    <span>
+                      {u.name}
+                      <span className="text-stone-400"> — {u.fields.map(fieldLabel).join(', ')}</span>
+                    </span>
+                  </p>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 /** Owner-only card: shows the automatic database snapshots. */
 function BackupsCard() {
@@ -333,6 +444,7 @@ export function SettingsPage() {
         {!canEdit && <p className="mt-2 text-xs text-stone-400">{t('settings.unlockNote')}</p>}
       </section>
 
+      {canDelete && <ChangeLogCard />}
       {canDelete && <BackupsCard />}
 
       {unlockOpen && <UnlockModal onClose={() => setUnlockOpen(false)} />}
