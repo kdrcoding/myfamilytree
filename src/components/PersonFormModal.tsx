@@ -595,7 +595,10 @@ export function PersonFormModal({
 
         {/* Sticky action bar: Save is always reachable, even mid-scroll on a
             long form — crucial on phones. */}
-        <div className="sticky bottom-0 z-10 -mx-5 -mb-5 mt-6 flex flex-wrap justify-end gap-2 border-t border-stone-200 bg-white/95 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:pb-3 dark:border-stone-700 dark:bg-stone-900/95">
+        {/* Sticky save bar. The modal panel has bottom padding inside its
+            scroll area; the negative bottom/margin let the bar cover that
+            strip so scrolled content never peeks out underneath it. */}
+        <div className="sticky bottom-[calc(-1*max(1.25rem,env(safe-area-inset-bottom)))] z-10 -mx-5 mb-[calc(-1*max(1.25rem,env(safe-area-inset-bottom)))] mt-6 flex flex-wrap justify-end gap-2 border-t border-stone-200 bg-white px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 dark:border-stone-700 dark:bg-stone-900">
           <button type="button" className="btn-secondary" onClick={onClose}>
             {t('common.cancel')}
           </button>

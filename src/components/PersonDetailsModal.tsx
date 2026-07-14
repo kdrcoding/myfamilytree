@@ -151,7 +151,7 @@ function SpouseChips({
                       : t('person.markDivorced', { name: fullName(spouse) })
                   }
                   aria-pressed={divorced}
-                  className={`rounded-full border p-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  className={`inline-flex h-[26px] w-[26px] items-center justify-center rounded-full border transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                     divorced
                       ? 'border-amber-400 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
                       : 'border-stone-300 bg-white text-stone-400 hover:border-amber-400 hover:text-amber-600 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-500 dark:hover:text-amber-400'
@@ -317,23 +317,27 @@ export function PersonDetailsModal({
         )}
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-stone-200 pt-4 dark:border-stone-700">
+      <div className="mt-5 border-t border-stone-200 pt-4 dark:border-stone-700">
         {editMode ? (
           <>
-            <div className="flex flex-wrap gap-1.5">
+            {/* Quick "add relative" buttons in a tidy 2-column grid, with the
+                edit/delete actions on their own row below. */}
+            <div className="grid grid-cols-2 gap-1.5">
               {(['spouse', 'child', 'parent', 'sibling'] as RelationKind[]).map((kind) => (
                 <button
                   key={kind}
                   type="button"
-                  className="btn-secondary !px-2.5 !py-1.5 !text-xs"
+                  className="btn-secondary justify-start !px-2.5 !py-1.5 !text-xs"
                   onClick={() => onAddRelative?.(kind, person)}
                 >
-                  <UserPlus className="h-3.5 w-3.5" aria-hidden />
-                  {t('person.addKind', { kind: t(KIND_KEYS[kind]) })}
+                  <UserPlus className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span className="truncate">
+                    {t('person.addKind', { kind: t(KIND_KEYS[kind]) })}
+                  </span>
                 </button>
               ))}
             </div>
-            <div className="flex gap-1.5">
+            <div className="mt-3 flex justify-end gap-1.5">
               <button type="button" className="btn-secondary" onClick={() => onEdit?.(person)}>
                 <Pencil className="h-4 w-4" aria-hidden /> {t('person.edit')}
               </button>
@@ -345,7 +349,7 @@ export function PersonDetailsModal({
             </div>
           </>
         ) : (
-          <>
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-xs text-stone-400 dark:text-stone-500">
               <Heart className="h-3.5 w-3.5" aria-hidden />
               {t('person.viewHint')}
@@ -353,7 +357,7 @@ export function PersonDetailsModal({
             <button type="button" className="btn-secondary" onClick={onClose}>
               {t('common.close')}
             </button>
-          </>
+          </div>
         )}
       </div>
     </Modal>
