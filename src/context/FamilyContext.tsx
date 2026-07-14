@@ -20,7 +20,6 @@ import {
   buildIndex,
   computeBloodline,
   computeGenerations,
-  mergeAdditiveEdit,
   normalizePeople,
   relationshipDescriptor,
   removePerson,
@@ -181,10 +180,19 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           const existing = current.find((p) => p.id === person.id);
           if (!existing) return current;
           if (!isOwner) {
-            // Family editors: fill in missing details only; existing values
-            // and relationships stay untouched.
-            const merged = mergeAdditiveEdit(existing, person);
-            return current.map((p) => (p.id === person.id ? merged : p));
+            // Family editors may change any DETAIL field (names, dates, place,
+            // bio, gender, deceased) — including things the owner filled in —
+            // but never relationships or deletion. Force the existing
+            // relationship arrays back on regardless of what the form sent, and
+            // skip setRelationships entirely.
+            const updated = {
+              ...person,
+              parentIds: existing.parentIds,
+              spouseIds: existing.spouseIds,
+              childIds: existing.childIds,
+              divorcedIds: existing.divorcedIds,
+            };
+            return current.map((p) => (p.id === person.id ? updated : p));
           }
           const replaced = current.map((p) => (p.id === person.id ? person : p));
           return setRelationships(replaced, person.id, parentIds, spouseIds);

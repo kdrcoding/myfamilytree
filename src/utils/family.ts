@@ -328,33 +328,6 @@ export function applyRelationLink(
 }
 
 /**
- * Merge an edit from a restricted "family editor": only MISSING information
- * may be filled in. Existing names, dates, details, photos and all
- * relationships are kept exactly as they were — additions only, never
- * overwrites, never deletions.
- */
-export function mergeAdditiveEdit(existing: FamilyPerson, updates: FamilyPerson): FamilyPerson {
-  const fill = (oldValue: string | undefined, newValue: string | undefined): string | undefined =>
-    oldValue?.trim() ? oldValue : newValue;
-  return {
-    ...existing,
-    firstName: existing.firstName.trim() ? existing.firstName : updates.firstName,
-    lastName: existing.lastName.trim() ? existing.lastName : updates.lastName,
-    nickname: fill(existing.nickname, updates.nickname),
-    gender: existing.gender === 'unspecified' ? updates.gender : existing.gender,
-    birthDate: fill(existing.birthDate, updates.birthDate),
-    deathDate: fill(existing.deathDate, updates.deathDate),
-    // A living person can be marked deceased (new information), never the reverse.
-    isDeceased: existing.isDeceased || updates.isDeceased,
-    photo: fill(existing.photo, updates.photo),
-    city: fill(existing.city, updates.city),
-    country: fill(existing.country, updates.country),
-    occupation: fill(existing.occupation, updates.occupation),
-    biography: fill(existing.biography, updates.biography),
-  };
-}
-
-/**
  * Repair imported data: drop references to people who do not exist and make
  * every relationship symmetric.
  */

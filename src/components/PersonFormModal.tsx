@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ImagePlus, Search, X } from 'lucide-react';
 import type { FamilyPerson, Gender, JoinRequest, RelationLink } from '../types/family';
@@ -6,7 +6,7 @@ import { JOIN_REQUEST_TYPE } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
-import { useT } from '../i18n/useT';
+import { useLanguage, useT } from '../i18n/useT';
 import type { TKey } from '../i18n/translations';
 import { downloadJson } from '../utils/dataTransfer';
 import { fullName, generatePersonId, sortByBirth } from '../utils/family';
@@ -64,6 +64,147 @@ function Field({
         </span>
       )}
     </label>
+  );
+}
+
+const MONTH_NAMES: Record<'en' | 'uz', string[]> = {
+  en: [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ],
+  uz: [
+    'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
+    'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr',
+  ],
+};
+
+/** Split a stored date string ("YYYY", "YYYY-MM", "YYYY-MM-DD") into parts. */
+function parseDateValue(value: string): { y: string; m: string; d: string } {
+  const match = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/.exec((value || '').trim());
+  return { y: match?.[1] ?? '', m: match?.[2] ?? '', d: match?.[3] ?? '' };
+}
+
+/** Rebuild the stored string, keeping only the precision the user supplied. */
+function composeDateValue(y: string, m: string, d: string): string {
+  if (!/^\d{4}$/.test(y)) return '';
+  if (!m) return y;
+  if (!d) return `${y}-${m}`;
+  return `${y}-${m}-${d}`;
+}
+
+function daysInMonth(y: string, m: string): number {
+  const year = Number(y);
+  const month = Number(m);
+  if (!year || !month) return 31;
+  return new Date(year, month, 0).getDate();
+}
+
+/**
+ * Friendly date entry: type the year, then optionally pick a month and day
+ * from dropdowns. Only the year is required, so a date you only half-remember
+ * ("born 1952") is easy, and there's no format to get wrong. Emits the same
+ * "YYYY" / "YYYY-MM" / "YYYY-MM-DD" string the rest of the app stores.
+ */
+function DateField({
+  label,
+  value,
+  onChange,
+  error,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  disabled?: boolean;
+}) {
+  const t = useT();
+  const language = useLanguage();
+  const [parts, setParts] = useState(() => parseDateValue(value));
+
+  // Re-sync from the stored value when it changes from outside the field —
+  // opening the form on an existing person, or "Save & add another" clearing it.
+  useEffect(() => {
+    setParts((prev) => (composeDateValue(prev.y, prev.m, prev.d) === value ? prev : parseDateValue(value)));
+  }, [value]);
+
+  const emit = (next: { y: string; m: string; d: string }) => {
+    setParts(next);
+    onChange(composeDateValue(next.y, next.m, next.d));
+  };
+
+  const yearReady = /^\d{4}$/.test(parts.y);
+
+  return (
+    <div className={disabled ? 'opacity-60' : ''}>
+      <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+        {label}
+      </span>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          inputMode="numeric"
+          maxLength={4}
+          className="input w-20 shrink-0"
+          placeholder={t('form.year')}
+          aria-label={t('form.year')}
+          value={parts.y}
+          disabled={disabled}
+          onChange={(e) => {
+            const y = e.target.value.replace(/\D/g, '').slice(0, 4);
+            if (!y) {
+              emit({ y: '', m: '', d: '' });
+              return;
+            }
+            // Changing the year can shorten February (leap → non-leap); drop a
+            // day that no longer exists so the date stays valid.
+            const d = parts.d && Number(parts.d) <= daysInMonth(y, parts.m) ? parts.d : '';
+            emit({ ...parts, y, d });
+          }}
+        />
+        <select
+          className="input flex-1"
+          aria-label={t('form.month')}
+          value={parts.m}
+          disabled={disabled || !yearReady}
+          onChange={(e) => {
+            const m = e.target.value;
+            // Dropping the month drops the day; clamp a day that no longer fits.
+            const d = m && parts.d && Number(parts.d) <= daysInMonth(parts.y, m) ? parts.d : '';
+            emit({ ...parts, m, d });
+          }}
+        >
+          <option value="">{t('form.month')}</option>
+          {MONTH_NAMES[language].map((name, i) => (
+            <option key={name} value={String(i + 1).padStart(2, '0')}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <select
+          className="input w-20 shrink-0"
+          aria-label={t('form.day')}
+          value={parts.d}
+          disabled={disabled || !parts.m}
+          onChange={(e) => emit({ ...parts, d: e.target.value })}
+        >
+          <option value="">{t('form.day')}</option>
+          {Array.from({ length: daysInMonth(parts.y, parts.m) }, (_, i) =>
+            String(i + 1).padStart(2, '0'),
+          ).map((d) => (
+            <option key={d} value={d}>
+              {Number(d)}
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{t('form.dateHint')}</p>
+      {error && (
+        <span role="alert" className="mt-1 block text-xs text-red-600 dark:text-red-400">
+          {error}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -159,10 +300,11 @@ export function PersonFormModal({
   const { toast } = useToast();
   const t = useT();
   const isEdit = person !== undefined;
-  // Family editors may only fill in MISSING info on existing people; fields
-  // that already have a value are locked, and relationships are owner-only.
+  // Family editors can now edit every DETAIL field (names, dates, place, bio,
+  // gender, deceased) exactly like the owner — including things already filled
+  // in. Only relationships and deletion stay owner-only, so `restricted` now
+  // gates just the relationship section and its note below.
   const restricted = isEdit && !isOwner;
-  const lockText = (value: string | undefined) => restricted && Boolean(value?.trim());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const firstNameRef = useRef<HTMLInputElement>(null);
 
@@ -257,11 +399,7 @@ export function PersonFormModal({
 
     if (isEdit) {
       updatePerson({ ...person, ...trimmed }, parentIds, spouseIds);
-      toast(
-        restricted
-          ? t('form.updatedRestrictedToast', { name: personLabel })
-          : t('form.updatedToast', { name: personLabel }),
-      );
+      toast(t('form.updatedToast', { name: personLabel }));
       onSaved?.(person.id);
     } else {
       const id = generatePersonId(
@@ -351,7 +489,6 @@ export function PersonFormModal({
               className="input"
               value={values.firstName}
               onChange={(e) => set('firstName', e.target.value)}
-              disabled={lockText(person?.firstName)}
               ref={firstNameRef}
               autoFocus
             />
@@ -362,7 +499,6 @@ export function PersonFormModal({
               className="input"
               value={values.lastName}
               onChange={(e) => set('lastName', e.target.value)}
-              disabled={lockText(person?.lastName)}
             />
           </Field>
           <Field label={t('form.gender')}>
@@ -370,7 +506,6 @@ export function PersonFormModal({
               className="input"
               value={values.gender}
               onChange={(e) => set('gender', e.target.value as Gender)}
-              disabled={restricted && person!.gender !== 'unspecified'}
             >
               <option value="unspecified">{t('filters.unspecified')}</option>
               <option value="female">{t('filters.female')}</option>
@@ -395,26 +530,20 @@ export function PersonFormModal({
                 className="input"
                 value={values.nickname}
                 onChange={(e) => set('nickname', e.target.value)}
-                disabled={lockText(person?.nickname)}
               />
             </Field>
-            <Field label={t('form.birthDate')} error={err(errors.birthDate)}>
-              <input
-                type="text"
-                className="input"
-                placeholder={t('form.datePlaceholder')}
-                value={values.birthDate}
-                onChange={(e) => set('birthDate', e.target.value)}
-                disabled={lockText(person?.birthDate)}
-              />
-            </Field>
+            <DateField
+              label={t('form.birthDate')}
+              value={values.birthDate}
+              onChange={(v) => set('birthDate', v)}
+              error={err(errors.birthDate)}
+            />
             <div>
               <label className="flex h-full items-center gap-2 pt-6 text-sm text-stone-700 dark:text-stone-300">
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-stone-300 text-emerald-600 focus:ring-emerald-500"
                   checked={values.isDeceased}
-                  disabled={restricted && person!.isDeceased}
                   onChange={(e) => {
                     set('isDeceased', e.target.checked);
                     if (!e.target.checked) set('deathDate', '');
@@ -424,16 +553,12 @@ export function PersonFormModal({
               </label>
             </div>
             {values.isDeceased && (
-              <Field label={t('form.deathDate')} error={err(errors.deathDate)}>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder={t('form.datePlaceholder')}
-                  value={values.deathDate}
-                  onChange={(e) => set('deathDate', e.target.value)}
-                  disabled={lockText(person?.deathDate)}
-                />
-              </Field>
+              <DateField
+                label={t('form.deathDate')}
+                value={values.deathDate}
+                onChange={(v) => set('deathDate', v)}
+                error={err(errors.deathDate)}
+              />
             )}
             <Field label={t('form.city')}>
               <input
@@ -441,7 +566,6 @@ export function PersonFormModal({
                 className="input"
                 value={values.city}
                 onChange={(e) => set('city', e.target.value)}
-                disabled={lockText(person?.city)}
               />
             </Field>
             <Field label={t('form.country')}>
@@ -450,7 +574,6 @@ export function PersonFormModal({
                 className="input"
                 value={values.country}
                 onChange={(e) => set('country', e.target.value)}
-                disabled={lockText(person?.country)}
               />
             </Field>
             <Field label={t('form.occupation')}>
@@ -459,7 +582,6 @@ export function PersonFormModal({
                 className="input"
                 value={values.occupation}
                 onChange={(e) => set('occupation', e.target.value)}
-                disabled={lockText(person?.occupation)}
               />
             </Field>
             <Field label={t('form.bio')} className="sm:col-span-2">
@@ -467,7 +589,6 @@ export function PersonFormModal({
                 className="input min-h-20"
                 value={values.biography}
                 onChange={(e) => set('biography', e.target.value)}
-                disabled={lockText(person?.biography)}
               />
             </Field>
             <div className="sm:col-span-2">
@@ -499,12 +620,11 @@ export function PersonFormModal({
                   type="button"
                   className="btn-secondary"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={lockText(person?.photo)}
                 >
                   <ImagePlus className="h-4 w-4" aria-hidden />
                   {values.photo ? t('form.photoChange') : t('form.photoUpload')}
                 </button>
-                {values.photo && !lockText(person?.photo) && (
+                {values.photo && (
                   <button type="button" className="btn-secondary" onClick={() => set('photo', '')}>
                     <X className="h-4 w-4" aria-hidden /> {t('form.photoRemove')}
                   </button>

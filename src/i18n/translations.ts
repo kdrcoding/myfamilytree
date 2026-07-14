@@ -224,7 +224,7 @@ export const en = {
   'form.oneNameHint':
     'Only one name is needed — first name, last name or nickname. Everything else is optional.',
   'form.restrictedNote':
-    "You're editing as a family editor: you can fill in missing information, but details that are already filled in — and all relationships — can only be changed by the owner. Locked fields are greyed out.",
+    "You're editing as a family member: you can update any of these details, including things already filled in. Only relationships (parents and spouses) and deleting a person are reserved for the owner.",
   'form.firstName': 'First name',
   'form.lastName': 'Last name',
   'form.gender': 'Gender',
@@ -233,6 +233,10 @@ export const en = {
   'form.birthDate': 'Birth date',
   'form.deathDate': 'Death date',
   'form.datePlaceholder': 'YYYY-MM-DD or YYYY',
+  'form.year': 'Year',
+  'form.month': 'Month',
+  'form.day': 'Day',
+  'form.dateHint': 'Tip: the year on its own is enough — add the month and day only if you know them.',
   'form.deceasedCheck': 'This person is deceased',
   'form.city': 'City',
   'form.country': 'Country',
@@ -253,7 +257,7 @@ export const en = {
   'form.willBeAdded':
     'This person will be added as a {kind} of {names}. You can adjust relationships later by editing the person.',
   'form.relOwnerNote':
-    'Parents and spouses of an existing person can only be changed by the owner. To add a new relative, use the “Add spouse / child / parent / sibling” buttons on their card instead.',
+    'Parents and spouses of an existing person can only be changed by the owner. To add a new relative, use the heart / baby / parent buttons on their card in the family tree.',
   'form.parents': 'Parents',
   'form.spouses': 'Spouses',
   'form.searchIn': 'Search {label}…',
@@ -681,7 +685,7 @@ export const uz: Record<TKey, string> = {
   'form.oneNameHint':
     'Faqat bitta nom kifoya — ism, familiya yoki laqab. Qolgan hammasi ixtiyoriy.',
   'form.restrictedNote':
-    "Siz oila tahrirchisi sifatida ishlayapsiz: faqat bo'sh kataklarni to'ldira olasiz. To'ldirilgan ma'lumotlarni va qarindoshlik aloqalarini faqat egasi o'zgartira oladi. Qulflangan kataklar xira ko'rinadi.",
+    "Siz oila a'zosi sifatida tahrirlayapsiz: bu ma'lumotlarning barchasini, hatto to'ldirilganlarini ham o'zgartira olasiz. Faqat qarindoshlik aloqalari (ota-ona va turmush o'rtoqlar) va odamni o'chirish egasiga tegishli.",
   'form.firstName': 'Ismi',
   'form.lastName': 'Familiyasi',
   'form.gender': 'Jinsi',
@@ -691,6 +695,10 @@ export const uz: Record<TKey, string> = {
   'form.birthDate': "Tug'ilgan sana",
   'form.deathDate': 'Vafot etgan sana',
   'form.datePlaceholder': 'YYYY-MM-DD yoki YYYY',
+  'form.year': 'Yil',
+  'form.month': 'Oy',
+  'form.day': 'Kun',
+  'form.dateHint': "Maslahat: faqat yilning o'zi ham yetarli — oy va kunni bilsangizgina qo'shing.",
   'form.deceasedCheck': 'Bu inson vafot etgan',
   'form.city': 'Shahar',
   'form.country': 'Mamlakat',
@@ -711,7 +719,7 @@ export const uz: Record<TKey, string> = {
   'form.willBeAdded':
     "Bu inson {names}ga {kind} sifatida qo'shiladi. Keyinchalik tahrirlash orqali aloqalarni o'zgartirishingiz mumkin.",
   'form.relOwnerNote':
-    "Mavjud odamning ota-onasi va turmush o'rtoqlarini faqat egasi o'zgartira oladi. Yangi qarindosh qo'shish uchun kartochkadagi qo'shish tugmalaridan foydalaning.",
+    "Mavjud odamning ota-onasi va turmush o'rtoqlarini faqat egasi o'zgartira oladi. Yangi qarindosh qo'shish uchun shajaradagi kartochkadagi tugmalardan foydalaning.",
   'form.parents': 'Ota-onasi',
   'form.spouses': "Turmush o'rtoqlari",
   'form.searchIn': '{label} ichida qidirish…',
