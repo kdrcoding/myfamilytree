@@ -305,7 +305,8 @@ export function SettingsPage() {
         </div>
       </section>
 
-      {/* Privacy */}
+      {/* Privacy — owner-only: controls what the whole family's data hides publicly. */}
+      {canDelete && (
       <section className="card mt-4 p-6">
         <h2 className="flex items-center gap-2 font-semibold">
           <ShieldCheck className="h-5 w-5 text-emerald-600" aria-hidden />{' '}
@@ -368,6 +369,7 @@ export function SettingsPage() {
           />
         </div>
       </section>
+      )}
 
       {/* Access */}
       <section className="card mt-4 p-6">
@@ -392,6 +394,7 @@ export function SettingsPage() {
             </button>
           )}
         </div>
+        {canDelete && (
         <details className="mt-4 rounded-xl bg-stone-50 p-3 text-sm dark:bg-stone-800/60">
           <summary className="cursor-pointer font-medium text-stone-700 dark:text-stone-300">
             {t('settings.howChange')}
@@ -429,9 +432,11 @@ export function SettingsPage() {
             <p className="text-xs">{t('settings.hashNote')}</p>
           </div>
         </details>
+        )}
       </section>
 
-      {/* Data management */}
+      {/* Data management — owner-only: export/import/restore act on the whole dataset. */}
+      {canDelete && (
       <section className="card mt-4 p-6">
         <h2 className="flex items-center gap-2 font-semibold">
           <Database className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.dataTitle')}
@@ -471,6 +476,7 @@ export function SettingsPage() {
         </div>
         {!canEdit && <p className="mt-2 text-xs text-stone-400">{t('settings.unlockNote')}</p>}
       </section>
+      )}
 
       {canDelete && <ChangeLogCard />}
       {canDelete && <BackupsCard />}
