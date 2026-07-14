@@ -231,20 +231,6 @@ function TreeCanvas({
                 x2="24"
                 y2="1"
                 strokeWidth="2"
-                strokeDasharray="4 3"
-                className="stroke-rose-400 dark:stroke-rose-600"
-              />
-            </svg>
-            {t('tree.legendPartners')}
-          </li>
-          <li className="flex items-center gap-2">
-            <svg width="24" height="2" aria-hidden className="shrink-0">
-              <line
-                x1="0"
-                y1="1"
-                x2="24"
-                y2="1"
-                strokeWidth="2"
                 strokeDasharray="2 5"
                 className="stroke-stone-400 dark:stroke-stone-500"
               />

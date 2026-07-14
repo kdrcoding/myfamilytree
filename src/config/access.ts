@@ -26,7 +26,7 @@ export const ACCESS = {
   /** SHA-256 hash of the owner password. */
   ownerHash: '39f2df21ef6aecdc8a706868252ef11e46afda2beecdcfc471109870faf1ff8e',
   /** SHA-256 hash of the family editor password. */
-  editorHash: '80236bd33e4da22b7b8c897ad4cac441de576ecbad84bc85e91eeebbf31abf65',
+  editorHash: '7fcc57f15a0a35995b1ef5fe78808863346e806aa2b86128c48c0133749c7586',
 } as const;
 
 export type Role = 'viewer' | 'editor' | 'owner';

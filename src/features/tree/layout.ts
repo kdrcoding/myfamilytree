@@ -182,14 +182,14 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
       const leftPerson = index.get(left)!;
       const rightPerson = index.get(right)!;
       const married = leftPerson.spouseIds.includes(right);
-      const divorced = married && isDivorced(leftPerson, rightPerson);
+      const divorced = isDivorced(leftPerson, rightPerson);
       const sharedChildren = leftPerson.childIds.filter((id) =>
         rightPerson.childIds.includes(id),
       );
-      // Solid line for a marriage, dashed rose for unmarried co-parents,
-      // broken grey for a divorced couple. Adjacent members that are none of
-      // these (e.g. the two partners of a twice-married anchor standing on
-      // either side of them) get no line at all.
+      // Every couple is either married (solid line) or divorced (broken grey
+      // line) — co-parents count as married unless marked divorced. Adjacent
+      // members that are neither (e.g. the two spouses of a twice-married
+      // anchor standing on either side of them) get no line at all.
       if (married || sharedChildren.length > 0) {
         edges.push({
           id: `spouse-${left}-${right}`,
@@ -198,7 +198,7 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
           target: right,
           targetHandle: 'left',
           type: 'straight',
-          className: divorced ? 'edge-divorced' : married ? 'edge-spouse' : 'edge-partner',
+          className: divorced ? 'edge-divorced' : 'edge-spouse',
           focusable: false,
         });
       }

@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { AppLockGate } from './components/AppLockGate';
 import { Layout } from './components/Layout';
 import { AuthProvider } from './context/AuthContext';
 import { ConfirmProvider } from './context/ConfirmContext';
@@ -19,21 +20,25 @@ export default function App() {
       <ToastProvider>
         <ConfirmProvider>
           <AuthProvider>
-            <FamilyProvider>
-              <BrowserRouter basename={import.meta.env.BASE_URL}>
-                <Routes>
-                  <Route element={<Layout />}>
-                    <Route index element={<HomePage />} />
-                    <Route path="tree" element={<TreePage />} />
-                    <Route path="members" element={<MembersPage />} />
-                    <Route path="statistics" element={<StatsPage />} />
-                    <Route path="about" element={<AboutPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Route>
-                </Routes>
-              </BrowserRouter>
-            </FamilyProvider>
+            {/* The whole site is password-gated: family data is only fetched
+                after unlocking with the family or owner password. */}
+            <AppLockGate>
+              <FamilyProvider>
+                <BrowserRouter basename={import.meta.env.BASE_URL}>
+                  <Routes>
+                    <Route element={<Layout />}>
+                      <Route index element={<HomePage />} />
+                      <Route path="tree" element={<TreePage />} />
+                      <Route path="members" element={<MembersPage />} />
+                      <Route path="statistics" element={<StatsPage />} />
+                      <Route path="about" element={<AboutPage />} />
+                      <Route path="settings" element={<SettingsPage />} />
+                      <Route path="*" element={<NotFoundPage />} />
+                    </Route>
+                  </Routes>
+                </BrowserRouter>
+              </FamilyProvider>
+            </AppLockGate>
           </AuthProvider>
         </ConfirmProvider>
       </ToastProvider>

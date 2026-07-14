@@ -91,14 +91,6 @@
 .dark .edge-spouse .react-flow__edge-path {
   stroke: var(--color-rose-600);
 }
-.edge-partner .react-flow__edge-path {
-  stroke: var(--color-rose-400);
-  stroke-width: 2;
-  stroke-dasharray: 6 4;
-}
-.dark .edge-partner .react-flow__edge-path {
-  stroke: var(--color-rose-600);
-}
 /* Divorced couples: a broken grey line instead of the rose marriage line. */
 .edge-divorced .react-flow__edge-path {
   stroke: var(--color-stone-400);
@@ -124,7 +116,6 @@
     stroke-width: 2.5;
   }
   .edge-spouse .react-flow__edge-path,
-  .edge-partner .react-flow__edge-path,
   .edge-divorced .react-flow__edge-path,
   .edge-child .react-flow__edge-path {
     stroke-width: 3;

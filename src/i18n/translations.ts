@@ -28,6 +28,16 @@ export const en = {
   'toast.dismiss': 'Dismiss notification',
   'avatar.photoOf': 'Photo of {name}',
 
+  // Site password gate
+  'gate.title': 'This is a private family website',
+  'gate.intro':
+    'Enter the family password to see the tree. If you do not have it, ask the site owner.',
+  'gate.password': 'Password',
+  'gate.btn': 'Enter',
+  'gate.checking': 'Checking…',
+  'gate.wrong': 'Wrong password.',
+  'gate.enter': 'Please enter the password.',
+
   // Dataset update banner
   'banner.updated': 'The family tree on this website has been updated since your last visit.',
   'banner.load': 'Load latest data',
@@ -84,7 +94,6 @@ export const en = {
   'tree.pngEmpty': 'There is nothing to export yet.',
   'tree.legendTitle': 'How to read the tree',
   'tree.legendMarried': 'Married couple',
-  'tree.legendPartners': 'Partners (not married)',
   'tree.legendDivorced': 'Divorced',
   'tree.legendChildren': 'Their children — arrow points to the child',
   'tree.emptyTitle': 'Your family tree is empty',
@@ -447,6 +456,15 @@ export const uz: Record<TKey, string> = {
   'toast.dismiss': 'Bildirishnomani yopish',
   'avatar.photoOf': '{name} surati',
 
+  'gate.title': 'Bu shaxsiy oilaviy sayt',
+  'gate.intro':
+    "Shajarani ko'rish uchun oila parolini kiriting. Parol sizda bo'lmasa, sayt egasidan so'rang.",
+  'gate.password': 'Parol',
+  'gate.btn': 'Kirish',
+  'gate.checking': 'Tekshirilmoqda…',
+  'gate.wrong': "Parol noto'g'ri.",
+  'gate.enter': 'Iltimos, parolni kiriting.',
+
   'banner.updated': 'Saytdagi oila shajarasi oxirgi tashrifingizdan keyin yangilangan.',
   'banner.load': "Yangi ma'lumotni yuklash",
   'banner.keep': 'Meniki qolsin',
@@ -501,7 +519,6 @@ export const uz: Record<TKey, string> = {
   'tree.pngEmpty': 'Hozircha eksport qiladigan narsa yo‘q.',
   'tree.legendTitle': "Shajarani qanday o'qish kerak",
   'tree.legendMarried': 'Er-xotin',
-  'tree.legendPartners': 'Sheriklar (nikohsiz)',
   'tree.legendDivorced': 'Ajrashgan',
   'tree.legendChildren': 'Farzandlari — strelka farzandga qaraydi',
   'tree.emptyTitle': "Shajarangiz hali bo'sh",
