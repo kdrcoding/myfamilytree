@@ -9,7 +9,7 @@ import {
   ReactFlowProvider,
   useReactFlow,
 } from '@xyflow/react';
-import type { Edge, Node, NodeTypes } from '@xyflow/react';
+import type { Edge, EdgeTypes, Node, NodeTypes } from '@xyflow/react';
 import {
   ChevronsDownUp,
   ChevronsUpDown,
@@ -50,11 +50,13 @@ import {
 } from '../features/tree/layout';
 import { exportTreeAsPng } from '../features/tree/exportPng';
 import { JunctionNode } from '../features/tree/JunctionNode';
+import { ChildEdge } from '../features/tree/ChildEdge';
 import { PersonNode } from '../features/tree/PersonNode';
 import { TreeInteractionContext } from '../features/tree/TreeInteractionContext';
 import type { TreeInteraction } from '../features/tree/TreeInteractionContext';
 
 const nodeTypes: NodeTypes = { person: PersonNode, junction: JunctionNode };
+const edgeTypes: EdgeTypes = { child: ChildEdge };
 
 function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) {
   const { people, getLabel } = useFamily();
@@ -186,14 +188,14 @@ function TreeCanvas({
     const first = nodes.find((n) => n.type === 'person');
     if (first) {
       const isPhone = window.innerWidth < 640;
-      const zoom = isPhone ? 1 : 0.75;
-      // On a phone the screen is too narrow to frame the whole founding couple,
-      // so centre on the first founder's card (fully visible) rather than the
-      // gap between the pair, which chopped the first card off the left edge.
-      const centerX = isPhone
-        ? first.position.x + CARD_W / 2
-        : first.position.x + CARD_W + 24;
-      setCenter(centerX, first.position.y + CARD_H * 1.8, { zoom });
+      // Pull back a little on phones so the founding couple AND the start of
+      // their children show at once, instead of filling the screen with a
+      // single card. 0.8 keeps the card text legible while giving context —
+      // and at this zoom the left card is no longer chopped off, which was the
+      // only reason phones used to centre on a single card.
+      const zoom = isPhone ? 0.8 : 0.75;
+      const centerX = first.position.x + CARD_W + 24;
+      setCenter(centerX, first.position.y + CARD_H * 1.4, { zoom });
     }
   }, [nodes, setCenter]);
 
@@ -202,6 +204,7 @@ function TreeCanvas({
       nodes={nodes}
       edges={edges}
       nodeTypes={nodeTypes}
+      edgeTypes={edgeTypes}
       onInit={handleInit}
       minZoom={0.05}
       maxZoom={1.5}

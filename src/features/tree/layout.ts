@@ -14,6 +14,12 @@ const SIBLING_GAP = 28;
 const LEVEL_GAP = 148;
 const ROOT_GAP = 72;
 const JUNCTION = 10;
+// Child connectors run along a horizontal "bus" just above the children. Each
+// couple gets its own lane height so a long cross-family link crosses other
+// buses instead of running on top of them (see ChildEdge).
+const BUS_BASE = 34;
+const BUS_STEP = 22;
+const BUS_LANES = 3;
 
 /**
  * How many whole generations open on a family's first view before deeper
@@ -249,6 +255,19 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
     rootX += root.width + ROOT_GAP;
   }
 
+  // Each child connector's source (a couple's junction, or a lone parent) keeps
+  // a stable bus lane so all siblings share one trunk while neighbouring
+  // couples sit at different heights.
+  const laneBySource = new Map<string, number>();
+  const busOffsetFor = (sourceId: string): number => {
+    let lane = laneBySource.get(sourceId);
+    if (lane === undefined) {
+      lane = laneBySource.size % BUS_LANES;
+      laneBySource.set(sourceId, lane);
+    }
+    return BUS_BASE + lane * BUS_STEP;
+  };
+
   // Parent -> child edges, preferring the couple's junction dot when both
   // parents are drawn next to each other.
   for (const person of people) {
@@ -266,8 +285,8 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
         sourceHandle: 'out',
         target: person.id,
         targetHandle: 'top',
-        type: 'smoothstep',
-        pathOptions: { borderRadius: 12 },
+        type: 'child',
+        data: { busOffset: busOffsetFor(junctionId) },
         className: 'edge-child',
         markerEnd: childMarker,
         focusable: false,
@@ -280,8 +299,8 @@ export function computeTreeLayout(people: FamilyPerson[], collapsedIds: Set<stri
           sourceHandle: 'bottom',
           target: person.id,
           targetHandle: 'top',
-          type: 'smoothstep',
-          pathOptions: { borderRadius: 12 },
+          type: 'child',
+          data: { busOffset: busOffsetFor(parentId) },
           className: 'edge-child',
           markerEnd: childMarker,
           focusable: false,
