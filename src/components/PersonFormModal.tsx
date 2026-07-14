@@ -10,6 +10,7 @@ import { useT } from '../i18n/useT';
 import type { TKey } from '../i18n/translations';
 import { downloadJson } from '../utils/dataTransfer';
 import { fullName, generatePersonId, sortByBirth } from '../utils/family';
+import { downscalePhoto } from '../utils/image';
 import { validatePersonForm, canLink } from '../utils/validation';
 import type { PersonFormValues } from '../utils/validation';
 import { Avatar } from './Avatar';
@@ -29,7 +30,9 @@ interface PersonFormModalProps {
   onSaved?: (id: string) => void;
 }
 
-const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+// Generous input limit — the photo is downscaled to ~100-250 KB before it
+// is stored, so even large phone camera originals are fine to pick.
+const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
 
 const KIND_KEYS = {
   spouse: 'relkind.spouse',
@@ -203,10 +206,15 @@ export function PersonFormModal({
       toast(t('form.photoTooBig'), 'error');
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => set('photo', String(reader.result ?? ''));
-    reader.onerror = () => toast(t('form.photoReadFail'), 'error');
-    reader.readAsDataURL(file);
+    // Photos are downscaled to a small JPEG before storing — phone camera
+    // originals are megabytes and would make the site slow for everyone.
+    downscalePhoto(file).then(
+      (dataUrl) => set('photo', dataUrl),
+      (error: unknown) => {
+        console.error('Photo processing failed:', error);
+        toast(t('form.photoReadFail'), 'error');
+      },
+    );
   };
 
   /** Validate and save. Returns true on success; does NOT close the modal. */

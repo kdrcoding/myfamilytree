@@ -65,10 +65,12 @@ function ChangeLogCard() {
   const t = useT();
   const language = useLanguage();
   const [entries, setEntries] = useState<AuditEntry[]>([]);
+  const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     listAuditLog().then(setEntries, (error: unknown) => {
       console.error('Failed to load the change log:', error);
+      setUnavailable(true);
     });
   }, []);
 
@@ -81,9 +83,15 @@ function ChangeLogCard() {
         <ScrollText className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.logTitle')}
       </h2>
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('settings.logIntro')}</p>
-      {entries.length === 0 ? (
+      {unavailable && (
+        <p className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+          {t('settings.setupNeeded')}
+        </p>
+      )}
+      {!unavailable &&
+      entries.length === 0 ? (
         <p className="mt-3 text-sm text-stone-400">{t('settings.logEmpty')}</p>
-      ) : (
+      ) : unavailable ? null : (
         <ul className="mt-3 divide-y divide-stone-100 text-sm dark:divide-stone-800">
           {entries.map((entry) => (
             <li key={entry.id} className="py-2.5">
@@ -142,11 +150,19 @@ function BackupsCard() {
   const { toast } = useToast();
   const [backups, setBackups] = useState<BackupMeta[]>([]);
   const [busy, setBusy] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
 
   const refresh = () => {
-    listBackups().then(setBackups, (error: unknown) => {
-      console.error('Failed to list backups:', error);
-    });
+    listBackups().then(
+      (rows) => {
+        setBackups(rows);
+        setUnavailable(false);
+      },
+      (error: unknown) => {
+        console.error('Failed to list backups:', error);
+        setUnavailable(true);
+      },
+    );
   };
   useEffect(refresh, []);
 
@@ -172,14 +188,20 @@ function BackupsCard() {
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
         {t('settings.backupsIntro')}
       </p>
+      {unavailable && (
+        <p className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+          {t('settings.setupNeeded')}
+        </p>
+      )}
       <div className="mt-3">
         <button type="button" className="btn-secondary" onClick={() => void takeNow()} disabled={busy}>
           <Archive className="h-4 w-4" aria-hidden /> {t('settings.backupNow')}
         </button>
       </div>
-      {backups.length === 0 ? (
+      {!unavailable &&
+      backups.length === 0 ? (
         <p className="mt-3 text-sm text-stone-400">{t('settings.backupsEmpty')}</p>
-      ) : (
+      ) : unavailable ? null : (
         <ul className="mt-3 divide-y divide-stone-100 text-sm dark:divide-stone-800">
           {backups.map((b) => (
             <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 py-2">

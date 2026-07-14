@@ -50,6 +50,8 @@ export const en = {
   'settings.backupDownload': 'Download',
   'settings.backupCounts': '{m} people · {r} relationships',
   'settings.backupsEmpty': 'No backups yet — one will be taken automatically.',
+  'settings.setupNeeded':
+    'Not active yet: the one-time database upgrade has not been run. Open the Supabase dashboard → SQL Editor and run the supabase-upgrade.sql file from the project folder (details in password/passwords.txt).',
 
   // Change log (owner only)
   'settings.logTitle': 'Change log',
@@ -240,8 +242,9 @@ export const en = {
   'form.photoUpload': 'Upload photo',
   'form.photoChange': 'Change photo',
   'form.photoRemove': 'Remove',
-  'form.photoNote': 'Optional. Stored in your browser as part of the family data (max 2 MB).',
-  'form.photoTooBig': 'Photo is too large — please use an image under 2 MB.',
+  'form.photoNote':
+    'Optional. The photo is automatically shrunk to load fast for everyone — phone camera photos are fine.',
+  'form.photoTooBig': 'Photo is too large — please use an image under 15 MB.',
   'form.photoReadFail': 'Could not read that image file.',
   'form.otherParent': "Other parent ({name}'s partner)",
   'form.otherParentNone': 'No second parent / not listed',
@@ -513,6 +516,8 @@ export const uz: Record<TKey, string> = {
   'settings.backupDownload': 'Yuklab olish',
   'settings.backupCounts': '{m} kishi · {r} aloqa',
   'settings.backupsEmpty': "Hozircha zaxira nusxalar yo'q — birinchisi avtomatik olinadi.",
+  'settings.setupNeeded':
+    "Hali faol emas: bir martalik ma'lumotlar bazasi yangilanishi bajarilmagan. Supabase boshqaruv paneli → SQL Editor'da loyiha papkasidagi supabase-upgrade.sql faylini ishga tushiring (tafsilotlar password/passwords.txt faylida).",
 
   'settings.logTitle': "O'zgarishlar tarixi",
   'settings.logIntro':
@@ -696,8 +701,8 @@ export const uz: Record<TKey, string> = {
   'form.photoChange': "Rasmni o'zgartirish",
   'form.photoRemove': 'Olib tashlash',
   'form.photoNote':
-    "Ixtiyoriy. Brauzeringizda oila ma'lumotlari bilan birga saqlanadi (eng ko'pi 2 MB).",
-  'form.photoTooBig': 'Rasm juda katta — 2 MB dan kichik rasm tanlang.',
+    'Ixtiyoriy. Rasm hamma uchun tez yuklanishi uchun avtomatik kichraytiriladi — telefon kamerasidagi rasmlar ham yaroqli.',
+  'form.photoTooBig': 'Rasm juda katta — 15 MB dan kichik rasm tanlang.',
   'form.photoReadFail': "Bu rasm faylini o'qib bo'lmadi.",
   'form.otherParent': "Ikkinchi ota-ona ({name}ning turmush o'rtog'i)",
   'form.otherParentNone': "Ikkinchi ota-ona yo'q / ro'yxatda emas",
