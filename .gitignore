@@ -41,3 +41,7 @@ password/
 
 # Internal notes - never publish
 README-CLAUDE.md
+
+# Local test scripts - contain real passwords, never commit
+tools/verify-features.mjs
+tools/repro-focus.mjs

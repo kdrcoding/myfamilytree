@@ -27,6 +27,16 @@ const FOCUSABLE =
 export function Modal({ onClose, children, labelledBy, size = 'md' }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
+  // The latest onClose, WITHOUT re-running the mount effect below. Parents
+  // often hand us a fresh function identity on every re-render; if the mount
+  // effect depended on it, any re-render mid-typing would re-run the
+  // initial-focus logic and yank the cursor back to the dialog's first field
+  // (real bug: typing in "occupation" landed in "first name").
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const panel = panelRef.current;
@@ -36,7 +46,7 @@ export function Modal({ onClose, children, labelledBy, size = 'md' }: ModalProps
     const onKey = (event: KeyboardEvent) => {
       if (!panel || modalStack[modalStack.length - 1] !== panel) return;
       if (event.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key === 'Tab') {
@@ -72,7 +82,10 @@ export function Modal({ onClose, children, labelledBy, size = 'md' }: ModalProps
       if (modalStack.length === 0) document.body.style.overflow = '';
       previous?.focus();
     };
-  }, [onClose]);
+    // Mount-only by design: initial focus, the stack entry and the scroll
+    // lock belong to the dialog's lifetime, not to any prop identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return createPortal(
     <div
