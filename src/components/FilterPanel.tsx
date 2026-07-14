@@ -3,7 +3,8 @@ import { ChevronDown, FilterX, SlidersHorizontal } from 'lucide-react';
 import type { Filters } from '../utils/filters';
 import { DEFAULT_FILTERS, hasActiveFilters } from '../utils/filters';
 import type { Gender } from '../types/family';
-import { useT } from '../i18n/useT';
+import { useLanguage, useT } from '../i18n/useT';
+import { countryLabel } from '../utils/countries';
 
 interface FilterPanelProps {
   filters: Filters;
@@ -21,6 +22,7 @@ export function FilterPanel({
   compact,
 }: FilterPanelProps) {
   const t = useT();
+  const language = useLanguage();
   // On phones the four dropdowns would fill the whole screen, so they hide
   // behind one small "Filters" button until needed. Desktop shows them inline.
   const [open, setOpen] = useState(false);
@@ -119,7 +121,7 @@ export function FilterPanel({
           <option value="all">{t('filters.all')}</option>
           {countries.map((country) => (
             <option key={country} value={country}>
-              {country}
+              {countryLabel(country, language)}
             </option>
           ))}
         </select>

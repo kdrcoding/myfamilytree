@@ -10,6 +10,7 @@ import { useLanguage, useT } from '../i18n/useT';
 import type { TKey } from '../i18n/translations';
 import { downloadJson } from '../utils/dataTransfer';
 import { fullName, generatePersonId, marriageDateOf, sortByBirth } from '../utils/family';
+import { countryOptions, normalizeCountry } from '../utils/countries';
 import { uploadPhoto } from '../lib/photoStorage';
 import { usePhotoUrl } from '../context/PhotoUrlsContext';
 import { downscalePhoto } from '../utils/image';
@@ -324,6 +325,7 @@ export function PersonFormModal({
   const { canDelete: isOwner } = useAuth();
   const { toast } = useToast();
   const t = useT();
+  const language = useLanguage();
   const isEdit = person !== undefined;
   // Family editors can now edit every DETAIL field (names, dates, place, bio,
   // gender, deceased) exactly like the owner — including things already filled
@@ -367,7 +369,9 @@ export function PersonFormModal({
       isDeceased: person?.isDeceased ?? false,
       photo: person?.photo ?? '',
       city: person?.city ?? '',
-      country: person?.country ?? '',
+      // Recognised RU/UZ/EN spellings snap to the canonical name, so simply
+      // re-saving a person repairs an inconsistently typed country.
+      country: normalizeCountry(person?.country) ?? '',
       occupation: person?.occupation ?? '',
       biography: person?.biography ?? '',
     },
@@ -393,6 +397,17 @@ export function PersonFormModal({
   // Storage-path photos (already-migrated members) resolve to a signed URL
   // for the preview; fresh uploads are data-URLs and pass through.
   const photoPreviewUrl = usePhotoUrl(values.photo || undefined);
+
+  const countryChoices = useMemo(() => countryOptions(language), [language]);
+  // A stored value the picker doesn't know (unrecognised legacy typing) is
+  // kept as an extra option so opening the form never silently loses it.
+  const legacyCountry = useMemo(() => {
+    if (!values.country) return null;
+    const known = [...countryChoices.priority, ...countryChoices.rest].some(
+      (c) => c.value === values.country,
+    );
+    return known ? null : values.country;
+  }, [values.country, countryChoices]);
 
   // When adding a child of someone who has (or had) more than one partner,
   // the child's other parent must be chosen explicitly. '' = no second parent.
@@ -734,12 +749,32 @@ export function PersonFormModal({
               />
             </Field>
             <Field label={t('form.country')}>
-              <input
-                type="text"
+              {/* A fixed list keeps one spelling per country — free typing
+                  produced a mix of English/Russian/Uzbek names that broke
+                  filters, statistics and the map. */}
+              <select
                 className="input"
                 value={values.country}
                 onChange={(e) => set('country', e.target.value)}
-              />
+              >
+                <option value="">—</option>
+                {countryChoices.priority.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+                <option value="" disabled>
+                  ──────────
+                </option>
+                {countryChoices.rest.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+                {legacyCountry && (
+                  <option value={legacyCountry}>{legacyCountry} (?)</option>
+                )}
+              </select>
             </Field>
             <Field label={t('form.occupation')}>
               <input

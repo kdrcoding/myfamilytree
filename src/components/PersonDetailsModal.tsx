@@ -16,6 +16,7 @@ import type { FamilyPerson } from '../types/family';
 import { useFamily } from '../context/FamilyContext';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { useLanguage, useT } from '../i18n/useT';
+import { countryLabel } from '../utils/countries';
 import { calculateAge, formatDate } from '../utils/dates';
 import { displayName, fullName, isDivorced, sortByBirth } from '../utils/family';
 import { Avatar } from './Avatar';
@@ -206,7 +207,7 @@ export function PersonDetailsModal({
     .filter(Boolean) as FamilyPerson[];
 
   const age = calculateAge(person.birthDate, person.deathDate);
-  const location = [privacy.showCity() ? person.city : null, person.country]
+  const location = [privacy.showCity() ? person.city : null, countryLabel(person.country, language)]
     .filter(Boolean)
     .join(', ');
 

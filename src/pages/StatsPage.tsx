@@ -13,8 +13,9 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useFamily } from '../context/FamilyContext';
-import { useT } from '../i18n/useT';
+import { useLanguage, useT } from '../i18n/useT';
 import { computeStats } from '../utils/stats';
+import { countryLabel } from '../utils/countries';
 import { fullName } from '../utils/family';
 
 function StatCard({
@@ -80,6 +81,7 @@ function BarChart({ title, data }: { title: string; data: { label: string; count
 export function StatsPage() {
   const { people } = useFamily();
   const t = useT();
+  const language = useLanguage();
   const stats = useMemo(() => computeStats(people), [people]);
 
   const genderData = [
@@ -168,7 +170,10 @@ export function StatsPage() {
         />
         <BarChart
           title={t('stats.perCountry')}
-          data={stats.perCountry.map((c) => ({ label: c.country, count: c.count }))}
+          data={stats.perCountry.map((c) => ({
+            label: countryLabel(c.country, language),
+            count: c.count,
+          }))}
         />
       </div>
     </div>

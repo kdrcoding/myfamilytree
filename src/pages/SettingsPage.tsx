@@ -4,6 +4,7 @@ import {
   Database,
   Download,
   Eye,
+  Globe,
   Images,
   KeyRound,
   Languages,
@@ -31,6 +32,7 @@ import { downloadBackup, forceBackup, listBackups } from '../lib/backups';
 import type { BackupMeta } from '../lib/backups';
 import { useFamily } from '../context/FamilyContext';
 import { uploadPhoto } from '../lib/photoStorage';
+import { normalizeCountry } from '../utils/countries';
 import { downscalePhoto } from '../utils/image';
 import { ToggleSwitch } from '../components/ui/ToggleSwitch';
 import { UnlockModal } from '../components/UnlockModal';
@@ -252,6 +254,60 @@ function BackupsCard() {
             </li>
           ))}
         </ul>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Owner-only card: unifies country spellings. Free typing left a mix of
+ * English/Russian/Uzbek names for the same country; one click snaps every
+ * recognisable spelling to the canonical name the picker now uses.
+ */
+function CountriesCard() {
+  const t = useT();
+  const { toast } = useToast();
+  const { people, normalizeAllCountries } = useFamily();
+  const [busy, setBusy] = useState(false);
+
+  const fixable = people.filter(
+    (p) => p.country && normalizeCountry(p.country) !== p.country,
+  ).length;
+
+  const fix = async () => {
+    if (busy) return;
+    setBusy(true);
+    const ok = await normalizeAllCountries();
+    setBusy(false);
+    toast(ok ? t('settings.countriesDone') : t('db.saveFailed'), ok ? 'success' : 'error');
+  };
+
+  return (
+    <section className="card mt-4 p-6">
+      <h2 className="flex items-center gap-2 font-semibold">
+        <Globe className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.countriesTitle')}
+      </h2>
+      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+        {t('settings.countriesIntro')}
+      </p>
+      {fixable === 0 ? (
+        <p className="mt-3 text-sm text-emerald-700 dark:text-emerald-400">
+          {t('settings.countriesNone')}
+        </p>
+      ) : (
+        <>
+          <p className="mt-3 text-sm text-stone-600 dark:text-stone-300">
+            {t('settings.countriesCount', { n: fixable })}
+          </p>
+          <button
+            type="button"
+            className="btn-primary mt-3"
+            disabled={busy}
+            onClick={() => void fix()}
+          >
+            <RotateCcw className="h-4 w-4" aria-hidden /> {t('settings.countriesFix')}
+          </button>
+        </>
       )}
     </section>
   );
@@ -582,6 +638,7 @@ export function SettingsPage() {
       {canDelete && <ChangeLogCard />}
       {canDelete && <BackupsCard />}
       {canDelete && <PhotosCard />}
+      {canDelete && <CountriesCard />}
 
       {unlockOpen && <UnlockModal onClose={() => setUnlockOpen(false)} />}
     </div>

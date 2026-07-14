@@ -14,6 +14,7 @@ import { logChange, summarizeFamilyChange } from '../lib/auditLog';
 import type { AuditAction } from '../lib/auditLog';
 import { autoBackup } from '../lib/backups';
 import { diffFamily, fetchFamily, isEmptyDiff, markSeeded, pushDiff } from '../lib/familyDb';
+import { normalizeCountry } from '../utils/countries';
 import { validateFamilyData } from '../utils/validation';
 import {
   applyRelationLink,
@@ -49,6 +50,8 @@ interface FamilyContextValue {
   replaceAll: (people: FamilyPerson[]) => void;
   /** Owner tool: replace many members' photo values in one save (migration). */
   bulkSetPhotos: (updates: Record<string, string>) => Promise<boolean>;
+  /** Owner tool: snap every recognisable country spelling to the canonical one. */
+  normalizeAllCountries: () => Promise<boolean>;
   /** Explicit setup action: fill the database with the bundled dataset. */
   resetToSample: () => void;
   exportData: () => FamilyData;
@@ -297,6 +300,15 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
             current.map((p) =>
               updates[p.id] !== undefined ? { ...p, photo: updates[p.id] || undefined } : p,
             ),
+          'edit',
+        ),
+      normalizeAllCountries: () =>
+        mutate(
+          (current) =>
+            current.map((p) => {
+              const fixed = normalizeCountry(p.country);
+              return fixed !== p.country ? { ...p, country: fixed } : p;
+            }),
           'edit',
         ),
       resetToSample: () => {

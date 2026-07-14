@@ -2,7 +2,8 @@ import { Baby, Briefcase, MapPin, Pencil, Trash2 } from 'lucide-react';
 import type { FamilyPerson } from '../types/family';
 import { useFamily } from '../context/FamilyContext';
 import { usePrivacy } from '../hooks/usePrivacy';
-import { useT } from '../i18n/useT';
+import { useLanguage, useT } from '../i18n/useT';
+import { countryLabel } from '../utils/countries';
 import { calculateAge, lifespan } from '../utils/dates';
 import { displayName } from '../utils/family';
 import { Avatar } from './Avatar';
@@ -20,6 +21,7 @@ export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps
   const { generations, getLabel } = useFamily();
   const privacy = usePrivacy();
   const t = useT();
+  const language = useLanguage();
   const age = calculateAge(person.birthDate, person.deathDate);
   const years = privacy.showBirthDate()
     ? lifespan(
@@ -69,7 +71,9 @@ export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps
         {(privacy.showCity() && person.city) || person.country ? (
           <li className="flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {[privacy.showCity() ? person.city : null, person.country].filter(Boolean).join(', ')}
+            {[privacy.showCity() ? person.city : null, countryLabel(person.country, language)]
+              .filter(Boolean)
+              .join(', ')}
           </li>
         ) : null}
         {privacy.showOccupation() && person.occupation && (
