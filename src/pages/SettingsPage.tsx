@@ -23,7 +23,7 @@ import { useToast } from '../context/ToastContext';
 import { useDataTransfer } from '../hooks/useDataTransfer';
 import { useLanguage, useT } from '../i18n/useT';
 import type { TKey } from '../i18n/translations';
-import { hashPassword } from '../config/access';
+import { AUTH_EMAILS, hashPassword } from '../config/access';
 import { listAuditLog } from '../lib/auditLog';
 import type { AuditEntry } from '../lib/auditLog';
 import { downloadBackup, forceBackup, listBackups } from '../lib/backups';
@@ -93,12 +93,12 @@ function ChangeLogCard() {
                 </span>
                 <span
                   className={`badge ${
-                    entry.actor.startsWith('owner@')
+                    entry.actor === AUTH_EMAILS.owner
                       ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
                       : 'border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300'
                   }`}
                 >
-                  {entry.actor.startsWith('owner@') ? t('log.actorOwner') : t('log.actorFamily')}
+                  {entry.actor === AUTH_EMAILS.owner ? t('log.actorOwner') : t('log.actorFamily')}
                 </span>
                 <span className="ml-auto text-xs text-stone-400">
                   {new Date(entry.at).toLocaleString(language === 'uz' ? 'uz-UZ' : 'en-GB')}
@@ -388,7 +388,13 @@ export function SettingsPage() {
               <button
                 type="button"
                 className="btn-secondary"
-                onClick={async () => setHashResult(hashInput ? await hashPassword(hashInput) : '')}
+                onClick={async () => {
+                  try {
+                    setHashResult(hashInput ? await hashPassword(hashInput) : '');
+                  } catch (error) {
+                    console.error('Hashing failed (needs a secure context):', error);
+                  }
+                }}
               >
                 {t('settings.genHash')}
               </button>

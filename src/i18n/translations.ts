@@ -18,6 +18,9 @@ export const en = {
   'nav.themeDark': 'Switch to dark mode',
   'nav.menuOpen': 'Open menu',
   'nav.menuClose': 'Close menu',
+  'nav.signOut': 'Sign out',
+  'nav.signOutConfirmTitle': 'Sign out of the site?',
+  'nav.signOutConfirmMsg': 'You will need the family password to enter again.',
   'footer.note': 'A private family history project. All sample people are fictional.',
 
   // Author credit
@@ -482,6 +485,9 @@ export const uz: Record<TKey, string> = {
   'nav.themeDark': "Tungi rejimga o'tish",
   'nav.menuOpen': 'Menyuni ochish',
   'nav.menuClose': 'Menyuni yopish',
+  'nav.signOut': 'Chiqish',
+  'nav.signOutConfirmTitle': 'Saytdan chiqilsinmi?',
+  'nav.signOutConfirmMsg': "Qayta kirish uchun oila paroli kerak bo'ladi.",
   'footer.note': "Shaxsiy oilaviy tarix loyihasi. Namunadagi odamlar to'qib chiqarilgan.",
 
   'credit.madeBy': 'Ilova muallifi — Kadir',

@@ -28,6 +28,9 @@ export function MapPage() {
   const markersRef = useRef<L.LayerGroup | null>(null);
   const [cache, setCache] = useState<GeoCache | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  // Fit the viewport to the markers once — later cache updates and language
+  // switches must not yank the map away from where the user panned.
+  const fittedRef = useRef(false);
 
   const showCity = privacy.showCity();
   const places = useMemo(() => {
@@ -66,24 +69,34 @@ export function MapPage() {
           console.error(`Geocoding "${missing[i].label}" failed:`, error);
           break; // network trouble — try again on the next visit
         }
-        if (cancelled) return;
+        if (cancelled) {
+          // Keep what was already found so it isn't re-requested next visit.
+          void saveGeoCache(updated);
+          return;
+        }
         setCache({ ...updated });
         setProgress({ done: i + 1, total: missing.length });
         if (i < missing.length - 1) {
           await new Promise((resolve) => setTimeout(resolve, GEOCODE_DELAY_MS));
+          if (cancelled) {
+            void saveGeoCache(updated);
+            return;
+          }
         }
       }
       setProgress(null);
-      if (!cancelled) void saveGeoCache(updated);
+      void saveGeoCache(updated);
     })();
     return () => {
       cancelled = true;
     };
   }, [places]);
 
-  // Create the Leaflet map once.
+  // Create the Leaflet map when its container exists (the container is only
+  // rendered once there is at least one place to show).
+  const hasPlaces = places.length > 0;
   useEffect(() => {
-    if (!mapEl.current || mapRef.current) return;
+    if (!hasPlaces || !mapEl.current || mapRef.current) return;
     const map = L.map(mapEl.current, { center: [41.3, 64.6], zoom: 5, scrollWheelZoom: true });
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       className: 'map-tiles',
@@ -96,8 +109,9 @@ export function MapPage() {
       map.remove();
       mapRef.current = null;
       markersRef.current = null;
+      fittedRef.current = false;
     };
-  }, []);
+  }, [hasPlaces]);
 
   // (Re)draw one marker per located place.
   useEffect(() => {
@@ -130,8 +144,9 @@ export function MapPage() {
       );
       marker.addTo(layer);
     }
-    if (bounds.length > 0) {
+    if (bounds.length > 0 && !fittedRef.current) {
       map.fitBounds(L.latLngBounds(bounds), { padding: [40, 40], maxZoom: 10 });
+      fittedRef.current = true;
     }
   }, [cache, places, t]);
 

@@ -32,28 +32,29 @@ function isGeoCache(value: unknown): value is GeoCache {
 export async function loadGeoCache(): Promise<GeoCache> {
   const local = loadJson<GeoCache>(LOCAL_KEY, isGeoCache) ?? {};
   if (!supabase) return local;
-  try {
-    const { data } = await supabase
-      .from('app_settings')
-      .select('value')
-      .eq('key', REMOTE_KEY)
-      .maybeSingle();
-    const remote = data?.value;
-    if (isGeoCache(remote)) return { ...local, ...remote };
-  } catch (error) {
+  const { data, error } = await supabase
+    .from('app_settings')
+    .select('value')
+    .eq('key', REMOTE_KEY)
+    .maybeSingle();
+  if (error) {
     console.error('Failed to load shared geocode cache:', error);
+    return local;
   }
-  return local;
+  const remote = data?.value;
+  return isGeoCache(remote) ? { ...local, ...remote } : local;
 }
 
 export async function saveGeoCache(cache: GeoCache): Promise<void> {
   saveJson(LOCAL_KEY, cache);
   if (!supabase) return;
-  try {
-    await supabase.from('app_settings').upsert({ key: REMOTE_KEY, value: cache });
-  } catch (error) {
-    console.error('Failed to save shared geocode cache:', error);
-  }
+  // Merge with the latest shared copy first, so two family members
+  // geocoding different cities at the same time don't overwrite each other.
+  const merged = { ...(await loadGeoCache()), ...cache };
+  const { error } = await supabase
+    .from('app_settings')
+    .upsert({ key: REMOTE_KEY, value: merged });
+  if (error) console.error('Failed to save shared geocode cache:', error);
 }
 
 /**

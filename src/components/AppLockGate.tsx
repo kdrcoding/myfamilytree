@@ -27,9 +27,15 @@ export function AppLockGate({ children }: { children: ReactNode }) {
       return;
     }
     setBusy(true);
-    const found = await signIn(password);
-    setBusy(false);
-    if (!found) setError(t('gate.wrong'));
+    try {
+      const found = await signIn(password);
+      if (!found) setError(t('gate.wrong'));
+    } catch (err) {
+      console.error('Sign-in failed:', err);
+      setError(t('gate.wrong'));
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (

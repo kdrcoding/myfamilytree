@@ -54,9 +54,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (fromSession !== 'viewer') setRole(fromSession);
       setReady(true);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       const fromSession = roleForEmail(session?.user.email);
-      if (fromSession !== 'viewer') setRole(fromSession);
+      if (fromSession !== 'viewer') {
+        setRole(fromSession);
+      } else if (event === 'SIGNED_OUT') {
+        // Sign-out in another tab (or a dead session) locks this tab too,
+        // unless a legacy hash credential is still valid.
+        const hash = loadJson<string>(AUTH_KEY, (v): v is string => typeof v === 'string');
+        setRole(hash ? roleForHash(hash) : 'viewer');
+      }
     });
     return () => sub.subscription.unsubscribe();
   }, []);

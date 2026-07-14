@@ -361,26 +361,35 @@ export function mergeAdditiveEdit(existing: FamilyPerson, updates: FamilyPerson)
 export function normalizePeople(people: FamilyPerson[]): FamilyPerson[] {
   const ids = new Set(people.map((p) => p.id));
   let next: FamilyPerson[] = people.map((p) => {
-    const spouseIds = [...new Set(p.spouseIds.filter((id) => ids.has(id) && id !== p.id))];
     const divorcedIds = [
-      ...new Set((p.divorcedIds ?? []).filter((id) => spouseIds.includes(id))),
+      ...new Set((p.divorcedIds ?? []).filter((id) => ids.has(id) && id !== p.id)),
     ];
     return {
       ...clone(p),
       parentIds: [...new Set(p.parentIds.filter((id) => ids.has(id) && id !== p.id))],
-      spouseIds,
+      spouseIds: [...new Set(p.spouseIds.filter((id) => ids.has(id) && id !== p.id))],
       childIds: [...new Set(p.childIds.filter((id) => ids.has(id) && id !== p.id))],
       divorcedIds: divorcedIds.length > 0 ? divorcedIds : undefined,
     };
   });
+  const divorcedPairs = next.flatMap((p) =>
+    (p.divorcedIds ?? []).map((exId) => [p.id, exId] as const),
+  );
   for (const person of next) {
     for (const spouseId of person.spouseIds) next = linkSpouses(next, person.id, spouseId);
     for (const childId of person.childIds) next = linkParentChild(next, person.id, childId);
     for (const parentId of person.parentIds) next = linkParentChild(next, parentId, person.id);
-    // Divorce markers are symmetric: one side recording it is enough.
-    for (const exId of person.divorcedIds ?? []) next = setDivorced(next, person.id, exId, true);
   }
-  return next;
+  // Divorce markers are symmetric (one side recording it is enough), and are
+  // applied only after every spouse link has been repaired — a marker whose
+  // spouse link was recorded on the OTHER person must survive too.
+  for (const [aId, bId] of divorcedPairs) next = setDivorced(next, aId, bId, true);
+  // Markers with no spouse link at all on either side are dropped.
+  return next.map((p) => {
+    const kept = (p.divorcedIds ?? []).filter((id) => p.spouseIds.includes(id));
+    if (kept.length === (p.divorcedIds ?? []).length) return p;
+    return { ...clone(p), divorcedIds: kept.length > 0 ? kept : undefined };
+  });
 }
 
 export function generatePersonId(

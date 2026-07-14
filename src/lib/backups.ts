@@ -68,5 +68,6 @@ export async function downloadBackup(id: number): Promise<void> {
   a.href = url;
   a.download = `family-backup-${row.taken_at.slice(0, 10)}.json`;
   a.click();
-  URL.revokeObjectURL(url);
+  // Revoking immediately can abort the download in Safari.
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

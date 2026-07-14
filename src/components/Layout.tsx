@@ -1,16 +1,30 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Languages, Menu, Moon, Sun, TreePine, X } from 'lucide-react';
+import { Languages, LogOut, Menu, Moon, Sun, TreePine, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { useSettings } from '../context/SettingsContext';
 import { useT } from '../i18n/useT';
 import { MadeByKadir } from './MadeByKadir';
 
 export function Layout() {
   const { settings, toggleTheme, setLanguage } = useSettings();
+  const { signOut } = useAuth();
+  const confirm = useConfirm();
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const t = useT();
   const isTreePage = location.pathname === '/tree';
+
+  // Signing out locks the whole site, so a stray tap shouldn't do it.
+  const handleSignOut = async () => {
+    const proceed = await confirm({
+      title: t('nav.signOutConfirmTitle'),
+      message: t('nav.signOutConfirmMsg'),
+      confirmLabel: t('nav.signOut'),
+    });
+    if (proceed) signOut();
+  };
 
   const navItems = [
     { to: '/', label: t('nav.home') },
@@ -76,6 +90,15 @@ export function Layout() {
               ) : (
                 <Moon className="h-5 w-5" aria-hidden />
               )}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              className="icon-btn"
+              title={t('nav.signOut')}
+              aria-label={t('nav.signOut')}
+            >
+              <LogOut className="h-5 w-5" aria-hidden />
             </button>
             <button
               type="button"
