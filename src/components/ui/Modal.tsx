@@ -76,7 +76,7 @@ export function Modal({ onClose, children, labelledBy, size = 'md' }: ModalProps
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-stone-900/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      className="animate-fade-in fixed inset-0 z-[70] flex items-end justify-center bg-stone-900/50 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}

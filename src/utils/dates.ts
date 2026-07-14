@@ -65,6 +65,13 @@ export function formatDate(value?: string, language: 'en' | 'uz' = 'en'): string
   return year;
 }
 
+/** "3 Aug" / "3 avg" — a day + month with no year, for birthdays. */
+export function formatMonthDay(month: number, day: number, language: 'en' | 'uz' = 'en'): string {
+  const months = MONTHS[language];
+  if (month < 1 || month > 12) return '';
+  return `${day} ${months[month - 1]}`;
+}
+
 /** "1928 – 2009", "b. 1976" etc. for compact display. */
 export function lifespan(
   birthDate?: string,

@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AppLockGate } from './components/AppLockGate';
 import { Layout } from './components/Layout';
@@ -6,14 +7,24 @@ import { ConfirmProvider } from './context/ConfirmContext';
 import { FamilyProvider } from './context/FamilyContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { ToastProvider } from './context/ToastContext';
-import { AboutPage } from './pages/AboutPage';
-import { HomePage } from './pages/HomePage';
-import { MapPage } from './pages/MapPage';
-import { MembersPage } from './pages/MembersPage';
-import { NotFoundPage } from './pages/NotFoundPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { StatsPage } from './pages/StatsPage';
-import { TreePage } from './pages/TreePage';
+
+// Pages are loaded on demand so the first paint doesn't ship the heavy tree
+// (React Flow), map (Leaflet) and export code up front — a big win on phones.
+// Each `.then` adapts our named page export to the default React.lazy wants.
+const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
+const TreePage = lazy(() => import('./pages/TreePage').then((m) => ({ default: m.TreePage })));
+const MembersPage = lazy(() =>
+  import('./pages/MembersPage').then((m) => ({ default: m.MembersPage })),
+);
+const MapPage = lazy(() => import('./pages/MapPage').then((m) => ({ default: m.MapPage })));
+const StatsPage = lazy(() => import('./pages/StatsPage').then((m) => ({ default: m.StatsPage })));
+const AboutPage = lazy(() => import('./pages/AboutPage').then((m) => ({ default: m.AboutPage })));
+const SettingsPage = lazy(() =>
+  import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
+);
+const NotFoundPage = lazy(() =>
+  import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
+);
 
 export default function App() {
   return (

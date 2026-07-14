@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Background,
   BackgroundVariant,
@@ -13,14 +13,12 @@ import type { Edge, EdgeTypes, Node, NodeTypes } from '@xyflow/react';
 import {
   ChevronsDownUp,
   ChevronsUpDown,
-  Download,
   Image as ImageIcon,
   Lock,
   LockOpen,
   LogOut,
   Search,
   TreePine,
-  Upload,
   UserPlus,
   UserRoundPlus,
   X,
@@ -31,24 +29,17 @@ import { useConfirm } from '../context/ConfirmContext';
 import { useFamily } from '../context/FamilyContext';
 import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
-import { useDataTransfer } from '../hooks/useDataTransfer';
 import { usePersistentState } from '../hooks/usePersistentState';
 import { useT } from '../i18n/useT';
-import { STORAGE_KEYS, loadJson } from '../utils/storage';
-import { defaultCollapsedIds, getAncestorIds, fullName } from '../utils/family';
+import { STORAGE_KEYS } from '../utils/storage';
+import { getAncestorIds, fullName } from '../utils/family';
 import { matchesSearch } from '../utils/filters';
 import { MadeByKadir } from '../components/MadeByKadir';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { PersonDetailsModal } from '../components/PersonDetailsModal';
 import { PersonFormModal } from '../components/PersonFormModal';
 import { UnlockModal } from '../components/UnlockModal';
-import {
-  computeTreeLayout,
-  CARD_H,
-  CARD_W,
-  DEFAULT_OPEN_GENERATIONS,
-} from '../features/tree/layout';
-import { exportTreeAsPng } from '../features/tree/exportPng';
+import { computeTreeLayout, CARD_H, CARD_W } from '../features/tree/layout';
 import { JunctionNode } from '../features/tree/JunctionNode';
 import { ChildEdge } from '../features/tree/ChildEdge';
 import { PersonNode } from '../features/tree/PersonNode';
@@ -281,32 +272,17 @@ export function TreePage() {
   const { settings } = useSettings();
   const { toast } = useToast();
   const confirm = useConfirm();
-  const { exportJson, importFromFile } = useDataTransfer();
   const t = useT();
 
+  // The tree defaults to fully expanded so every family member is shown on
+  // load. Collapsing is opt-in: the owner's toolbar buttons, or the per-card
+  // chevron anyone can tap. The choice persists per browser.
   const [collapsedList, setCollapsedList] = usePersistentState<string[]>(
     STORAGE_KEYS.collapsed,
     [],
     (v): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string'),
   );
   const collapsed = useMemo(() => new Set(collapsedList), [collapsedList]);
-
-  // First view of a large tree opens compact: fold everything past the top few
-  // generations so it doesn't sprawl sideways. Runs once, and only when this
-  // browser has no saved collapse choice yet (null key) — a stored preference,
-  // including a deliberate "Expand all", is always left untouched.
-  const didSeedCollapse = useRef(false);
-  useEffect(() => {
-    if (didSeedCollapse.current || people.length === 0) return;
-    didSeedCollapse.current = true;
-    const saved = loadJson<string[]>(
-      STORAGE_KEYS.collapsed,
-      (v): v is string[] => Array.isArray(v),
-    );
-    if (saved === null) {
-      setCollapsedList(defaultCollapsedIds(people, DEFAULT_OPEN_GENERATIONS));
-    }
-  }, [people, setCollapsedList]);
 
   const [editMode, setEditMode] = useState(false);
   const [unlockOpen, setUnlockOpen] = useState(false);
@@ -316,7 +292,6 @@ export function TreePage() {
   const [form, setForm] = useState<{ person?: FamilyPerson; link?: RelationLink } | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
-  const importInputRef = useRef<HTMLInputElement>(null);
 
   // Signing out (or a password change) always leaves edit mode.
   useEffect(() => {
@@ -391,6 +366,8 @@ export function TreePage() {
 
   const handleExportPng = async () => {
     try {
+      // Loaded on demand — html-to-image is heavy and only needed on export.
+      const { exportTreeAsPng } = await import('../features/tree/exportPng');
       await exportTreeAsPng(flowNodes, settings.theme === 'dark');
       toast(t('tree.pngDone'));
     } catch {
@@ -435,58 +412,30 @@ export function TreePage() {
               instead of stacking into a wall of buttons; ≥sm this wrapper
               disappears (display:contents) and the groups wrap as before. */}
           <div className="scrollbar-none flex w-full items-center gap-1.5 overflow-x-auto sm:contents">
-          <div className="flex shrink-0 items-center gap-1.5 sm:flex-wrap">
-            <button type="button" className="btn-secondary" onClick={() => setCollapsedList([])}>
-              <ChevronsUpDown className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">{t('tree.expandAll')}</span>
-            </button>
-            <button type="button" className="btn-secondary" onClick={collapseAll}>
-              <ChevronsDownUp className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">{t('tree.collapseAll')}</span>
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={exportJson}
-              title={t('tree.exportTitle')}
-            >
-              <Download className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">{t('tree.export')}</span>
-            </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handleExportPng}
-              title={t('tree.pngTitle')}
-            >
-              <ImageIcon className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">{t('tree.png')}</span>
-            </button>
-            {canEdit && (
-              <>
-                <input
-                  ref={importInputRef}
-                  type="file"
-                  accept="application/json,.json"
-                  className="sr-only"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) void importFromFile(file);
-                    e.target.value = '';
-                  }}
-                />
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => importInputRef.current?.click()}
-                  title={t('tree.importTitle')}
-                >
-                  <Upload className="h-4 w-4" aria-hidden />
-                  <span className="hidden sm:inline">{t('tree.import')}</span>
-                </button>
-              </>
-            )}
-          </div>
+          {/* Tree-wide controls are owner-only. Export/Import of the whole
+              dataset live on the Settings page (also owner-only); the toolbar
+              keeps just the view controls + on-canvas PNG here. */}
+          {canDelete && (
+            <div className="flex shrink-0 items-center gap-1.5 sm:flex-wrap">
+              <button type="button" className="btn-secondary" onClick={() => setCollapsedList([])}>
+                <ChevronsUpDown className="h-4 w-4" aria-hidden />
+                <span className="hidden sm:inline">{t('tree.expandAll')}</span>
+              </button>
+              <button type="button" className="btn-secondary" onClick={collapseAll}>
+                <ChevronsDownUp className="h-4 w-4" aria-hidden />
+                <span className="hidden sm:inline">{t('tree.collapseAll')}</span>
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleExportPng}
+                title={t('tree.pngTitle')}
+              >
+                <ImageIcon className="h-4 w-4" aria-hidden />
+                <span className="hidden sm:inline">{t('tree.png')}</span>
+              </button>
+            </div>
+          )}
 
           {/* Edit / Add stay pinned to the right edge while the utility
               buttons scroll underneath, so the way into editing is never

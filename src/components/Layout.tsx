@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Languages, LogOut, Menu, Moon, Sun, TreePine, X } from 'lucide-react';
+import { Languages, Loader2, LogOut, Menu, Moon, Sun, TreePine, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useSettings } from '../context/SettingsContext';
@@ -140,7 +140,16 @@ export function Layout() {
       </header>
 
       <main id="main" className="flex flex-1 flex-col">
-        <Outlet />
+        <Suspense
+          fallback={
+            <div className="flex flex-1 items-center justify-center py-24">
+              <Loader2 className="h-7 w-7 animate-spin text-emerald-600" aria-hidden />
+              <span className="sr-only">{t('db.loading')}</span>
+            </div>
+          }
+        >
+          <Outlet />
+        </Suspense>
       </main>
 
       {!isTreePage && (

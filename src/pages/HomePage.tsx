@@ -1,23 +1,64 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Heart, Network, ShieldCheck, UserRoundPlus, Users } from 'lucide-react';
+import { ArrowRight, Cake, Heart, Network, PartyPopper, ShieldCheck, UserRoundPlus, Users } from 'lucide-react';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { useFamily } from '../context/FamilyContext';
+import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
 import { computeStats } from '../utils/stats';
 import { findFounders, fullName } from '../utils/family';
-import { formatDate } from '../utils/dates';
+import { formatDate, formatMonthDay } from '../utils/dates';
+import { getUpcomingBirthdays } from '../utils/birthdays';
+import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { Avatar } from '../components/Avatar';
+
+/** How far ahead the homepage looks for upcoming birthdays. */
+const BIRTHDAY_WINDOW_DAYS = 30;
 
 export function HomePage() {
   const { people } = useFamily();
   const privacy = usePrivacy();
+  const { toast } = useToast();
   const t = useT();
   const language = useLanguage();
   const [joinOpen, setJoinOpen] = useState(false);
   const stats = useMemo(() => computeStats(people), [people]);
   const founders = useMemo(() => findFounders(people).slice(0, 2), [people]);
+
+  // Birth dates are gated by privacy, so hide birthdays entirely when they are.
+  const showBirthDates = privacy.showBirthDate();
+  const upcoming = useMemo(
+    () => (showBirthDates ? getUpcomingBirthdays(people) : []),
+    [people, showBirthDates],
+  );
+  // Show everyone whose birthday is within the next month. In a quiet stretch
+  // with none coming up soon, still show the next few so the card is never
+  // empty — it always tells you who's up next and how far away it is.
+  const birthdays = useMemo(() => {
+    const soon = upcoming.filter((b) => b.daysUntil <= BIRTHDAY_WINDOW_DAYS);
+    return soon.length > 0 ? soon : upcoming.slice(0, 3);
+  }, [upcoming]);
+
+  // Notify once per day when someone has a birthday today. The stored date
+  // guards against re-toasting on every re-visit to the homepage.
+  useEffect(() => {
+    const todays = upcoming.filter((b) => b.isToday);
+    if (todays.length === 0) return;
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const last = loadJson<string>(
+      STORAGE_KEYS.birthdayNotified,
+      (v): v is string => typeof v === 'string',
+    );
+    if (last === todayKey) return;
+    saveJson(STORAGE_KEYS.birthdayNotified, todayKey);
+    toast(
+      todays.length === 1
+        ? t('home.bdayToastOne', { name: fullName(todays[0].person) })
+        : t('home.bdayToastMany', { names: todays.map((b) => fullName(b.person)).join(', ') }),
+      'info',
+    );
+  }, [upcoming, toast, t]);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
@@ -78,6 +119,64 @@ export function HomePage() {
           </div>
         ))}
       </section>
+
+      {/* Upcoming birthdays */}
+      {birthdays.length > 0 && (
+        <section className="card mt-8 p-6">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <Cake className="h-5 w-5 text-rose-500" aria-hidden />
+            {t('home.birthdaysTitle')}
+          </h2>
+          <ul className="mt-4 space-y-2">
+            {birthdays.map((b) => {
+              const when = b.isToday
+                ? t('home.bdayToday')
+                : b.daysUntil === 1
+                  ? t('home.bdayTomorrow')
+                  : t('home.bdayInDays', { n: b.daysUntil });
+              const showAge = b.turningAge !== null && privacy.showAge(b.person);
+              return (
+                <li
+                  key={b.person.id}
+                  className={`flex items-center gap-3 rounded-2xl p-3 ${
+                    b.isToday
+                      ? 'bg-rose-50 ring-1 ring-rose-200 dark:bg-rose-950/40 dark:ring-rose-900'
+                      : 'bg-stone-50 dark:bg-stone-800/60'
+                  }`}
+                >
+                  <Avatar person={b.person} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-stone-900 dark:text-stone-100">
+                      {fullName(b.person)}
+                    </p>
+                    <p className="text-sm text-stone-500 dark:text-stone-400">
+                      {formatMonthDay(b.month, b.day, language)}
+                      {showAge && (
+                        <>
+                          {' · '}
+                          {b.isToday
+                            ? t('home.bdayTurnsToday', { age: b.turningAge! })
+                            : t('home.bdayTurns', { age: b.turningAge! })}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <span
+                    className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      b.isToday
+                        ? 'bg-rose-500 text-white'
+                        : 'bg-stone-200 text-stone-600 dark:bg-stone-700 dark:text-stone-300'
+                    }`}
+                  >
+                    {b.isToday && <PartyPopper className="h-3.5 w-3.5" aria-hidden />}
+                    {when}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {/* Founding couple */}
       {founders.length > 0 && (

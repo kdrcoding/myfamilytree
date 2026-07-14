@@ -2,11 +2,16 @@
 // password. The family data itself lives in Supabase (src/lib/familyDb.ts).
 export const STORAGE_KEYS = {
   settings: 'familytree.settings.v1',
-  collapsed: 'familytree.collapsed.v1',
+  // v2: the tree now defaults to fully expanded (everyone shown). Bumping the
+  // key drops the old auto-collapsed state so existing devices start expanded.
+  collapsed: 'familytree.collapsed.v2',
   auth: 'familytree.auth.v1',
   // The person add/edit form autosaves here so an accidental reload (or a
   // phone browser discarding the backgrounded tab) doesn't lose typed work.
   formDraft: 'familytree.formDraft.v1',
+  // Last date (YYYY-MM-DD) we showed the "birthday today" toast, so it fires
+  // at most once per day per browser.
+  birthdayNotified: 'familytree.birthdayNotified.v1',
 } as const;
 
 /**

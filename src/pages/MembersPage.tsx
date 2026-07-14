@@ -135,14 +135,22 @@ export function MembersPage() {
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {visible.map((person) => (
-            <PersonCard
+          {visible.map((person, i) => (
+            // Staggered reveal, capped so a large family doesn't wait seconds
+            // for the last card. Re-sorting reuses the same keys, so cards
+            // animate once on mount, not on every reorder.
+            <div
               key={person.id}
-              person={person}
-              onOpen={setDetailsId}
-              onEdit={canEdit ? (p) => setForm({ person: p }) : undefined}
-              onDelete={canDelete ? handleDelete : undefined}
-            />
+              className="animate-rise-in"
+              style={{ animationDelay: `${Math.min(i * 25, 300)}ms` }}
+            >
+              <PersonCard
+                person={person}
+                onOpen={setDetailsId}
+                onEdit={canEdit ? (p) => setForm({ person: p }) : undefined}
+                onDelete={canDelete ? handleDelete : undefined}
+              />
+            </div>
           ))}
         </div>
       )}
