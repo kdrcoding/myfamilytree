@@ -36,6 +36,11 @@
   }
   body {
     @apply antialiased;
+    /* Disable the browser's pull-to-refresh gesture. On phones a long edit
+       form lives in a scrollable modal; swiping down to scroll up past the top
+       would otherwise trigger a full page reload and wipe the user's unsaved
+       work — reported as the page "refreshing by itself". */
+    overscroll-behavior-y: contain;
   }
 }
 

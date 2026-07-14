@@ -4,6 +4,9 @@ export const STORAGE_KEYS = {
   settings: 'familytree.settings.v1',
   collapsed: 'familytree.collapsed.v1',
   auth: 'familytree.auth.v1',
+  // The person add/edit form autosaves here so an accidental reload (or a
+  // phone browser discarding the backgrounded tab) doesn't lose typed work.
+  formDraft: 'familytree.formDraft.v1',
 } as const;
 
 /**

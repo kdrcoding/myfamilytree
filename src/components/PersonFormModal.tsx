@@ -13,6 +13,7 @@ import { fullName, generatePersonId, sortByBirth } from '../utils/family';
 import { downscalePhoto } from '../utils/image';
 import { validatePersonForm, canLink } from '../utils/validation';
 import type { PersonFormValues } from '../utils/validation';
+import { loadJson, removeKey, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { Avatar } from './Avatar';
 import { Modal } from './ui/Modal';
 
@@ -40,6 +41,25 @@ const KIND_KEYS = {
   parent: 'relkind.parent',
   sibling: 'relkind.sibling',
 } as const;
+
+/** Autosaved snapshot of an in-progress form, keyed to the thing being edited. */
+interface FormDraft {
+  id: string;
+  values: PersonFormValues;
+  parentIds: string[];
+  spouseIds: string[];
+  otherParentId: string;
+}
+
+function isFormDraft(value: unknown): value is FormDraft {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as FormDraft).id === 'string' &&
+    typeof (value as FormDraft).values === 'object' &&
+    (value as FormDraft).values !== null
+  );
+}
 
 function Field({
   label,
@@ -308,28 +328,54 @@ export function PersonFormModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const firstNameRef = useRef<HTMLInputElement>(null);
 
-  const [values, setValues] = useState<PersonFormValues>({
-    firstName: person?.firstName ?? '',
-    lastName: person?.lastName ?? (link ? (getPerson(link.targetId)?.lastName ?? '') : ''),
-    nickname: person?.nickname ?? '',
-    gender: person?.gender ?? 'unspecified',
-    birthDate: person?.birthDate ?? '',
-    deathDate: person?.deathDate ?? '',
-    isDeceased: person?.isDeceased ?? false,
-    photo: person?.photo ?? '',
-    city: person?.city ?? '',
-    country: person?.country ?? '',
-    occupation: person?.occupation ?? '',
-    biography: person?.biography ?? '',
-  });
-  const [parentIds, setParentIds] = useState<string[]>(person?.parentIds ?? []);
-  const [spouseIds, setSpouseIds] = useState<string[]>(person?.spouseIds ?? []);
+  const linkTarget = link ? getPerson(link.targetId) : undefined;
+
+  // A stable identity for this particular form, so a restored draft can only
+  // ever refill the exact person/relationship it was typed for.
+  const draftId = selfJoin
+    ? 'self'
+    : person
+      ? `edit:${person.id}`
+      : link
+        ? `new:${link.kind}:${link.targetId}`
+        : 'new';
+
+  // Read a saved draft once. It only applies if it belongs to this same form —
+  // a leftover draft for a different person is discarded.
+  const draftRef = useRef<FormDraft | null | undefined>(undefined);
+  if (draftRef.current === undefined) {
+    const stored = loadJson<FormDraft>(STORAGE_KEYS.formDraft, isFormDraft);
+    draftRef.current = stored && stored.id === draftId ? stored : null;
+  }
+  const restored = draftRef.current;
+  // If we restored real unsaved work, keep autosaving from the start.
+  const dirtyRef = useRef(restored !== null);
+
+  const [values, setValues] = useState<PersonFormValues>(() =>
+    restored?.values ?? {
+      firstName: person?.firstName ?? '',
+      lastName: person?.lastName ?? (link ? (getPerson(link.targetId)?.lastName ?? '') : ''),
+      nickname: person?.nickname ?? '',
+      gender: person?.gender ?? 'unspecified',
+      birthDate: person?.birthDate ?? '',
+      deathDate: person?.deathDate ?? '',
+      isDeceased: person?.isDeceased ?? false,
+      photo: person?.photo ?? '',
+      city: person?.city ?? '',
+      country: person?.country ?? '',
+      occupation: person?.occupation ?? '',
+      biography: person?.biography ?? '',
+    },
+  );
+  const [parentIds, setParentIds] = useState<string[]>(restored?.parentIds ?? person?.parentIds ?? []);
+  const [spouseIds, setSpouseIds] = useState<string[]>(restored?.spouseIds ?? person?.spouseIds ?? []);
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
 
-  const linkTarget = link ? getPerson(link.targetId) : undefined;
   // When adding a child of someone who has (or had) more than one partner,
   // the child's other parent must be chosen explicitly. '' = no second parent.
-  const [otherParentId, setOtherParentId] = useState<string>(linkTarget?.spouseIds[0] ?? '');
+  const [otherParentId, setOtherParentId] = useState<string>(
+    restored?.otherParentId ?? linkTarget?.spouseIds[0] ?? '',
+  );
   const askOtherParent =
     !isEdit && link?.kind === 'child' && (linkTarget?.spouseIds.length ?? 0) > 0;
   const candidates = useMemo(
@@ -337,10 +383,40 @@ export function PersonFormModal({
     [people, person?.id],
   );
 
-  const set = <K extends keyof PersonFormValues>(key: K, value: PersonFormValues[K]) =>
+  const markDirty = () => {
+    dirtyRef.current = true;
+  };
+
+  const set = <K extends keyof PersonFormValues>(key: K, value: PersonFormValues[K]) => {
+    markDirty();
     setValues((v) => ({ ...v, [key]: value }));
+  };
+
+  const clearDraft = () => {
+    dirtyRef.current = false;
+    removeKey(STORAGE_KEYS.formDraft);
+  };
 
   const err = (key?: string) => (key ? t(key as TKey) : undefined);
+
+  // Tell the user once when their previous unsaved work was recovered.
+  useEffect(() => {
+    if (restored) toast(t('form.draftRestored'), 'info');
+    // Runs once on open; `restored` is fixed for this modal's lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Autosave the in-progress form so a reload (accidental refresh, phone
+  // pull-to-refresh, or the OS discarding a backgrounded tab) never means
+  // starting over. Debounced so a large embedded photo isn't rewritten on
+  // every keystroke; only writes once the user has actually changed something.
+  useEffect(() => {
+    if (!dirtyRef.current) return;
+    const handle = window.setTimeout(() => {
+      saveJson(STORAGE_KEYS.formDraft, { id: draftId, values, parentIds, spouseIds, otherParentId });
+    }, 400);
+    return () => window.clearTimeout(handle);
+  }, [draftId, values, parentIds, spouseIds, otherParentId]);
 
   const onPhotoFile = (file: File | undefined) => {
     if (!file) return;
@@ -376,6 +452,10 @@ export function PersonFormModal({
 
     setErrors(fieldErrors);
     if (Object.keys(fieldErrors).length > 0) return false;
+
+    // The change is now committed to app state (FamilyContext handles the
+    // database write, retry and rollback); the recovery draft has done its job.
+    clearDraft();
 
     const trimmed = {
       firstName: values.firstName.trim(),
@@ -431,9 +511,16 @@ export function PersonFormModal({
     return true;
   };
 
+  // Closing (Cancel, Escape, backdrop, or after saving) discards any recovery
+  // draft — it only exists to survive an *involuntary* reload mid-edit.
+  const handleClose = () => {
+    clearDraft();
+    onClose();
+  };
+
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (doSave()) onClose();
+    if (doSave()) handleClose();
   };
 
   /** Save this person, then clear the form for the next one (same family). */
@@ -465,7 +552,7 @@ export function PersonFormModal({
         : t('form.titleAdd');
 
   return (
-    <Modal onClose={onClose} labelledBy="person-form-title" size="lg">
+    <Modal onClose={handleClose} labelledBy="person-form-title" size="lg">
       <form onSubmit={submit} noValidate>
         <h2
           id="person-form-title"
@@ -647,22 +734,24 @@ export function PersonFormModal({
               candidates={candidates}
               selected={parentIds}
               maxSelected={2}
-              onToggle={(id) =>
+              onToggle={(id) => {
+                markDirty();
                 setParentIds((ids) =>
                   ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id],
-                )
-              }
+                );
+              }}
               disabledReason={(id) => canLink(people, 'parent-child', id, person.id)}
             />
             <PeoplePicker
               label={t('form.spouses')}
               candidates={candidates}
               selected={spouseIds}
-              onToggle={(id) =>
+              onToggle={(id) => {
+                markDirty();
                 setSpouseIds((ids) =>
                   ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id],
-                )
-              }
+                );
+              }}
               disabledReason={(id) => canLink(people, 'spouse', person.id, id)}
             />
             {errors.relationships && (
@@ -679,7 +768,10 @@ export function PersonFormModal({
               <select
                 className="input"
                 value={otherParentId}
-                onChange={(e) => setOtherParentId(e.target.value)}
+                onChange={(e) => {
+                  markDirty();
+                  setOtherParentId(e.target.value);
+                }}
               >
                 {linkTarget.spouseIds
                   .map((id) => index.get(id))
@@ -719,7 +811,7 @@ export function PersonFormModal({
             scroll area; the negative bottom/margin let the bar cover that
             strip so scrolled content never peeks out underneath it. */}
         <div className="sticky bottom-[calc(-1*max(1.25rem,env(safe-area-inset-bottom)))] z-10 -mx-5 mb-[calc(-1*max(1.25rem,env(safe-area-inset-bottom)))] mt-6 flex flex-wrap justify-end gap-2 border-t border-stone-200 bg-white px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 dark:border-stone-700 dark:bg-stone-900">
-          <button type="button" className="btn-secondary" onClick={onClose}>
+          <button type="button" className="btn-secondary" onClick={handleClose}>
             {t('common.cancel')}
           </button>
           {!isEdit && !selfJoin && (

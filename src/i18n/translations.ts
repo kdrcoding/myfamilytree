@@ -269,6 +269,7 @@ export const en = {
   'form.addMe': 'Add me & download request file',
   'form.addedToast': '{name} was added to the family.',
   'form.updatedToast': '{name} was updated.',
+  'form.draftRestored': 'Restored the unsaved changes you were making here.',
   'form.updatedRestrictedToast': '{name} was updated — only empty fields were filled in.',
   'form.selfJoinToast':
     'You are on the tree in this browser, and a request file was downloaded — send it to the family owner so everyone sees you.',
@@ -473,6 +474,8 @@ export const en = {
     'This site needs the VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables. See the "Shared data with Supabase" section of the README.',
   'db.saveFailed':
     'Could not save to the shared database — this change is only visible here until it is saved. Check your connection and try again.',
+  'db.refreshFailed':
+    'Could not refresh from the database. Still showing the latest data on this device.',
 } as const;
 
 export type TKey = keyof typeof en;
@@ -731,6 +734,7 @@ export const uz: Record<TKey, string> = {
   'form.addMe': "Meni qo'shish va so'rov faylini yuklab olish",
   'form.addedToast': '{name} oilaga qo‘shildi.',
   'form.updatedToast': '{name} yangilandi.',
+  'form.draftRestored': 'Shu yerda kiritayotgan saqlanmagan o‘zgarishlaringiz tiklandi.',
   'form.updatedRestrictedToast': '{name} yangilandi — faqat bo‘sh kataklar to‘ldirildi.',
   'form.selfJoinToast':
     "Siz bu brauzerda shajaraga qo'shildingiz va so'rov fayli yuklab olindi — hamma sizni ko'rishi uchun uni oila egasiga yuboring.",
@@ -926,6 +930,8 @@ export const uz: Record<TKey, string> = {
     "Bu saytga VITE_SUPABASE_URL va VITE_SUPABASE_ANON_KEY muhit o'zgaruvchilari kerak. README dagi \"Shared data with Supabase\" bo'limiga qarang.",
   'db.saveFailed':
     "Umumiy ma'lumotlar bazasiga saqlab bo'lmadi — bu o'zgarish saqlanmaguncha faqat shu yerda ko'rinadi. Aloqani tekshirib, qayta urinib ko'ring.",
+  'db.refreshFailed':
+    "Ma'lumotlar bazasidan yangilab bo'lmadi. Shu qurilmadagi eng so'nggi ma'lumotlar ko'rsatilmoqda.",
 };
 
 export type Language = 'uz' | 'en';

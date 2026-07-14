@@ -79,21 +79,46 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   // request chains could otherwise land out of order (e.g. a delete
   // completing before the add it depends on).
   const pushQueue = useRef<Promise<unknown>>(Promise.resolve());
+  // True once the first successful load has put data on screen. After that a
+  // refetch must run in the BACKGROUND: flipping `status` back to 'loading'
+  // would make FamilyProvider render the full-screen gate instead of
+  // `children`, unmounting everything — including a half-filled edit form —
+  // which looks exactly like the page "refreshing by itself" and loses the
+  // user's unsaved work. Mobile users reported precisely this.
+  const hasLoadedRef = useRef(false);
+  // Keep the latest toast/language reachable from `load` without adding them
+  // to its dependency list — that would change `load`'s identity and make the
+  // mount effect below refetch on every language toggle.
+  const toastRef = useRef(toast);
+  const languageRef = useRef(language);
+  useEffect(() => {
+    toastRef.current = toast;
+    languageRef.current = language;
+  });
 
   const load = useCallback(async () => {
     if (!isSupabaseConfigured) return;
-    setStatus('loading');
+    const isFirstLoad = !hasLoadedRef.current;
+    // Only the very first load blocks the whole UI with the loading screen.
+    if (isFirstLoad) setStatus('loading');
     try {
       const loaded = await fetchFamily();
       peopleRef.current = loaded;
       setPeopleState(loaded);
+      hasLoadedRef.current = true;
       setStatus('ready');
       // Every visit keeps the daily database snapshot fresh (no-op when a
       // recent backup already exists).
       autoBackup();
     } catch (error) {
       console.error('Failed to load family data from Supabase:', error);
-      setStatus('error');
+      if (isFirstLoad) {
+        setStatus('error');
+      } else {
+        // We already have data on screen. Keep showing it and just warn,
+        // rather than throwing the user out of whatever they were editing.
+        toastRef.current(translate(languageRef.current, 'db.refreshFailed'), 'error');
+      }
     }
   }, []);
 
