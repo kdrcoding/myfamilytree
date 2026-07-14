@@ -171,3 +171,25 @@ export function countryLabel(stored: string | undefined, language: AppLanguage):
   const code = nameLookup().get(matchKey(stored));
   return code ? localizedName(code, language) : stored;
 }
+
+/**
+ * The distinct countries in a set of people, merged across spelling/case/
+ * language variants (each returned as its canonical stored value). Used for
+ * filter dropdowns and grouping so variants never appear as separate entries
+ * even when the stored data hasn't been cleaned up yet.
+ */
+export function distinctCountries(
+  people: { country?: string }[],
+): string[] {
+  const seen = new Set<string>();
+  for (const p of people) {
+    const canonical = normalizeCountry(p.country);
+    if (canonical) seen.add(canonical);
+  }
+  return [...seen];
+}
+
+/** True when two country values are the same country (any spelling/case). */
+export function sameCountry(a: string | undefined, b: string | undefined): boolean {
+  return normalizeCountry(a) === normalizeCountry(b);
+}

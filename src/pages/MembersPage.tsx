@@ -7,6 +7,7 @@ import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
 import { useT } from '../i18n/useT';
 import { calculateAge, birthYear } from '../utils/dates';
+import { distinctCountries } from '../utils/countries';
 import { fullName } from '../utils/family';
 import { DEFAULT_FILTERS, matchesFilters, matchesSearch } from '../utils/filters';
 import type { Filters } from '../utils/filters';
@@ -124,7 +125,7 @@ export function MembersPage() {
           filters={filters}
           onChange={setFilters}
           generationCount={Math.max(...[...generations.values(), 1])}
-          countries={[...new Set(people.map((p) => p.country?.trim()).filter(Boolean))] as string[]}
+          countries={distinctCountries(people)}
         />
       </div>
 

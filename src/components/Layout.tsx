@@ -1,4 +1,4 @@
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Languages, Loader2, LogOut, Menu, Moon, Sun, TreePine, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +15,12 @@ export function Layout() {
   const location = useLocation();
   const t = useT();
   const isTreePage = location.pathname === '/tree';
+
+  // Always close the mobile menu when the route changes (covers back/forward
+  // and any programmatic navigation, not just link taps).
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   // Signing out locks the whole site, so a stray tap shouldn't do it.
   const handleSignOut = async () => {
@@ -118,7 +124,7 @@ export function Layout() {
 
         {menuOpen && (
           <nav
-            className="border-t border-stone-200 bg-white px-4 py-3 lg:hidden dark:border-stone-800 dark:bg-stone-950"
+            className="animate-fade-in border-t border-stone-200 bg-white px-4 py-3 lg:hidden dark:border-stone-800 dark:bg-stone-950"
             aria-label="Mobile navigation"
           >
             <ul className="flex flex-col gap-1">
@@ -138,6 +144,17 @@ export function Layout() {
           </nav>
         )}
       </header>
+
+      {/* Tap-away backdrop for the mobile menu (below the header, above content). */}
+      {menuOpen && (
+        <button
+          type="button"
+          aria-hidden
+          tabIndex={-1}
+          onClick={() => setMenuOpen(false)}
+          className="fixed inset-0 z-30 bg-stone-900/20 lg:hidden"
+        />
+      )}
 
       <main id="main" className="flex flex-1 flex-col">
         <Suspense

@@ -1,4 +1,5 @@
 import type { FamilyPerson, Gender } from '../types/family';
+import { sameCountry } from './countries';
 import { fullName } from './family';
 
 export interface Filters {
@@ -34,7 +35,9 @@ export function matchesFilters(
   if (filters.status === 'deceased' && !person.isDeceased) return false;
   if (filters.generation !== 'all' && generations.get(person.id) !== filters.generation)
     return false;
-  if (filters.country !== 'all' && person.country?.trim() !== filters.country) return false;
+  // Compare by canonical country so a filter for "Uzbekistan" also matches
+  // people stored as "uzbekiston" / "Узбекистан".
+  if (filters.country !== 'all' && !sameCountry(person.country, filters.country)) return false;
   return true;
 }
 

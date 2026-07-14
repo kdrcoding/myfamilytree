@@ -65,6 +65,7 @@
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
     /* Tell the browser which palette native controls (select dropdowns, date
        pickers, checkboxes, scrollbars, form autofill) should use. Without
        this, a phone whose OS is in dark mode renders those native bits dark
@@ -82,6 +83,8 @@
        would otherwise trigger a full page reload and wipe the user's unsaved
        work — reported as the page "refreshing by itself". */
     overscroll-behavior-y: contain;
+    /* Smooth momentum scrolling inside scrollable regions on iOS. */
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Honour the OS "reduce motion" setting: strip animations and transitions
@@ -113,17 +116,18 @@
     @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium;
   }
 
-  /* Buttons are slightly taller on touch screens (~44px targets). */
+  /* Buttons are slightly taller on touch screens (~44px targets). The
+     `active:scale-95` gives a tactile press response on phones (no hover). */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:bg-emerald-600 dark:hover:bg-emerald-500 dark:focus-visible:ring-offset-stone-900;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition-[background-color,transform] hover:bg-emerald-800 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:bg-emerald-600 dark:hover:bg-emerald-500 dark:focus-visible:ring-offset-stone-900;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-stone-700 shadow-sm transition-colors hover:bg-stone-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700 dark:focus-visible:ring-offset-stone-900;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-stone-700 shadow-sm transition-[background-color,transform] hover:bg-stone-100 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700 dark:focus-visible:ring-offset-stone-900;
   }
 
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:focus-visible:ring-offset-stone-900;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition-[background-color,transform] hover:bg-red-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:focus-visible:ring-offset-stone-900;
   }
 
   /* Bigger on touch screens — 24px circles are too small for fingers. */

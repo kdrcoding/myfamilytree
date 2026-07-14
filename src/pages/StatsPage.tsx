@@ -4,6 +4,7 @@ import {
   Cake,
   Earth,
   Flower2,
+  Heart,
   HeartPulse,
   Layers,
   MapPin,
@@ -49,31 +50,51 @@ function StatCard({
 
 const BAR_COLORS = ['bg-emerald-500', 'bg-sky-500', 'bg-amber-500', 'bg-rose-500', 'bg-violet-500'];
 
-function BarChart({ title, data }: { title: string; data: { label: string; count: number }[] }) {
+function BarChart({
+  title,
+  data,
+  showPercent = false,
+}: {
+  title: string;
+  data: { label: string; count: number }[];
+  showPercent?: boolean;
+}) {
   const max = Math.max(...data.map((d) => d.count), 1);
+  const total = data.reduce((sum, d) => sum + d.count, 0);
+  const rows = data.filter((d) => d.count > 0);
   return (
     <div className="card p-5">
       <h2 className="font-semibold text-stone-900 dark:text-stone-100">{title}</h2>
-      <ul className="mt-4 space-y-3">
-        {data.map((item, i) => (
-          <li key={item.label}>
-            <div className="mb-1 flex items-baseline justify-between text-sm">
-              <span className="text-stone-700 dark:text-stone-300">{item.label}</span>
-              <span className="font-semibold tabular-nums text-stone-900 dark:text-stone-100">
-                {item.count}
-              </span>
-            </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800">
-              <div
-                role="img"
-                aria-label={`${item.label}: ${item.count}`}
-                className={`h-full rounded-full transition-all duration-500 ${BAR_COLORS[i % BAR_COLORS.length]}`}
-                style={{ width: `${(item.count / max) * 100}%` }}
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
+      {rows.length === 0 ? (
+        <p className="mt-3 text-sm text-stone-400">—</p>
+      ) : (
+        <ul className="mt-4 space-y-3">
+          {rows.map((item, i) => {
+            const percent = total > 0 ? Math.round((item.count / total) * 100) : 0;
+            return (
+              <li key={item.label}>
+                <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
+                  <span className="truncate text-stone-700 dark:text-stone-300">{item.label}</span>
+                  <span className="shrink-0 font-semibold tabular-nums text-stone-900 dark:text-stone-100">
+                    {item.count}
+                    {showPercent && (
+                      <span className="ml-1 font-normal text-stone-400">· {percent}%</span>
+                    )}
+                  </span>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800">
+                  <div
+                    role="img"
+                    aria-label={`${item.label}: ${item.count}`}
+                    className={`h-full rounded-full transition-[width] duration-700 ease-out ${BAR_COLORS[i % BAR_COLORS.length]}`}
+                    style={{ width: `${(item.count / max) * 100}%` }}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
@@ -120,7 +141,10 @@ export function StatsPage() {
           icon={<Earth className="h-5 w-5" aria-hidden />}
           label={t('stats.countries')}
           value={stats.countries.length}
-          hint={stats.countries.slice(0, 4).join(', ')}
+          hint={stats.countries
+            .slice(0, 4)
+            .map((c) => countryLabel(c, language))
+            .join(', ')}
         />
         <StatCard
           icon={<MapPin className="h-5 w-5" aria-hidden />}
@@ -157,16 +181,28 @@ export function StatsPage() {
           value={stats.mostDescendants ? stats.mostDescendants.count : '—'}
           hint={stats.mostDescendants ? fullName(stats.mostDescendants.person) : undefined}
         />
+        <StatCard
+          icon={<Heart className="h-5 w-5" aria-hidden />}
+          label={t('stats.couples')}
+          value={stats.couples}
+        />
+        <StatCard
+          icon={<Baby className="h-5 w-5" aria-hidden />}
+          label={t('stats.avgChildren')}
+          value={stats.averageChildren !== null ? stats.averageChildren : '—'}
+          hint={stats.averageChildren !== null ? t('stats.perParent') : undefined}
+        />
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <BarChart title={t('stats.gender')} data={genderData} />
+        <BarChart title={t('stats.gender')} data={genderData} showPercent />
         <BarChart
           title={t('stats.perGeneration')}
           data={stats.perGeneration.map((g) => ({
             label: t('filters.generationN', { n: g.generation }),
             count: g.count,
           }))}
+          showPercent
         />
         <BarChart
           title={t('stats.perCountry')}
@@ -174,6 +210,7 @@ export function StatsPage() {
             label: countryLabel(c.country, language),
             count: c.count,
           }))}
+          showPercent
         />
       </div>
     </div>

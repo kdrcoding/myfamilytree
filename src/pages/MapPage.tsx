@@ -7,6 +7,7 @@ import { useFamily } from '../context/FamilyContext';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { useT } from '../i18n/useT';
 import { fullName } from '../utils/family';
+import { normalizeCountry } from '../utils/countries';
 import { geocodePlace, loadGeoCache, saveGeoCache } from '../lib/geocode';
 import type { GeoCache } from '../lib/geocode';
 
@@ -37,8 +38,9 @@ export function MapPage() {
     const byKey = new Map<string, Place>();
     for (const person of people) {
       // With cities hidden by privacy mode, group people by country only.
+      // Normalize the country so spelling variants geocode to one marker.
       const city = showCity ? person.city?.trim() : undefined;
-      const country = person.country?.trim();
+      const country = normalizeCountry(person.country);
       const label = [city, country].filter(Boolean).join(', ');
       if (!label) continue;
       const key = label.toLowerCase();
