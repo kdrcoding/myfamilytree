@@ -86,7 +86,7 @@ export function HomePage() {
           {t('home.title')}
         </h1>
         <p className="mt-4 max-w-2xl text-emerald-100/90">
-          {t('home.intro', { countries: Math.max(stats.countries.length, 1) })}
+          {t('home.intro')}
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
@@ -225,9 +225,13 @@ export function HomePage() {
                       {a.years !== null && (
                         <>
                           {' · '}
-                          {a.isToday
-                            ? t('home.annivYearsToday', { n: a.years })
-                            : t('home.annivYears', { n: a.years })}
+                          {a.years === 1
+                            ? a.isToday
+                              ? t('home.annivYearOneToday')
+                              : t('home.annivYearOne')
+                            : a.isToday
+                              ? t('home.annivYearsToday', { n: a.years })
+                              : t('home.annivYears', { n: a.years })}
                         </>
                       )}
                     </p>

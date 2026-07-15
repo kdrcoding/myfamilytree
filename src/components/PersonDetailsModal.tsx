@@ -91,7 +91,7 @@ function RelativeChips({
             key={p.id}
             type="button"
             onClick={() => onNavigate(p.id)}
-            className="rounded-full border border-stone-300 bg-stone-50 px-3 py-1 text-xs font-medium text-stone-700 transition-colors hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-emerald-950/60"
+            className="rounded-full border border-stone-300 bg-stone-50 px-3.5 py-2 text-sm font-medium text-stone-700 transition-colors hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-emerald-950/60"
           >
             {fullName(p)}
             {p.isDeceased ? ' †' : ''}
@@ -135,7 +135,7 @@ function SpouseChips({
               <button
                 type="button"
                 onClick={() => onNavigate(spouse.id)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                className={`rounded-full border px-3.5 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                   divorced
                     ? 'border-stone-300 bg-stone-100 text-stone-500 dark:border-stone-600 dark:bg-stone-800/60 dark:text-stone-400'
                     : 'border-stone-300 bg-stone-50 text-stone-700 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-emerald-950/60'
@@ -164,7 +164,7 @@ function SpouseChips({
                       : t('person.markDivorced', { name: fullName(spouse) })
                   }
                   aria-pressed={divorced}
-                  className={`inline-flex h-[26px] w-[26px] items-center justify-center rounded-full border transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                     divorced
                       ? 'border-amber-400 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
                       : 'border-stone-300 bg-white text-stone-400 hover:border-amber-400 hover:text-amber-600 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-500 dark:hover:text-amber-400'
@@ -266,7 +266,7 @@ export function PersonDetailsModal({
             icon={<Users className="h-4 w-4" aria-hidden />}
             label={person.isDeceased ? t('person.ageAtDeath') : t('person.age')}
           >
-            {t('person.years', { n: age })}
+            {age === 1 ? t('person.yearOne') : t('person.years', { n: age })}
           </DetailRow>
         )}
         {location && (

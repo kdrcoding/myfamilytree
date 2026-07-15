@@ -66,6 +66,10 @@
   html {
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
+    /* Slightly larger base so the whole UI reads comfortably for older family
+       members. Tailwind sizes are rem-based, so this scales text AND spacing
+       proportionally without breaking any layout. */
+    font-size: 17px;
     /* Tell the browser which palette native controls (select dropdowns, date
        pickers, checkboxes, scrollbars, form autofill) should use. Without
        this, a phone whose OS is in dark mode renders those native bits dark
@@ -99,6 +103,14 @@
       scroll-behavior: auto !important;
     }
   }
+}
+
+/* Light theme readability: the very lightest muted text (text-stone-400 on
+   white, ~2.9:1) is hard for older eyes. Nudge it one shade darker so
+   secondary details stay comfortably legible. Unlayered so it wins over the
+   Tailwind utility; scoped to light mode only, so dark mode is untouched. */
+html:not(.dark) .text-stone-400 {
+  color: var(--color-stone-500);
 }
 
 @layer components {
