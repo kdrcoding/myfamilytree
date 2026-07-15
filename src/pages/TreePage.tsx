@@ -16,11 +16,14 @@ import {
   ChevronsUpDown,
   Image as ImageIcon,
   Link as LinkIcon,
+  Crosshair,
   Lock,
   LockOpen,
   LogOut,
+  Map,
   Maximize,
   MoreHorizontal,
+  RotateCcw,
   Rows3,
   Columns3,
   Scan,
@@ -252,6 +255,7 @@ function TreeCanvas({
 }) {
   const { setCenter } = useReactFlow();
   const t = useT();
+  const [minimapOpen, setMinimapOpen] = useState(true);
 
   useEffect(() => {
     if (!focusId) return;
@@ -265,20 +269,17 @@ function TreeCanvas({
     onFocused();
   }, [focusId, nodes, setCenter, onFocused]);
 
-  // Start centered on the founding couple at a readable zoom, instead of
-  // squeezing the whole tree into view (unreadable on large families/phones).
+  // Frame the whole tree to its actual bounds on load — this fills the canvas
+  // instead of leaving big empty margins — but cap the zoom so a small family
+  // isn't blown up and the cards stay legible.
   const handleInit = useCallback(
     (instance: ReactFlowInstance) => {
       onReady(instance);
-      const first = nodes.find((n) => n.type === 'person');
-      if (first) {
-        const isPhone = window.innerWidth < 640;
-        const zoom = isPhone ? 0.8 : 0.75;
-        const centerX = first.position.x + CARD_W + 24;
-        setCenter(centerX, first.position.y + CARD_H * 1.4, { zoom });
-      }
+      // No minZoom clamp: a very wide family must be allowed to zoom out far
+      // enough to fit fully rather than be clipped at the edges.
+      instance.fitView({ padding: 0.16, maxZoom: 0.85 });
     },
-    [nodes, setCenter, onReady],
+    [onReady],
   );
 
   return (
@@ -288,7 +289,7 @@ function TreeCanvas({
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       onInit={handleInit}
-      minZoom={0.05}
+      minZoom={0.02}
       maxZoom={1.5}
       nodesDraggable={false}
       nodesConnectable={false}
@@ -346,14 +347,31 @@ function TreeCanvas({
         <MadeByKadir align="left" />
       </Panel>
       <Controls showInteractive={false} position="bottom-right" />
-      <MiniMap
-        className="!hidden md:!block"
-        pannable
-        zoomable
-        nodeStrokeWidth={4}
-        nodeColor="#a8a29e"
-        maskColor="rgb(120 113 108 / 0.15)"
-      />
+
+      {/* Collapsible minimap: a toggle sits at the bottom-right corner; the
+          map itself floats just above it and can be hidden to free up canvas
+          on large families. Hidden on phones where it would crowd the view. */}
+      <Panel position="bottom-right" className="!bottom-16 !right-3 hidden md:block">
+        <button
+          type="button"
+          onClick={() => setMinimapOpen((v) => !v)}
+          className="flex items-center gap-1.5 rounded-lg border border-stone-300 bg-white/90 px-2.5 py-1.5 text-xs font-semibold text-stone-600 shadow-sm backdrop-blur transition-colors hover:border-emerald-400 hover:text-emerald-700 dark:border-stone-600 dark:bg-stone-800/90 dark:text-stone-300"
+          aria-pressed={minimapOpen}
+        >
+          <Map className="h-3.5 w-3.5" aria-hidden />
+          {minimapOpen ? t('tree.minimapHide') : t('tree.minimapShow')}
+        </button>
+      </Panel>
+      {minimapOpen && (
+        <MiniMap
+          className="!hidden !bottom-24 md:!block"
+          pannable
+          zoomable
+          nodeStrokeWidth={4}
+          nodeColor="#a8a29e"
+          maskColor="rgb(120 113 108 / 0.15)"
+        />
+      )}
     </ReactFlow>
   );
 }
@@ -490,7 +508,25 @@ export function TreePage() {
   };
 
   // ---- View controls (need the live React Flow instance) --------------------
-  const fitEntireTree = () => rfRef.current?.fitView({ padding: 0.12, duration: 600 });
+  // Fit Tree: pack the whole family into view (may zoom out on big trees).
+  const fitEntireTree = () => rfRef.current?.fitView({ padding: 0.1, duration: 600 });
+
+  // Reset View: the comfortable default framing — fits the tree to its bounds
+  // but never zooms in past a legible level, so there's little empty canvas.
+  const resetView = () =>
+    rfRef.current?.fitView({ padding: 0.16, maxZoom: 0.85, duration: 600 });
+
+  // Center Selected: bring the selected person to the middle at a close zoom.
+  const centerSelected = () => {
+    if (!rfRef.current || !selectedId) return;
+    const node = flowNodes.find((n) => n.id === selectedId);
+    if (node) {
+      rfRef.current.setCenter(node.position.x + CARD_W / 2, node.position.y + CARD_H / 2, {
+        zoom: 1,
+        duration: 600,
+      });
+    }
+  };
 
   const fitSelectedBranch = () => {
     if (!rfRef.current || !selectedId || !selection) return;
@@ -498,16 +534,6 @@ export function TreePage() {
     const nodes = flowNodes.filter((n) => branch.has(n.id));
     if (nodes.length === 0) return;
     rfRef.current.fitView({ nodes: nodes.map((n) => ({ id: n.id })), padding: 0.2, duration: 600 });
-  };
-
-  const resetView = () => {
-    const first = flowNodes.find((n) => n.type === 'person');
-    if (!rfRef.current || !first) return;
-    const isPhone = window.innerWidth < 640;
-    rfRef.current.setCenter(first.position.x + CARD_W + 24, first.position.y + CARD_H * 1.4, {
-      zoom: isPhone ? 0.8 : 0.75,
-      duration: 600,
-    });
   };
 
   const copyShareLink = async () => {
@@ -626,13 +652,19 @@ export function TreePage() {
                 onClick={fitEntireTree}
               />
               <MenuItem
+                icon={<Crosshair className="h-4 w-4" />}
+                label={t('tree.centerSelected')}
+                onClick={centerSelected}
+                disabled={!selectedId}
+              />
+              <MenuItem
                 icon={<Scan className="h-4 w-4" />}
                 label={t('tree.fitBranch')}
                 onClick={fitSelectedBranch}
                 disabled={!selectedId}
               />
               <MenuItem
-                icon={<TreePine className="h-4 w-4" />}
+                icon={<RotateCcw className="h-4 w-4" />}
                 label={t('tree.resetView')}
                 onClick={resetView}
               />

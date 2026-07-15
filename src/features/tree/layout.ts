@@ -6,8 +6,8 @@ import type { PersonIndex } from '../../utils/family';
 
 // Cards are wide enough to show a full "First Last" name across two lines and
 // tall enough for the name, nickname, dates and the gender/deceased badges.
-export const CARD_W = 248;
-export const CARD_H = 124;
+export const CARD_W = 276;
+export const CARD_H = 130;
 
 export type TreeOrientation = 'vertical' | 'horizontal';
 export type TreeSpacing = 'comfortable' | 'compact';
@@ -29,7 +29,7 @@ const BUS_BASE = 34;
 const BUS_STEP = 22;
 const BUS_LANES = 3;
 // Room reserved before each generation row for its label chip.
-const GEN_LABEL_GAP = 132;
+const GEN_LABEL_GAP = 148;
 
 /**
  * How many whole generations open on a family's first view before deeper

@@ -61,7 +61,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
   return (
     <div
       style={{ width: CARD_W, height: CARD_H }}
-      className={`relative transition-opacity duration-300 ${dimmed ? 'opacity-20' : ''}`}
+      className={`relative transition-opacity duration-300 ${dimmed ? 'opacity-40' : ''}`}
     >
       <Handle type="target" position={Position.Top} id="top" className={HANDLE} />
       <Handle type="target" position={Position.Left} id="left" className={HANDLE} />
@@ -84,7 +84,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
         <Avatar person={person} size="sm" />
         <span className="min-w-0 flex-1">
           <span
-            className="block text-sm font-semibold leading-tight text-stone-900 dark:text-stone-100"
+            className="block text-[15px] font-semibold leading-tight text-stone-900 dark:text-stone-100"
             style={{
               display: '-webkit-box',
               WebkitLineClamp: 2,
@@ -95,9 +95,9 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
             {name}
           </span>
           {person.nickname && (
-            <span className="block truncate text-xs text-stone-400">“{person.nickname}”</span>
+            <span className="block truncate text-[13px] text-stone-400">“{person.nickname}”</span>
           )}
-          <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+          <span className="block truncate text-[13px] text-stone-500 dark:text-stone-400">
             {years || getLabel(person)}
           </span>
           <span className="mt-1 flex gap-1">
