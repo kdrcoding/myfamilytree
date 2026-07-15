@@ -12,7 +12,6 @@ import { DeceasedBadge, GenderBadge } from '../../components/badges';
 import { CARD_H, CARD_W } from './layout';
 import type { PersonFlowNode } from './layout';
 import { useTreeInteraction } from './TreeInteractionContext';
-import type { SelectionRole } from './TreeInteractionContext';
 
 // Softer left-border accents: the gender is still signalled, but the strong
 // saturated bar is toned down so a wall of cards reads calmly. The clear
@@ -23,29 +22,16 @@ const GENDER_ACCENT = {
   unspecified: 'border-l-violet-300 dark:border-l-violet-700/70',
 };
 
-// Ring colour per relationship to the selected person.
-const ROLE_RING: Record<SelectionRole, string> = {
-  selected: 'ring-4 ring-amber-400 dark:ring-amber-500',
-  ancestor: 'ring-2 ring-sky-400 dark:ring-sky-500',
-  descendant: 'ring-2 ring-emerald-400 dark:ring-emerald-500',
-  spouse: 'ring-2 ring-rose-400 dark:ring-rose-500',
-  unrelated: '',
-  none: '',
-};
-
 const HANDLE = '!h-1.5 !w-1.5 !min-h-0 !min-w-0 !border-0 !bg-transparent';
 
 function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
   const { getPerson, getLabel } = useFamily();
   const privacy = usePrivacy();
   const t = useT();
-  const { onOpen, onToggleCollapse, onQuickAdd, editMode, selectedId, roleOf } =
-    useTreeInteraction();
+  const { onOpen, onToggleCollapse, onQuickAdd, editMode } = useTreeInteraction();
   const person = getPerson(data.personId);
   if (!person) return null;
 
-  const role = roleOf(person.id);
-  const dimmed = selectedId !== null && role === 'unrelated';
   const name = fullName(person);
   const years = privacy.showBirthDate()
     ? lifespan(
@@ -59,10 +45,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
       : '';
 
   return (
-    <div
-      style={{ width: CARD_W, height: CARD_H }}
-      className={`relative transition-opacity duration-300 ${dimmed ? 'opacity-40' : ''}`}
-    >
+    <div style={{ width: CARD_W, height: CARD_H }} className="relative">
       <Handle type="target" position={Position.Top} id="top" className={HANDLE} />
       <Handle type="target" position={Position.Left} id="left" className={HANDLE} />
       <Handle type="source" position={Position.Right} id="right" className={HANDLE} />
@@ -79,7 +62,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
           person.isDeceased
             ? 'border-dashed border-stone-400 dark:border-stone-600'
             : 'border-stone-300 dark:border-stone-700'
-        } ${ROLE_RING[role]}`}
+        }`}
       >
         <Avatar person={person} size="sm" />
         <span className="min-w-0 flex-1">

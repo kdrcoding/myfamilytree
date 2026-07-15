@@ -6,6 +6,7 @@ import {
   Flower2,
   Heart,
   HeartCrack,
+  Link as LinkIcon,
   MapPin,
   Pencil,
   Trash2,
@@ -39,6 +40,12 @@ interface PersonDetailsModalProps {
    * on phones where it scrolls off the right edge.
    */
   onRequestEdit?: (person: FamilyPerson) => void;
+  /**
+   * When provided, a small "copy share link" button appears in the header.
+   * The tree passes this so a person can be shared; the shared link reopens
+   * this person automatically.
+   */
+  onCopyLink?: (person: FamilyPerson) => void;
 }
 
 function DetailRow({
@@ -187,6 +194,7 @@ export function PersonDetailsModal({
   onEdit,
   onDelete,
   onRequestEdit,
+  onCopyLink,
 }: PersonDetailsModalProps) {
   const { index, generations, getLabel } = useFamily();
   const privacy = usePrivacy();
@@ -229,6 +237,17 @@ export function PersonDetailsModal({
             <DeceasedBadge person={person} />
           </div>
         </div>
+        {onCopyLink && (
+          <button
+            type="button"
+            onClick={() => onCopyLink(person)}
+            className="shrink-0 rounded-lg border border-stone-300 bg-white p-2 text-stone-500 shadow-sm transition-colors hover:border-emerald-400 hover:text-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-400 dark:hover:text-emerald-300"
+            title={t('tree.copyLink')}
+            aria-label={t('tree.copyLink')}
+          >
+            <LinkIcon className="h-4 w-4" aria-hidden />
+          </button>
+        )}
       </div>
 
       <dl className="mt-4 grid grid-cols-1 gap-x-6 sm:grid-cols-2">
