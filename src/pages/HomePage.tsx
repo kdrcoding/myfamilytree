@@ -1,18 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import {
-  ArrowRight,
-  Cake,
-  CalendarPlus,
-  Gem,
-  Heart,
-  Network,
-  PartyPopper,
-  ShieldCheck,
-  UserRoundPlus,
-} from 'lucide-react';
+import { ArrowRight, CalendarPlus, UserRoundPlus } from 'lucide-react';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { PersonSearch } from '../components/PersonSearch';
+import { BrandMark } from '../components/BrandLogo';
 import { useFamily } from '../context/FamilyContext';
 import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
@@ -78,7 +69,6 @@ export function HomePage() {
     );
   }, [upcoming, toast, t]);
 
-  // Invite link: after unlock, open Add yourself and clear the query.
   useEffect(() => {
     if (searchParams.get('invite') === '1' || searchParams.get('join') === '1') {
       setJoinOpen(true);
@@ -90,179 +80,185 @@ export function HomePage() {
     }
   }, [searchParams, setSearchParams, toast, t]);
 
-  return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-8 sm:px-6">
-      {/* Hero — compact on phones so search + buttons + birthdays fit on screen */}
-      <section
-        className={`relative mt-4 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 via-emerald-900 to-stone-900 text-emerald-50 shadow-xl sm:mt-6 ${
-          easy ? 'px-5 py-7 sm:px-10 sm:py-12' : 'px-5 py-8 sm:px-12 sm:py-16'
-        }`}
-      >
-        <Network
-          className="pointer-events-none absolute -right-10 -top-10 hidden h-64 w-64 rotate-12 text-emerald-700/30 sm:block"
-          aria-hidden
-        />
-        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-300 sm:text-sm">
-          {t('home.kicker')}
-        </p>
-        <h1
-          className={`mt-2 max-w-2xl font-extrabold tracking-tight ${
-            easy ? 'text-2xl sm:text-4xl' : 'text-2xl sm:text-5xl'
-          }`}
-        >
-          {t('home.title')}
-        </h1>
-        <p className="mt-2 hidden max-w-2xl text-emerald-100/90 sm:mt-4 sm:block">
-          {easy ? t('home.introEasy') : t('home.intro')}
-        </p>
-        <p className="mt-2 text-sm text-emerald-100/90 sm:hidden">{t('home.introMobile')}</p>
+  const whenLabel = (isToday: boolean, daysUntil: number) =>
+    isToday
+      ? t('home.bdayToday')
+      : daysUntil === 1
+        ? t('home.bdayTomorrow')
+        : t('home.bdayInDays', { n: daysUntil });
 
-        {/* Big search — primary way elders find someone */}
-        <div className="relative z-20 mt-5 max-w-xl sm:mt-8">
-          <p className="mb-2 text-sm font-semibold text-emerald-200">{t('home.searchTitle')}</p>
-          <PersonSearch large placeholder={t('home.searchPlaceholder')} />
+  return (
+    <div className="home-page pb-14">
+      {/* Full-bleed heritage hero — brand first, one composition */}
+      <section className="home-hero relative overflow-hidden text-stone-50" aria-labelledby="home-brand">
+        <div className="home-hero__atmosphere" aria-hidden>
+          <svg className="home-hero__pedigree" viewBox="0 0 420 420" fill="none">
+            <path
+              d="M210 48v72M210 120L96 210M210 120l114 90M96 210v78M324 210v78M96 288L48 360M96 288l48 72M324 288l-48 72M324 288l48 72"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              strokeLinecap="round"
+            />
+            <circle cx="210" cy="42" r="14" fill="currentColor" opacity="0.55" />
+            <circle cx="96" cy="210" r="11" fill="currentColor" opacity="0.4" />
+            <circle cx="324" cy="210" r="11" fill="currentColor" opacity="0.4" />
+            <circle cx="48" cy="360" r="9" fill="currentColor" opacity="0.28" />
+            <circle cx="144" cy="360" r="9" fill="currentColor" opacity="0.28" />
+            <circle cx="276" cy="360" r="9" fill="currentColor" opacity="0.28" />
+            <circle cx="372" cy="360" r="9" fill="currentColor" opacity="0.28" />
+          </svg>
         </div>
 
-        {/* Two clear actions — more options live in Menu / Settings */}
-        <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
-          <Link
-            to="/tree"
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3.5 text-base font-bold text-emerald-900 shadow transition-transform hover:scale-[1.01] focus-visible:ring-2 focus-visible:ring-white sm:w-auto sm:rounded-xl sm:py-3 sm:text-sm sm:font-semibold"
+        <div className="relative mx-auto max-w-3xl px-5 pb-12 pt-10 sm:px-8 sm:pb-16 sm:pt-14">
+          <div className="home-hero__mark">
+            <BrandMark size="lg" title={t('site.title')} className="!h-[4.5rem] !w-[4.5rem] !rounded-[1.25rem] shadow-md" />
+          </div>
+
+          <p className="home-hero__kicker mt-6 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-emerald-200/80 sm:text-xs">
+            {t('home.kicker')}
+          </p>
+
+          <h1
+            id="home-brand"
+            className="home-hero__title mt-3 font-display text-[2.15rem] font-semibold leading-[1.1] tracking-tight text-white sm:text-5xl"
           >
-            {t('home.explore')}
-            <ArrowRight className="h-5 w-5" aria-hidden />
-          </Link>
-          <button
-            type="button"
-            onClick={() => setJoinOpen(true)}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-300/50 bg-emerald-800/40 px-5 py-3.5 text-base font-bold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white sm:w-auto sm:rounded-xl sm:border sm:border-emerald-400/40 sm:bg-transparent sm:py-3 sm:text-sm sm:font-semibold"
-          >
-            <UserRoundPlus className="h-5 w-5" aria-hidden />
-            {t('home.addSelf')}
-          </button>
+            {t('site.title')}
+          </h1>
+
+          <p className="home-hero__intro mt-4 max-w-xl text-base leading-relaxed text-stone-200/90 sm:text-lg">
+            {easy ? t('home.introEasy') : t('home.intro')}
+          </p>
+
+          <div className="home-hero__search relative z-20 mt-8 max-w-lg">
+            <p className="mb-2 text-sm font-medium text-emerald-100/80">{t('home.searchTitle')}</p>
+            <PersonSearch large placeholder={t('home.searchPlaceholder')} />
+          </div>
+
+          <div className="home-hero__actions mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Link
+              to="/tree"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-base font-semibold text-emerald-950 transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-950"
+            >
+              {t('home.explore')}
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Link>
+            <button
+              type="button"
+              onClick={() => setJoinOpen(true)}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/5 px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-950"
+            >
+              <UserRoundPlus className="h-4 w-4" aria-hidden />
+              {t('home.addSelf')}
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* Birthdays move up — first thing after hero so phones see them without scrolling far */}
-      {birthdays.length > 0 && (
-        <section className="card mt-5 p-4 sm:mt-8 sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="flex items-center gap-2 text-lg font-bold">
-              <Cake className="h-5 w-5 text-rose-500" aria-hidden />
-              {t('home.birthdaysTitle')}
-            </h2>
-            {showBirthDates && !easy && (
-              <button
-                type="button"
-                className="btn-secondary !px-3 text-sm"
-                onClick={() => {
-                  downloadFamilyCalendarIcs(people, {
-                    language,
-                    calendarName: t('site.title'),
-                  });
-                  toast(t('home.calendarDownloaded'), 'info');
-                }}
-              >
-                <CalendarPlus className="h-4 w-4" aria-hidden />
-                {t('home.downloadCalendar')}
-              </button>
-            )}
-          </div>
-          <ul className="mt-3 space-y-2 sm:mt-4">
-            {birthdays.map((b) => {
-              const when = b.isToday
-                ? t('home.bdayToday')
-                : b.daysUntil === 1
-                  ? t('home.bdayTomorrow')
-                  : t('home.bdayInDays', { n: b.daysUntil });
-              const showAge = b.turningAge !== null && privacy.showAge(b.person);
-              return (
-                <li
-                  key={b.person.id}
-                  className={`flex items-center gap-3 rounded-2xl p-3 ${
-                    b.isToday
-                      ? 'bg-rose-50 ring-1 ring-rose-200 dark:bg-rose-950/40 dark:ring-rose-900'
-                      : 'bg-stone-50 dark:bg-stone-800/60'
-                  }`}
+      <div className="mx-auto w-full max-w-3xl px-5 sm:px-8">
+        {/* Upcoming birthdays — calm list, not party badges */}
+        {birthdays.length > 0 && (
+          <section className="home-section mt-10 sm:mt-12" aria-labelledby="home-birthdays">
+            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-stone-300 pb-3 dark:border-stone-700">
+              <h2 id="home-birthdays" className="font-display text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
+                {t('home.birthdaysTitle')}
+              </h2>
+              {showBirthDates && !easy && (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-800 transition-colors hover:text-emerald-950 dark:text-emerald-400 dark:hover:text-emerald-300"
+                  onClick={() => {
+                    downloadFamilyCalendarIcs(people, {
+                      language,
+                      calendarName: t('site.title'),
+                    });
+                    toast(t('home.calendarDownloaded'), 'info');
+                  }}
                 >
-                  <Avatar person={b.person} size="md" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-stone-900 dark:text-stone-100">
-                      {fullName(b.person)}
-                    </p>
-                    <p className="text-sm text-stone-500 dark:text-stone-400">
-                      {formatMonthDay(b.month, b.day, language)}
-                      {showAge && (
-                        <>
-                          {' · '}
-                          {b.isToday
-                            ? t('home.bdayTurnsToday', { age: b.turningAge! })
-                            : t('home.bdayTurns', { age: b.turningAge! })}
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <span
-                    className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      b.isToday
-                        ? 'bg-rose-500 text-white'
-                        : 'bg-stone-200 text-stone-600 dark:bg-stone-700 dark:text-stone-300'
-                    }`}
-                  >
-                    {b.isToday && <PartyPopper className="h-3.5 w-3.5" aria-hidden />}
-                    {when}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
-
-      {/* Stats — after birthdays; hidden in Easy Mode */}
-      {!easy && (
-        <section aria-label={t('home.summaryLabel')} className="mt-5 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-4">
-          {[
-            { label: t('home.statMembers'), value: stats.total },
-            { label: t('home.statGenerations'), value: stats.generations },
-            { label: t('home.statLiving'), value: stats.living },
-            { label: t('home.statCountries'), value: stats.countries.length },
-          ].map((item) => (
-            <div key={item.label} className="card p-4 text-center sm:p-5">
-              <p className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 sm:text-3xl">
-                {item.value}
-              </p>
-              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400 sm:text-sm">
-                {item.label}
-              </p>
+                  <CalendarPlus className="h-4 w-4" aria-hidden />
+                  {t('home.downloadCalendar')}
+                </button>
+              )}
             </div>
-          ))}
-        </section>
-      )}
 
-      {/* Anniversaries — skip in Easy Mode */}
-      {!easy && anniversaries.length > 0 && (
-        <section className="card mt-8 p-6">
-          <h2 className="flex items-center gap-2 text-lg font-bold">
-            <Gem className="h-5 w-5 text-amber-500" aria-hidden />
-            {t('home.annivTitle')}
-          </h2>
-          <ul className="mt-4 space-y-2">
-            {anniversaries.map((a) => {
-              const when = a.isToday
-                ? t('home.bdayToday')
-                : a.daysUntil === 1
-                  ? t('home.bdayTomorrow')
-                  : t('home.bdayInDays', { n: a.daysUntil });
-              return (
-                <li
-                  key={`${a.a.id}-${a.b.id}`}
-                  className={`flex items-center gap-3 rounded-2xl p-3 ${
-                    a.isToday
-                      ? 'bg-amber-50 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:ring-amber-900'
-                      : 'bg-stone-50 dark:bg-stone-800/60'
-                  }`}
-                >
+            <ul className="divide-y divide-stone-200 dark:divide-stone-800">
+              {birthdays.map((b) => {
+                const showAge = b.turningAge !== null && privacy.showAge(b.person);
+                return (
+                  <li key={b.person.id}>
+                    <Link
+                      to={`/tree?person=${encodeURIComponent(b.person.id)}`}
+                      className="flex items-center gap-3 py-3.5 transition-colors hover:bg-stone-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 dark:hover:bg-stone-900/50"
+                    >
+                      <Avatar person={b.person} size="md" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-stone-900 dark:text-stone-100">
+                          {fullName(b.person)}
+                        </p>
+                        <p className="text-sm text-stone-500 dark:text-stone-400">
+                          {formatMonthDay(b.month, b.day, language)}
+                          {showAge && (
+                            <>
+                              {' · '}
+                              {b.isToday
+                                ? t('home.bdayTurnsToday', { age: b.turningAge! })
+                                : t('home.bdayTurns', { age: b.turningAge! })}
+                            </>
+                          )}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 text-sm font-medium tabular-nums ${
+                          b.isToday
+                            ? 'text-emerald-800 dark:text-emerald-400'
+                            : 'text-stone-500 dark:text-stone-400'
+                        }`}
+                      >
+                        {whenLabel(b.isToday, b.daysUntil)}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
+        {/* Quiet stats strip — not four flashy cards */}
+        {!easy && (
+          <section
+            aria-label={t('home.summaryLabel')}
+            className="home-section mt-10 grid grid-cols-2 gap-x-6 gap-y-5 border-y border-stone-300 py-6 sm:grid-cols-4 dark:border-stone-700"
+          >
+            {[
+              { label: t('home.statMembers'), value: stats.total },
+              { label: t('home.statGenerations'), value: stats.generations },
+              { label: t('home.statLiving'), value: stats.living },
+              { label: t('home.statCountries'), value: stats.countries.length },
+            ].map((item) => (
+              <div key={item.label} className="min-w-0">
+                <p className="font-display text-2xl font-semibold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
+                  {item.value}
+                </p>
+                <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {/* Anniversaries */}
+        {!easy && anniversaries.length > 0 && (
+          <section className="home-section mt-10" aria-labelledby="home-anniv">
+            <h2
+              id="home-anniv"
+              className="border-b border-stone-300 pb-3 font-display text-xl font-semibold tracking-tight text-stone-900 dark:border-stone-700 dark:text-stone-50"
+            >
+              {t('home.annivTitle')}
+            </h2>
+            <ul className="divide-y divide-stone-200 dark:divide-stone-800">
+              {anniversaries.map((a) => (
+                <li key={`${a.a.id}-${a.b.id}`} className="flex items-center gap-3 py-3.5">
                   <div className="flex -space-x-2">
                     <Avatar person={a.a} size="md" />
                     <Avatar person={a.b} size="md" />
@@ -288,74 +284,78 @@ export function HomePage() {
                     </p>
                   </div>
                   <span
-                    className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                    className={`shrink-0 text-sm font-medium tabular-nums ${
                       a.isToday
-                        ? 'bg-amber-500 text-white'
-                        : 'bg-stone-200 text-stone-600 dark:bg-stone-700 dark:text-stone-300'
+                        ? 'text-emerald-800 dark:text-emerald-400'
+                        : 'text-stone-500 dark:text-stone-400'
                     }`}
                   >
-                    {a.isToday && <PartyPopper className="h-3.5 w-3.5" aria-hidden />}
-                    {when}
+                    {whenLabel(a.isToday, a.daysUntil)}
                   </span>
                 </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
+              ))}
+            </ul>
+          </section>
+        )}
 
-      {/* Founders — skip in Easy Mode */}
-      {!easy && founders.length > 0 && (
-        <section className="card mt-8 p-6">
-          <h2 className="flex items-center gap-2 text-lg font-bold">
-            <Heart className="h-5 w-5 text-rose-500" aria-hidden />
-            {t('home.foundersTitle')}
-          </h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {founders.map((person) => (
-              <div
-                key={person.id}
-                className="flex items-center gap-4 rounded-2xl bg-stone-50 p-4 dark:bg-stone-800/60"
-              >
-                <Avatar person={person} size="lg" />
-                <div className="min-w-0">
-                  <p className="font-semibold text-stone-900 dark:text-stone-100">
-                    {fullName(person)}
-                  </p>
-                  {privacy.showBirthDate() && person.birthDate && (
-                    <p className="text-sm text-stone-500 dark:text-stone-400">
-                      {t('home.born', { date: formatDate(person.birthDate, language) })}
-                      {person.country
-                        ? ` · ${privacy.showCity() && person.city ? person.city + ', ' : ''}${person.country}`
-                        : ''}
-                    </p>
-                  )}
-                  {privacy.showOccupation() && person.occupation && (
-                    <p className="text-sm text-stone-500 dark:text-stone-400">
-                      {person.occupation}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+        {/* Founders */}
+        {!easy && founders.length > 0 && (
+          <section className="home-section mt-10" aria-labelledby="home-founders">
+            <h2
+              id="home-founders"
+              className="border-b border-stone-300 pb-3 font-display text-xl font-semibold tracking-tight text-stone-900 dark:border-stone-700 dark:text-stone-50"
+            >
+              {t('home.foundersTitle')}
+            </h2>
+            <ul className="mt-2 divide-y divide-stone-200 dark:divide-stone-800">
+              {founders.map((person) => (
+                <li key={person.id}>
+                  <Link
+                    to={`/tree?person=${encodeURIComponent(person.id)}`}
+                    className="flex items-center gap-4 py-4 transition-colors hover:bg-stone-50/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 dark:hover:bg-stone-900/50"
+                  >
+                    <Avatar person={person} size="lg" />
+                    <div className="min-w-0">
+                      <p className="font-semibold text-stone-900 dark:text-stone-100">
+                        {fullName(person)}
+                      </p>
+                      {privacy.showBirthDate() && person.birthDate && (
+                        <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
+                          {t('home.born', { date: formatDate(person.birthDate, language) })}
+                          {person.country
+                            ? ` · ${privacy.showCity() && person.city ? person.city + ', ' : ''}${person.country}`
+                            : ''}
+                        </p>
+                      )}
+                      {privacy.showOccupation() && person.occupation && (
+                        <p className="text-sm text-stone-500 dark:text-stone-400">
+                          {person.occupation}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
-      {!easy && (
-        <section className="mb-10 mt-8 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
-          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-          <p>
-            <strong>{t('home.privacyStrong')}</strong> {t('home.privacyBefore')}
-            <Link to="/settings" className="underline">
+        {!easy && (
+          <p className="home-section mt-12 text-sm leading-relaxed text-stone-500 dark:text-stone-400">
+            <span className="font-medium text-stone-700 dark:text-stone-300">
+              {t('home.privacyStrong')}
+            </span>{' '}
+            {t('home.privacyBefore')}
+            <Link
+              to="/settings"
+              className="font-medium text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-400"
+            >
               {t('home.settingsLink')}
             </Link>
             {t('home.privacyAfter')}
           </p>
-        </section>
-      )}
-
-      {easy && <div className="mb-10" />}
+        )}
+      </div>
 
       {joinOpen && <JoinFamilyModal onClose={() => setJoinOpen(false)} />}
     </div>
