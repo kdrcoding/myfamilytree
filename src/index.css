@@ -77,6 +77,10 @@
        invisible text. Bound to the app's own theme, not the OS preference. */
     color-scheme: light;
   }
+  /* Easy Mode: bigger type and tap targets for older relatives. */
+  html.easy {
+    font-size: 20px;
+  }
   html.dark {
     color-scheme: dark;
   }
@@ -140,6 +144,21 @@ html:not(.dark) .text-stone-400 {
 
   .btn-danger {
     @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition-[background-color,transform] hover:bg-red-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:focus-visible:ring-offset-stone-900;
+  }
+
+  /* Easy Mode: taller buttons, easier to tap. */
+  html.easy .btn-primary,
+  html.easy .btn-secondary,
+  html.easy .btn-danger {
+    @apply px-5 py-3.5 text-base sm:py-3;
+  }
+
+  html.easy .input {
+    @apply py-3.5 text-base sm:py-3 sm:text-base;
+  }
+
+  html.easy .icon-btn {
+    @apply p-3 sm:p-2.5;
   }
 
   /* Bigger on touch screens — 24px circles are too small for fingers. */

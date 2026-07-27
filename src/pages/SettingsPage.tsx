@@ -392,7 +392,7 @@ function PhotosCard() {
 }
 
 export function SettingsPage() {
-  const { settings, setTheme, setLanguage, setPrivacy } = useSettings();
+  const { settings, setTheme, setLanguage, setPrivacy, setEasyMode } = useSettings();
   const { role, canEdit, canDelete, signOut } = useAuth();
   const { exportJson, importFromFile, resetSample } = useDataTransfer();
   const t = useT();
@@ -400,8 +400,10 @@ export function SettingsPage() {
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [hashInput, setHashInput] = useState('');
   const [hashResult, setHashResult] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const privacy = settings.privacy;
+  const easy = Boolean(settings.easyMode);
   const roleLabel =
     role === 'owner'
       ? t('settings.roleOwner')
@@ -413,8 +415,24 @@ export function SettingsPage() {
     <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
       <h1 className="text-2xl font-bold tracking-tight">{t('settings.title')}</h1>
 
+      {/* Easy Mode — first, so older relatives find it immediately */}
+      <section className="card mt-6 border-emerald-300 p-6 dark:border-emerald-800">
+        <h2 className="flex items-center gap-2 font-semibold">
+          <Eye className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.easyTitle')}
+        </h2>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('settings.easyIntro')}</p>
+        <div className="mt-3">
+          <ToggleSwitch
+            label={t('settings.easyLabel')}
+            description={t('settings.easyDesc')}
+            checked={easy}
+            onChange={setEasyMode}
+          />
+        </div>
+      </section>
+
       {/* Language */}
-      <section className="card mt-6 p-6">
+      <section className="card mt-4 p-6">
         <h2 className="flex items-center gap-2 font-semibold">
           <Languages className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.language')}
         </h2>
@@ -463,6 +481,18 @@ export function SettingsPage() {
         </div>
       </section>
 
+      {easy && !showAdvanced && (
+        <button
+          type="button"
+          className="btn-secondary mt-4 w-full"
+          onClick={() => setShowAdvanced(true)}
+        >
+          {t('settings.showAdvanced')}
+        </button>
+      )}
+
+      {(!easy || showAdvanced) && (
+        <>
       {/* Privacy — owner-only: controls what the whole family's data hides publicly. */}
       {canDelete && (
       <section className="card mt-4 p-6">
@@ -635,12 +665,18 @@ export function SettingsPage() {
         {!canEdit && <p className="mt-2 text-xs text-stone-400">{t('settings.unlockNote')}</p>}
       </section>
       )}
+        </>
+      )}
 
       {canDelete && <JoinRequestsCard />}
-      {canDelete && <ChangeLogCard />}
-      {canDelete && <BackupsCard />}
-      {canDelete && <PhotosCard />}
-      {canDelete && <CountriesCard />}
+      {(!easy || showAdvanced) && (
+        <>
+          {canDelete && <ChangeLogCard />}
+          {canDelete && <BackupsCard />}
+          {canDelete && <PhotosCard />}
+          {canDelete && <CountriesCard />}
+        </>
+      )}
 
       {unlockOpen && <UnlockModal onClose={() => setUnlockOpen(false)} />}
     </div>

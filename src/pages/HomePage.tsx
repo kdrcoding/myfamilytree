@@ -1,8 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Cake, CalendarPlus, Gem, Heart, Network, PartyPopper, ShieldCheck, UserRoundPlus, Users } from 'lucide-react';
+import {
+  ArrowRight,
+  Cake,
+  CalendarPlus,
+  Gem,
+  GitBranch,
+  Heart,
+  Network,
+  PartyPopper,
+  ShieldCheck,
+  UserRoundPlus,
+  Users,
+} from 'lucide-react';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
+import { PersonSearch } from '../components/PersonSearch';
 import { useFamily } from '../context/FamilyContext';
+import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
 import { computeStats } from '../utils/stats';
@@ -20,42 +34,35 @@ const BIRTHDAY_WINDOW_DAYS = 30;
 
 export function HomePage() {
   const { people } = useFamily();
+  const { settings } = useSettings();
   const privacy = usePrivacy();
   const { toast } = useToast();
   const t = useT();
   const language = useLanguage();
   const [joinOpen, setJoinOpen] = useState(false);
+  const easy = Boolean(settings.easyMode);
   const stats = useMemo(() => computeStats(people), [people]);
   const founders = useMemo(() => findFounders(people).slice(0, 2), [people]);
 
-  // Birth dates are gated by privacy, so hide birthdays entirely when they are.
   const showBirthDates = privacy.showBirthDate();
   const upcoming = useMemo(
     () => (showBirthDates ? getUpcomingBirthdays(people) : []),
     [people, showBirthDates],
   );
-  // Show everyone whose birthday is within the next month. In a quiet stretch
-  // with none coming up soon, still show the next few so the card is never
-  // empty — it always tells you who's up next and how far away it is.
   const birthdays = useMemo(() => {
     const soon = upcoming.filter((b) => b.daysUntil <= BIRTHDAY_WINDOW_DAYS);
     return soon.length > 0 ? soon : upcoming.slice(0, 3);
   }, [upcoming]);
 
-  // Wedding anniversaries follow the same window/fallback rule as birthdays.
   const upcomingAnniversaries = useMemo(() => getUpcomingAnniversaries(people), [people]);
   const anniversaries = useMemo(() => {
     const soon = upcomingAnniversaries.filter((a) => a.daysUntil <= BIRTHDAY_WINDOW_DAYS);
     return soon.length > 0 ? soon : upcomingAnniversaries.slice(0, 2);
   }, [upcomingAnniversaries]);
 
-  // Notify once per day when someone has a birthday today. The stored date
-  // guards against re-toasting on every re-visit to the homepage.
   useEffect(() => {
     const todays = upcoming.filter((b) => b.isToday);
     if (todays.length === 0) return;
-    // Local calendar date — `isToday` is computed in local time, so the
-    // once-per-day key must be too (toISOString flips to UTC at 05:00 in UZ).
     const now = new Date();
     const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const last = loadJson<string>(
@@ -75,7 +82,11 @@ export function HomePage() {
   return (
     <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
       {/* Hero */}
-      <section className="relative mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 via-emerald-900 to-stone-900 px-6 py-16 text-emerald-50 shadow-xl sm:px-12 sm:py-20">
+      <section
+        className={`relative mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 via-emerald-900 to-stone-900 text-emerald-50 shadow-xl ${
+          easy ? 'px-6 py-10 sm:px-10 sm:py-12' : 'px-6 py-16 sm:px-12 sm:py-20'
+        }`}
+      >
         <Network
           className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rotate-12 text-emerald-700/30"
           aria-hidden
@@ -83,31 +94,57 @@ export function HomePage() {
         <p className="text-sm font-semibold uppercase tracking-widest text-emerald-300">
           {t('home.kicker')}
         </p>
-        <h1 className="mt-3 max-w-2xl text-4xl font-extrabold tracking-tight sm:text-5xl">
+        <h1
+          className={`mt-3 max-w-2xl font-extrabold tracking-tight ${
+            easy ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-5xl'
+          }`}
+        >
           {t('home.title')}
         </h1>
         <p className="mt-4 max-w-2xl text-emerald-100/90">
-          {t('home.intro')}
+          {easy ? t('home.introEasy') : t('home.intro')}
         </p>
-        <div className="mt-8 flex flex-wrap gap-3">
+
+        {/* Big search — primary way elders find someone */}
+        <div className="relative z-20 mt-8 max-w-xl">
+          <p className="mb-2 text-sm font-semibold text-emerald-200">{t('home.searchTitle')}</p>
+          <PersonSearch large placeholder={t('home.searchPlaceholder')} />
+        </div>
+
+        <div className={`mt-6 flex flex-wrap gap-3 ${easy ? 'flex-col sm:flex-row' : ''}`}>
           <Link
             to="/tree"
-            className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 font-semibold text-emerald-900 shadow transition-transform hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-white"
+            className={`inline-flex items-center justify-center gap-2 rounded-xl bg-white font-semibold text-emerald-900 shadow transition-transform hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-white ${
+              easy ? 'px-6 py-4 text-lg' : 'px-5 py-3'
+            }`}
           >
             {t('home.explore')}
             <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
           <Link
-            to="/members"
-            className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 px-5 py-3 font-semibold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white"
+            to="/related"
+            className={`inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-400/40 font-semibold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white ${
+              easy ? 'px-6 py-4 text-lg' : 'px-5 py-3'
+            }`}
           >
-            <Users className="h-4 w-4" aria-hidden />
-            {t('home.browse')}
+            <GitBranch className="h-4 w-4" aria-hidden />
+            {t('home.related')}
           </Link>
+          {!easy && (
+            <Link
+              to="/members"
+              className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 px-5 py-3 font-semibold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <Users className="h-4 w-4" aria-hidden />
+              {t('home.browse')}
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setJoinOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 px-5 py-3 font-semibold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white"
+            className={`inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-400/40 font-semibold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white ${
+              easy ? 'px-6 py-4 text-lg' : 'px-5 py-3'
+            }`}
           >
             <UserRoundPlus className="h-4 w-4" aria-hidden />
             {t('home.addSelf')}
@@ -115,22 +152,24 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Summary stats */}
-      <section aria-label="Family summary" className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {[
-          { label: t('home.statMembers'), value: stats.total },
-          { label: t('home.statGenerations'), value: stats.generations },
-          { label: t('home.statLiving'), value: stats.living },
-          { label: t('home.statCountries'), value: stats.countries.length },
-        ].map((item) => (
-          <div key={item.label} className="card p-5 text-center">
-            <p className="text-3xl font-extrabold text-emerald-700 dark:text-emerald-400">
-              {item.value}
-            </p>
-            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{item.label}</p>
-          </div>
-        ))}
-      </section>
+      {/* Stats — hidden in Easy Mode to reduce clutter */}
+      {!easy && (
+        <section aria-label="Family summary" className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {[
+            { label: t('home.statMembers'), value: stats.total },
+            { label: t('home.statGenerations'), value: stats.generations },
+            { label: t('home.statLiving'), value: stats.living },
+            { label: t('home.statCountries'), value: stats.countries.length },
+          ].map((item) => (
+            <div key={item.label} className="card p-5 text-center">
+              <p className="text-3xl font-extrabold text-emerald-700 dark:text-emerald-400">
+                {item.value}
+              </p>
+              <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{item.label}</p>
+            </div>
+          ))}
+        </section>
+      )}
 
       {/* Upcoming birthdays */}
       {birthdays.length > 0 && (
@@ -140,7 +179,7 @@ export function HomePage() {
               <Cake className="h-5 w-5 text-rose-500" aria-hidden />
               {t('home.birthdaysTitle')}
             </h2>
-            {showBirthDates && (
+            {showBirthDates && !easy && (
               <button
                 type="button"
                 className="btn-secondary !px-3 text-sm"
@@ -208,8 +247,8 @@ export function HomePage() {
         </section>
       )}
 
-      {/* Upcoming wedding anniversaries */}
-      {anniversaries.length > 0 && (
+      {/* Anniversaries — skip in Easy Mode */}
+      {!easy && anniversaries.length > 0 && (
         <section className="card mt-8 p-6">
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <Gem className="h-5 w-5 text-amber-500" aria-hidden />
@@ -272,8 +311,8 @@ export function HomePage() {
         </section>
       )}
 
-      {/* Founding couple */}
-      {founders.length > 0 && (
+      {/* Founders — skip in Easy Mode */}
+      {!easy && founders.length > 0 && (
         <section className="card mt-8 p-6">
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <Heart className="h-5 w-5 text-rose-500" aria-hidden />
@@ -310,17 +349,20 @@ export function HomePage() {
         </section>
       )}
 
-      {/* Privacy notice */}
-      <section className="mb-10 mt-8 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
-        <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-        <p>
-          <strong>{t('home.privacyStrong')}</strong> {t('home.privacyBefore')}
-          <Link to="/settings" className="underline">
-            {t('home.settingsLink')}
-          </Link>
-          {t('home.privacyAfter')}
-        </p>
-      </section>
+      {!easy && (
+        <section className="mb-10 mt-8 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+          <p>
+            <strong>{t('home.privacyStrong')}</strong> {t('home.privacyBefore')}
+            <Link to="/settings" className="underline">
+              {t('home.settingsLink')}
+            </Link>
+            {t('home.privacyAfter')}
+          </p>
+        </section>
+      )}
+
+      {easy && <div className="mb-10" />}
 
       {joinOpen && <JoinFamilyModal onClose={() => setJoinOpen(false)} />}
     </div>

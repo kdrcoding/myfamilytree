@@ -33,15 +33,16 @@ export function Layout() {
   };
 
   const navItems = [
-    { to: '/', label: t('nav.home') },
-    { to: '/tree', label: t('nav.tree') },
-    { to: '/members', label: t('nav.members') },
-    { to: '/map', label: t('nav.map') },
-    { to: '/timeline', label: t('nav.timeline') },
-    { to: '/statistics', label: t('nav.stats') },
-    { to: '/about', label: t('nav.about') },
-    { to: '/settings', label: t('nav.settings') },
-  ];
+    { to: '/', label: t('nav.home'), easy: true },
+    { to: '/tree', label: t('nav.tree'), easy: true },
+    { to: '/members', label: t('nav.members'), easy: true },
+    { to: '/related', label: t('nav.related'), easy: true },
+    { to: '/timeline', label: t('nav.timeline'), easy: true },
+    { to: '/map', label: t('nav.map'), easy: false },
+    { to: '/statistics', label: t('nav.stats'), easy: false },
+    { to: '/about', label: t('nav.about'), easy: false },
+    { to: '/settings', label: t('nav.settings'), easy: true },
+  ].filter((item) => !settings.easyMode || item.easy);
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${

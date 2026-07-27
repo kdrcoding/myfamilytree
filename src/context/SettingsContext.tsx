@@ -11,6 +11,7 @@ interface SettingsContextValue {
   toggleTheme: () => void;
   setLanguage: (language: AppLanguage) => void;
   setPrivacy: (patch: Partial<PrivacySettings>) => void;
+  setEasyMode: (easyMode: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -31,12 +32,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     // Dark is the default for everyone (it reads best on phones and is what the
     // family prefers); a visitor can still switch to light in Settings. Uzbek
     // is the default language; English is the second option.
-    { theme: 'dark', language: 'uz', privacy: DEFAULT_PRIVACY },
+    { theme: 'dark', language: 'uz', privacy: DEFAULT_PRIVACY, easyMode: false },
     isSettings,
   );
 
-  // Settings saved by earlier versions have no language field.
+  // Settings saved by earlier versions have no language / easyMode field.
   const language: AppLanguage = settings.language === 'en' ? 'en' : 'uz';
+  const easyMode = Boolean(settings.easyMode);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', settings.theme === 'dark');
@@ -55,11 +57,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = language;
   }, [language]);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('easy', easyMode);
+  }, [easyMode]);
+
   const value = useMemo<SettingsContextValue>(
     () => ({
       settings: {
         ...settings,
         language,
+        easyMode,
         // Merge so privacy flags added in future versions get defaults.
         privacy: { ...DEFAULT_PRIVACY, ...settings.privacy },
       },
@@ -69,8 +76,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setLanguage: (nextLanguage) => setSettings((s) => ({ ...s, language: nextLanguage })),
       setPrivacy: (patch) =>
         setSettings((s) => ({ ...s, privacy: { ...DEFAULT_PRIVACY, ...s.privacy, ...patch } })),
+      setEasyMode: (next) => setSettings((s) => ({ ...s, easyMode: next })),
     }),
-    [settings, language, setSettings],
+    [settings, language, easyMode, setSettings],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

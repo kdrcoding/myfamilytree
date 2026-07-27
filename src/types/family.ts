@@ -63,6 +63,11 @@ export interface AppSettings {
   /** UI language. Uzbek is the default; English is the second option. */
   language: AppLanguage;
   privacy: PrivacySettings;
+  /**
+   * Larger text, bigger taps, and a shorter menu — aimed at older relatives.
+   * Optional so older saved settings stay valid.
+   */
+  easyMode?: boolean;
 }
 
 export const DEFAULT_PRIVACY: PrivacySettings = {
