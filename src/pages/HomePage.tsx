@@ -224,7 +224,7 @@ export function HomePage() {
 
       {/* Stats — after birthdays; hidden in Easy Mode */}
       {!easy && (
-        <section aria-label="Family summary" className="mt-5 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-4">
+        <section aria-label={t('home.summaryLabel')} className="mt-5 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-4">
           {[
             { label: t('home.statMembers'), value: stats.total },
             { label: t('home.statGenerations'), value: stats.generations },

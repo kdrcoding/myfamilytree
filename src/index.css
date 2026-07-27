@@ -216,13 +216,13 @@ html:not(.dark) .text-stone-400 {
 .dark .edge-divorced .react-flow__edge-path {
   stroke: var(--color-stone-500);
 }
-/* Parent -> child ("birth") lines: green with an arrow pointing at the child. */
+/* Parent -> child ("birth") lines: stronger green, clearer on busy trees. */
 .edge-child .react-flow__edge-path {
-  stroke: var(--color-emerald-500);
-  stroke-width: 2;
+  stroke: #059669;
+  stroke-width: 2.5;
 }
 .dark .edge-child .react-flow__edge-path {
-  stroke: var(--color-emerald-500);
+  stroke: #34d399;
 }
 
 /* Touch screens: thicker relationship lines and finger-sized zoom controls

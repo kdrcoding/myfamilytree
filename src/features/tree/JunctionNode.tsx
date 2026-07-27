@@ -10,7 +10,7 @@ import type { NodeProps } from '@xyflow/react';
 function JunctionNodeComponent({ data }: NodeProps) {
   const horizontal = data?.orientation === 'horizontal';
   return (
-    <div className="h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow dark:border-stone-900">
+    <div className="h-3 w-3 rounded-full border-2 border-white bg-emerald-600 shadow dark:border-stone-900 dark:bg-emerald-400">
       <Handle
         type="source"
         position={horizontal ? Position.Right : Position.Bottom}

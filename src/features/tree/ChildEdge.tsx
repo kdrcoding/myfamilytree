@@ -10,8 +10,7 @@ import type { EdgeProps } from '@xyflow/react';
  * (`data.busOffset`, set in layout.ts). A long cross-family link crosses the
  * other buses transversally instead of running on top of them.
  *
- * Works in both orientations: vertical (top-down) draws a horizontal bus,
- * horizontal (left-to-right) draws a vertical bus.
+ * A light understroke keeps green lines readable when they cross.
  */
 function ChildEdgeComponent({
   sourceX,
@@ -21,16 +20,14 @@ function ChildEdgeComponent({
   markerEnd,
   data,
 }: EdgeProps) {
-  const busOffset = typeof data?.busOffset === 'number' ? data.busOffset : 40;
+  const busOffset = typeof data?.busOffset === 'number' ? data.busOffset : 48;
   const horizontal = data?.orientation === 'horizontal';
 
   let path: string;
   if (horizontal) {
-    // Vertical bus: run out from the source, along a shared trunk just left of
-    // the children, then into each child from the left.
     const busX = targetX - busOffset;
     const dy = Math.abs(targetY - sourceY);
-    const r = Math.max(0, Math.min(10, dy / 2, (busX - sourceX) / 2, targetX - busX));
+    const r = Math.max(0, Math.min(12, dy / 2, (busX - sourceX) / 2, targetX - busX));
     if (dy < 1) {
       path = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
     } else {
@@ -44,10 +41,9 @@ function ChildEdgeComponent({
         `H ${targetX}`;
     }
   } else {
-    // Horizontal bus (default top-down).
     const busY = targetY - busOffset;
     const dx = Math.abs(targetX - sourceX);
-    const r = Math.max(0, Math.min(10, dx / 2, (busY - sourceY) / 2, targetY - busY));
+    const r = Math.max(0, Math.min(12, dx / 2, (busY - sourceY) / 2, targetY - busY));
     if (dx < 1) {
       path = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
     } else {
@@ -62,7 +58,26 @@ function ChildEdgeComponent({
     }
   }
 
-  return <BaseEdge path={path} markerEnd={markerEnd} />;
+  return (
+    <>
+      {/* Halo so crossing green lines stay visible on the dotted canvas */}
+      <path
+        d={path}
+        fill="none"
+        stroke="var(--child-edge-halo, #ffffff)"
+        strokeWidth={6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="pointer-events-none dark:[stroke:var(--color-stone-950)]"
+        aria-hidden
+      />
+      <BaseEdge
+        path={path}
+        markerEnd={markerEnd}
+        style={{ strokeWidth: 2.5 }}
+      />
+    </>
+  );
 }
 
 export const ChildEdge = memo(ChildEdgeComponent);

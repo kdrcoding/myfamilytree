@@ -17,17 +17,19 @@ const SPACING: Record<
   TreeSpacing,
   { spouse: number; sibling: number; level: number; root: number }
 > = {
-  comfortable: { spouse: 44, sibling: 36, level: 150, root: 80 },
-  compact: { spouse: 32, sibling: 20, level: 112, root: 56 },
+  // Tighter spouse/root gaps keep the oldest generation together; a taller
+  // level gap leaves room for separate green bus lanes between rows.
+  comfortable: { spouse: 28, sibling: 40, level: 176, root: 48 },
+  compact: { spouse: 20, sibling: 24, level: 140, root: 32 },
 };
 
 const JUNCTION = 10;
 // Child connectors run along a "bus" just before the children. Each couple
 // gets its own lane so a long cross-family link crosses other buses instead
 // of running on top of them (see ChildEdge).
-const BUS_BASE = 34;
-const BUS_STEP = 22;
-const BUS_LANES = 3;
+const BUS_BASE = 44;
+const BUS_STEP = 20;
+const BUS_LANES = 5;
 // Room reserved before each generation row for its label chip.
 const GEN_LABEL_GAP = 148;
 
@@ -37,6 +39,9 @@ const GEN_LABEL_GAP = 148;
  * tree narrow on load; the viewer expands from there.
  */
 export const DEFAULT_OPEN_GENERATIONS = 2;
+
+/** Shared stroke for parent→child lines and their arrowheads. */
+export const CHILD_EDGE_COLOR = '#059669';
 
 export interface PersonNodeData extends Record<string, unknown> {
   personId: string;
@@ -71,6 +76,23 @@ interface Unit {
   width: number;
 }
 
+/** Other parents of this person's children who are not yet visited. */
+function coParentIds(
+  anchor: FamilyPerson,
+  index: PersonIndex,
+  visited: Set<string>,
+): string[] {
+  const found = new Set<string>();
+  for (const childId of anchor.childIds) {
+    const child = index.get(childId);
+    if (!child) continue;
+    for (const pid of child.parentIds) {
+      if (pid !== anchor.id && index.has(pid) && !visited.has(pid)) found.add(pid);
+    }
+  }
+  return [...found];
+}
+
 function buildUnit(
   anchorId: string,
   index: PersonIndex,
@@ -80,13 +102,21 @@ function buildUnit(
 ): Unit {
   const anchor = index.get(anchorId)!;
   visited.add(anchorId);
+
+  // Partners: recorded spouses, plus co-parents of shared children (so a
+  // founding couple without a spouse link still sits side-by-side on top).
   const spouseIds = anchor.spouseIds.filter((id) => index.has(id) && !visited.has(id));
-  for (const spouseId of spouseIds) visited.add(spouseId);
+  const partners = [
+    ...spouseIds,
+    ...coParentIds(anchor, index, visited).filter((id) => !spouseIds.includes(id)),
+  ];
+  for (const partnerId of partners) visited.add(partnerId);
+
   // One marriage reads left-to-right; with several marriages the anchor sits
   // in the middle so each partner stands directly beside them and every
   // couple gets its own marriage line and child connector.
-  const leftCount = Math.floor(spouseIds.length / 2);
-  const memberIds = [...spouseIds.slice(0, leftCount), anchorId, ...spouseIds.slice(leftCount)];
+  const leftCount = Math.floor(partners.length / 2);
+  const memberIds = [...partners.slice(0, leftCount), anchorId, ...partners.slice(leftCount)];
 
   const memberPos = new Map(memberIds.map((id, i) => [id, i]));
   const coupleOf = (p: FamilyPerson): number => {
@@ -142,6 +172,12 @@ function measure(unit: Unit, spouseGap: number, siblingGap: number): number {
   return unit.width;
 }
 
+/** Collect every person / junction id belonging to a unit subtree. */
+function collectSubtreeIds(unit: Unit, into: Set<string>): void {
+  for (const id of unit.memberIds) into.add(id);
+  for (const child of unit.children) collectSubtreeIds(child, into);
+}
+
 export interface TreeLayout {
   nodes: PersonFlowNode[];
   junctionNodes: Node[];
@@ -160,6 +196,40 @@ const HANDLE_REFLECT: Record<string, string> = {
   bottom: 'right',
 };
 
+function shiftSubtree(
+  ids: Set<string>,
+  dx: number,
+  nodes: PersonFlowNode[],
+  junctionNodes: Node[],
+  positions: Map<string, { x: number; y: number }>,
+  depthByNode?: Map<string, number>,
+  /** When set, only shift people at this depth or deeper (keeps founders put). */
+  minDepth = 0,
+): void {
+  if (dx === 0) return;
+  for (const node of nodes) {
+    if (!ids.has(node.id)) continue;
+    if ((depthByNode?.get(node.id) ?? 0) < minDepth) continue;
+    node.position.x += dx;
+  }
+  for (const node of junctionNodes) {
+    const key = node.id.replace(/^junction-/, '');
+    const parts = key.split('|');
+    const touches = parts.some((id) => ids.has(id)) || ids.has(node.id);
+    if (!touches) continue;
+    // Keep founding-couple junctions put when only shifting deeper nodes.
+    if (minDepth > 0 && parts.every((id) => (depthByNode?.get(id) ?? 0) < minDepth)) {
+      continue;
+    }
+    node.position.x += dx;
+  }
+  for (const id of ids) {
+    if ((depthByNode?.get(id) ?? 0) < minDepth) continue;
+    const pos = positions.get(id);
+    if (pos) pos.x += dx;
+  }
+}
+
 /** Compute node positions and relationship edges for the whole family. */
 export function computeTreeLayout(
   people: FamilyPerson[],
@@ -173,7 +243,9 @@ export function computeTreeLayout(
   const suppressed = new Set<string>();
   const roots: Unit[] = [];
 
-  for (const founder of findFounders(people)) {
+  // Oldest founders first so the main ancestral couple anchors the left/center.
+  const founderList = [...findFounders(people)].sort(sortByBirth);
+  for (const founder of founderList) {
     if (!visited.has(founder.id)) {
       roots.push(buildUnit(founder.id, index, visited, collapsedIds, suppressed));
     }
@@ -202,10 +274,13 @@ export function computeTreeLayout(
   const junctionByPair = new Map<string, string>();
   const depthByNode = new Map<string, number>();
 
-  function place(unit: Unit, x: number, depth: number): void {
+  function place(unit: Unit, x: number, depth: number, clusterLeft?: number): void {
     const y = depth * (CARD_H + gap.level);
     const clusterW = unit.memberIds.length * CARD_W + (unit.memberIds.length - 1) * gap.spouse;
-    const clusterX = x + (unit.width - clusterW) / 2;
+    // Default: center the couple over their subtree. Roots pass an explicit
+    // clusterLeft so several founding lines sit next to each other on top.
+    const clusterX =
+      clusterLeft !== undefined ? clusterLeft : x + (unit.width - clusterW) / 2;
 
     unit.memberIds.forEach((memberId, i) => {
       const memberX = clusterX + i * (CARD_W + gap.spouse);
@@ -238,11 +313,12 @@ export function computeTreeLayout(
       const right = unit.memberIds[i + 1];
       const leftPerson = index.get(left)!;
       const rightPerson = index.get(right)!;
-      const married = leftPerson.spouseIds.includes(right);
+      const married = leftPerson.spouseIds.includes(right) || rightPerson.spouseIds.includes(left);
       const divorced = isDivorced(leftPerson, rightPerson);
       const sharedChildren = leftPerson.childIds.filter((id) =>
         rightPerson.childIds.includes(id),
       );
+      // Draw a couple link for recorded marriages OR shared children (co-parents).
       if (married || sharedChildren.length > 0) {
         edges.push({
           id: `spouse-${left}-${right}`,
@@ -274,76 +350,176 @@ export function computeTreeLayout(
       }
     }
 
-    let childX =
-      x +
-      (unit.width -
-        unit.children.reduce((sum, c, i) => sum + c.width + (i > 0 ? gap.sibling : 0), 0)) /
-        2;
+    const childrenSpan = unit.children.reduce(
+      (sum, c, i) => sum + c.width + (i > 0 ? gap.sibling : 0),
+      0,
+    );
+    // Fan children out under the couple's center so parents stay together
+    // even when the next generation is much wider.
+    const clusterCenter = clusterX + clusterW / 2;
+    let childX = clusterCenter - childrenSpan / 2;
     for (const child of unit.children) {
       place(child, childX, depth + 1);
       childX += child.width + gap.sibling;
     }
   }
 
-  let rootX = 0;
+  // Pack root couples tightly side-by-side; children fan out under each couple.
+  let clusterCursor = 0;
+  const subtreeIds: Set<string>[] = [];
   for (const root of roots) {
     measure(root, gap.spouse, gap.sibling);
-    place(root, rootX, 0);
-    rootX += root.width + gap.root;
+    const clusterW = root.memberIds.length * CARD_W + (root.memberIds.length - 1) * gap.spouse;
+    place(root, clusterCursor, 0, clusterCursor);
+    const ids = new Set<string>();
+    collectSubtreeIds(root, ids);
+    subtreeIds.push(ids);
+    clusterCursor += clusterW + gap.root;
   }
 
-  // Each child connector's source (a couple's junction, or a lone parent)
-  // keeps a stable bus lane so all siblings share one trunk while neighbouring
-  // couples sit at different heights.
-  const laneBySource = new Map<string, number>();
-  const busOffsetFor = (sourceId: string): number => {
-    let lane = laneBySource.get(sourceId);
-    if (lane === undefined) {
-      lane = laneBySource.size % BUS_LANES;
-      laneBySource.set(sourceId, lane);
+  // If child rows from neighbouring root lines overlap, nudge later *children*
+  // right — founding couples on top stay side-by-side.
+  for (let i = 1; i < roots.length; i++) {
+    let leftMax = -Infinity;
+    for (let j = 0; j < i; j++) {
+      for (const id of subtreeIds[j]) {
+        if ((depthByNode.get(id) ?? 0) < 1) continue;
+        const pos = positions.get(id);
+        if (pos) leftMax = Math.max(leftMax, pos.x + CARD_W);
+      }
     }
-    return BUS_BASE + lane * BUS_STEP;
+    let rightMin = Infinity;
+    for (const id of subtreeIds[i]) {
+      if ((depthByNode.get(id) ?? 0) < 1) continue;
+      const pos = positions.get(id);
+      if (pos) rightMin = Math.min(rightMin, pos.x);
+    }
+    if (!Number.isFinite(leftMax) || !Number.isFinite(rightMin)) continue;
+    const overlap = leftMax + gap.sibling - rightMin;
+    if (overlap > 0) {
+      shiftSubtree(subtreeIds[i], overlap, nodes, junctionNodes, positions, depthByNode, 1);
+    }
+  }
+
+  // Assign bus lanes left-to-right by source X so neighbouring couples get
+  // alternating heights instead of stacking on the same green line.
+  const laneBySource = new Map<string, number>();
+  const pendingSources: { id: string; x: number }[] = [];
+  const noteSource = (sourceId: string, x: number) => {
+    if (!laneBySource.has(sourceId) && !pendingSources.some((s) => s.id === sourceId)) {
+      pendingSources.push({ id: sourceId, x });
+    }
+  };
+
+  const ensureJunctionForParents = (parentIds: string[]): string | undefined => {
+    if (parentIds.length < 2) return undefined;
+    const pairKey = [...parentIds].sort().join('|');
+    const existing = junctionByPair.get(pairKey);
+    if (existing) return existing;
+
+    const placed = parentIds
+      .map((id) => ({ id, pos: positions.get(id) }))
+      .filter((p): p is { id: string; pos: { x: number; y: number } } => !!p.pos);
+    if (placed.length < 2) return undefined;
+
+    placed.sort((a, b) => a.pos.x - b.pos.x);
+    const left = placed[0];
+    const right = placed[placed.length - 1];
+    const midX = (left.pos.x + CARD_W + right.pos.x) / 2;
+    const midY = (left.pos.y + right.pos.y) / 2 + CARD_H / 2;
+    const junctionId = `junction-${pairKey}`;
+    junctionByPair.set(pairKey, junctionId);
+    junctionNodes.push({
+      id: junctionId,
+      type: 'junction',
+      position: { x: midX - JUNCTION / 2, y: midY - JUNCTION / 2 },
+      width: JUNCTION,
+      height: JUNCTION,
+      data: { orientation },
+      draggable: false,
+      selectable: false,
+      connectable: false,
+    });
+    return junctionId;
   };
 
   // Parent -> child edges, preferring the couple's junction dot when both
   // parents are drawn next to each other.
+  const childEdgeDrafts: {
+    id: string;
+    source: string;
+    sourceHandle: string;
+    target: string;
+    sourceX: number;
+  }[] = [];
+
   for (const person of people) {
     if (!positions.has(person.id)) continue;
     const placedParents = person.parentIds.filter((id) => positions.has(id));
     if (placedParents.length === 0) continue;
     const pairKey = [...placedParents].sort().join('|');
-    const junctionId = placedParents.length >= 2 ? junctionByPair.get(pairKey) : undefined;
-    // Arrow points AT the child, so "who gave birth to whom" reads at a glance.
-    const childMarker = { type: MarkerType.ArrowClosed, width: 18, height: 18, color: '#10b981' };
+    let junctionId =
+      placedParents.length >= 2 ? junctionByPair.get(pairKey) : undefined;
+    if (placedParents.length >= 2 && !junctionId) {
+      junctionId = ensureJunctionForParents(placedParents);
+    }
+
     if (junctionId) {
-      edges.push({
+      const jNode = junctionNodes.find((n) => n.id === junctionId);
+      const sourceX = jNode ? jNode.position.x : 0;
+      childEdgeDrafts.push({
         id: `child-${junctionId}-${person.id}`,
         source: junctionId,
         sourceHandle: 'out',
         target: person.id,
-        targetHandle: 'top',
-        type: 'child',
-        data: { busOffset: busOffsetFor(junctionId), orientation },
-        className: 'edge-child',
-        markerEnd: childMarker,
-        focusable: false,
-      } as Edge);
+        sourceX,
+      });
+      noteSource(junctionId, sourceX);
     } else {
       for (const parentId of placedParents) {
-        edges.push({
+        const sourceX = positions.get(parentId)?.x ?? 0;
+        childEdgeDrafts.push({
           id: `child-${parentId}-${person.id}`,
           source: parentId,
           sourceHandle: 'bottom',
           target: person.id,
-          targetHandle: 'top',
-          type: 'child',
-          data: { busOffset: busOffsetFor(parentId), orientation },
-          className: 'edge-child',
-          markerEnd: childMarker,
-          focusable: false,
-        } as Edge);
+          sourceX,
+        });
+        noteSource(parentId, sourceX);
       }
     }
+  }
+
+  pendingSources.sort((a, b) => a.x - b.x);
+  pendingSources.forEach((s, i) => {
+    laneBySource.set(s.id, i % BUS_LANES);
+  });
+
+  const busOffsetFor = (sourceId: string): number => {
+    const lane = laneBySource.get(sourceId) ?? 0;
+    return BUS_BASE + lane * BUS_STEP;
+  };
+
+  const childMarker = {
+    type: MarkerType.ArrowClosed,
+    width: 16,
+    height: 16,
+    color: CHILD_EDGE_COLOR,
+  };
+
+  for (const draft of childEdgeDrafts) {
+    edges.push({
+      id: draft.id,
+      source: draft.source,
+      sourceHandle: draft.sourceHandle,
+      target: draft.target,
+      targetHandle: 'top',
+      type: 'child',
+      data: { busOffset: busOffsetFor(draft.source), orientation },
+      className: 'edge-child',
+      markerEnd: childMarker,
+      focusable: false,
+    } as Edge);
   }
 
   // One label chip per generation row, placed just before the row's first card.

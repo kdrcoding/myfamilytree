@@ -83,7 +83,7 @@ export function Layout() {
             </span>
           </NavLink>
 
-          <nav className="ml-auto hidden items-center gap-1 lg:flex" aria-label="Main navigation">
+          <nav className="ml-auto hidden items-center gap-1 lg:flex" aria-label={t('nav.mainNav')}>
             {navItems.map((item) => (
               <NavLink key={item.to} to={item.to} className={linkClass} end={item.to === '/'}>
                 {item.label}
@@ -143,7 +143,7 @@ export function Layout() {
         {menuOpen && (
           <nav
             className="animate-fade-in border-t border-stone-200 bg-white px-3 py-3 lg:hidden dark:border-stone-800 dark:bg-stone-950"
-            aria-label="Mobile navigation"
+            aria-label={t('nav.mobileNav')}
           >
             <ul className="flex flex-col gap-1.5">
               {navItems.map((item) => (

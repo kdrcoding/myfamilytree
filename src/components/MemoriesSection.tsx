@@ -226,7 +226,7 @@ export function MemoriesSection({ person }: MemoriesSectionProps) {
             {t('memories.fieldTakenOn')}
             <input
               className="input mt-1"
-              placeholder="YYYY-MM-DD"
+              placeholder={t('form.datePlaceholder')}
               value={draftTakenOn}
               onChange={(e) => setDraftTakenOn(e.target.value)}
             />

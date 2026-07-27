@@ -131,7 +131,8 @@ export function AppLockGate({ children }: { children: ReactNode }) {
         type="button"
         onClick={() => setLanguage(nextLanguage(settings.language))}
         className="icon-btn !w-auto mt-4 gap-1 px-2 text-xs font-bold"
-        title="UZ → EN → RU"
+        title={t('nav.langCycle')}
+        aria-label={t('nav.langCycle')}
       >
         <Languages className="h-4 w-4" aria-hidden />
         {languageCodeLabel(settings.language)}

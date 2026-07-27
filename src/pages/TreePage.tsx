@@ -200,11 +200,17 @@ function TreeCanvas({
     (instance?: ReactFlowInstance, animate = true) => {
       const personNodes = nodes.filter((n) => n.type === 'person');
       if (personNodes.length === 0) return;
-      const minY = Math.min(...personNodes.map((n) => n.position.y));
-      const topRow = personNodes.filter((n) => n.position.y === minY);
+      // Prefer generation 1 (founders) so side branches don't pull the camera.
+      const gen1 = personNodes.filter((n) => n.data && (n.data as { generation?: number }).generation === 1);
+      const topRow = gen1.length > 0
+        ? gen1
+        : (() => {
+            const minY = Math.min(...personNodes.map((n) => n.position.y));
+            return personNodes.filter((n) => n.position.y === minY);
+          })();
       const centersX = topRow.map((n) => n.position.x + CARD_W / 2);
       const cx = (Math.min(...centersX) + Math.max(...centersX)) / 2;
-      const cy = minY + CARD_H / 2;
+      const cy = topRow[0].position.y + CARD_H / 2;
       const opts = { zoom: startZoom, duration: animate ? 500 : 0 };
       if (instance) instance.setCenter(cx, cy, opts);
       else setCenter(cx, cy, opts);
@@ -264,9 +270,9 @@ function TreeCanvas({
     >
       <Background
         variant={BackgroundVariant.Dots}
-        gap={28}
-        size={1.5}
-        className="!text-slate-500 dark:!text-stone-700"
+        gap={32}
+        size={1}
+        className="!text-stone-300 dark:!text-stone-700"
       />
       {!easyMode && (
         <Panel
@@ -343,19 +349,19 @@ function TreeCanvas({
           {t('tree.fitTree')}
         </button>
       </Panel>
-      <Panel position="bottom-left" className="!m-3">
+      <Panel position="bottom-left" className="!m-3 !mb-20 lg:!mb-3">
         <MadeByKadir align="left" />
       </Panel>
       <Controls
         showInteractive={false}
         position="bottom-right"
-        className={easyMode ? 'tree-controls-easy' : undefined}
+        className={`!mb-16 lg:!mb-0 ${easyMode ? 'tree-controls-easy' : ''}`}
       />
 
       {/* Collapsible minimap: a toggle sits at the bottom-right corner; the map
           floats just above it and can be hidden to free up canvas. Hidden on
           phones where it would crowd the view. */}
-      <Panel position="bottom-right" className="!bottom-16 !right-3 hidden md:block">
+      <Panel position="bottom-right" className="!bottom-16 !right-3 hidden md:block lg:!bottom-16">
         <button
           type="button"
           onClick={() => setMinimapOpen((v) => !v)}
