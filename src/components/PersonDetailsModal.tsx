@@ -77,6 +77,7 @@ function RelativeChips({
   people: FamilyPerson[];
   onNavigate: (id: string) => void;
 }) {
+  const t = useT();
   if (people.length === 0) return null;
   return (
     <div>
@@ -92,7 +93,7 @@ function RelativeChips({
             className="rounded-full border border-stone-300 bg-stone-50 px-3.5 py-2 text-sm font-medium text-stone-700 transition-colors hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-emerald-950/60"
           >
             {fullName(p)}
-            {p.isDeceased ? ' †' : ''}
+            {p.isDeceased ? ` · ${t('common.deceasedShort')}` : ''}
           </button>
         ))}
       </div>
@@ -140,7 +141,7 @@ function SpouseChips({
                 }`}
               >
                 {fullName(spouse)}
-                {spouse.isDeceased ? ' †' : ''}
+                {spouse.isDeceased ? ` · ${t('common.deceasedShort')}` : ''}
                 {divorced && (
                   <span className="ml-1 text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400">
                     · {t('person.divorced')}

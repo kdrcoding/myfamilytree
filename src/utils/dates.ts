@@ -100,12 +100,13 @@ export function lifespan(
   deathDate?: string,
   deceased?: boolean,
   bornPrefix = 'b.',
+  diedPrefix = 'd.',
 ): string {
   const born = birthYear(birthDate);
   const died = birthYear(deathDate);
   if (born && died) return `${born} – ${died}`;
   if (born && deceased) return `${born} – ?`;
   if (born) return `${bornPrefix} ${born}`;
-  if (died) return `† ${died}`;
+  if (died) return `${diedPrefix} ${died}`;
   return '';
 }

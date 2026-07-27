@@ -277,7 +277,7 @@ function TreeCanvas({
     >
       <Background
         id="tree-grid"
-        variant={BackgroundVariant.Cross}
+        variant={BackgroundVariant.Dots}
         gap={28}
         size={1.25}
         color={dark ? 'rgba(168, 162, 158, 0.14)' : 'rgba(120, 113, 108, 0.18)'}

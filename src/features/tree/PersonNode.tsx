@@ -39,6 +39,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
         privacy.showDeathDate() ? person.deathDate : undefined,
         person.isDeceased,
         t('common.bornAbbr'),
+        t('common.diedAbbr'),
       )
     : person.isDeceased
       ? t('common.deceasedShort')

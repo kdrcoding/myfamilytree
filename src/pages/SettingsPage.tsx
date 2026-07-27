@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Archive,
-  Bell,
   Database,
   Download,
   Eye,
@@ -399,7 +398,7 @@ function PhotosCard() {
 }
 
 export function SettingsPage() {
-  const { settings, setTheme, setLanguage, setPrivacy, setEasyMode, setBrowserNotify } = useSettings();
+  const { settings, setTheme, setLanguage, setPrivacy, setEasyMode } = useSettings();
   const { role, canEdit, canDelete, signOut } = useAuth();
   const { exportJson, importFromFile, resetSample } = useDataTransfer();
   const { toast } = useToast();
@@ -494,27 +493,6 @@ export function SettingsPage() {
           <Link2 className="h-4 w-4" aria-hidden />
           {t('invite.copyBtn')}
         </button>
-      </section>
-
-      {/* Browser notifications */}
-      <section className="card mt-4 p-6">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <Bell className="h-5 w-5 text-emerald-600" aria-hidden /> {t('notify.settingsTitle')}
-        </h2>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('notify.settingsIntro')}</p>
-        <div className="mt-3">
-          <ToggleSwitch
-            label={t('notify.browserLabel')}
-            description={t('notify.browserDesc')}
-            checked={Boolean(settings.browserNotify)}
-            onChange={(next) => {
-              setBrowserNotify(next);
-              if (next && typeof Notification !== 'undefined' && Notification.permission === 'default') {
-                void Notification.requestPermission();
-              }
-            }}
-          />
-        </div>
       </section>
 
       {/* Custom domain tip */}

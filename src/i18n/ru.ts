@@ -164,6 +164,7 @@ export const ruOverrides: Record<string, string> = {
   'common.unnamed': 'Без имени',
   'common.yearsOld': '{n} лет',
   'common.bornAbbr': 'р.',
+  'common.diedAbbr': 'ум.',
   'common.deceasedShort': 'Умер(ла)',
 
   'gate.nameHint': 'Чтобы семья видела, кто внёс каждое изменение.',

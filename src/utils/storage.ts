@@ -25,8 +25,6 @@ export const STORAGE_KEYS = {
   treeTipSeen: 'familytree.treeTipSeen.v1',
   // First-visit welcome tour completed.
   tourSeen: 'familytree.tourSeen.v1',
-  // Ids of browser notifications already pushed (dedupe).
-  browserNotifyPushed: 'familytree.browserNotifyPushed.v1',
   // Dismissed invite banner for this browser session key.
   inviteBannerDismissed: 'familytree.inviteBanner.v1',
 } as const;

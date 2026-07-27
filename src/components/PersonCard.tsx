@@ -29,6 +29,7 @@ export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps
         privacy.showDeathDate() ? person.deathDate : undefined,
         person.isDeceased,
         t('common.bornAbbr'),
+        t('common.diedAbbr'),
       )
     : '';
 

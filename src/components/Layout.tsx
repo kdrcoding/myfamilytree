@@ -9,7 +9,6 @@ import { useT } from '../i18n/useT';
 import { MadeByKadir } from './MadeByKadir';
 import { BottomNav } from './BottomNav';
 import { WelcomeTour } from './WelcomeTour';
-import { NotificationsBell } from './NotificationsBell';
 import { OverflowMenu } from './OverflowMenu';
 import { BrandLogo } from './BrandLogo';
 
@@ -134,7 +133,6 @@ export function Layout() {
           </nav>
 
           <div className="ml-auto flex items-center gap-0.5 lg:ml-2">
-            <NotificationsBell />
             <OverflowMenu
               label={t('nav.more')}
               items={[
