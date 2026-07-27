@@ -5,12 +5,8 @@ import type { EdgeProps } from '@xyflow/react';
 /**
  * Orthogonal parent -> child ("birth") connector with a per-couple bus lane.
  *
- * Every child of one couple shares the same trunk (a clean sibling bus), but
- * each couple's trunk sits at its own offset in the gap between generations
- * (`data.busOffset`, set in layout.ts). A long cross-family link crosses the
- * other buses transversally instead of running on top of them.
- *
- * A light understroke keeps green lines readable when they cross.
+ * A soft solid trunk carries the arrow; two dashed overlays animate along the
+ * path so inheritance reads as DNA flowing from parents down to each child.
  */
 function ChildEdgeComponent({
   sourceX,
@@ -60,21 +56,32 @@ function ChildEdgeComponent({
 
   return (
     <>
-      {/* Halo so crossing green lines stay visible on the dotted canvas */}
+      {/* Halo so crossing lines stay visible on the dotted canvas */}
       <path
         d={path}
         fill="none"
         stroke="var(--child-edge-halo, #ffffff)"
-        strokeWidth={6}
+        strokeWidth={7}
         strokeLinecap="round"
         strokeLinejoin="round"
         className="pointer-events-none dark:[stroke:var(--color-stone-950)]"
         aria-hidden
       />
-      <BaseEdge
-        path={path}
-        markerEnd={markerEnd}
-        style={{ strokeWidth: 2.5 }}
+      {/* Quiet solid trunk + arrowhead toward the child */}
+      <BaseEdge path={path} markerEnd={markerEnd} style={{ strokeWidth: 2, opacity: 0.45 }} />
+      {/* DNA strand A — dashes flow parent → child */}
+      <path
+        d={path}
+        fill="none"
+        className="edge-child-flow edge-child-flow--a"
+        aria-hidden
+      />
+      {/* DNA strand B — phase-shifted twin for a double-helix feel */}
+      <path
+        d={path}
+        fill="none"
+        className="edge-child-flow edge-child-flow--b"
+        aria-hidden
       />
     </>
   );
