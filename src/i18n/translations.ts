@@ -3,6 +3,8 @@
  * default; English is the second option. Placeholders like {name} are
  * replaced via the t() hook in src/i18n/useT.ts.
  */
+import { ruOverrides } from './ru';
+
 export const en = {
   // Site & navigation
   'site.title': 'Oq-Ariq OILASI',
@@ -22,6 +24,7 @@ export const en = {
   'nav.menuClose': 'Close menu',
   'nav.menu': 'Menu',
   'nav.menuCloseShort': 'Close',
+  'nav.bottomNav': 'Bottom navigation',
   'nav.signOut': 'Sign out',
   'nav.signOutConfirmTitle': 'Sign out of the site?',
   'nav.signOutConfirmMsg': 'You will need the family password to enter again.',
@@ -504,6 +507,11 @@ export const en = {
   'settings.easyDesc':
     'Hides Map, Statistics and About from the menu. Turn this on for parents and grandparents.',
   'settings.showAdvanced': 'Show advanced settings',
+  'settings.domainTitle': 'Your own website address',
+  'settings.domainIntro':
+    'The site currently uses a Vercel link. You can attach a short domain (for example oilasi.uz) in Vercel → Project → Settings → Domains.',
+  'settings.domainSteps':
+    '1) Buy a domain. 2) Vercel → Domains → Add. 3) Follow the DNS instructions. After that, share the short address with the family.',
   'settings.language': 'Language',
   'settings.theme': 'Theme',
   'settings.light': 'Light',
@@ -670,6 +678,21 @@ export const en = {
   'related.nephewRole': 'nephew',
   'related.nieceRole': 'niece',
   'related.nibling': 'nephew / niece',
+
+  // First-visit tour
+  'tour.progress': 'Step {n} of {total}',
+  'tour.next': 'Next',
+  'tour.done': 'Got it — open',
+  'tour.skip': 'Skip',
+  'tour.step1Title': 'Find someone',
+  'tour.step1Body':
+    'On the home page, type a name in the search box. That is the easiest way for everyone.',
+  'tour.step2Title': 'Open the tree',
+  'tour.step2Body':
+    'Tap Family Tree. If names look small, use “Zoom in (readable)” or search again.',
+  'tour.step3Title': 'How are we related?',
+  'tour.step3Body':
+    'Pick two people — the site explains the connection in plain words.',
 } as const;
 
 export type TKey = keyof typeof en;
@@ -693,6 +716,7 @@ export const uz: Record<TKey, string> = {
   'nav.menuClose': 'Menyuni yopish',
   'nav.menu': 'Menyu',
   'nav.menuCloseShort': 'Yopish',
+  'nav.bottomNav': 'Pastki menyu',
   'nav.signOut': 'Chiqish',
   'nav.signOutConfirmTitle': 'Saytdan chiqilsinmi?',
   'nav.signOutConfirmMsg': "Qayta kirish uchun oila paroli kerak bo'ladi.",
@@ -1155,6 +1179,11 @@ export const uz: Record<TKey, string> = {
   'settings.easyDesc':
     'Menyudan Xarita, Statistika va Haqida yashiriladi. Ota-ona va buvi-bobolar uchun yoqing.',
   'settings.showAdvanced': 'Qo‘shimcha sozlamalarni ko‘rsatish',
+  'settings.domainTitle': 'O‘z sayt manzilingiz',
+  'settings.domainIntro':
+    'Hozir sayt Vercel havolasi orqali ochiladi. Qisqa domen (masalan oilasi.uz) ni Vercel → Project → Settings → Domains orqali ulang.',
+  'settings.domainSteps':
+    '1) Domen sotib oling. 2) Vercel → Domains → Add. 3) DNS ko‘rsatmalariga amal qiling. Shundan keyin oilaga qisqa manzilni yuborasiz.',
   'settings.language': 'Til',
   'settings.theme': 'Mavzu',
   'settings.light': "Yorug'",
@@ -1316,11 +1345,27 @@ export const uz: Record<TKey, string> = {
   'related.nephewRole': 'jiyani (o‘g‘il)',
   'related.nieceRole': 'jiyani (qiz)',
   'related.nibling': 'jiyani',
+
+  'tour.progress': 'Qadam {n} / {total}',
+  'tour.next': 'Keyingisi',
+  'tour.done': 'Tushundim — ochish',
+  'tour.skip': 'O‘tkazib yuborish',
+  'tour.step1Title': 'Odamni toping',
+  'tour.step1Body':
+    'Bosh sahifada qidiruvga ism yozing. Bu butun oila uchun eng oson yo‘l.',
+  'tour.step2Title': 'Shajarani oching',
+  'tour.step2Body':
+    '«Shajara»ni bosing. Mayda bo‘lsa — «Kattalashtirish» yoki yana ism qidiring.',
+  'tour.step3Title': 'Qanday qarindosh?',
+  'tour.step3Body':
+    'Ikki odamni tanlang — sayt oddiy so‘zlar bilan bog‘lanishni aytadi.',
 };
 
-export type Language = 'uz' | 'en';
+export type Language = 'uz' | 'en' | 'ru';
 
-export const DICTIONARIES: Record<Language, Record<TKey, string>> = { en, uz };
+export const ru: Record<TKey, string> = { ...en, ...ruOverrides };
+
+export const DICTIONARIES: Record<Language, Record<TKey, string>> = { en, uz, ru };
 
 /** Replace {placeholders} in a translated string. */
 export function formatMessage(template: string, params?: Record<string, string | number>): string {

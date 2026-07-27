@@ -56,7 +56,24 @@ export interface PrivacySettings {
   hidePhotos: boolean;
 }
 
-export type AppLanguage = 'uz' | 'en';
+export type AppLanguage = 'uz' | 'en' | 'ru';
+
+export const APP_LANGUAGES: AppLanguage[] = ['uz', 'en', 'ru'];
+
+/** Cycle UZ → EN → RU → UZ. */
+export function nextLanguage(current: AppLanguage): AppLanguage {
+  const i = APP_LANGUAGES.indexOf(current);
+  return APP_LANGUAGES[(i < 0 ? 0 : i + 1) % APP_LANGUAGES.length];
+}
+
+export function languageCodeLabel(language: AppLanguage): string {
+  return language === 'uz' ? 'UZ' : language === 'ru' ? 'RU' : 'EN';
+}
+
+export function normalizeLanguage(value: unknown): AppLanguage {
+  if (value === 'en' || value === 'ru' || value === 'uz') return value;
+  return 'uz';
+}
 
 export interface AppSettings {
   theme: Theme;

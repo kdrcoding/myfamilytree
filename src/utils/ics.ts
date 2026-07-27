@@ -45,7 +45,7 @@ function uid(seed: string): string {
  */
 export function buildFamilyCalendarIcs(
   people: FamilyPerson[],
-  options: { calendarName?: string; language?: 'en' | 'uz' } = {},
+  options: { calendarName?: string; language?: 'en' | 'uz' | 'ru' } = {},
 ): string {
   const calendarName = options.calendarName ?? 'Oq-Ariq family';
   const now = new Date();
@@ -63,7 +63,11 @@ export function buildFamilyCalendarIcs(
   for (const b of getUpcomingBirthdays(people, now)) {
     const name = fullName(b.person);
     const summary =
-      options.language === 'uz' ? `${name} — tug‘ilgan kun` : `${name} — birthday`;
+      options.language === 'uz'
+        ? `${name} — tug‘ilgan kun`
+        : options.language === 'ru'
+          ? `${name} — день рождения`
+          : `${name} — birthday`;
     const occurrence = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     occurrence.setDate(occurrence.getDate() + b.daysUntil);
 
@@ -82,7 +86,11 @@ export function buildFamilyCalendarIcs(
   for (const a of getUpcomingAnniversaries(people, now)) {
     const names = `${fullName(a.a)} & ${fullName(a.b)}`;
     const summary =
-      options.language === 'uz' ? `${names} — to‘y yilligi` : `${names} — anniversary`;
+      options.language === 'uz'
+        ? `${names} — to‘y yilligi`
+        : options.language === 'ru'
+          ? `${names} — годовщина свадьбы`
+          : `${names} — anniversary`;
     const occurrence = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     occurrence.setDate(occurrence.getDate() + a.daysUntil);
 
@@ -105,7 +113,7 @@ export function buildFamilyCalendarIcs(
 /** Trigger a browser download of the calendar file. */
 export function downloadFamilyCalendarIcs(
   people: FamilyPerson[],
-  options: { calendarName?: string; language?: 'en' | 'uz'; filename?: string } = {},
+  options: { calendarName?: string; language?: 'en' | 'uz' | 'ru'; filename?: string } = {},
 ): void {
   const ics = buildFamilyCalendarIcs(people, options);
   const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });

@@ -185,6 +185,10 @@ function TreeCanvas({
   const { setCenter, getZoom, fitView } = useReactFlow();
   const t = useT();
   const [minimapOpen, setMinimapOpen] = useState(!easyMode);
+
+  useEffect(() => {
+    if (easyMode) setMinimapOpen(false);
+  }, [easyMode]);
   const [tipVisible, setTipVisible] = useState(
     () => loadJson<boolean>(STORAGE_KEYS.treeTipSeen, (v): v is boolean => typeof v === 'boolean') !== true,
   );

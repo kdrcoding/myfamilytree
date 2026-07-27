@@ -127,7 +127,9 @@ function ChangeLogCard() {
                   </span>
                 )}
                 <span className="ml-auto text-xs text-stone-400">
-                  {new Date(entry.at).toLocaleString(language === 'uz' ? 'uz-UZ' : 'en-GB')}
+                  {new Date(entry.at).toLocaleString(
+                    language === 'uz' ? 'uz-UZ' : language === 'ru' ? 'ru-RU' : 'en-GB',
+                  )}
                 </span>
               </div>
               <div className="mt-1 space-y-0.5 text-stone-600 dark:text-stone-300">
@@ -234,7 +236,9 @@ function BackupsCard() {
             <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
               <span className="min-w-0">
                 <span className="block font-medium text-stone-800 dark:text-stone-200">
-                  {new Date(b.taken_at).toLocaleString(language === 'uz' ? 'uz-UZ' : 'en-GB')}
+                  {new Date(b.taken_at).toLocaleString(
+                    language === 'uz' ? 'uz-UZ' : language === 'ru' ? 'ru-RU' : 'en-GB',
+                  )}
                 </span>
                 <span className="block text-xs text-stone-500 dark:text-stone-400">
                   {t('settings.backupCounts', { m: b.member_count, r: b.relationship_count })}
@@ -436,7 +440,7 @@ export function SettingsPage() {
         <h2 className="flex items-center gap-2 font-semibold">
           <Languages className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.language')}
         </h2>
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"
             className={settings.language === 'uz' ? 'btn-primary' : 'btn-secondary'}
@@ -453,7 +457,27 @@ export function SettingsPage() {
           >
             English
           </button>
+          <button
+            type="button"
+            className={settings.language === 'ru' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => setLanguage('ru')}
+            aria-pressed={settings.language === 'ru'}
+          >
+            Русский
+          </button>
         </div>
+      </section>
+
+      {/* Custom domain tip */}
+      <section className="card mt-4 p-6">
+        <h2 className="flex items-center gap-2 font-semibold">
+          <Globe className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.domainTitle')}
+        </h2>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('settings.domainIntro')}</p>
+        <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">{t('settings.domainSteps')}</p>
+        <p className="mt-3 break-all rounded-xl bg-stone-50 px-3 py-2 text-sm font-medium dark:bg-stone-800/60">
+          {typeof window !== 'undefined' ? window.location.origin : 'https://myfamilytree-kdr6.vercel.app'}
+        </p>
       </section>
 
       {/* Theme */}

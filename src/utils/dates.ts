@@ -65,26 +65,31 @@ export function isMinor(birthDate?: string, deathDate?: string): boolean {
   return age !== null && age < 18;
 }
 
-const MONTHS: Record<'en' | 'uz', string[]> = {
+const MONTHS: Record<'en' | 'uz' | 'ru', string[]> = {
   en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
   uz: ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'],
+  ru: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'],
 };
 
 /** Human readable date, showing only the precision that was entered. */
-export function formatDate(value?: string, language: 'en' | 'uz' = 'en'): string {
+export function formatDate(value?: string, language: 'en' | 'uz' | 'ru' = 'en'): string {
   if (!value) return '';
   const match = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/.exec(value.trim());
   if (!match) return value;
   const [, year, month, day] = match;
-  const months = MONTHS[language];
+  const months = MONTHS[language] ?? MONTHS.en;
   if (month && day) return `${Number(day)} ${months[Number(month) - 1]} ${year}`;
   if (month) return `${months[Number(month) - 1]} ${year}`;
   return year;
 }
 
 /** "3 Aug" / "3 avg" — a day + month with no year, for birthdays. */
-export function formatMonthDay(month: number, day: number, language: 'en' | 'uz' = 'en'): string {
-  const months = MONTHS[language];
+export function formatMonthDay(
+  month: number,
+  day: number,
+  language: 'en' | 'uz' | 'ru' = 'en',
+): string {
+  const months = MONTHS[language] ?? MONTHS.en;
   if (month < 1 || month > 12) return '';
   return `${day} ${months[month - 1]}`;
 }

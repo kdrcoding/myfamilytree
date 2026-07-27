@@ -4,8 +4,11 @@ import { Languages, Loader2, LogOut, Menu, Moon, Sun, TreePine, X } from 'lucide
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useSettings } from '../context/SettingsContext';
+import { languageCodeLabel, nextLanguage } from '../types/family';
 import { useT } from '../i18n/useT';
 import { MadeByKadir } from './MadeByKadir';
+import { BottomNav } from './BottomNav';
+import { WelcomeTour } from './WelcomeTour';
 
 export function Layout() {
   const { settings, toggleTheme, setLanguage } = useSettings();
@@ -16,13 +19,10 @@ export function Layout() {
   const t = useT();
   const isTreePage = location.pathname === '/tree';
 
-  // Always close the mobile menu when the route changes (covers back/forward
-  // and any programmatic navigation, not just link taps).
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
 
-  // Signing out locks the whole site, so a stray tap shouldn't do it.
   const handleSignOut = async () => {
     const proceed = await confirm({
       title: t('nav.signOutConfirmTitle'),
@@ -31,6 +31,8 @@ export function Layout() {
     });
     if (proceed) signOut();
   };
+
+  const cycleLanguage = () => setLanguage(nextLanguage(settings.language));
 
   const navItems = [
     { to: '/', label: t('nav.home'), easy: true },
@@ -50,6 +52,13 @@ export function Layout() {
         ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200'
         : 'text-stone-700 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-stone-100'
     }`;
+
+  const langTitle =
+    settings.language === 'uz'
+      ? 'Switch to English'
+      : settings.language === 'en'
+        ? 'Переключить на русский'
+        : "O'zbekchaga o'tish";
 
   return (
     <div className="flex min-h-dvh flex-col bg-stone-100 text-stone-900 dark:bg-stone-950 dark:text-stone-100">
@@ -85,13 +94,13 @@ export function Layout() {
           <div className="ml-auto flex items-center gap-0.5 sm:gap-1 lg:ml-2">
             <button
               type="button"
-              onClick={() => setLanguage(settings.language === 'uz' ? 'en' : 'uz')}
+              onClick={cycleLanguage}
               className="icon-btn !min-h-11 !min-w-11 !w-auto gap-1 px-2.5 text-sm font-bold"
-              title={settings.language === 'uz' ? 'Switch to English' : "O'zbekchaga o'tish"}
-              aria-label={settings.language === 'uz' ? 'Switch to English' : "O'zbekchaga o'tish"}
+              title={langTitle}
+              aria-label={langTitle}
             >
               <Languages className="h-5 w-5" aria-hidden />
-              {settings.language === 'uz' ? 'EN' : 'UZ'}
+              {languageCodeLabel(settings.language)}
             </button>
             <button
               type="button"
@@ -160,7 +169,6 @@ export function Layout() {
         )}
       </header>
 
-      {/* Tap-away backdrop for the mobile menu (below the header, above content). */}
       {menuOpen && (
         <button
           type="button"
@@ -171,7 +179,10 @@ export function Layout() {
         />
       )}
 
-      <main id="main" className="flex flex-1 flex-col">
+      <main
+        id="main"
+        className={`flex flex-1 flex-col ${isTreePage ? 'pb-16 lg:pb-0' : 'pb-20 lg:pb-0'}`}
+      >
         <Suspense
           fallback={
             <div className="flex flex-1 items-center justify-center py-24">
@@ -185,13 +196,16 @@ export function Layout() {
       </main>
 
       {!isTreePage && (
-        <footer className="border-t border-stone-200 py-6 text-center text-xs text-stone-500 dark:border-stone-800 dark:text-stone-400">
+        <footer className="mb-16 border-t border-stone-200 py-6 text-center text-xs text-stone-500 lg:mb-0 dark:border-stone-800 dark:text-stone-400">
           <p>{t('footer.note')}</p>
           <div className="mt-3">
             <MadeByKadir />
           </div>
         </footer>
       )}
+
+      <BottomNav />
+      <WelcomeTour />
     </div>
   );
 }

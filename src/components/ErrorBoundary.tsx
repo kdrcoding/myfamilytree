@@ -1,10 +1,10 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { normalizeLanguage } from '../types/family';
 import { translate } from '../i18n/translations';
 import type { Language } from '../i18n/translations';
-import { loadJson } from '../utils/storage';
-import { STORAGE_KEYS } from '../utils/storage';
+import { loadJson, STORAGE_KEYS } from '../utils/storage';
 
 interface Props {
   children: ReactNode;
@@ -17,7 +17,7 @@ interface State {
 /** Class components can't use hooks, so read the saved language directly. */
 function savedLanguage(): Language {
   const settings = loadJson<{ language?: string }>(STORAGE_KEYS.settings);
-  return settings?.language === 'en' ? 'en' : 'uz';
+  return normalizeLanguage(settings?.language);
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -46,8 +46,7 @@ export class ErrorBoundary extends Component<Props, State> {
           {translate(lang, 'error.text')}
         </p>
         <button type="button" className="btn-primary" onClick={() => window.location.reload()}>
-          <RotateCcw className="h-4 w-4" aria-hidden />
-          {translate(lang, 'error.reload')}
+          <RotateCcw className="h-4 w-4" aria-hidden /> {translate(lang, 'error.reload')}
         </button>
       </div>
     );

@@ -339,7 +339,7 @@ function FamilyDbGate({
   onRetry,
 }: {
   status: Exclude<FamilyDbStatus, 'ready'>;
-  language: 'uz' | 'en';
+  language: 'uz' | 'en' | 'ru';
   onRetry: () => void;
 }) {
   return (

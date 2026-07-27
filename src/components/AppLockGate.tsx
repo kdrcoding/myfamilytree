@@ -4,6 +4,7 @@ import { Languages, Loader2, LockKeyhole, TreePine } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useT } from '../i18n/useT';
+import { languageCodeLabel, nextLanguage } from '../types/family';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 
 /**
@@ -128,12 +129,12 @@ export function AppLockGate({ children }: { children: ReactNode }) {
 
       <button
         type="button"
-        onClick={() => setLanguage(settings.language === 'uz' ? 'en' : 'uz')}
+        onClick={() => setLanguage(nextLanguage(settings.language))}
         className="icon-btn !w-auto mt-4 gap-1 px-2 text-xs font-bold"
-        title={settings.language === 'uz' ? 'Switch to English' : "O'zbekchaga o'tish"}
+        title="UZ → EN → RU"
       >
         <Languages className="h-4 w-4" aria-hidden />
-        {settings.language === 'uz' ? 'EN' : 'UZ'}
+        {languageCodeLabel(settings.language)}
       </button>
     </div>
   );

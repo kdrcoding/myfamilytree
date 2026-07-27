@@ -138,7 +138,7 @@ export function JoinRequestsCard() {
                     {req.submitter_name ? ` · ${req.submitter_name}` : ''}
                     {' · '}
                     {new Date(req.submitted_at).toLocaleString(
-                      language === 'uz' ? 'uz-UZ' : 'en-GB',
+                      language === 'uz' ? 'uz-UZ' : language === 'ru' ? 'ru-RU' : 'en-GB',
                     )}
                   </p>
                 </div>

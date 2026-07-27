@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { AppLanguage, AppSettings, PrivacySettings, Theme } from '../types/family';
-import { DEFAULT_PRIVACY } from '../types/family';
+import { DEFAULT_PRIVACY, normalizeLanguage } from '../types/family';
 import { usePersistentState } from '../hooks/usePersistentState';
 import { STORAGE_KEYS } from '../utils/storage';
 
@@ -29,21 +29,15 @@ function isSettings(value: unknown): value is AppSettings {
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = usePersistentState<AppSettings>(
     STORAGE_KEYS.settings,
-    // Dark is the default for everyone (it reads best on phones and is what the
-    // family prefers); a visitor can still switch to light in Settings. Uzbek
-    // is the default language; English is the second option.
     { theme: 'dark', language: 'uz', privacy: DEFAULT_PRIVACY, easyMode: false },
     isSettings,
   );
 
-  // Settings saved by earlier versions have no language / easyMode field.
-  const language: AppLanguage = settings.language === 'en' ? 'en' : 'uz';
+  const language = normalizeLanguage(settings.language);
   const easyMode = Boolean(settings.easyMode);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', settings.theme === 'dark');
-    // Keep the mobile browser's address bar in step with the app theme so a
-    // light-theme page doesn't sit under a dark (or mismatched) chrome bar.
     let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
     if (!meta) {
       meta = document.createElement('meta');
@@ -67,7 +61,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         ...settings,
         language,
         easyMode,
-        // Merge so privacy flags added in future versions get defaults.
         privacy: { ...DEFAULT_PRIVACY, ...settings.privacy },
       },
       setTheme: (theme) => setSettings((s) => ({ ...s, theme })),

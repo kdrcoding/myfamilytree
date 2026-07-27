@@ -23,6 +23,8 @@ export const STORAGE_KEYS = {
   treeSpacing: 'familytree.treeSpacing.v1',
   // Dismissed the one-time "how to use the tree" tip.
   treeTipSeen: 'familytree.treeTipSeen.v1',
+  // First-visit welcome tour completed.
+  tourSeen: 'familytree.tourSeen.v1',
 } as const;
 
 /**

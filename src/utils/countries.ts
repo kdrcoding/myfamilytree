@@ -45,7 +45,8 @@ export function countryNameEn(code: string): string {
 }
 
 function localizedName(code: string, language: AppLanguage): string {
-  const names = language === 'uz' ? NAMES_UZ : NAMES_EN;
+  const names =
+    language === 'uz' ? NAMES_UZ : language === 'ru' ? NAMES_RU : NAMES_EN;
   return names?.of(code) ?? countryNameEn(code);
 }
 

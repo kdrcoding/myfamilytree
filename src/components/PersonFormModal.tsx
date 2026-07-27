@@ -92,7 +92,7 @@ function Field({
   );
 }
 
-const MONTH_NAMES: Record<'en' | 'uz', string[]> = {
+const MONTH_NAMES: Record<'en' | 'uz' | 'ru', string[]> = {
   en: [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December',
@@ -100,6 +100,10 @@ const MONTH_NAMES: Record<'en' | 'uz', string[]> = {
   uz: [
     'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun',
     'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr',
+  ],
+  ru: [
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
   ],
 };
 
@@ -200,7 +204,7 @@ function DateField({
           }}
         >
           <option value="">{t('form.month')}</option>
-          {MONTH_NAMES[language].map((name, i) => (
+          {MONTH_NAMES[language]?.map((name, i) => (
             <option key={name} value={String(i + 1).padStart(2, '0')}>
               {name}
             </option>

@@ -268,7 +268,7 @@ function MemoryViewer({
   onDelete,
 }: {
   memory: FamilyMemory;
-  language: 'en' | 'uz';
+  language: 'en' | 'uz' | 'ru';
   canDelete: boolean;
   onClose: () => void;
   onDelete: () => void;
