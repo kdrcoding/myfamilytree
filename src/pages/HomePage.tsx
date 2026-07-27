@@ -80,100 +80,75 @@ export function HomePage() {
   }, [upcoming, toast, t]);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-      {/* Hero */}
+    <div className="mx-auto w-full max-w-7xl px-4 pb-8 sm:px-6">
+      {/* Hero — compact on phones so search + buttons + birthdays fit on screen */}
       <section
-        className={`relative mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 via-emerald-900 to-stone-900 text-emerald-50 shadow-xl ${
-          easy ? 'px-6 py-10 sm:px-10 sm:py-12' : 'px-6 py-16 sm:px-12 sm:py-20'
+        className={`relative mt-4 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-800 via-emerald-900 to-stone-900 text-emerald-50 shadow-xl sm:mt-6 ${
+          easy ? 'px-5 py-7 sm:px-10 sm:py-12' : 'px-5 py-8 sm:px-12 sm:py-16'
         }`}
       >
         <Network
-          className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rotate-12 text-emerald-700/30"
+          className="pointer-events-none absolute -right-10 -top-10 hidden h-64 w-64 rotate-12 text-emerald-700/30 sm:block"
           aria-hidden
         />
-        <p className="text-sm font-semibold uppercase tracking-widest text-emerald-300">
+        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-300 sm:text-sm">
           {t('home.kicker')}
         </p>
         <h1
-          className={`mt-3 max-w-2xl font-extrabold tracking-tight ${
-            easy ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-5xl'
+          className={`mt-2 max-w-2xl font-extrabold tracking-tight ${
+            easy ? 'text-2xl sm:text-4xl' : 'text-2xl sm:text-5xl'
           }`}
         >
           {t('home.title')}
         </h1>
-        <p className="mt-4 max-w-2xl text-emerald-100/90">
+        <p className="mt-2 hidden max-w-2xl text-emerald-100/90 sm:mt-4 sm:block">
           {easy ? t('home.introEasy') : t('home.intro')}
         </p>
+        <p className="mt-2 text-sm text-emerald-100/90 sm:hidden">{t('home.introMobile')}</p>
 
         {/* Big search — primary way elders find someone */}
-        <div className="relative z-20 mt-8 max-w-xl">
+        <div className="relative z-20 mt-5 max-w-xl sm:mt-8">
           <p className="mb-2 text-sm font-semibold text-emerald-200">{t('home.searchTitle')}</p>
           <PersonSearch large placeholder={t('home.searchPlaceholder')} />
         </div>
 
-        <div className={`mt-6 flex flex-wrap gap-3 ${easy ? 'flex-col sm:flex-row' : ''}`}>
+        {/* Full-width stacked actions on phones — hard to miss */}
+        <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
           <Link
             to="/tree"
-            className={`inline-flex items-center justify-center gap-2 rounded-xl bg-white font-semibold text-emerald-900 shadow transition-transform hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-white ${
-              easy ? 'px-6 py-4 text-lg' : 'px-5 py-3'
-            }`}
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3.5 text-base font-bold text-emerald-900 shadow transition-transform hover:scale-[1.01] focus-visible:ring-2 focus-visible:ring-white sm:w-auto sm:rounded-xl sm:py-3 sm:text-sm sm:font-semibold"
           >
             {t('home.explore')}
-            <ArrowRight className="h-4 w-4" aria-hidden />
+            <ArrowRight className="h-5 w-5" aria-hidden />
           </Link>
           <Link
             to="/related"
-            className={`inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-400/40 font-semibold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white ${
-              easy ? 'px-6 py-4 text-lg' : 'px-5 py-3'
-            }`}
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-300/50 bg-emerald-800/40 px-5 py-3.5 text-base font-bold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white sm:w-auto sm:rounded-xl sm:border sm:border-emerald-400/40 sm:bg-transparent sm:py-3 sm:text-sm sm:font-semibold"
           >
-            <GitBranch className="h-4 w-4" aria-hidden />
+            <GitBranch className="h-5 w-5" aria-hidden />
             {t('home.related')}
           </Link>
-          {!easy && (
-            <Link
-              to="/members"
-              className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 px-5 py-3 font-semibold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white"
-            >
-              <Users className="h-4 w-4" aria-hidden />
-              {t('home.browse')}
-            </Link>
-          )}
+          <Link
+            to="/members"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-300/50 bg-emerald-800/40 px-5 py-3.5 text-base font-bold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white sm:w-auto sm:rounded-xl sm:border sm:border-emerald-400/40 sm:bg-transparent sm:py-3 sm:text-sm sm:font-semibold"
+          >
+            <Users className="h-5 w-5" aria-hidden />
+            {t('home.browse')}
+          </Link>
           <button
             type="button"
             onClick={() => setJoinOpen(true)}
-            className={`inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-400/40 font-semibold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white ${
-              easy ? 'px-6 py-4 text-lg' : 'px-5 py-3'
-            }`}
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-300/50 bg-emerald-800/40 px-5 py-3.5 text-base font-bold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white sm:w-auto sm:rounded-xl sm:border sm:border-emerald-400/40 sm:bg-transparent sm:py-3 sm:text-sm sm:font-semibold"
           >
-            <UserRoundPlus className="h-4 w-4" aria-hidden />
+            <UserRoundPlus className="h-5 w-5" aria-hidden />
             {t('home.addSelf')}
           </button>
         </div>
       </section>
 
-      {/* Stats — hidden in Easy Mode to reduce clutter */}
-      {!easy && (
-        <section aria-label="Family summary" className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {[
-            { label: t('home.statMembers'), value: stats.total },
-            { label: t('home.statGenerations'), value: stats.generations },
-            { label: t('home.statLiving'), value: stats.living },
-            { label: t('home.statCountries'), value: stats.countries.length },
-          ].map((item) => (
-            <div key={item.label} className="card p-5 text-center">
-              <p className="text-3xl font-extrabold text-emerald-700 dark:text-emerald-400">
-                {item.value}
-              </p>
-              <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{item.label}</p>
-            </div>
-          ))}
-        </section>
-      )}
-
-      {/* Upcoming birthdays */}
+      {/* Birthdays move up — first thing after hero so phones see them without scrolling far */}
       {birthdays.length > 0 && (
-        <section className="card mt-8 p-6">
+        <section className="card mt-5 p-4 sm:mt-8 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-lg font-bold">
               <Cake className="h-5 w-5 text-rose-500" aria-hidden />
@@ -196,7 +171,7 @@ export function HomePage() {
               </button>
             )}
           </div>
-          <ul className="mt-4 space-y-2">
+          <ul className="mt-3 space-y-2 sm:mt-4">
             {birthdays.map((b) => {
               const when = b.isToday
                 ? t('home.bdayToday')
@@ -244,6 +219,27 @@ export function HomePage() {
               );
             })}
           </ul>
+        </section>
+      )}
+
+      {/* Stats — after birthdays; hidden in Easy Mode */}
+      {!easy && (
+        <section aria-label="Family summary" className="mt-5 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-4">
+          {[
+            { label: t('home.statMembers'), value: stats.total },
+            { label: t('home.statGenerations'), value: stats.generations },
+            { label: t('home.statLiving'), value: stats.living },
+            { label: t('home.statCountries'), value: stats.countries.length },
+          ].map((item) => (
+            <div key={item.label} className="card p-4 text-center sm:p-5">
+              <p className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-400 sm:text-3xl">
+                {item.value}
+              </p>
+              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400 sm:text-sm">
+                {item.label}
+              </p>
+            </div>
+          ))}
         </section>
       )}
 

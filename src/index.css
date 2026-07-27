@@ -246,6 +246,17 @@ html:not(.dark) .text-stone-400 {
   }
 }
 
+/* Easy / older-adult tree controls: finger-sized zoom buttons */
+html.easy .tree-controls-easy .react-flow__controls-button,
+.tree-controls-easy .react-flow__controls-button {
+  width: 44px;
+  height: 44px;
+}
+html.easy .tree-easy .react-flow__node-person {
+  /* slightly stronger shadow when easy */
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.12));
+}
+
 /* React Flow chrome in dark mode */
 .dark .react-flow__controls {
   box-shadow: none;

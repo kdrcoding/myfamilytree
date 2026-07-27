@@ -21,6 +21,8 @@ export const STORAGE_KEYS = {
   // Tree view preferences.
   treeOrientation: 'familytree.treeOrientation.v1',
   treeSpacing: 'familytree.treeSpacing.v1',
+  // Dismissed the one-time "how to use the tree" tip.
+  treeTipSeen: 'familytree.treeTipSeen.v1',
 } as const;
 
 /**

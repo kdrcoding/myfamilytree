@@ -20,6 +20,8 @@ export const en = {
   'nav.themeDark': 'Switch to dark mode',
   'nav.menuOpen': 'Open menu',
   'nav.menuClose': 'Close menu',
+  'nav.menu': 'Menu',
+  'nav.menuCloseShort': 'Close',
   'nav.signOut': 'Sign out',
   'nav.signOutConfirmTitle': 'Sign out of the site?',
   'nav.signOutConfirmMsg': 'You will need the family password to enter again.',
@@ -115,6 +117,7 @@ export const en = {
     'Explore every branch of our family — the people, the places and the stories that connect us.',
   'home.introEasy':
     'Find someone by name, open the family tree, or see how two people are related.',
+  'home.introMobile': 'Search a name, or tap a button below.',
   'home.searchTitle': 'Who are you looking for?',
   'home.searchPlaceholder': 'Type a name…',
   'home.related': 'How are we related?',
@@ -153,6 +156,7 @@ export const en = {
 
   // Tree page
   'tree.searchPlaceholder': 'Search name, city, occupation…',
+  'tree.searchPlaceholderEasy': 'Type a name to find someone…',
   'tree.searchLabel': 'Search family members',
   'tree.noMatch': 'No one matches “{q}”.',
   'tree.expandAll': 'Expand all',
@@ -180,6 +184,9 @@ export const en = {
   'tree.minimapHide': 'Hide map',
   'tree.minimapShow': 'Show map',
   'tree.resetView': 'Reset view',
+  'tree.zoomReadable': 'Zoom in (readable)',
+  'tree.tip':
+    'Tip: type a name above to jump to someone. Drag to move · pinch or use +/− to zoom.',
   'tree.copyLink': 'Copy share link',
   'tree.linkCopied': 'Share link copied to clipboard.',
   'tree.linkCopyFail': 'Link added to the address bar — copy it from there.',
@@ -684,6 +691,8 @@ export const uz: Record<TKey, string> = {
   'nav.themeDark': "Tungi rejimga o'tish",
   'nav.menuOpen': 'Menyuni ochish',
   'nav.menuClose': 'Menyuni yopish',
+  'nav.menu': 'Menyu',
+  'nav.menuCloseShort': 'Yopish',
   'nav.signOut': 'Chiqish',
   'nav.signOutConfirmTitle': 'Saytdan chiqilsinmi?',
   'nav.signOutConfirmMsg': "Qayta kirish uchun oila paroli kerak bo'ladi.",
@@ -771,6 +780,7 @@ export const uz: Record<TKey, string> = {
     "Oilamizning har bir shoxini o'rganing — insonlarimiz, joylarimiz va bizni bog'lab turgan hikoyalar.",
   'home.introEasy':
     "Ism bo'yicha qidiring, shajarani oching yoki ikki odam qanday qarindosh ekanini biling.",
+  'home.introMobile': 'Ism qidiring yoki pastdagi tugmani bosing.',
   'home.searchTitle': 'Kimni qidiryapsiz?',
   'home.searchPlaceholder': 'Ism yozing…',
   'home.related': 'Qanday qarindoshmiz?',
@@ -809,6 +819,7 @@ export const uz: Record<TKey, string> = {
   'home.settingsLink': 'Sozlamalar sahifasi',
 
   'tree.searchPlaceholder': 'Ism, shahar, kasb bo‘yicha qidiring…',
+  'tree.searchPlaceholderEasy': 'Kimnidir topish uchun ism yozing…',
   'tree.searchLabel': "Oila a'zolarini qidirish",
   'tree.noMatch': '“{q}” bo‘yicha hech kim topilmadi.',
   'tree.expandAll': 'Hammasini yoyish',
@@ -836,6 +847,9 @@ export const uz: Record<TKey, string> = {
   'tree.minimapHide': "Xaritani yashirish",
   'tree.minimapShow': "Xaritani ko‘rsatish",
   'tree.resetView': 'Ko‘rinishni tiklash',
+  'tree.zoomReadable': 'Kattalashtirish (o‘qiladi)',
+  'tree.tip':
+    'Maslahat: kimnidir topish uchun yuqorida ism yozing. Surish uchun torting · kattalashtirish uchun chimding yoki +/− dan foydalaning.',
   'tree.copyLink': 'Havolani nusxalash',
   'tree.linkCopied': 'Havola nusxalandi.',
   'tree.linkCopyFail': 'Havola manzil satriga qo‘shildi — o‘sha yerdan nusxalang.',

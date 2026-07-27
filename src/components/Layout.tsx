@@ -45,10 +45,10 @@ export function Layout() {
   ].filter((item) => !settings.easyMode || item.easy);
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+    `rounded-xl px-4 py-3.5 text-base font-semibold transition-colors lg:rounded-lg lg:px-3 lg:py-2 lg:text-sm lg:font-medium ${
       isActive
         ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200'
-        : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100'
+        : 'text-stone-700 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-stone-100'
     }`;
 
   return (
@@ -60,12 +60,18 @@ export function Layout() {
         {t('nav.skip')}
       </a>
       <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/85 backdrop-blur dark:border-stone-800 dark:bg-stone-950/85">
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6">
-          <NavLink to="/" className="flex items-center gap-2" onClick={() => setMenuOpen(false)}>
-            <span className="rounded-xl bg-emerald-700 p-1.5 text-emerald-50">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-3 sm:gap-3 sm:px-6">
+          <NavLink
+            to="/"
+            className="flex min-w-0 items-center gap-2"
+            onClick={() => setMenuOpen(false)}
+          >
+            <span className="shrink-0 rounded-xl bg-emerald-700 p-1.5 text-emerald-50">
               <TreePine className="h-5 w-5" aria-hidden />
             </span>
-            <span className="text-lg font-bold tracking-tight">{t('site.title')}</span>
+            <span className="truncate text-base font-bold tracking-tight sm:text-lg">
+              {t('site.title')}
+            </span>
           </NavLink>
 
           <nav className="ml-auto hidden items-center gap-1 lg:flex" aria-label="Main navigation">
@@ -76,21 +82,21 @@ export function Layout() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-1 lg:ml-2">
+          <div className="ml-auto flex items-center gap-0.5 sm:gap-1 lg:ml-2">
             <button
               type="button"
               onClick={() => setLanguage(settings.language === 'uz' ? 'en' : 'uz')}
-              className="icon-btn !w-auto gap-1 px-2 text-xs font-bold"
+              className="icon-btn !min-h-11 !min-w-11 !w-auto gap-1 px-2.5 text-sm font-bold"
               title={settings.language === 'uz' ? 'Switch to English' : "O'zbekchaga o'tish"}
               aria-label={settings.language === 'uz' ? 'Switch to English' : "O'zbekchaga o'tish"}
             >
-              <Languages className="h-4 w-4" aria-hidden />
+              <Languages className="h-5 w-5" aria-hidden />
               {settings.language === 'uz' ? 'EN' : 'UZ'}
             </button>
             <button
               type="button"
               onClick={toggleTheme}
-              className="icon-btn"
+              className="icon-btn !min-h-11 !min-w-11"
               aria-label={settings.theme === 'dark' ? t('nav.themeLight') : t('nav.themeDark')}
             >
               {settings.theme === 'dark' ? (
@@ -102,7 +108,7 @@ export function Layout() {
             <button
               type="button"
               onClick={() => void handleSignOut()}
-              className="icon-btn"
+              className="icon-btn !min-h-11 !min-w-11"
               title={t('nav.signOut')}
               aria-label={t('nav.signOut')}
             >
@@ -110,32 +116,39 @@ export function Layout() {
             </button>
             <button
               type="button"
-              className="icon-btn lg:hidden"
+              className="icon-btn !min-h-11 !gap-1.5 !px-3 text-sm font-bold lg:hidden"
               onClick={() => setMenuOpen((open) => !open)}
               aria-expanded={menuOpen}
               aria-label={menuOpen ? t('nav.menuClose') : t('nav.menuOpen')}
             >
               {menuOpen ? (
-                <X className="h-5 w-5" aria-hidden />
+                <X className="h-6 w-6" aria-hidden />
               ) : (
-                <Menu className="h-5 w-5" aria-hidden />
+                <Menu className="h-6 w-6" aria-hidden />
               )}
+              <span className="pr-0.5">{menuOpen ? t('nav.menuCloseShort') : t('nav.menu')}</span>
             </button>
           </div>
         </div>
 
         {menuOpen && (
           <nav
-            className="animate-fade-in border-t border-stone-200 bg-white px-4 py-3 lg:hidden dark:border-stone-800 dark:bg-stone-950"
+            className="animate-fade-in border-t border-stone-200 bg-white px-3 py-3 lg:hidden dark:border-stone-800 dark:bg-stone-950"
             aria-label="Mobile navigation"
           >
-            <ul className="flex flex-col gap-1">
+            <ul className="flex flex-col gap-1.5">
               {navItems.map((item) => (
                 <li key={item.to}>
                   <NavLink
                     to={item.to}
                     end={item.to === '/'}
-                    className={linkClass}
+                    className={({ isActive }) =>
+                      `block w-full rounded-2xl px-4 py-4 text-lg font-semibold transition-colors ${
+                        isActive
+                          ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200'
+                          : 'bg-stone-50 text-stone-800 hover:bg-stone-100 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800'
+                      }`
+                    }
                     onClick={() => setMenuOpen(false)}
                   >
                     {item.label}

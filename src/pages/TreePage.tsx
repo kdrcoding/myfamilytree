@@ -11,15 +11,16 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import type { Edge, EdgeTypes, Node, NodeTypes, ReactFlowInstance } from '@xyflow/react';
-import { Lock, LockOpen, Map, Search, TreePine, UserPlus, UserRoundPlus } from 'lucide-react';
+import { Lock, LockOpen, Map, Search, TreePine, UserPlus, UserRoundPlus, X } from 'lucide-react';
 import type { FamilyPerson, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useFamily } from '../context/FamilyContext';
+import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
 import { usePersistentState } from '../hooks/usePersistentState';
 import { useT } from '../i18n/useT';
-import { STORAGE_KEYS } from '../utils/storage';
+import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { getAncestorIds, fullName } from '../utils/family';
 import { matchesSearch } from '../utils/filters';
 import { MadeByKadir } from '../components/MadeByKadir';
@@ -27,6 +28,7 @@ import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { PersonDetailsModal } from '../components/PersonDetailsModal';
 import { PersonFormModal } from '../components/PersonFormModal';
 import { UnlockModal } from '../components/UnlockModal';
+import { Avatar } from '../components/Avatar';
 import { computeTreeLayout, CARD_H, CARD_W } from '../features/tree/layout';
 import { JunctionNode } from '../features/tree/JunctionNode';
 import { GenLabelNode } from '../features/tree/GenLabelNode';
@@ -38,7 +40,18 @@ import type { TreeInteraction } from '../features/tree/TreeInteractionContext';
 const nodeTypes: NodeTypes = { person: PersonNode, junction: JunctionNode, genLabel: GenLabelNode };
 const edgeTypes: EdgeTypes = { child: ChildEdge };
 
-function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) {
+const START_ZOOM = 1.1;
+const START_ZOOM_EASY = 1.25;
+const FOCUS_ZOOM = 1.2;
+const FOCUS_ZOOM_EASY = 1.35;
+
+function TreeSearch({
+  onSelect,
+  large = false,
+}: {
+  onSelect: (person: FamilyPerson) => void;
+  large?: boolean;
+}) {
   const { people, getLabel } = useFamily();
   const t = useT();
   const [query, setQuery] = useState('');
@@ -59,7 +72,7 @@ function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) 
 
   return (
     <div
-      className="relative min-w-0 flex-1 sm:w-72 sm:flex-none"
+      className={`relative min-w-0 flex-1 ${large ? 'sm:max-w-xl sm:flex-1' : 'sm:w-72 sm:flex-none'}`}
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Element | null)) {
           setOpen(false);
@@ -68,7 +81,9 @@ function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) 
       }}
     >
       <Search
-        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400"
+        className={`pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 ${
+          large ? 'h-5 w-5' : 'h-4 w-4'
+        }`}
         aria-hidden
       />
       <input
@@ -76,8 +91,8 @@ function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) 
         role="combobox"
         aria-expanded={open && results.length > 0}
         aria-label={t('tree.searchLabel')}
-        placeholder={t('tree.searchPlaceholder')}
-        className="input !pl-9"
+        placeholder={t(large ? 'tree.searchPlaceholderEasy' : 'tree.searchPlaceholder')}
+        className={`input ${large ? '!py-3.5 !pl-11 !pr-10 !text-base' : '!pl-9'}`}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -103,25 +118,48 @@ function TreeSearch({ onSelect }: { onSelect: (person: FamilyPerson) => void }) 
           }
         }}
       />
+      {query && (
+        <button
+          type="button"
+          className="icon-btn absolute right-1.5 top-1/2 -translate-y-1/2"
+          onClick={() => {
+            setQuery('');
+            setOpen(false);
+            setActiveIndex(-1);
+          }}
+          aria-label={t('search.clear')}
+        >
+          <X className="h-4 w-4" aria-hidden />
+        </button>
+      )}
       {open && query.trim() && (
-        <ul className="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-stone-200 bg-white p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900">
+        <ul className="absolute z-30 mt-1 max-h-80 w-full overflow-y-auto rounded-xl border border-stone-200 bg-white p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900">
           {results.length === 0 && (
-            <li className="px-3 py-2 text-sm text-stone-400">{t('tree.noMatch', { q: query })}</li>
+            <li className={`px-3 py-2 text-stone-400 ${large ? 'text-base' : 'text-sm'}`}>
+              {t('tree.noMatch', { q: query })}
+            </li>
           )}
           {results.map((p, i) => (
             <li key={p.id}>
               <button
                 type="button"
-                className={`flex w-full items-baseline justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/50 ${
-                  i === activeIndex ? 'bg-emerald-50 dark:bg-emerald-950/50' : ''
-                }`}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 text-left hover:bg-emerald-50 dark:hover:bg-emerald-950/50 ${
+                  large ? 'py-3' : 'py-2'
+                } ${i === activeIndex ? 'bg-emerald-50 dark:bg-emerald-950/50' : ''}`}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => select(p)}
               >
-                <span className="truncate font-medium text-stone-800 dark:text-stone-200">
-                  {fullName(p)}
+                <Avatar person={p} size={large ? 'md' : 'sm'} />
+                <span className="min-w-0 flex-1">
+                  <span
+                    className={`block truncate font-medium text-stone-800 dark:text-stone-200 ${
+                      large ? 'text-base' : 'text-sm'
+                    }`}
+                  >
+                    {fullName(p)}
+                  </span>
+                  <span className="block truncate text-xs text-stone-400">{getLabel(p)}</span>
                 </span>
-                <span className="shrink-0 text-xs text-stone-400">{getLabel(p)}</span>
               </button>
             </li>
           ))}
@@ -136,34 +174,72 @@ function TreeCanvas({
   edges,
   focusId,
   onFocused,
+  easyMode,
 }: {
   nodes: Node[];
   edges: Edge[];
   focusId: string | null;
   onFocused: () => void;
+  easyMode: boolean;
 }) {
-  const { setCenter } = useReactFlow();
+  const { setCenter, getZoom, fitView } = useReactFlow();
   const t = useT();
-  const [minimapOpen, setMinimapOpen] = useState(true);
+  const [minimapOpen, setMinimapOpen] = useState(!easyMode);
+  const [tipVisible, setTipVisible] = useState(
+    () => loadJson<boolean>(STORAGE_KEYS.treeTipSeen, (v): v is boolean => typeof v === 'boolean') !== true,
+  );
+  const didInitialFocus = useRef(false);
+  const startZoom = easyMode ? START_ZOOM_EASY : START_ZOOM;
+  const focusZoom = easyMode ? FOCUS_ZOOM_EASY : FOCUS_ZOOM;
+
+  const focusTopOfTree = useCallback(
+    (instance?: ReactFlowInstance, animate = true) => {
+      const personNodes = nodes.filter((n) => n.type === 'person');
+      if (personNodes.length === 0) return;
+      const minY = Math.min(...personNodes.map((n) => n.position.y));
+      const topRow = personNodes.filter((n) => n.position.y === minY);
+      const centersX = topRow.map((n) => n.position.x + CARD_W / 2);
+      const cx = (Math.min(...centersX) + Math.max(...centersX)) / 2;
+      const cy = minY + CARD_H / 2;
+      const opts = { zoom: startZoom, duration: animate ? 500 : 0 };
+      if (instance) instance.setCenter(cx, cy, opts);
+      else setCenter(cx, cy, opts);
+    },
+    [nodes, setCenter, startZoom],
+  );
 
   useEffect(() => {
     if (!focusId) return;
     const node = nodes.find((n) => n.id === focusId);
     if (node) {
       setCenter(node.position.x + CARD_W / 2, node.position.y + CARD_H / 2, {
-        zoom: 0.9,
+        zoom: Math.max(getZoom(), focusZoom),
         duration: 600,
       });
     }
     onFocused();
-  }, [focusId, nodes, setCenter, onFocused]);
+  }, [focusId, nodes, setCenter, getZoom, focusZoom, onFocused]);
 
-  // Frame the whole tree to its actual bounds on load — fills the canvas
-  // instead of leaving big empty margins — capping the zoom so a small family
-  // isn't blown up and the cards stay legible.
-  const handleInit = useCallback((instance: ReactFlowInstance) => {
-    instance.fitView({ padding: 0.16, maxZoom: 0.85 });
-  }, []);
+  // Centre on the founding row at a readable zoom — not fitView of the whole tree.
+  const handleInit = useCallback(
+    (instance: ReactFlowInstance) => {
+      focusTopOfTree(instance, false);
+      didInitialFocus.current = true;
+    },
+    [focusTopOfTree],
+  );
+
+  useEffect(() => {
+    if (didInitialFocus.current) return;
+    if (!nodes.some((n) => n.type === 'person')) return;
+    didInitialFocus.current = true;
+    focusTopOfTree(undefined, false);
+  }, [nodes, focusTopOfTree]);
+
+  const dismissTip = () => {
+    setTipVisible(false);
+    saveJson(STORAGE_KEYS.treeTipSeen, true);
+  };
 
   return (
     <ReactFlow
@@ -172,8 +248,9 @@ function TreeCanvas({
       nodeTypes={nodeTypes}
       edgeTypes={edgeTypes}
       onInit={handleInit}
-      minZoom={0.02}
-      maxZoom={1.5}
+      minZoom={0.08}
+      maxZoom={2.25}
+      className={easyMode ? 'tree-easy' : undefined}
       nodesDraggable={false}
       nodesConnectable={false}
       nodesFocusable={false}
@@ -187,49 +264,89 @@ function TreeCanvas({
         size={1.5}
         className="!text-slate-500 dark:!text-stone-700"
       />
-      <Panel
-        position="top-left"
-        className="hidden rounded-xl border border-stone-200 bg-white/90 p-3 text-xs shadow-sm backdrop-blur sm:block dark:border-stone-700 dark:bg-stone-900/90"
-      >
-        <p className="mb-1.5 font-semibold text-stone-700 dark:text-stone-200">
-          {t('tree.legendTitle')}
-        </p>
-        <ul className="space-y-1.5 text-stone-600 dark:text-stone-300">
-          <li className="flex items-center gap-2">
-            <span
-              aria-hidden
-              className="inline-block h-0.5 w-6 rounded bg-rose-400 dark:bg-rose-600"
-            />
-            {t('tree.legendMarried')}
-          </li>
-          <li className="flex items-center gap-2">
-            <svg width="24" height="2" aria-hidden className="shrink-0">
-              <line
-                x1="0"
-                y1="1"
-                x2="24"
-                y2="1"
-                strokeWidth="2"
-                strokeDasharray="2 5"
-                className="stroke-stone-400 dark:stroke-stone-500"
+      {!easyMode && (
+        <Panel
+          position="top-left"
+          className="hidden rounded-xl border border-stone-200 bg-white/90 p-3 text-xs shadow-sm backdrop-blur sm:block dark:border-stone-700 dark:bg-stone-900/90"
+        >
+          <p className="mb-1.5 font-semibold text-stone-700 dark:text-stone-200">
+            {t('tree.legendTitle')}
+          </p>
+          <ul className="space-y-1.5 text-stone-600 dark:text-stone-300">
+            <li className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="inline-block h-0.5 w-6 rounded bg-rose-400 dark:bg-rose-600"
               />
-            </svg>
-            {t('tree.legendDivorced')}
-          </li>
-          <li className="flex items-center gap-2">
-            <span aria-hidden className="flex items-center">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              <span className="inline-block h-0.5 w-4 bg-emerald-500" />
-              <span className="-ml-px inline-block border-y-4 border-l-[6px] border-y-transparent border-l-emerald-500" />
-            </span>
-            {t('tree.legendChildren')}
-          </li>
-        </ul>
+              {t('tree.legendMarried')}
+            </li>
+            <li className="flex items-center gap-2">
+              <svg width="24" height="2" aria-hidden className="shrink-0">
+                <line
+                  x1="0"
+                  y1="1"
+                  x2="24"
+                  y2="1"
+                  strokeWidth="2"
+                  strokeDasharray="2 5"
+                  className="stroke-stone-400 dark:stroke-stone-500"
+                />
+              </svg>
+              {t('tree.legendDivorced')}
+            </li>
+            <li className="flex items-center gap-2">
+              <span aria-hidden className="flex items-center">
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                <span className="inline-block h-0.5 w-4 bg-emerald-500" />
+                <span className="-ml-px inline-block border-y-4 border-l-[6px] border-y-transparent border-l-emerald-500" />
+              </span>
+              {t('tree.legendChildren')}
+            </li>
+          </ul>
+        </Panel>
+      )}
+      {tipVisible && (
+        <Panel
+          position="top-center"
+          className="max-w-md rounded-xl border border-emerald-200 bg-white/95 p-3 text-sm shadow-sm backdrop-blur dark:border-emerald-800 dark:bg-stone-900/95"
+        >
+          <div className="flex items-start gap-2">
+            <p className="flex-1 text-stone-700 dark:text-stone-200">{t('tree.tip')}</p>
+            <button
+              type="button"
+              className="icon-btn shrink-0"
+              onClick={dismissTip}
+              aria-label={t('common.close')}
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </button>
+          </div>
+        </Panel>
+      )}
+      <Panel position="top-right" className="flex flex-col gap-1.5 !m-3">
+        <button
+          type="button"
+          className="btn-secondary !text-xs"
+          onClick={() => focusTopOfTree()}
+        >
+          {t('tree.zoomReadable')}
+        </button>
+        <button
+          type="button"
+          className="btn-secondary !text-xs"
+          onClick={() => fitView({ padding: 0.16, duration: 500, maxZoom: startZoom })}
+        >
+          {t('tree.fitTree')}
+        </button>
       </Panel>
       <Panel position="bottom-left" className="!m-3">
         <MadeByKadir align="left" />
       </Panel>
-      <Controls showInteractive={false} position="bottom-right" />
+      <Controls
+        showInteractive={false}
+        position="bottom-right"
+        className={easyMode ? 'tree-controls-easy' : undefined}
+      />
 
       {/* Collapsible minimap: a toggle sits at the bottom-right corner; the map
           floats just above it and can be hidden to free up canvas. Hidden on
@@ -262,6 +379,8 @@ function TreeCanvas({
 export function TreePage() {
   const { people, index, deletePerson } = useFamily();
   const { canEdit, canDelete } = useAuth();
+  const { settings } = useSettings();
+  const easy = Boolean(settings.easyMode);
   const { toast } = useToast();
   const confirm = useConfirm();
   const t = useT();
@@ -405,7 +524,7 @@ export function TreePage() {
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-stone-200 bg-white px-4 py-3 dark:border-stone-800 dark:bg-stone-900">
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2">
-          <TreeSearch onSelect={focusPerson} />
+          <TreeSearch onSelect={focusPerson} large />
 
           <div className="ml-auto flex items-center gap-1.5">
             {!editMode && (
@@ -456,6 +575,7 @@ export function TreePage() {
                 edges={layout.edges}
                 focusId={focusId}
                 onFocused={() => setFocusId(null)}
+                easyMode={easy}
               />
             </ReactFlowProvider>
           </TreeInteractionContext.Provider>
