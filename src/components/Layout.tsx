@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { ChevronDown, Languages, Loader2, LogOut, Menu, Moon, Sun, TreePine, X } from 'lucide-react';
+import { ChevronDown, Languages, Loader2, LogOut, Menu, Moon, Sun, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useSettings } from '../context/SettingsContext';
@@ -11,6 +11,7 @@ import { BottomNav } from './BottomNav';
 import { WelcomeTour } from './WelcomeTour';
 import { NotificationsBell } from './NotificationsBell';
 import { OverflowMenu } from './OverflowMenu';
+import { BrandLogo } from './BrandLogo';
 
 export function Layout() {
   const { settings, toggleTheme, setLanguage } = useSettings();
@@ -87,12 +88,7 @@ export function Layout() {
             className="flex min-w-0 items-center gap-2"
             onClick={() => setMenuOpen(false)}
           >
-            <span className="shrink-0 rounded-xl bg-emerald-700 p-1.5 text-emerald-50">
-              <TreePine className="h-5 w-5" aria-hidden />
-            </span>
-            <span className="truncate text-base font-bold tracking-tight sm:text-lg">
-              {t('site.title')}
-            </span>
+            <BrandLogo size="sm" />
           </NavLink>
 
           <nav className="ml-auto hidden items-center gap-0.5 lg:flex" aria-label={t('nav.mainNav')}>

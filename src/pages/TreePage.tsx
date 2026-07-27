@@ -11,7 +11,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import type { Edge, EdgeTypes, Node, NodeTypes, ReactFlowInstance } from '@xyflow/react';
-import { Lock, LockOpen, Map, Search, TreePine, UserPlus, UserRoundPlus, X, Download, Printer, Share2 } from 'lucide-react';
+import { Lock, LockOpen, Map, Search, UserPlus, UserRoundPlus, X, Download, Printer, Share2 } from 'lucide-react';
 import type { FamilyPerson, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -29,6 +29,7 @@ import { PersonDetailsModal } from '../components/PersonDetailsModal';
 import { PersonFormModal } from '../components/PersonFormModal';
 import { UnlockModal } from '../components/UnlockModal';
 import { OverflowMenu } from '../components/OverflowMenu';
+import { BrandMark } from '../components/BrandLogo';
 import { Avatar } from '../components/Avatar';
 import { computeTreeLayout, CARD_H, CARD_W } from '../features/tree/layout';
 import { exportTreeAsPng, printTreePoster, shareTreePoster } from '../features/tree/exportPng';
@@ -702,9 +703,7 @@ function EmptyTreeState({ onAdd, children }: { onAdd: () => void; children?: Rea
   const t = useT();
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-      <span className="rounded-full bg-emerald-100 p-4 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-        <TreePine className="h-10 w-10" aria-hidden />
-      </span>
+      <BrandMark size="lg" className="!h-14 !w-14" />
       <h1 className="text-xl font-semibold">{t('tree.emptyTitle')}</h1>
       <p className="max-w-md text-sm text-stone-500 dark:text-stone-400">{t('tree.emptyText')}</p>
       <button type="button" className="btn-primary" onClick={onAdd}>

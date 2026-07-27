@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Languages, Loader2, LockKeyhole, TreePine } from 'lucide-react';
+import { Languages, Loader2, LockKeyhole } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useT } from '../i18n/useT';
 import { languageCodeLabel, nextLanguage } from '../types/family';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
+import { BrandHero } from './BrandLogo';
 
 /**
  * The whole site sits behind a password: without the family or owner
@@ -61,17 +62,14 @@ export function AppLockGate({ children }: { children: ReactNode }) {
         <Loader2 className="h-8 w-8 animate-spin text-emerald-600" aria-hidden />
       ) : (
         <div className="card w-full max-w-sm p-6 sm:p-8">
-          <div className="flex flex-col items-center text-center">
-            <span className="rounded-2xl bg-emerald-700 p-3 text-emerald-50">
-              <TreePine className="h-8 w-8" aria-hidden />
-            </span>
+          <BrandHero>
             <h1 className="mt-4 text-xl font-bold tracking-tight">{t('site.title')}</h1>
             <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-stone-600 dark:text-stone-300">
               <LockKeyhole className="h-4 w-4" aria-hidden />
               {t('gate.title')}
             </p>
             <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">{t('gate.intro')}</p>
-          </div>
+          </BrandHero>
 
           <form onSubmit={submit} className="mt-6 space-y-4">
             <label className="block">

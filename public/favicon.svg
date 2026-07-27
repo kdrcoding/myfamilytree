@@ -1,8 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#065f46"/>
-  <circle cx="32" cy="14" r="7" fill="#a7f3d0"/>
-  <circle cx="16" cy="38" r="7" fill="#6ee7b7"/>
-  <circle cx="48" cy="38" r="7" fill="#6ee7b7"/>
-  <circle cx="32" cy="54" r="5" fill="#34d399"/>
-  <path d="M32 21v6M32 27L16 31M32 27l16 4M16 45v0M32 27v22" stroke="#a7f3d0" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <defs>
+    <linearGradient id="bg" x1="12" y1="4" x2="52" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#047857"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg)"/>
+  <circle cx="32" cy="28" r="22" fill="#064e3b" opacity="0.25"/>
+  <path d="M32 18v14M32 32L18 44M32 32l14 12" fill="none" stroke="#ecfdf5" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="16" r="5.5" fill="#ecfdf5"/>
+  <circle cx="18" cy="46" r="5" fill="#d1fae5"/>
+  <circle cx="46" cy="46" r="5" fill="#d1fae5"/>
+  <circle cx="32" cy="34" r="3.25" fill="#6ee7b7"/>
 </svg>
