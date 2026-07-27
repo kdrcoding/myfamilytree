@@ -19,9 +19,8 @@ interface JoinFamilyModalProps {
 }
 
 /**
- * Public "Add yourself" flow — no password required. Step 1 asks how the
- * visitor connects to the family; step 2 is the normal person form, which in
- * self-join mode also downloads a join-request file to send to the owner.
+ * Public "Add yourself" flow. Step 1 asks how the visitor connects; step 2
+ * is the person form, which submits a pending join request for the owner.
  */
 export function JoinFamilyModal({ onClose }: JoinFamilyModalProps) {
   const { people, getLabel } = useFamily();

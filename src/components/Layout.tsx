@@ -37,6 +37,7 @@ export function Layout() {
     { to: '/tree', label: t('nav.tree') },
     { to: '/members', label: t('nav.members') },
     { to: '/map', label: t('nav.map') },
+    { to: '/timeline', label: t('nav.timeline') },
     { to: '/statistics', label: t('nav.stats') },
     { to: '/about', label: t('nav.about') },
     { to: '/settings', label: t('nav.settings') },

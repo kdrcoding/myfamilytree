@@ -18,6 +18,9 @@ const MembersPage = lazy(() =>
   import('./pages/MembersPage').then((m) => ({ default: m.MembersPage })),
 );
 const MapPage = lazy(() => import('./pages/MapPage').then((m) => ({ default: m.MapPage })));
+const TimelinePage = lazy(() =>
+  import('./pages/TimelinePage').then((m) => ({ default: m.TimelinePage })),
+);
 const StatsPage = lazy(() => import('./pages/StatsPage').then((m) => ({ default: m.StatsPage })));
 const AboutPage = lazy(() => import('./pages/AboutPage').then((m) => ({ default: m.AboutPage })));
 const SettingsPage = lazy(() =>
@@ -45,6 +48,7 @@ export default function App() {
                       <Route path="tree" element={<TreePage />} />
                       <Route path="members" element={<MembersPage />} />
                       <Route path="map" element={<MapPage />} />
+                      <Route path="timeline" element={<TimelinePage />} />
                       <Route path="statistics" element={<StatsPage />} />
                       <Route path="about" element={<AboutPage />} />
                       <Route path="settings" element={<SettingsPage />} />

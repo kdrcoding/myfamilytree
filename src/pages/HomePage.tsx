@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Cake, Gem, Heart, Network, PartyPopper, ShieldCheck, UserRoundPlus, Users } from 'lucide-react';
+import { ArrowRight, Cake, CalendarPlus, Gem, Heart, Network, PartyPopper, ShieldCheck, UserRoundPlus, Users } from 'lucide-react';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
@@ -10,6 +10,7 @@ import { findFounders, fullName } from '../utils/family';
 import { formatDate, formatMonthDay } from '../utils/dates';
 import { getUpcomingBirthdays } from '../utils/birthdays';
 import { getUpcomingAnniversaries } from '../utils/anniversaries';
+import { downloadFamilyCalendarIcs } from '../utils/ics';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { Avatar } from '../components/Avatar';
@@ -134,10 +135,28 @@ export function HomePage() {
       {/* Upcoming birthdays */}
       {birthdays.length > 0 && (
         <section className="card mt-8 p-6">
-          <h2 className="flex items-center gap-2 text-lg font-bold">
-            <Cake className="h-5 w-5 text-rose-500" aria-hidden />
-            {t('home.birthdaysTitle')}
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-lg font-bold">
+              <Cake className="h-5 w-5 text-rose-500" aria-hidden />
+              {t('home.birthdaysTitle')}
+            </h2>
+            {showBirthDates && (
+              <button
+                type="button"
+                className="btn-secondary !px-3 text-sm"
+                onClick={() => {
+                  downloadFamilyCalendarIcs(people, {
+                    language,
+                    calendarName: t('site.title'),
+                  });
+                  toast(t('home.calendarDownloaded'), 'info');
+                }}
+              >
+                <CalendarPlus className="h-4 w-4" aria-hidden />
+                {t('home.downloadCalendar')}
+              </button>
+            )}
+          </div>
           <ul className="mt-4 space-y-2">
             {birthdays.map((b) => {
               const when = b.isToday

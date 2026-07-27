@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ImagePlus, Search, X } from 'lucide-react';
-import type { FamilyPerson, Gender, JoinRequest, RelationLink } from '../types/family';
-import { JOIN_REQUEST_TYPE } from '../types/family';
+import type { FamilyPerson, Gender, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
 import type { TKey } from '../i18n/translations';
-import { downloadJson } from '../utils/dataTransfer';
 import { fullName, generatePersonId, marriageDateOf, sortByBirth } from '../utils/family';
 import { countryOptions, normalizeCountry } from '../utils/countries';
 import { uploadPhoto } from '../lib/photoStorage';
+import { submitJoinRequest } from '../lib/joinRequests';
 import { usePhotoUrl } from '../context/PhotoUrlsContext';
 import { downscalePhoto } from '../utils/image';
 import { validatePersonForm, canLink } from '../utils/validation';
@@ -27,8 +26,8 @@ interface PersonFormModalProps {
   /** When creating, optionally attach the new person to an existing one. */
   link?: RelationLink;
   /**
-   * "Add yourself" mode: no password needed. Saves the person locally and
-   * additionally downloads a join-request file to send to the family owner.
+   * "Add yourself" mode: submits a pending join request for the owner to
+   * approve — the person is not added to the live tree until then.
    */
   selfJoin?: boolean;
   onClose: () => void;
@@ -571,20 +570,21 @@ export function PersonFormModal({
       const effectiveLink =
         link && link.kind === 'child' ? { ...link, secondParentId: otherParentId || null } : link;
       const newPerson = { id, ...trimmed, parentIds: [], spouseIds: [], childIds: [] };
-      addPerson(newPerson, effectiveLink);
       if (selfJoin) {
-        const request: JoinRequest = {
-          type: JOIN_REQUEST_TYPE,
-          version: 1,
-          submittedAt: new Date().toISOString(),
-          person: newPerson,
-          link: effectiveLink ?? null,
-          linkTargetName: linkTarget ? fullName(linkTarget) : undefined,
-          note: 'Send this file to the family tree owner so they can import you into the published tree.',
-        };
-        downloadJson(request, `join-request-${id}.json`);
-        toast(t('form.selfJoinToast'), 'info');
+        try {
+          await submitJoinRequest({
+            person: newPerson,
+            link: effectiveLink ?? null,
+            linkTargetName: linkTarget ? fullName(linkTarget) : undefined,
+          });
+          toast(t('form.selfJoinToast'), 'info');
+        } catch (error) {
+          console.error('Join request failed:', error);
+          toast(t('form.selfJoinFailed'), 'error');
+          return false;
+        }
       } else {
+        addPerson(newPerson, effectiveLink);
         toast(t('form.addedToast', { name: personLabel }));
       }
       onSaved?.(id);

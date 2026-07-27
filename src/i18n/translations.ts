@@ -10,6 +10,7 @@ export const en = {
   'nav.tree': 'Family Tree',
   'nav.members': 'Members',
   'nav.map': 'Map',
+  'nav.timeline': 'Timeline',
   'nav.stats': 'Statistics',
   'nav.about': 'About',
   'nav.settings': 'Settings',
@@ -135,6 +136,9 @@ export const en = {
   'home.bdayTurnsToday': 'turns {age} today! 🎉',
   'home.bdayToastOne': '🎉 It’s {name}’s birthday today!',
   'home.bdayToastMany': '🎉 Birthdays today: {names}',
+  'home.downloadCalendar': 'Add to my calendar',
+  'home.calendarDownloaded':
+    'Calendar file downloaded — open it on your phone to get yearly birthday and anniversary reminders.',
   'home.privacyStrong': 'A note on privacy:',
   'home.privacyBefore':
     'this is a family history site. Public family websites should never expose sensitive personal information — exact birth dates of living people, home addresses, phone numbers or documents. Before sharing this site publicly, use the privacy controls on the ',
@@ -321,19 +325,21 @@ export const en = {
   'form.add': 'Add person',
   'form.saveAnother': 'Save & add another',
   'form.saveAnotherTitle': 'Save this person and immediately start the next one',
-  'form.addMe': 'Add me & download request file',
+  'form.addMe': 'Send my request',
   'form.addedToast': '{name} was added to the family.',
   'form.updatedToast': '{name} was updated.',
   'form.draftRestored': 'Restored the unsaved changes you were making here.',
   'form.updatedRestrictedToast': '{name} was updated — only empty fields were filled in.',
   'form.selfJoinToast':
-    'You are on the tree in this browser, and a request file was downloaded — send it to the family owner so everyone sees you.',
+    'Your request was sent. The family owner will review it and add you to the tree.',
+  'form.selfJoinFailed':
+    'Could not send your request. Check your connection and try again — the owner may still need to run the database upgrade.',
   'form.thisPerson': 'This person',
 
   // Join ("Add yourself")
   'join.title': 'Add yourself to the family tree',
   'join.intro':
-    "No password needed. You'll appear on the tree in this browser right away, and a small request file will download for you to send to the family owner — once they import it, everyone will see you.",
+    'Fill in your details and how you connect. Your request goes to the family owner for approval — you will appear on the tree once they accept it.',
   'join.howRelated': 'How are you related? I am…',
   'join.kindChild': 'a child of',
   'join.kindSpouse': 'the spouse / partner of',
@@ -345,6 +351,60 @@ export const en = {
   'join.noMatches': 'No matching people.',
   'join.notSure': "I'm not sure how I connect — let the owner place me",
   'join.continue': 'Continue to my details',
+
+  // Owner join-request inbox
+  'joinReq.title': 'Join requests',
+  'joinReq.intro':
+    'Relatives who used “Add yourself” appear here until you approve or reject them.',
+  'joinReq.empty': 'No pending requests.',
+  'joinReq.setupNeeded':
+    'Not active yet: run supabase-upgrade-3.sql in the Supabase SQL Editor to enable join requests and memories.',
+  'joinReq.approve': 'Approve',
+  'joinReq.reject': 'Reject',
+  'joinReq.approveTitle': 'Add {name} to the tree?',
+  'joinReq.approveMsg': 'This will add {name} to the shared family tree for everyone.',
+  'joinReq.approveMsgLinked':
+    'This will add {name} to the tree, linked to {target}, for everyone to see.',
+  'joinReq.rejectTitle': 'Reject {name}’s request?',
+  'joinReq.rejectMsg': 'They will not be added. They can submit again later if needed.',
+  'joinReq.approvedToast': '{name} was added to the family.',
+  'joinReq.rejectedToast': '{name}’s request was rejected.',
+  'joinReq.actionFailed': 'That action failed. Check your connection and try again.',
+  'joinReq.linkedAs': 'Connected to {target}',
+  'joinReq.unlinked': 'No connection chosen — place them manually after approving',
+
+  // Memories
+  'memories.title': 'Photos & memories',
+  'memories.add': 'Add photo',
+  'memories.empty': 'No extra photos yet — add a memory from a reunion or celebration.',
+  'memories.loading': 'Loading photos…',
+  'memories.setupNeeded':
+    'Photo memories need the database upgrade (supabase-upgrade-3.sql).',
+  'memories.fieldTitle': 'Title (optional)',
+  'memories.fieldCaption': 'Caption / story (optional)',
+  'memories.fieldTakenOn': 'When was this? (YYYY, YYYY-MM or YYYY-MM-DD)',
+  'memories.save': 'Save memory',
+  'memories.saving': 'Saving…',
+  'memories.added': 'Memory added.',
+  'memories.addFailed': 'Could not save that photo. Try again.',
+  'memories.deleted': 'Memory removed.',
+  'memories.deleteFailed': 'Could not delete that memory.',
+  'memories.deleteTitle': 'Delete this memory?',
+  'memories.deleteMsg': 'The photo will be removed for everyone.',
+  'memories.openPhoto': 'Open photo',
+
+  // Timeline
+  'timeline.kicker': 'Family history',
+  'timeline.title': 'Timeline',
+  'timeline.intro':
+    'Births, marriages, memories and farewells in order — a scroll through the years.',
+  'timeline.loading': 'Loading memories…',
+  'timeline.empty': 'No dated events yet. Add birth dates, wedding dates or photo memories.',
+  'timeline.born': '{name} was born',
+  'timeline.died': '{name} passed away',
+  'timeline.married': '{a} and {b} were married',
+  'timeline.memory': 'Memory of {name}',
+  'timeline.memoryTitled': '{name} — {title}',
 
   // Unlock
   'unlock.title': 'Unlock editing',
@@ -545,6 +605,7 @@ export const uz: Record<TKey, string> = {
   'nav.tree': 'Shajara',
   'nav.members': "Oila a'zolari",
   'nav.map': 'Xarita',
+  'nav.timeline': 'Tarix chizig‘i',
   'nav.stats': 'Statistika',
   'nav.about': 'Loyiha haqida',
   'nav.settings': 'Sozlamalar',
@@ -662,6 +723,9 @@ export const uz: Record<TKey, string> = {
   'home.bdayTurnsToday': 'bugun {age} yoshga to‘ladi! 🎉',
   'home.bdayToastOne': '🎉 Bugun {name}ning tug‘ilgan kuni!',
   'home.bdayToastMany': '🎉 Bugun tug‘ilgan kunlar: {names}',
+  'home.downloadCalendar': 'Kalendarimga qo‘shish',
+  'home.calendarDownloaded':
+    'Kalendar fayli yuklab olindi — telefoningizda oching, har yili tug‘ilgan kun va to‘y yilligi eslatmalari keladi.',
   'home.privacyStrong': 'Maxfiylik haqida eslatma:',
   'home.privacyBefore':
     "bu oilaviy tarix sayti. Ochiq oilaviy saytlarda nozik shaxsiy ma'lumotlar — tiriklarning aniq tug'ilgan sanalari, uy manzillari, telefon raqamlari yoki hujjatlar — hech qachon ko'rsatilmasligi kerak. Saytni ochiq ulashishdan oldin ",
@@ -844,18 +908,20 @@ export const uz: Record<TKey, string> = {
   'form.add': "Qo'shish",
   'form.saveAnother': "Saqlab, yana qo'shish",
   'form.saveAnotherTitle': 'Bu odamni saqlab, darhol keyingisini kiritish',
-  'form.addMe': "Meni qo'shish va so'rov faylini yuklab olish",
+  'form.addMe': 'So‘rovni yuborish',
   'form.addedToast': '{name} oilaga qo‘shildi.',
   'form.updatedToast': '{name} yangilandi.',
   'form.draftRestored': 'Shu yerda kiritayotgan saqlanmagan o‘zgarishlaringiz tiklandi.',
   'form.updatedRestrictedToast': '{name} yangilandi — faqat bo‘sh kataklar to‘ldirildi.',
   'form.selfJoinToast':
-    "Siz bu brauzerda shajaraga qo'shildingiz va so'rov fayli yuklab olindi — hamma sizni ko'rishi uchun uni oila egasiga yuboring.",
+    'So‘rovingiz yuborildi. Oila egasi ko‘rib chiqib, sizni shajaraga qo‘shadi.',
+  'form.selfJoinFailed':
+    'So‘rovni yuborib bo‘lmadi. Aloqani tekshirib qayta urinib ko‘ring — egasi hali ma’lumotlar bazasi yangilanishini ishga tushirmagan bo‘lishi mumkin.',
   'form.thisPerson': 'Bu inson',
 
   'join.title': "O'zingizni shajaraga qo'shing",
   'join.intro':
-    "Parol kerak emas. Siz darhol shu brauzerdagi shajarada paydo bo'lasiz, shuningdek kichik so'rov fayli yuklab olinadi — uni oila egasiga yuboring, u import qilgach hamma sizni ko'radi.",
+    'Ma’lumotlaringizni va qanday bog‘lanishingizni kiriting. So‘rov oila egasiga boradi — u qabul qilgach shajarada ko‘rinasiz.',
   'join.howRelated': 'Qarindoshligingiz qanday? Men…',
   'join.kindChild': 'farzandiman',
   'join.kindSpouse': "turmush o'rtog'iman",
@@ -867,6 +933,58 @@ export const uz: Record<TKey, string> = {
   'join.noMatches': 'Mos odam topilmadi.',
   'join.notSure': "Qanday bog'lanishimni bilmayman — egasi joylashtirsin",
   'join.continue': "Ma'lumotlarimni kiritish",
+
+  'joinReq.title': 'Qo‘shilish so‘rovlari',
+  'joinReq.intro':
+    '“O‘zingizni qo‘shing” orqali yuborilgan so‘rovlar shu yerda — tasdiqlang yoki rad eting.',
+  'joinReq.empty': 'Kutilayotgan so‘rov yo‘q.',
+  'joinReq.setupNeeded':
+    'Hali faol emas: join so‘rovlari va xotiralar uchun Supabase SQL Editor’da supabase-upgrade-3.sql ni ishga tushiring.',
+  'joinReq.approve': 'Tasdiqlash',
+  'joinReq.reject': 'Rad etish',
+  'joinReq.approveTitle': '{name}ni shajaraga qo‘shilsinmi?',
+  'joinReq.approveMsg': 'Bu {name}ni hamma ko‘radigan umumiy shajaraga qo‘shadi.',
+  'joinReq.approveMsgLinked':
+    'Bu {name}ni {target} bilan bog‘lab, hamma ko‘radigan shajaraga qo‘shadi.',
+  'joinReq.rejectTitle': '{name}ning so‘rovi rad etilsinmi?',
+  'joinReq.rejectMsg': 'Ular qo‘shilmaydi. Kerak bo‘lsa keyinroq yana so‘rov yuborishlari mumkin.',
+  'joinReq.approvedToast': '{name} oilaga qo‘shildi.',
+  'joinReq.rejectedToast': '{name}ning so‘rovi rad etildi.',
+  'joinReq.actionFailed': 'Amal bajarilmadi. Aloqani tekshirib qayta urinib ko‘ring.',
+  'joinReq.linkedAs': '{target} bilan bog‘langan',
+  'joinReq.unlinked': 'Bog‘lanish tanlanmagan — tasdiqlagach joylashtiring',
+
+  'memories.title': 'Rasmlar va xotiralar',
+  'memories.add': 'Rasm qo‘shish',
+  'memories.empty': 'Hali qo‘shimcha rasm yo‘q — bayram yoki uchrashuvdan xotira qo‘shing.',
+  'memories.loading': 'Rasmlar yuklanmoqda…',
+  'memories.setupNeeded':
+    'Rasm xotiralari uchun ma’lumotlar bazasi yangilanishi kerak (supabase-upgrade-3.sql).',
+  'memories.fieldTitle': 'Sarlavha (ixtiyoriy)',
+  'memories.fieldCaption': 'Izoh / hikoya (ixtiyoriy)',
+  'memories.fieldTakenOn': 'Qachon? (YYYY, YYYY-MM yoki YYYY-MM-DD)',
+  'memories.save': 'Xotirani saqlash',
+  'memories.saving': 'Saqlanmoqda…',
+  'memories.added': 'Xotira qo‘shildi.',
+  'memories.addFailed': 'Rasmni saqlab bo‘lmadi. Qayta urinib ko‘ring.',
+  'memories.deleted': 'Xotira o‘chirildi.',
+  'memories.deleteFailed': 'Xotirani o‘chirib bo‘lmadi.',
+  'memories.deleteTitle': 'Bu xotira o‘chirilsinmi?',
+  'memories.deleteMsg': 'Rasm hamma uchun o‘chiriladi.',
+  'memories.openPhoto': 'Rasmni ochish',
+
+  'timeline.kicker': 'Oila tarixi',
+  'timeline.title': 'Tarix chizig‘i',
+  'timeline.intro':
+    'Tug‘ilishlar, nikohlar, xotiralar va vidolashuvlar tartibda — yillar bo‘ylab sayr.',
+  'timeline.loading': 'Xotiralar yuklanmoqda…',
+  'timeline.empty':
+    'Hali sanalangan voqealar yo‘q. Tug‘ilgan kun, to‘y sanasi yoki rasm xotiralarini qo‘shing.',
+  'timeline.born': '{name} tug‘ildi',
+  'timeline.died': '{name} vafot etdi',
+  'timeline.married': '{a} va {b} turmush qurishdi',
+  'timeline.memory': '{name} haqidagi xotira',
+  'timeline.memoryTitled': '{name} — {title}',
 
   'unlock.title': 'Tahrirlashni ochish',
   'unlock.intro':

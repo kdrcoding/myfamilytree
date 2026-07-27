@@ -22,6 +22,7 @@ import { calculateAge, formatDate } from '../utils/dates';
 import { displayName, fullName, isDivorced, sortByBirth } from '../utils/family';
 import { Avatar } from './Avatar';
 import { DeceasedBadge, GenderBadge, GenerationBadge } from './badges';
+import { MemoriesSection } from './MemoriesSection';
 import { Modal } from './ui/Modal';
 
 interface PersonDetailsModalProps {
@@ -302,6 +303,8 @@ export function PersonDetailsModal({
           </p>
         </div>
       )}
+
+      <MemoriesSection person={person} />
 
       <div className="mt-4 space-y-3">
         <RelativeChips title={t('person.parents')} people={parents} onNavigate={onNavigate} />
