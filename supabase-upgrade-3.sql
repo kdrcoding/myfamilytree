@@ -60,7 +60,7 @@ create table if not exists public.family_memories (
   taken_on text
     check (taken_on is null or taken_on ~ '^\d{4}(-\d{2}){0,2}$'),
   photo text not null,
-  sort_order int not null default 0,
+  sort_order bigint not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

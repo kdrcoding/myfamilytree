@@ -3,6 +3,8 @@ import type { Edge, Node } from '@xyflow/react';
 import type { FamilyPerson } from '../../types/family';
 import { buildIndex, findFounders, isDivorced, sortByBirth } from '../../utils/family';
 import type { PersonIndex } from '../../utils/family';
+import { dnaPaletteForParents } from './dnaColor';
+import type { DnaPalette } from './dnaColor';
 
 // Cards are wide enough to show a full "First Last" name across two lines and
 // tall enough for the name, nickname, dates and the gender/deceased badges.
@@ -40,7 +42,7 @@ const GEN_LABEL_GAP = 148;
  */
 export const DEFAULT_OPEN_GENERATIONS = 2;
 
-/** Shared stroke for parent→child lines and their arrowheads. */
+/** Fallback when a palette is missing (should be rare). */
 export const CHILD_EDGE_COLOR = '#059669';
 
 export interface PersonNodeData extends Record<string, unknown> {
@@ -451,7 +453,19 @@ export function computeTreeLayout(
     sourceHandle: string;
     target: string;
     sourceX: number;
+    parentIds: string[];
   }[] = [];
+
+  const paletteByCouple = new Map<string, DnaPalette>();
+  const paletteFor = (parentIds: string[]): DnaPalette => {
+    const key = [...parentIds].sort().join('|');
+    let palette = paletteByCouple.get(key);
+    if (!palette) {
+      palette = dnaPaletteForParents(parentIds, index);
+      paletteByCouple.set(key, palette);
+    }
+    return palette;
+  };
 
   for (const person of people) {
     if (!positions.has(person.id)) continue;
@@ -467,12 +481,17 @@ export function computeTreeLayout(
     if (junctionId) {
       const jNode = junctionNodes.find((n) => n.id === junctionId);
       const sourceX = jNode ? jNode.position.x : 0;
+      const palette = paletteFor(placedParents);
+      if (jNode) {
+        jNode.data = { ...jNode.data, dnaColor: palette.trunk };
+      }
       childEdgeDrafts.push({
         id: `child-${junctionId}-${person.id}`,
         source: junctionId,
         sourceHandle: 'out',
         target: person.id,
         sourceX,
+        parentIds: placedParents,
       });
       noteSource(junctionId, sourceX);
     } else {
@@ -484,6 +503,7 @@ export function computeTreeLayout(
           sourceHandle: 'bottom',
           target: person.id,
           sourceX,
+          parentIds: [parentId],
         });
         noteSource(parentId, sourceX);
       }
@@ -500,14 +520,8 @@ export function computeTreeLayout(
     return BUS_BASE + lane * BUS_STEP;
   };
 
-  const childMarker = {
-    type: MarkerType.ArrowClosed,
-    width: 16,
-    height: 16,
-    color: CHILD_EDGE_COLOR,
-  };
-
   for (const draft of childEdgeDrafts) {
+    const palette = paletteFor(draft.parentIds);
     edges.push({
       id: draft.id,
       source: draft.source,
@@ -515,10 +529,22 @@ export function computeTreeLayout(
       target: draft.target,
       targetHandle: 'top',
       type: 'child',
-      data: { busOffset: busOffsetFor(draft.source), orientation },
+      data: {
+        busOffset: busOffsetFor(draft.source),
+        orientation,
+        dnaA: palette.a,
+        dnaB: palette.b,
+        dnaTrunk: palette.trunk,
+      },
       className: 'edge-child',
-      markerEnd: childMarker,
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        width: 16,
+        height: 16,
+        color: palette.trunk,
+      },
       focusable: false,
+      style: { stroke: palette.trunk },
     } as Edge);
   }
 

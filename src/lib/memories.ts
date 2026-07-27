@@ -53,8 +53,19 @@ export async function addMemory(input: {
   if (!supabase) throw new Error('Supabase is not configured');
 
   const id = `mem-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-  // Reuse the people/ path so existing Storage policies cover memory photos.
-  const photo = await uploadPhoto(input.personId, input.dataUrl);
+
+  let photo: string;
+  try {
+    // Prefer Storage so the row stays small; fall back to the data-URL if the
+    // bucket/policies aren't ready yet (still viewable in the app).
+    photo = await uploadPhoto(input.personId, input.dataUrl);
+  } catch (storageError) {
+    console.warn('Memory photo storage upload failed; storing inline:', storageError);
+    photo = input.dataUrl;
+  }
+
+  // sort_order must fit Postgres `integer` (max ~2.1e9). Date.now() does not.
+  const sortOrder = Math.floor(Date.now() / 1000);
 
   const row = {
     id,
@@ -63,12 +74,12 @@ export async function addMemory(input: {
     caption: input.caption?.trim() || null,
     taken_on: input.takenOn?.trim() || null,
     photo,
-    sort_order: Date.now(),
+    sort_order: sortOrder,
   };
 
   const { data, error } = await supabase.from('family_memories').insert(row).select('*').single();
   if (error) {
-    deletePhoto(photo);
+    if (isStoragePhoto(photo)) deletePhoto(photo);
     throw error;
   }
   return data as FamilyMemory;

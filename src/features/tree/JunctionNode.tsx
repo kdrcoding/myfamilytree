@@ -3,14 +3,17 @@ import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 
 /**
- * Small dot on a couple's marriage line where child connectors start. The
- * outgoing handle points down (vertical tree) or right (horizontal tree) so
- * child edges leave toward the next generation.
+ * Small dot on a couple's marriage line where child connectors start.
+ * Coloured to match that couple's DNA strand on the tree.
  */
 function JunctionNodeComponent({ data }: NodeProps) {
   const horizontal = data?.orientation === 'horizontal';
+  const dnaColor = typeof data?.dnaColor === 'string' ? data.dnaColor : '#059669';
   return (
-    <div className="h-3 w-3 rounded-full border-2 border-white bg-emerald-600 shadow dark:border-stone-900 dark:bg-emerald-400">
+    <div
+      className="h-3 w-3 rounded-full border-2 border-white shadow dark:border-stone-900"
+      style={{ backgroundColor: dnaColor }}
+    >
       <Handle
         type="source"
         position={horizontal ? Position.Right : Position.Bottom}

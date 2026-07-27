@@ -10,6 +10,7 @@ import {
   MapPin,
   Pencil,
   Trash2,
+  GitBranch,
   Users,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -23,6 +24,7 @@ import { displayName, fullName, isDivorced, sortByBirth } from '../utils/family'
 import { Avatar } from './Avatar';
 import { DeceasedBadge, GenderBadge, GenerationBadge } from './badges';
 import { MemoriesSection } from './MemoriesSection';
+import { AudioStoriesSection } from './AudioStoriesSection';
 import { Modal } from './ui/Modal';
 
 interface PersonDetailsModalProps {
@@ -47,6 +49,8 @@ interface PersonDetailsModalProps {
    * this person automatically.
    */
   onCopyLink?: (person: FamilyPerson) => void;
+  /** Focus the tree on this person's descendants (and spouses). */
+  onFocusBranch?: (person: FamilyPerson) => void;
 }
 
 function DetailRow({
@@ -196,6 +200,7 @@ export function PersonDetailsModal({
   onDelete,
   onRequestEdit,
   onCopyLink,
+  onFocusBranch,
 }: PersonDetailsModalProps) {
   const { index, generations, getLabel } = useFamily();
   const privacy = usePrivacy();
@@ -247,6 +252,20 @@ export function PersonDetailsModal({
             aria-label={t('tree.copyLink')}
           >
             <LinkIcon className="h-4 w-4" aria-hidden />
+          </button>
+        )}
+        {onFocusBranch && (
+          <button
+            type="button"
+            onClick={() => {
+              onFocusBranch(person);
+              onClose();
+            }}
+            className="shrink-0 rounded-lg border border-stone-300 bg-white p-2 text-stone-500 shadow-sm transition-colors hover:border-emerald-400 hover:text-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-400 dark:hover:text-emerald-300"
+            title={t('tree.focusBranch')}
+            aria-label={t('tree.focusBranch')}
+          >
+            <GitBranch className="h-4 w-4" aria-hidden />
           </button>
         )}
       </div>
@@ -305,6 +324,7 @@ export function PersonDetailsModal({
       )}
 
       <MemoriesSection person={person} />
+      <AudioStoriesSection person={person} />
 
       <div className="mt-4 space-y-3">
         <RelativeChips title={t('person.parents')} people={parents} onNavigate={onNavigate} />

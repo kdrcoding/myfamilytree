@@ -84,6 +84,10 @@ export function MemoriesSection({ person }: MemoriesSectionProps) {
 
   const onPickFile = async (file: File | undefined) => {
     if (!file) return;
+    if (!file.type.startsWith('image/') && !/\.(jpe?g|png|webp|gif)$/i.test(file.name)) {
+      toast(t('memories.notImage'), 'error');
+      return;
+    }
     if (file.size > MAX_PHOTO_BYTES) {
       toast(t('form.photoTooBig'), 'error');
       return;
@@ -93,7 +97,7 @@ export function MemoriesSection({ person }: MemoriesSectionProps) {
       setPendingDataUrl(dataUrl);
     } catch (error) {
       console.error(error);
-      toast(t('form.photoReadFail'), 'error');
+      toast(t('memories.photoReadFail'), 'error');
     }
   };
 
@@ -116,11 +120,23 @@ export function MemoriesSection({ person }: MemoriesSectionProps) {
       setDraftTitle('');
       setDraftCaption('');
       setDraftTakenOn('');
-      toast(t('memories.added'));
+      toast(t('memories.added'), 'success');
       refresh();
     } catch (error) {
       console.error(error);
-      toast(t('memories.addFailed'), 'error');
+      const detail =
+        error && typeof error === 'object' && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : '';
+      // Common: table missing (upgrade SQL not run) or not signed in to Supabase.
+      if (/relation .*family_memories.* does not exist|Could not find the table/i.test(detail)) {
+        toast(t('memories.setupNeeded'), 'error');
+        setUnavailable(true);
+      } else if (/JWT|not authenticated|permission|row-level security|RLS/i.test(detail)) {
+        toast(t('memories.authFailed'), 'error');
+      } else {
+        toast(detail ? `${t('memories.addFailed')} (${detail})` : t('memories.addFailed'), 'error');
+      }
     } finally {
       setBusy(false);
     }
@@ -151,12 +167,12 @@ export function MemoriesSection({ person }: MemoriesSectionProps) {
         <h3 className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
           <ImagePlus className="h-3.5 w-3.5" aria-hidden /> {t('memories.title')}
         </h3>
-        {canEdit && !unavailable && (
+        {canEdit && (
           <>
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/*"
               className="sr-only"
               onChange={(e) => {
                 void onPickFile(e.target.files?.[0]);
@@ -167,11 +183,15 @@ export function MemoriesSection({ person }: MemoriesSectionProps) {
               type="button"
               className="btn-secondary !px-2.5 !py-1 text-xs"
               onClick={() => fileRef.current?.click()}
-              disabled={busy}
+              disabled={busy || unavailable}
+              title={unavailable ? t('memories.setupNeeded') : undefined}
             >
               <ImagePlus className="h-3.5 w-3.5" aria-hidden /> {t('memories.add')}
             </button>
           </>
+        )}
+        {!canEdit && (
+          <p className="text-xs text-stone-400">{t('memories.unlockToAdd')}</p>
         )}
       </div>
 

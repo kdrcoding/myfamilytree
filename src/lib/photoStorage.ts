@@ -88,6 +88,23 @@ export async function uploadPhoto(personId: string, dataUrl: string): Promise<st
   return path;
 }
 
+/** Upload an audio blob for a person; returns the Storage path. */
+export async function uploadAudio(
+  personId: string,
+  blob: Blob,
+  ext = 'webm',
+): Promise<string> {
+  const client = supabase;
+  if (!client) throw new Error('Supabase is not configured');
+  const token = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  const path = `audio/${personId}-${token}.${ext}`;
+  const { error } = await client.storage.from(BUCKET).upload(path, blob, {
+    contentType: blob.type || `audio/${ext}`,
+  });
+  if (error) throw error;
+  return path;
+}
+
 /** Best-effort removal of a replaced/deleted photo object. */
 export function deletePhoto(path: string | undefined): void {
   if (!supabase || !isStoragePhoto(path)) return;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
   Cake,
@@ -7,6 +7,7 @@ import {
   Gem,
   GitBranch,
   Heart,
+  Link2,
   Network,
   PartyPopper,
   ShieldCheck,
@@ -25,6 +26,7 @@ import { formatDate, formatMonthDay } from '../utils/dates';
 import { getUpcomingBirthdays } from '../utils/birthdays';
 import { getUpcomingAnniversaries } from '../utils/anniversaries';
 import { downloadFamilyCalendarIcs } from '../utils/ics';
+import { inviteUrl } from '../utils/notifications';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { Avatar } from '../components/Avatar';
@@ -40,6 +42,7 @@ export function HomePage() {
   const t = useT();
   const language = useLanguage();
   const [joinOpen, setJoinOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const easy = Boolean(settings.easyMode);
   const stats = useMemo(() => computeStats(people), [people]);
   const founders = useMemo(() => findFounders(people).slice(0, 2), [people]);
@@ -78,6 +81,28 @@ export function HomePage() {
       'info',
     );
   }, [upcoming, toast, t]);
+
+  // Invite link: after unlock, open Add yourself and clear the query.
+  useEffect(() => {
+    if (searchParams.get('invite') === '1' || searchParams.get('join') === '1') {
+      setJoinOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete('invite');
+      next.delete('join');
+      setSearchParams(next, { replace: true });
+      toast(t('invite.openedToast'), 'info');
+    }
+  }, [searchParams, setSearchParams, toast, t]);
+
+  const copyInvite = async () => {
+    const url = inviteUrl();
+    try {
+      await navigator.clipboard.writeText(url);
+      toast(t('invite.copied'), 'success');
+    } catch {
+      toast(url, 'info');
+    }
+  };
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-8 sm:px-6">
@@ -142,6 +167,14 @@ export function HomePage() {
           >
             <UserRoundPlus className="h-5 w-5" aria-hidden />
             {t('home.addSelf')}
+          </button>
+          <button
+            type="button"
+            onClick={() => void copyInvite()}
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-emerald-300/40 bg-transparent px-5 py-3.5 text-base font-bold text-emerald-100 transition-colors hover:bg-emerald-800/40 focus-visible:ring-2 focus-visible:ring-white sm:w-auto sm:rounded-xl sm:py-3 sm:text-sm sm:font-semibold"
+          >
+            <Link2 className="h-5 w-5" aria-hidden />
+            {t('invite.copyBtn')}
           </button>
         </div>
       </section>

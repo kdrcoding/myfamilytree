@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Archive,
+  Bell,
   Database,
   Download,
   Eye,
@@ -8,6 +9,7 @@ import {
   Images,
   KeyRound,
   Languages,
+  Link2,
   LogOut,
   Moon,
   Pencil,
@@ -26,6 +28,7 @@ import { useDataTransfer } from '../hooks/useDataTransfer';
 import { useLanguage, useT } from '../i18n/useT';
 import type { TKey } from '../i18n/translations';
 import { AUTH_EMAILS, hashPassword } from '../config/access';
+import { inviteUrl } from '../utils/notifications';
 import { listAuditLog } from '../lib/auditLog';
 import type { AuditEntry } from '../lib/auditLog';
 import { downloadBackup, forceBackup, listBackups } from '../lib/backups';
@@ -396,9 +399,10 @@ function PhotosCard() {
 }
 
 export function SettingsPage() {
-  const { settings, setTheme, setLanguage, setPrivacy, setEasyMode } = useSettings();
+  const { settings, setTheme, setLanguage, setPrivacy, setEasyMode, setBrowserNotify } = useSettings();
   const { role, canEdit, canDelete, signOut } = useAuth();
   const { exportJson, importFromFile, resetSample } = useDataTransfer();
+  const { toast } = useToast();
   const t = useT();
   const importInputRef = useRef<HTMLInputElement>(null);
   const [unlockOpen, setUnlockOpen] = useState(false);
@@ -465,6 +469,51 @@ export function SettingsPage() {
           >
             Русский
           </button>
+        </div>
+      </section>
+
+      {/* Invite relatives */}
+      <section className="card mt-4 p-6">
+        <h2 className="flex items-center gap-2 font-semibold">
+          <Link2 className="h-5 w-5 text-emerald-600" aria-hidden /> {t('invite.title')}
+        </h2>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('invite.intro')}</p>
+        <p className="mt-2 break-all rounded-xl bg-stone-50 px-3 py-2 text-sm font-medium dark:bg-stone-800/60">
+          {inviteUrl()}
+        </p>
+        <button
+          type="button"
+          className="btn-primary mt-3"
+          onClick={() => {
+            void navigator.clipboard.writeText(inviteUrl()).then(
+              () => toast(t('invite.copied'), 'success'),
+              () => toast(inviteUrl(), 'info'),
+            );
+          }}
+        >
+          <Link2 className="h-4 w-4" aria-hidden />
+          {t('invite.copyBtn')}
+        </button>
+      </section>
+
+      {/* Browser notifications */}
+      <section className="card mt-4 p-6">
+        <h2 className="flex items-center gap-2 font-semibold">
+          <Bell className="h-5 w-5 text-emerald-600" aria-hidden /> {t('notify.settingsTitle')}
+        </h2>
+        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('notify.settingsIntro')}</p>
+        <div className="mt-3">
+          <ToggleSwitch
+            label={t('notify.browserLabel')}
+            description={t('notify.browserDesc')}
+            checked={Boolean(settings.browserNotify)}
+            onChange={(next) => {
+              setBrowserNotify(next);
+              if (next && typeof Notification !== 'undefined' && Notification.permission === 'default') {
+                void Notification.requestPermission();
+              }
+            }}
+          />
         </div>
       </section>
 

@@ -3,10 +3,10 @@ import { BaseEdge } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 
 /**
- * Orthogonal parent -> child ("birth") connector with a per-couple bus lane.
+ * Orthogonal parent -> child connector with per-couple DNA colours.
  *
- * A soft solid trunk carries the arrow; two dashed overlays animate along the
- * path so inheritance reads as DNA flowing from parents down to each child.
+ * Brothers/sisters (same parents) share one palette. Cousins sit in a similar
+ * hue band but shift because their parents differ. Unrelated branches diverge.
  */
 function ChildEdgeComponent({
   sourceX,
@@ -15,9 +15,13 @@ function ChildEdgeComponent({
   targetY,
   markerEnd,
   data,
+  style,
 }: EdgeProps) {
   const busOffset = typeof data?.busOffset === 'number' ? data.busOffset : 48;
   const horizontal = data?.orientation === 'horizontal';
+  const dnaA = typeof data?.dnaA === 'string' ? data.dnaA : '#10b981';
+  const dnaB = typeof data?.dnaB === 'string' ? data.dnaB : '#047857';
+  const dnaTrunk = typeof data?.dnaTrunk === 'string' ? data.dnaTrunk : style?.stroke ?? '#059669';
 
   let path: string;
   if (horizontal) {
@@ -56,7 +60,6 @@ function ChildEdgeComponent({
 
   return (
     <>
-      {/* Halo so crossing lines stay visible on the dotted canvas */}
       <path
         d={path}
         fill="none"
@@ -67,19 +70,22 @@ function ChildEdgeComponent({
         className="pointer-events-none dark:[stroke:var(--color-stone-950)]"
         aria-hidden
       />
-      {/* Quiet solid trunk + arrowhead toward the child */}
-      <BaseEdge path={path} markerEnd={markerEnd} style={{ strokeWidth: 2, opacity: 0.45 }} />
-      {/* DNA strand A — dashes flow parent → child */}
+      <BaseEdge
+        path={path}
+        markerEnd={markerEnd}
+        style={{ stroke: dnaTrunk, strokeWidth: 2, opacity: 0.45 }}
+      />
       <path
         d={path}
         fill="none"
+        stroke={dnaA}
         className="edge-child-flow edge-child-flow--a"
         aria-hidden
       />
-      {/* DNA strand B — phase-shifted twin for a double-helix feel */}
       <path
         d={path}
         fill="none"
+        stroke={dnaB}
         className="edge-child-flow edge-child-flow--b"
         aria-hidden
       />

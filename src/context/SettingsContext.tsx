@@ -12,6 +12,7 @@ interface SettingsContextValue {
   setLanguage: (language: AppLanguage) => void;
   setPrivacy: (patch: Partial<PrivacySettings>) => void;
   setEasyMode: (easyMode: boolean) => void;
+  setBrowserNotify: (enabled: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -29,12 +30,13 @@ function isSettings(value: unknown): value is AppSettings {
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = usePersistentState<AppSettings>(
     STORAGE_KEYS.settings,
-    { theme: 'dark', language: 'uz', privacy: DEFAULT_PRIVACY, easyMode: false },
+    { theme: 'dark', language: 'uz', privacy: DEFAULT_PRIVACY, easyMode: false, browserNotify: false },
     isSettings,
   );
 
   const language = normalizeLanguage(settings.language);
   const easyMode = Boolean(settings.easyMode);
+  const browserNotify = Boolean(settings.browserNotify);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', settings.theme === 'dark');
@@ -61,6 +63,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         ...settings,
         language,
         easyMode,
+        browserNotify,
         privacy: { ...DEFAULT_PRIVACY, ...settings.privacy },
       },
       setTheme: (theme) => setSettings((s) => ({ ...s, theme })),
@@ -70,8 +73,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setPrivacy: (patch) =>
         setSettings((s) => ({ ...s, privacy: { ...DEFAULT_PRIVACY, ...s.privacy, ...patch } })),
       setEasyMode: (next) => setSettings((s) => ({ ...s, easyMode: next })),
+      setBrowserNotify: (next) => setSettings((s) => ({ ...s, browserNotify: next })),
     }),
-    [settings, language, easyMode, setSettings],
+    [settings, language, easyMode, browserNotify, setSettings],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

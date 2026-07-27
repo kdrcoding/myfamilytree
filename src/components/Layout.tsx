@@ -9,6 +9,7 @@ import { useT } from '../i18n/useT';
 import { MadeByKadir } from './MadeByKadir';
 import { BottomNav } from './BottomNav';
 import { WelcomeTour } from './WelcomeTour';
+import { NotificationsBell } from './NotificationsBell';
 
 export function Layout() {
   const { settings, toggleTheme, setLanguage } = useSettings();
@@ -92,6 +93,7 @@ export function Layout() {
           </nav>
 
           <div className="ml-auto flex items-center gap-0.5 sm:gap-1 lg:ml-2">
+            <NotificationsBell />
             <button
               type="button"
               onClick={cycleLanguage}

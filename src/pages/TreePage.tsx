@@ -11,7 +11,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import type { Edge, EdgeTypes, Node, NodeTypes, ReactFlowInstance } from '@xyflow/react';
-import { Lock, LockOpen, Map, Search, TreePine, UserPlus, UserRoundPlus, X } from 'lucide-react';
+import { Lock, LockOpen, Map, Search, TreePine, UserPlus, UserRoundPlus, X, Download, Printer, Share2, GitBranch } from 'lucide-react';
 import type { FamilyPerson, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -22,6 +22,7 @@ import { usePersistentState } from '../hooks/usePersistentState';
 import { useT } from '../i18n/useT';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { getAncestorIds, fullName } from '../utils/family';
+import { filterBranchPeople } from '../utils/branch';
 import { matchesSearch } from '../utils/filters';
 import { MadeByKadir } from '../components/MadeByKadir';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
@@ -30,6 +31,7 @@ import { PersonFormModal } from '../components/PersonFormModal';
 import { UnlockModal } from '../components/UnlockModal';
 import { Avatar } from '../components/Avatar';
 import { computeTreeLayout, CARD_H, CARD_W } from '../features/tree/layout';
+import { exportTreeAsPng, printTreePoster, shareTreePoster } from '../features/tree/exportPng';
 import { JunctionNode } from '../features/tree/JunctionNode';
 import { GenLabelNode } from '../features/tree/GenLabelNode';
 import { ChildEdge } from '../features/tree/ChildEdge';
@@ -410,16 +412,69 @@ export function TreePage() {
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [form, setForm] = useState<{ person?: FamilyPerson; link?: RelationLink } | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
+  const [branchRootId, setBranchRootId] = useState<string | null>(null);
+  const [exportBusy, setExportBusy] = useState(false);
 
   useEffect(() => {
     if (!canEdit && editMode) setEditMode(false);
   }, [canEdit, editMode]);
 
-  const layout = useMemo(() => computeTreeLayout(people, collapsed), [people, collapsed]);
+  // Invite / join deep link: ?join=1 or ?invite=1 opens Add yourself.
+  useEffect(() => {
+    if (searchParams.get('join') === '1' || searchParams.get('invite') === '1') {
+      setJoinOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete('join');
+      next.delete('invite');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  const branchPeople = useMemo(
+    () => filterBranchPeople(people, branchRootId, index),
+    [people, branchRootId, index],
+  );
+
+  const layout = useMemo(
+    () => computeTreeLayout(branchPeople, collapsed),
+    [branchPeople, collapsed],
+  );
   const flowNodes = useMemo(
     () => [...layout.genLabelNodes, ...layout.nodes, ...layout.junctionNodes] as Node[],
     [layout],
   );
+
+  const branchRoot = branchRootId ? index.get(branchRootId) : null;
+
+  const runExport = async (mode: 'png' | 'print' | 'share') => {
+    if (exportBusy) return;
+    setExportBusy(true);
+    try {
+      const opts = {
+        nodes: flowNodes,
+        darkMode: settings.theme === 'dark',
+        filename: branchRoot
+          ? `family-tree-${fullName(branchRoot).replace(/\s+/g, '-').toLowerCase()}.png`
+          : 'family-tree.png',
+        title: t('site.title'),
+        text: t('tree.shareText'),
+      };
+      if (mode === 'png') {
+        await exportTreeAsPng(opts);
+        toast(t('tree.pngDone'), 'success');
+      } else if (mode === 'print') {
+        await printTreePoster(opts);
+      } else {
+        const result = await shareTreePoster(opts);
+        toast(result === 'shared' ? t('tree.shareDone') : t('tree.pngDone'), 'success');
+      }
+    } catch (error) {
+      console.error(error);
+      toast(t('tree.pngFail'), 'error');
+    } finally {
+      setExportBusy(false);
+    }
+  };
 
   const toggleCollapse = useCallback(
     (anchorId: string) => {
@@ -536,7 +591,37 @@ export function TreePage() {
         <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2">
           <TreeSearch onSelect={focusPerson} large />
 
-          <div className="ml-auto flex items-center gap-1.5">
+          <div className="ml-auto flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={exportBusy || flowNodes.length === 0}
+              onClick={() => void runExport('png')}
+              title={t('tree.pngTitle')}
+            >
+              <Download className="h-4 w-4" aria-hidden />
+              <span className="hidden sm:inline">{t('tree.png')}</span>
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={exportBusy || flowNodes.length === 0}
+              onClick={() => void runExport('print')}
+              title={t('tree.printTitle')}
+            >
+              <Printer className="h-4 w-4" aria-hidden />
+              <span className="hidden md:inline">{t('tree.print')}</span>
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={exportBusy || flowNodes.length === 0}
+              onClick={() => void runExport('share')}
+              title={t('tree.shareTitle')}
+            >
+              <Share2 className="h-4 w-4" aria-hidden />
+              <span className="hidden lg:inline">{t('tree.share')}</span>
+            </button>
             {!editMode && (
               <button
                 type="button"
@@ -574,6 +659,17 @@ export function TreePage() {
             </button>
           </div>
         </div>
+        {branchRoot && (
+          <div className="mx-auto mt-2 flex max-w-[1600px] flex-wrap items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
+            <GitBranch className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="min-w-0 flex-1 font-medium">
+              {t('tree.focusBanner', { name: fullName(branchRoot) })}
+            </span>
+            <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => setBranchRootId(null)}>
+              {t('tree.focusClear')}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="relative min-h-[420px] flex-1" style={{ height: 'calc(100dvh - 12rem)' }}>
@@ -606,6 +702,11 @@ export function TreePage() {
           onDelete={handleDelete}
           onRequestEdit={requestEdit}
           onCopyLink={copyPersonLink}
+          onFocusBranch={(person) => {
+            setBranchRootId(person.id);
+            setFocusId(person.id);
+            toast(t('tree.focusToast', { name: fullName(person) }), 'info');
+          }}
         />
       )}
       {form && (

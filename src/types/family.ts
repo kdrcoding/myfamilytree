@@ -85,6 +85,8 @@ export interface AppSettings {
    * Optional so older saved settings stay valid.
    */
   easyMode?: boolean;
+  /** Ask the browser to show birthday reminders when the site is open. */
+  browserNotify?: boolean;
 }
 
 export const DEFAULT_PRIVACY: PrivacySettings = {
