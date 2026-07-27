@@ -5,14 +5,11 @@ import {
   Cake,
   CalendarPlus,
   Gem,
-  GitBranch,
   Heart,
-  Link2,
   Network,
   PartyPopper,
   ShieldCheck,
   UserRoundPlus,
-  Users,
 } from 'lucide-react';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { PersonSearch } from '../components/PersonSearch';
@@ -26,7 +23,6 @@ import { formatDate, formatMonthDay } from '../utils/dates';
 import { getUpcomingBirthdays } from '../utils/birthdays';
 import { getUpcomingAnniversaries } from '../utils/anniversaries';
 import { downloadFamilyCalendarIcs } from '../utils/ics';
-import { inviteUrl } from '../utils/notifications';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { Avatar } from '../components/Avatar';
@@ -94,16 +90,6 @@ export function HomePage() {
     }
   }, [searchParams, setSearchParams, toast, t]);
 
-  const copyInvite = async () => {
-    const url = inviteUrl();
-    try {
-      await navigator.clipboard.writeText(url);
-      toast(t('invite.copied'), 'success');
-    } catch {
-      toast(url, 'info');
-    }
-  };
-
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-8 sm:px-6">
       {/* Hero — compact on phones so search + buttons + birthdays fit on screen */}
@@ -137,7 +123,7 @@ export function HomePage() {
           <PersonSearch large placeholder={t('home.searchPlaceholder')} />
         </div>
 
-        {/* Full-width stacked actions on phones — hard to miss */}
+        {/* Two clear actions — more options live in Menu / Settings */}
         <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
           <Link
             to="/tree"
@@ -146,20 +132,6 @@ export function HomePage() {
             {t('home.explore')}
             <ArrowRight className="h-5 w-5" aria-hidden />
           </Link>
-          <Link
-            to="/related"
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-300/50 bg-emerald-800/40 px-5 py-3.5 text-base font-bold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white sm:w-auto sm:rounded-xl sm:border sm:border-emerald-400/40 sm:bg-transparent sm:py-3 sm:text-sm sm:font-semibold"
-          >
-            <GitBranch className="h-5 w-5" aria-hidden />
-            {t('home.related')}
-          </Link>
-          <Link
-            to="/members"
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-300/50 bg-emerald-800/40 px-5 py-3.5 text-base font-bold text-emerald-50 transition-colors hover:bg-emerald-800/60 focus-visible:ring-2 focus-visible:ring-white sm:w-auto sm:rounded-xl sm:border sm:border-emerald-400/40 sm:bg-transparent sm:py-3 sm:text-sm sm:font-semibold"
-          >
-            <Users className="h-5 w-5" aria-hidden />
-            {t('home.browse')}
-          </Link>
           <button
             type="button"
             onClick={() => setJoinOpen(true)}
@@ -167,14 +139,6 @@ export function HomePage() {
           >
             <UserRoundPlus className="h-5 w-5" aria-hidden />
             {t('home.addSelf')}
-          </button>
-          <button
-            type="button"
-            onClick={() => void copyInvite()}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-emerald-300/40 bg-transparent px-5 py-3.5 text-base font-bold text-emerald-100 transition-colors hover:bg-emerald-800/40 focus-visible:ring-2 focus-visible:ring-white sm:w-auto sm:rounded-xl sm:py-3 sm:text-sm sm:font-semibold"
-          >
-            <Link2 className="h-5 w-5" aria-hidden />
-            {t('invite.copyBtn')}
           </button>
         </div>
       </section>

@@ -1,12 +1,13 @@
 import { NavLink } from 'react-router-dom';
-import { GitBranch, Home, TreePine, Users } from 'lucide-react';
+import { Home, Settings, TreePine, Users } from 'lucide-react';
 import { useT } from '../i18n/useT';
 
+/** Four clear tabs — everything else lives in the Menu / More list. */
 const TABS = [
   { to: '/', labelKey: 'nav.home' as const, icon: Home, end: true },
   { to: '/tree', labelKey: 'nav.tree' as const, icon: TreePine, end: false },
-  { to: '/related', labelKey: 'nav.related' as const, icon: GitBranch, end: false },
   { to: '/members', labelKey: 'nav.members' as const, icon: Users, end: false },
+  { to: '/settings', labelKey: 'nav.settings' as const, icon: Settings, end: false },
 ];
 
 /**

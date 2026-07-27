@@ -11,7 +11,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import type { Edge, EdgeTypes, Node, NodeTypes, ReactFlowInstance } from '@xyflow/react';
-import { Lock, LockOpen, Map, Search, TreePine, UserPlus, UserRoundPlus, X, Download, Printer, Share2, GitBranch } from 'lucide-react';
+import { Lock, LockOpen, Map, Search, TreePine, UserPlus, UserRoundPlus, X, Download, Printer, Share2 } from 'lucide-react';
 import type { FamilyPerson, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -22,13 +22,13 @@ import { usePersistentState } from '../hooks/usePersistentState';
 import { useT } from '../i18n/useT';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { getAncestorIds, fullName } from '../utils/family';
-import { filterBranchPeople } from '../utils/branch';
 import { matchesSearch } from '../utils/filters';
 import { MadeByKadir } from '../components/MadeByKadir';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { PersonDetailsModal } from '../components/PersonDetailsModal';
 import { PersonFormModal } from '../components/PersonFormModal';
 import { UnlockModal } from '../components/UnlockModal';
+import { OverflowMenu } from '../components/OverflowMenu';
 import { Avatar } from '../components/Avatar';
 import { computeTreeLayout, CARD_H, CARD_W } from '../features/tree/layout';
 import { exportTreeAsPng, printTreePoster, shareTreePoster } from '../features/tree/exportPng';
@@ -193,9 +193,10 @@ function TreeCanvas({
   useEffect(() => {
     if (easyMode) setMinimapOpen(false);
   }, [easyMode]);
-  const [tipVisible, setTipVisible] = useState(
-    () => loadJson<boolean>(STORAGE_KEYS.treeTipSeen, (v): v is boolean => typeof v === 'boolean') !== true,
-  );
+  const [tipVisible, setTipVisible] = useState(() => {
+    if (easyMode) return false;
+    return loadJson<boolean>(STORAGE_KEYS.treeTipSeen, (v): v is boolean => typeof v === 'boolean') !== true;
+  });
   const didInitialFocus = useRef(false);
   const startZoom = easyMode ? START_ZOOM_EASY : START_ZOOM;
   const focusZoom = easyMode ? FOCUS_ZOOM_EASY : FOCUS_ZOOM;
@@ -413,7 +414,6 @@ export function TreePage() {
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
   const [form, setForm] = useState<{ person?: FamilyPerson; link?: RelationLink } | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
-  const [branchRootId, setBranchRootId] = useState<string | null>(null);
   const [exportBusy, setExportBusy] = useState(false);
 
   useEffect(() => {
@@ -431,21 +431,11 @@ export function TreePage() {
     }
   }, [searchParams, setSearchParams]);
 
-  const branchPeople = useMemo(
-    () => filterBranchPeople(people, branchRootId, index),
-    [people, branchRootId, index],
-  );
-
-  const layout = useMemo(
-    () => computeTreeLayout(branchPeople, collapsed),
-    [branchPeople, collapsed],
-  );
+  const layout = useMemo(() => computeTreeLayout(people, collapsed), [people, collapsed]);
   const flowNodes = useMemo(
     () => [...layout.genLabelNodes, ...layout.nodes, ...layout.junctionNodes] as Node[],
     [layout],
   );
-
-  const branchRoot = branchRootId ? index.get(branchRootId) : null;
 
   const runExport = async (mode: 'png' | 'print' | 'share') => {
     if (exportBusy) return;
@@ -454,9 +444,7 @@ export function TreePage() {
       const opts = {
         nodes: flowNodes,
         darkMode: settings.theme === 'dark',
-        filename: branchRoot
-          ? `family-tree-${fullName(branchRoot).replace(/\s+/g, '-').toLowerCase()}.png`
-          : 'family-tree.png',
+        filename: 'family-tree.png',
         title: t('site.title'),
         text: t('tree.shareText'),
       };
@@ -589,62 +577,10 @@ export function TreePage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-stone-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3 dark:border-stone-800 dark:bg-stone-900">
-        <div className="mx-auto flex max-w-[1600px] flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-2 sm:flex-row sm:items-center">
           <TreeSearch onSelect={focusPerson} large />
 
           <div className="flex items-center gap-1.5 sm:ml-auto">
-            <button
-              type="button"
-              className="icon-btn !min-h-10 !min-w-10 sm:hidden"
-              disabled={exportBusy || flowNodes.length === 0}
-              onClick={() => void runExport('share')}
-              title={t('tree.shareTitle')}
-              aria-label={t('tree.share')}
-            >
-              <Share2 className="h-4 w-4" aria-hidden />
-            </button>
-            <button
-              type="button"
-              className="btn-secondary !hidden !min-h-10 sm:!inline-flex"
-              disabled={exportBusy || flowNodes.length === 0}
-              onClick={() => void runExport('png')}
-              title={t('tree.pngTitle')}
-            >
-              <Download className="h-4 w-4" aria-hidden />
-              <span className="hidden md:inline">{t('tree.png')}</span>
-            </button>
-            <button
-              type="button"
-              className="btn-secondary !hidden !min-h-10 md:!inline-flex"
-              disabled={exportBusy || flowNodes.length === 0}
-              onClick={() => void runExport('print')}
-              title={t('tree.printTitle')}
-            >
-              <Printer className="h-4 w-4" aria-hidden />
-              <span className="hidden lg:inline">{t('tree.print')}</span>
-            </button>
-            <button
-              type="button"
-              className="btn-secondary !hidden !min-h-10 sm:!inline-flex"
-              disabled={exportBusy || flowNodes.length === 0}
-              onClick={() => void runExport('share')}
-              title={t('tree.shareTitle')}
-            >
-              <Share2 className="h-4 w-4" aria-hidden />
-              <span className="hidden lg:inline">{t('tree.share')}</span>
-            </button>
-            {!editMode && (
-              <button
-                type="button"
-                className="icon-btn !min-h-10 !min-w-10 sm:!min-w-0 sm:!w-auto sm:!gap-1.5 sm:!px-3 sm:!text-sm"
-                onClick={() => setJoinOpen(true)}
-                title={t('tree.addYourselfTitle')}
-                aria-label={t('tree.addYourself')}
-              >
-                <UserRoundPlus className="h-4 w-4" aria-hidden />
-                <span className="hidden sm:inline">{t('tree.addYourself')}</span>
-              </button>
-            )}
             {editMode && (
               <button type="button" className="btn-primary !min-h-10" onClick={() => setForm({})}>
                 <UserPlus className="h-4 w-4" aria-hidden />
@@ -669,23 +605,39 @@ export function TreePage() {
                 {editMode ? t('tree.editing') : t('tree.editMode')}
               </span>
             </button>
+            <OverflowMenu
+              items={[
+                {
+                  id: 'join',
+                  label: t('tree.addYourself'),
+                  icon: <UserRoundPlus className="h-4 w-4" aria-hidden />,
+                  onClick: () => setJoinOpen(true),
+                },
+                {
+                  id: 'share',
+                  label: t('tree.share'),
+                  icon: <Share2 className="h-4 w-4" aria-hidden />,
+                  onClick: () => void runExport('share'),
+                  disabled: exportBusy || flowNodes.length === 0,
+                },
+                {
+                  id: 'png',
+                  label: t('tree.pngTitle'),
+                  icon: <Download className="h-4 w-4" aria-hidden />,
+                  onClick: () => void runExport('png'),
+                  disabled: exportBusy || flowNodes.length === 0,
+                },
+                {
+                  id: 'print',
+                  label: t('tree.print'),
+                  icon: <Printer className="h-4 w-4" aria-hidden />,
+                  onClick: () => void runExport('print'),
+                  disabled: exportBusy || flowNodes.length === 0,
+                },
+              ]}
+            />
           </div>
         </div>
-        {branchRoot && (
-          <div className="mx-auto mt-2 flex max-w-[1600px] items-center gap-2 rounded-xl bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-900 sm:px-3 sm:py-2 sm:text-sm dark:bg-emerald-950/40 dark:text-emerald-100">
-            <GitBranch className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
-            <span className="min-w-0 flex-1 truncate font-medium">
-              {t('tree.focusBanner', { name: fullName(branchRoot) })}
-            </span>
-            <button
-              type="button"
-              className="shrink-0 rounded-lg border border-emerald-200 bg-white/80 px-2 py-1 text-xs font-semibold dark:border-emerald-800 dark:bg-stone-900/60"
-              onClick={() => setBranchRootId(null)}
-            >
-              {t('tree.focusClear')}
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="relative min-h-0 flex-1" style={{ minHeight: 'calc(100dvh - 11rem)' }}>
@@ -718,11 +670,6 @@ export function TreePage() {
           onDelete={handleDelete}
           onRequestEdit={requestEdit}
           onCopyLink={copyPersonLink}
-          onFocusBranch={(person) => {
-            setBranchRootId(person.id);
-            setFocusId(person.id);
-            toast(t('tree.focusToast', { name: fullName(person) }), 'info');
-          }}
         />
       )}
       {form && (

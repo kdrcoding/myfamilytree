@@ -30,7 +30,7 @@ function isSettings(value: unknown): value is AppSettings {
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = usePersistentState<AppSettings>(
     STORAGE_KEYS.settings,
-    { theme: 'dark', language: 'uz', privacy: DEFAULT_PRIVACY, easyMode: false, browserNotify: false },
+    { theme: 'dark', language: 'uz', privacy: DEFAULT_PRIVACY, easyMode: true, browserNotify: false },
     isSettings,
   );
 

@@ -21,6 +21,8 @@ export const ruOverrides: Record<string, string> = {
   'nav.signOutConfirmTitle': 'Выйти с сайта?',
   'nav.signOutConfirmMsg': 'Чтобы войти снова, понадобится семейный пароль.',
   'nav.bottomNav': 'Нижнее меню',
+  'nav.more': 'Ещё',
+  'nav.language': 'Язык',
   'footer.note': 'Частный семейный проект. Все примеры вымышлены.',
 
   'home.kicker': 'Поколения одной семьи',
