@@ -83,7 +83,9 @@ export const en = {
   'settings.logTitle': 'Change log',
   'settings.logIntro':
     'Who changed what, and when — recorded automatically on every save. Only you can see this.',
-  'settings.logEmpty': 'Nothing recorded yet.',
+  'settings.logEmpty': 'Nothing recorded yet. Edit a person or add a photo, then tap Refresh.',
+  'settings.logRefresh': 'Refresh',
+  'form.marriageDateShort': 'Marriage date',
   'log.actorOwner': 'Owner',
   'log.actorFamily': 'Family',
   'log.add': 'Added',
@@ -843,7 +845,10 @@ export const uz: Record<TKey, string> = {
   'settings.logTitle': "O'zgarishlar tarixi",
   'settings.logIntro':
     "Kim, qachon va nimani o'zgartirgani — har bir saqlashda avtomatik yoziladi. Buni faqat siz ko'rasiz.",
-  'settings.logEmpty': "Hozircha hech narsa yozilmagan.",
+  'settings.logEmpty':
+    "Hozircha hech narsa yozilmagan. Odami tahrirlang yoki foto qo'shing, so'ng Yangilashni bosing.",
+  'settings.logRefresh': 'Yangilash',
+  'form.marriageDateShort': 'Nikoh sanasi',
   'log.actorOwner': 'Egasi',
   'log.actorFamily': "Oila a'zosi",
   'log.add': "Qo'shildi",

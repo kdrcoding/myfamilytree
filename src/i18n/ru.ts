@@ -253,6 +253,27 @@ export const ruOverrides: Record<string, string> = {
   'form.noMatches': 'Никого не найдено.',
   'form.parents': 'Родители',
   'form.spouses': 'Супруги',
+  'form.marriageDateShort': 'Дата свадьбы',
+
+  'settings.logTitle': 'Журнал изменений',
+  'settings.logIntro':
+    'Кто что изменил и когда — пишется при каждом сохранении. Видите только вы.',
+  'settings.logEmpty':
+    'Пока пусто. Измените человека или добавьте фото, затем нажмите Обновить.',
+  'settings.logRefresh': 'Обновить',
+  'log.actorOwner': 'Владелец',
+  'log.actorFamily': 'Семья',
+  'log.add': 'Добавлено',
+  'log.edit': 'Изменено',
+  'log.delete': 'Удалено',
+  'log.divorce': 'Статус развода',
+  'log.import': 'Импорт данных',
+  'log.reset': 'Восстановлены данные по умолчанию',
+  'log.by': 'от',
+  'log.showLess': 'Свернуть',
+  'log.showAll': 'Показать все ({count})',
+  'settings.setupNeeded':
+    'Ещё не активно: одноразовое обновление базы не выполнено. В Supabase → SQL Editor запустите supabase-upgrade.sql из папки проекта.',
 
   'join.title': 'Добавить себя в семейное древо',
   'join.intro':

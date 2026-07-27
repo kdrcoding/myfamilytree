@@ -12,15 +12,19 @@ import {
   listAudioStories,
   type AudioStory,
 } from '../lib/audioStories';
+import { logChange } from '../lib/auditLog';
+import { fullName } from '../utils/family';
 
 const MAX_SECONDS = 90;
 
 function StoryRow({
   story,
+  person,
   canDelete,
   onDeleted,
 }: {
   story: AudioStory;
+  person: FamilyPerson;
   canDelete: boolean;
   onDeleted: () => void;
 }) {
@@ -41,6 +45,9 @@ function StoryRow({
     setBusy(true);
     try {
       await deleteAudioStory(story);
+      logChange('edit', {
+        updated: [{ name: fullName(person), fields: ['audio'] }],
+      });
       toast(t('audio.deleted'), 'success');
       onDeleted();
     } catch (error) {
@@ -201,6 +208,9 @@ export function AudioStoriesSection({ person }: { person: FamilyPerson }) {
         durationSec,
         ext,
       });
+      logChange('edit', {
+        updated: [{ name: fullName(person), fields: ['audio'] }],
+      });
       setTitle('');
       toast(t('audio.added'), 'success');
       refresh();
@@ -269,6 +279,7 @@ export function AudioStoriesSection({ person }: { person: FamilyPerson }) {
             <StoryRow
               key={story.id}
               story={story}
+              person={person}
               canDelete={canDelete}
               onDeleted={refresh}
             />

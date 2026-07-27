@@ -43,8 +43,57 @@ function sameIds(a: string[], b: string[]): boolean {
   return b.every((id) => set.has(id));
 }
 
+function sameMarriageDates(
+  a: Record<string, string> | undefined,
+  b: Record<string, string> | undefined,
+): boolean {
+  const left = a ?? {};
+  const right = b ?? {};
+  const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+  for (const key of keys) {
+    if ((left[key] ?? '') !== (right[key] ?? '')) return false;
+  }
+  return true;
+}
+
 function capped(names: string[]): string[] {
   return names.length > 20 ? [...names.slice(0, 20), `… +${names.length - 20}`] : names;
+}
+
+/** Coerce jsonb / string / null into a safe AuditDetails object. */
+export function normalizeAuditDetails(raw: unknown): AuditDetails {
+  let value: unknown = raw;
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value) as unknown;
+    } catch {
+      return {};
+    }
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const obj = value as Record<string, unknown>;
+  const details: AuditDetails = {};
+  if (Array.isArray(obj.added)) {
+    details.added = obj.added.filter((x): x is string => typeof x === 'string');
+  }
+  if (Array.isArray(obj.deleted)) {
+    details.deleted = obj.deleted.filter((x): x is string => typeof x === 'string');
+  }
+  if (Array.isArray(obj.updated)) {
+    details.updated = obj.updated
+      .map((row) => {
+        if (!row || typeof row !== 'object') return null;
+        const item = row as Record<string, unknown>;
+        const name = typeof item.name === 'string' ? item.name : '';
+        const fields = Array.isArray(item.fields)
+          ? item.fields.filter((f): f is string => typeof f === 'string')
+          : [];
+        if (!name && fields.length === 0) return null;
+        return { name: name || '—', fields };
+      })
+      .filter((row): row is { name: string; fields: string[] } => row !== null);
+  }
+  return details;
 }
 
 /**
@@ -74,6 +123,9 @@ export function summarizeFamilyChange(
     if (!sameIds(before.spouseIds, person.spouseIds)) fields.push('spouses');
     if (!sameIds(before.childIds, person.childIds)) fields.push('children');
     if (!sameIds(before.divorcedIds ?? [], person.divorcedIds ?? [])) fields.push('divorced');
+    if (!sameMarriageDates(before.marriageDates, person.marriageDates)) {
+      fields.push('marriageDates');
+    }
     if (fields.length > 0) updated.push({ name: fullName(person), fields });
   }
 
@@ -85,30 +137,42 @@ export function summarizeFamilyChange(
   };
 }
 
+async function callLogRpc(
+  action: AuditAction,
+  details: AuditDetails,
+  actorName: string | null,
+): Promise<void> {
+  if (!supabase) return;
+  const client = supabase;
+
+  // Prefer the 3-argument form (actor name). Fall back to the older signature
+  // when the one-time upgrade SQL has not been run yet.
+  const withName = await client.rpc('log_family_change', {
+    p_action: action,
+    p_details: details,
+    p_actor_name: actorName,
+  });
+  if (!withName.error) return;
+
+  const fallback = await client.rpc('log_family_change', {
+    p_action: action,
+    p_details: details,
+  });
+  if (fallback.error) {
+    console.error('Failed to record change in the log:', withName.error, fallback.error);
+  }
+}
+
 /**
  * Record a change in the owner-only log. Fire-and-forget: the database
  * function stamps who did it from the signed-in account, so the entry
  * can't be forged.
  */
 export function logChange(action: AuditAction, details: AuditDetails): void {
-  if (!supabase) return;
-  const client = supabase;
   const actorName =
     loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string')?.trim() ||
     null;
-  void client
-    .rpc('log_family_change', { p_action: action, p_details: details, p_actor_name: actorName })
-    .then(({ error }) => {
-      if (!error) return;
-      // The 3-argument function only exists after the owner runs the upgrade
-      // SQL; until then fall back to the original signature so nothing is lost.
-      void client
-        .rpc('log_family_change', { p_action: action, p_details: details })
-        .then(({ error: fallbackError }) => {
-          if (fallbackError)
-            console.error('Failed to record change in the log:', fallbackError);
-        });
-    });
+  void callLogRpc(action, details, actorName);
 }
 
 /** Owner-only: newest entries first. */
@@ -122,5 +186,11 @@ export async function listAuditLog(limit = 200): Promise<AuditEntry[]> {
     .order('at', { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return (data ?? []) as AuditEntry[];
+  return (data ?? []).map((row) => {
+    const entry = row as AuditEntry;
+    return {
+      ...entry,
+      details: normalizeAuditDetails(entry.details),
+    };
+  });
 }

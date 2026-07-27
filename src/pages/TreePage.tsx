@@ -272,7 +272,9 @@ function TreeCanvas({
       nodesFocusable={false}
       edgesFocusable={false}
       zoomOnDoubleClick={false}
-      panOnScroll
+      zoomOnScroll
+      panOnScroll={false}
+      panOnDrag
       proOptions={{ hideAttribution: true }}
     >
       <Background

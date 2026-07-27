@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Archive,
   Database,
@@ -58,6 +58,9 @@ const FIELD_LABEL_KEYS: Record<string, TKey> = {
   spouses: 'form.spouses',
   children: 'person.children',
   divorced: 'person.divorced',
+  marriageDates: 'form.marriageDateShort',
+  memories: 'memories.title',
+  audio: 'audio.title',
 };
 
 const ACTION_LABEL_KEYS: Record<string, TKey> = {
@@ -76,16 +79,32 @@ const LOG_PREVIEW_COUNT = 8;
 function ChangeLogCard() {
   const t = useT();
   const language = useLanguage();
+  const { ready } = useAuth();
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [unavailable, setUnavailable] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
 
+  const refresh = useCallback(() => {
+    if (!ready) return;
+    setLoading(true);
+    listAuditLog().then(
+      (rows) => {
+        setEntries(rows);
+        setUnavailable(false);
+        setLoading(false);
+      },
+      (error: unknown) => {
+        console.error('Failed to load the change log:', error);
+        setUnavailable(true);
+        setLoading(false);
+      },
+    );
+  }, [ready]);
+
   useEffect(() => {
-    listAuditLog().then(setEntries, (error: unknown) => {
-      console.error('Failed to load the change log:', error);
-      setUnavailable(true);
-    });
-  }, []);
+    refresh();
+  }, [refresh]);
 
   const fieldLabel = (field: string) =>
     FIELD_LABEL_KEYS[field] ? t(FIELD_LABEL_KEYS[field]) : field;
@@ -94,74 +113,96 @@ function ChangeLogCard() {
 
   return (
     <section className="card mt-4 p-6">
-      <h2 className="flex items-center gap-2 font-semibold">
-        <ScrollText className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.logTitle')}
-      </h2>
-      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('settings.logIntro')}</p>
-      {unavailable && (
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 className="flex items-center gap-2 font-semibold">
+            <ScrollText className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.logTitle')}
+          </h2>
+          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('settings.logIntro')}</p>
+        </div>
+        <button
+          type="button"
+          className="btn-secondary !px-3 text-sm"
+          onClick={refresh}
+          disabled={loading || !ready}
+        >
+          {t('settings.logRefresh')}
+        </button>
+      </div>
+      {loading ? (
+        <p className="mt-3 text-sm text-stone-400">{t('db.loading')}</p>
+      ) : unavailable ? (
         <p className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
           {t('settings.setupNeeded')}
         </p>
-      )}
-      {!unavailable &&
-      entries.length === 0 ? (
+      ) : entries.length === 0 ? (
         <p className="mt-3 text-sm text-stone-400">{t('settings.logEmpty')}</p>
-      ) : unavailable ? null : (
+      ) : (
         <ul className="mt-3 divide-y divide-stone-100 text-sm dark:divide-stone-800">
-          {visible.map((entry) => (
-            <li key={entry.id} className="py-2.5">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="font-medium text-stone-800 dark:text-stone-200">
-                  {ACTION_LABEL_KEYS[entry.action] ? t(ACTION_LABEL_KEYS[entry.action]) : entry.action}
-                </span>
-                <span
-                  className={`badge ${
-                    entry.actor === AUTH_EMAILS.owner
-                      ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
-                      : 'border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300'
-                  }`}
-                >
-                  {entry.actor === AUTH_EMAILS.owner ? t('log.actorOwner') : t('log.actorFamily')}
-                </span>
-                {entry.actor_name && (
-                  <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
-                    {t('log.by')} {entry.actor_name}
+          {visible.map((entry) => {
+            const details = entry.details ?? {};
+            return (
+              <li key={entry.id} className="py-2.5">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="font-medium text-stone-800 dark:text-stone-200">
+                    {ACTION_LABEL_KEYS[entry.action]
+                      ? t(ACTION_LABEL_KEYS[entry.action])
+                      : entry.action}
                   </span>
-                )}
-                <span className="ml-auto text-xs text-stone-400">
-                  {new Date(entry.at).toLocaleString(
-                    language === 'uz' ? 'uz-UZ' : language === 'ru' ? 'ru-RU' : 'en-GB',
-                  )}
-                </span>
-              </div>
-              <div className="mt-1 space-y-0.5 text-stone-600 dark:text-stone-300">
-                {entry.details.added && (
-                  <p className="flex items-start gap-1.5">
-                    <UserPlus className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden />
-                    <span>{entry.details.added.join(', ')}</span>
-                  </p>
-                )}
-                {entry.details.deleted && (
-                  <p className="flex items-start gap-1.5">
-                    <Trash2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" aria-hidden />
-                    <span>{entry.details.deleted.join(', ')}</span>
-                  </p>
-                )}
-                {entry.details.updated?.map((u, i) => (
-                  <p key={i} className="flex items-start gap-1.5">
-                    <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden />
-                    <span>
-                      {u.name}
-                      <span className="text-stone-400"> — {u.fields.map(fieldLabel).join(', ')}</span>
+                  <span
+                    className={`badge ${
+                      entry.actor === AUTH_EMAILS.owner
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                        : 'border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300'
+                    }`}
+                  >
+                    {entry.actor === AUTH_EMAILS.owner ? t('log.actorOwner') : t('log.actorFamily')}
+                  </span>
+                  {entry.actor_name && (
+                    <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                      {t('log.by')} {entry.actor_name}
                     </span>
-                  </p>
-                ))}
-              </div>
-            </li>
-          ))}
+                  )}
+                  <span className="ml-auto text-xs text-stone-400">
+                    {new Date(entry.at).toLocaleString(
+                      language === 'uz' ? 'uz-UZ' : language === 'ru' ? 'ru-RU' : 'en-GB',
+                    )}
+                  </span>
+                </div>
+                <div className="mt-1 space-y-0.5 text-stone-600 dark:text-stone-300">
+                  {details.added && details.added.length > 0 && (
+                    <p className="flex items-start gap-1.5">
+                      <UserPlus className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" aria-hidden />
+                      <span>{details.added.join(', ')}</span>
+                    </p>
+                  )}
+                  {details.deleted && details.deleted.length > 0 && (
+                    <p className="flex items-start gap-1.5">
+                      <Trash2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-500" aria-hidden />
+                      <span>{details.deleted.join(', ')}</span>
+                    </p>
+                  )}
+                  {details.updated?.map((u, i) => (
+                    <p key={i} className="flex items-start gap-1.5">
+                      <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden />
+                      <span>
+                        {u.name}
+                        {u.fields.length > 0 && (
+                          <span className="text-stone-400">
+                            {' '}
+                            — {u.fields.map(fieldLabel).join(', ')}
+                          </span>
+                        )}
+                      </span>
+                    </p>
+                  ))}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
-      {!unavailable && entries.length > LOG_PREVIEW_COUNT && (
+      {!loading && !unavailable && entries.length > LOG_PREVIEW_COUNT && (
         <button
           type="button"
           onClick={() => setShowAll((v) => !v)}
@@ -720,9 +761,9 @@ export function SettingsPage() {
       )}
 
       {canDelete && <JoinRequestsCard />}
+      {canDelete && <ChangeLogCard />}
       {(!easy || showAdvanced) && (
         <>
-          {canDelete && <ChangeLogCard />}
           {canDelete && <BackupsCard />}
           {canDelete && <PhotosCard />}
           {canDelete && <CountriesCard />}

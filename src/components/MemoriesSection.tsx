@@ -9,8 +9,10 @@ import { usePrivacy } from '../hooks/usePrivacy';
 import { useLanguage, useT } from '../i18n/useT';
 import { addMemory, deleteMemory, listMemories } from '../lib/memories';
 import type { FamilyMemory } from '../lib/memories';
+import { logChange } from '../lib/auditLog';
 import { downscalePhoto } from '../utils/image';
 import { formatDate, isValidDateString } from '../utils/dates';
+import { fullName } from '../utils/family';
 
 const MAX_PHOTO_BYTES = 15 * 1024 * 1024;
 
@@ -116,6 +118,14 @@ export function MemoriesSection({ person }: MemoriesSectionProps) {
         caption: draftCaption,
         takenOn: draftTakenOn,
       });
+      logChange('edit', {
+        updated: [
+          {
+            name: fullName(person),
+            fields: ['memories'],
+          },
+        ],
+      });
       setPendingDataUrl(null);
       setDraftTitle('');
       setDraftCaption('');
@@ -152,6 +162,14 @@ export function MemoriesSection({ person }: MemoriesSectionProps) {
     if (!ok) return;
     try {
       await deleteMemory(memory);
+      logChange('edit', {
+        updated: [
+          {
+            name: fullName(person),
+            fields: ['memories'],
+          },
+        ],
+      });
       setViewer(null);
       toast(t('memories.deleted'));
       refresh();
