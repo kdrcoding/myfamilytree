@@ -421,7 +421,7 @@ export const ruOverrides: Record<string, string> = {
   'notify.digestTitle': 'Oq-Ariq OILASI — новости семьи',
   'notify.settingsTitle': 'Напоминания',
   'notify.settingsIntro':
-    'Колокольчик в шапке — дни рождения, заявки и новые истории. Дайджест можно отправить в Telegram или по email.',
+    'Колокольчик в шапке — дни рождения, заявки и новые истории.',
   'notify.browserLabel': 'Напоминания в браузере',
   'notify.browserDesc': 'Системное уведомление о днях рождения при открытии сайта.',
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Mail, Send } from 'lucide-react';
+import { Bell, Cake, ImagePlus, Mic, UserPlus, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
 import { useSettings } from '../context/SettingsContext';
@@ -8,14 +9,27 @@ import { useT } from '../i18n/useT';
 import {
   collectFamilyNotices,
   maybePushBrowserNotices,
-  mailtoDigest,
-  telegramShareUrl,
   type FamilyNotice,
+  type FamilyNoticeKind,
 } from '../utils/notifications';
 
+function kindIcon(kind: FamilyNoticeKind) {
+  switch (kind) {
+    case 'birthday':
+      return Cake;
+    case 'join':
+      return UserPlus;
+    case 'audio':
+      return Mic;
+    default:
+      return ImagePlus;
+  }
+}
+
 /**
- * In-app notification bell: birthdays (today/tomorrow), join requests,
- * recent photos & audio stories. Optional browser + Telegram/email share.
+ * Compact in-app notification bell. Mobile uses a full-width sheet under the
+ * header so nothing is clipped; Telegram/email share links are intentionally
+ * omitted to keep the panel simple.
  */
 export function NotificationsBell() {
   const t = useT();
@@ -25,7 +39,8 @@ export function NotificationsBell() {
   const { settings } = useSettings();
   const [open, setOpen] = useState(false);
   const [notices, setNotices] = useState<FamilyNotice[]>([]);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const labels = useMemo(
     () => ({
@@ -53,18 +68,98 @@ export function NotificationsBell() {
 
   useEffect(() => {
     if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    const onDoc = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (btnRef.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
     };
     document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
+    document.addEventListener('touchstart', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('touchstart', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
-  const digestText = notices.map((n) => `• ${n.title}`).join('\n') || t('notify.empty');
+  const openNotice = (notice: FamilyNotice) => {
+    setOpen(false);
+    if (notice.href) navigate(notice.href);
+  };
+
+  const panel = open
+    ? createPortal(
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-label={t('notify.title')}
+          className="fixed inset-x-2 top-[4.25rem] z-[60] max-h-[min(70dvh,24rem)] overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-xl sm:inset-x-auto sm:right-3 sm:w-80 lg:right-6 dark:border-stone-700 dark:bg-stone-900"
+        >
+          <div className="flex items-center justify-between gap-2 border-b border-stone-100 px-3 py-2 dark:border-stone-800">
+            <p className="text-sm font-bold text-stone-800 dark:text-stone-100">
+              {t('notify.title')}
+              {notices.length > 0 ? (
+                <span className="ml-1.5 text-xs font-semibold text-stone-400">
+                  {notices.length}
+                </span>
+              ) : null}
+            </p>
+            <button
+              type="button"
+              className="icon-btn !h-8 !w-8"
+              onClick={() => setOpen(false)}
+              aria-label={t('common.close')}
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </button>
+          </div>
+
+          {notices.length === 0 ? (
+            <p className="px-3 py-4 text-sm text-stone-500 dark:text-stone-400">{t('notify.empty')}</p>
+          ) : (
+            <ul className="max-h-[min(60dvh,20rem)] overflow-y-auto overscroll-contain py-1">
+              {notices.map((notice) => {
+                const Icon = kindIcon(notice.kind);
+                const showBody = notice.body && notice.body !== notice.title;
+                return (
+                  <li key={notice.id}>
+                    <button
+                      type="button"
+                      className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left hover:bg-stone-50 active:bg-stone-100 dark:hover:bg-stone-800/80 dark:active:bg-stone-800"
+                      onClick={() => openNotice(notice)}
+                    >
+                      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                        <Icon className="h-3.5 w-3.5" aria-hidden />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-stone-800 dark:text-stone-100">
+                          {notice.title}
+                        </span>
+                        {showBody && (
+                          <span className="mt-0.5 block truncate text-xs text-stone-500 dark:text-stone-400">
+                            {notice.body}
+                          </span>
+                        )}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>,
+        document.body,
+      )
+    : null;
 
   return (
-    <div className="relative" ref={rootRef}>
+    <>
       <button
+        ref={btnRef}
         type="button"
         className="icon-btn !min-h-11 !min-w-11 relative"
         aria-label={t('notify.bell')}
@@ -76,60 +171,7 @@ export function NotificationsBell() {
           <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
         )}
       </button>
-
-      {open && (
-        <div
-          className="absolute right-0 z-50 mt-2 w-[min(100vw-2rem,22rem)] rounded-2xl border border-stone-200 bg-white p-3 shadow-xl dark:border-stone-700 dark:bg-stone-900"
-          role="dialog"
-          aria-label={t('notify.title')}
-        >
-          <p className="px-1 text-sm font-bold text-stone-800 dark:text-stone-100">{t('notify.title')}</p>
-          {notices.length === 0 ? (
-            <p className="mt-2 px-1 text-sm text-stone-500 dark:text-stone-400">{t('notify.empty')}</p>
-          ) : (
-            <ul className="mt-2 max-h-72 space-y-1 overflow-y-auto">
-              {notices.map((notice) => (
-                <li key={notice.id}>
-                  <button
-                    type="button"
-                    className="w-full rounded-xl px-3 py-2.5 text-left hover:bg-stone-100 dark:hover:bg-stone-800"
-                    onClick={() => {
-                      setOpen(false);
-                      if (notice.href) navigate(notice.href);
-                    }}
-                  >
-                    <span className="block text-sm font-semibold text-stone-800 dark:text-stone-100">
-                      {notice.title}
-                    </span>
-                    <span className="mt-0.5 block text-xs text-stone-500 dark:text-stone-400">
-                      {notice.body}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <div className="mt-3 flex flex-wrap gap-2 border-t border-stone-200 pt-3 dark:border-stone-700">
-            <a
-              className="btn-secondary !py-1.5 !text-xs"
-              href={telegramShareUrl(`${t('notify.digestTitle')}\n${digestText}`)}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Send className="h-3.5 w-3.5" aria-hidden />
-              {t('notify.telegram')}
-            </a>
-            <a
-              className="btn-secondary !py-1.5 !text-xs"
-              href={mailtoDigest(t('notify.digestTitle'), digestText)}
-            >
-              <Mail className="h-3.5 w-3.5" aria-hidden />
-              {t('notify.email')}
-            </a>
-          </div>
-        </div>
-      )}
-    </div>
+      {panel}
+    </>
   );
 }

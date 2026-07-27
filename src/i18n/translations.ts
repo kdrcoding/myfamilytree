@@ -274,7 +274,7 @@ export const en = {
   'notify.digestTitle': 'Oq-Ariq OILASI — family updates',
   'notify.settingsTitle': 'Reminders',
   'notify.settingsIntro':
-    'Use the bell in the header for birthdays, join requests and new stories. You can also share a digest to Telegram or email.',
+    'Use the bell in the header for birthdays, join requests and new stories.',
   'notify.browserLabel': 'Browser birthday reminders',
   'notify.browserDesc': 'Show a system notification for birthdays when you open the site.',
 
@@ -1026,7 +1026,7 @@ export const uz: Record<TKey, string> = {
   'notify.digestTitle': 'Oq-Ariq OILASI — oila yangiliklari',
   'notify.settingsTitle': 'Eslatmalar',
   'notify.settingsIntro':
-    'Sarlavhadagi qo‘ng‘iroq tug‘ilgan kunlar, so‘rovlar va yangi hikoyalar uchun. Digestni Telegram yoki emailga ham ulashishingiz mumkin.',
+    'Sarlavhadagi qo‘ng‘iroq tug‘ilgan kunlar, so‘rovlar va yangi hikoyalar uchun.',
   'notify.browserLabel': 'Brauzer tug‘ilgan kun eslatmalari',
   'notify.browserDesc': 'Saytni ochganda tug‘ilgan kun uchun tizim bildirishnomasi.',
 

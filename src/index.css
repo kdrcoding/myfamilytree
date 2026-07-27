@@ -277,6 +277,53 @@ html:not(.dark) .text-stone-400 {
   }
 }
 
+/* Family tree canvas — calm stone surfaces for light + dark */
+.family-tree-canvas {
+  background: transparent !important;
+}
+.family-tree-canvas .react-flow__renderer,
+.family-tree-canvas .react-flow__pane {
+  cursor: grab;
+}
+.family-tree-canvas .react-flow__pane:active {
+  cursor: grabbing;
+}
+
+.family-tree-controls {
+  background: rgb(255 255 255 / 0.95) !important;
+  box-shadow: 0 4px 14px rgb(28 25 23 / 0.08) !important;
+}
+.family-tree-controls .react-flow__controls-button {
+  background: transparent;
+  border-bottom-color: var(--color-stone-200);
+  fill: var(--color-stone-700);
+}
+.family-tree-controls .react-flow__controls-button:hover {
+  background: var(--color-stone-100);
+}
+
+.dark .family-tree-controls {
+  background: rgb(28 25 23 / 0.95) !important;
+  border-color: var(--color-stone-700) !important;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.35) !important;
+}
+.dark .family-tree-controls .react-flow__controls-button {
+  background: transparent;
+  border-bottom-color: var(--color-stone-700);
+  fill: var(--color-stone-200);
+}
+.dark .family-tree-controls .react-flow__controls-button:hover {
+  background: var(--color-stone-800);
+}
+
+/* DNA halo: softer on light canvas so coloured strands stay clear */
+.family-tree-canvas--light {
+  --child-edge-halo: #f5f5f4;
+}
+.family-tree-canvas--dark {
+  --child-edge-halo: #0c0a09;
+}
+
 /* Easy / older-adult tree controls: finger-sized zoom buttons */
 html.easy .tree-controls-easy .react-flow__controls-button,
 .tree-controls-easy .react-flow__controls-button {
@@ -284,22 +331,10 @@ html.easy .tree-controls-easy .react-flow__controls-button,
   height: 44px;
 }
 html.easy .tree-easy .react-flow__node-person {
-  /* slightly stronger shadow when easy */
-  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.12));
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.1));
 }
 
 /* React Flow chrome in dark mode */
-.dark .react-flow__controls {
-  box-shadow: none;
-}
-.dark .react-flow__controls-button {
-  background: var(--color-stone-800);
-  border-bottom-color: var(--color-stone-700);
-  fill: var(--color-stone-200);
-}
-.dark .react-flow__controls-button:hover {
-  background: var(--color-stone-700);
-}
 .dark .react-flow__minimap {
   background: var(--color-stone-900);
 }

@@ -186,6 +186,8 @@ function TreeCanvas({
 }) {
   const { setCenter, getZoom, fitView } = useReactFlow();
   const t = useT();
+  const { settings } = useSettings();
+  const dark = settings.theme === 'dark';
   const [minimapOpen, setMinimapOpen] = useState(!easyMode);
 
   useEffect(() => {
@@ -262,45 +264,47 @@ function TreeCanvas({
       onInit={handleInit}
       minZoom={0.08}
       maxZoom={2.25}
-      className={easyMode ? 'tree-easy' : undefined}
+      className={`family-tree-canvas ${easyMode ? 'tree-easy' : ''} ${dark ? 'family-tree-canvas--dark' : 'family-tree-canvas--light'}`}
       nodesDraggable={false}
       nodesConnectable={false}
       nodesFocusable={false}
       edgesFocusable={false}
       zoomOnDoubleClick={false}
+      panOnScroll
       proOptions={{ hideAttribution: true }}
     >
       <Background
-        variant={BackgroundVariant.Dots}
-        gap={32}
-        size={1}
-        className="!text-stone-300 dark:!text-stone-700"
+        id="tree-grid"
+        variant={BackgroundVariant.Cross}
+        gap={28}
+        size={1.25}
+        color={dark ? 'rgba(168, 162, 158, 0.14)' : 'rgba(120, 113, 108, 0.18)'}
       />
       {!easyMode && (
         <Panel
           position="top-left"
-          className="hidden rounded-xl border border-stone-200 bg-white/90 p-3 text-xs shadow-sm backdrop-blur sm:block dark:border-stone-700 dark:bg-stone-900/90"
+          className="!m-2 hidden rounded-xl border border-stone-200/80 bg-white/95 p-2.5 text-[11px] shadow-sm backdrop-blur sm:!m-3 sm:block dark:border-stone-700/80 dark:bg-stone-900/95"
         >
-          <p className="mb-1.5 font-semibold text-stone-700 dark:text-stone-200">
+          <p className="mb-1 font-semibold text-stone-700 dark:text-stone-200">
             {t('tree.legendTitle')}
           </p>
-          <ul className="space-y-1.5 text-stone-600 dark:text-stone-300">
+          <ul className="space-y-1 text-stone-600 dark:text-stone-300">
             <li className="flex items-center gap-2">
               <span
                 aria-hidden
-                className="inline-block h-0.5 w-6 rounded bg-rose-400 dark:bg-rose-600"
+                className="inline-block h-0.5 w-5 rounded bg-rose-400 dark:bg-rose-500"
               />
               {t('tree.legendMarried')}
             </li>
             <li className="flex items-center gap-2">
-              <svg width="24" height="2" aria-hidden className="shrink-0">
+              <svg width="20" height="2" aria-hidden className="shrink-0">
                 <line
                   x1="0"
                   y1="1"
-                  x2="24"
+                  x2="20"
                   y2="1"
                   strokeWidth="2"
-                  strokeDasharray="2 5"
+                  strokeDasharray="2 4"
                   className="stroke-stone-400 dark:stroke-stone-500"
                 />
               </svg>
@@ -308,9 +312,9 @@ function TreeCanvas({
             </li>
             <li className="flex items-center gap-2">
               <span aria-hidden className="flex items-center">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                <span className="inline-block h-0.5 w-4 bg-emerald-500" />
-                <span className="-ml-px inline-block border-y-4 border-l-[6px] border-y-transparent border-l-emerald-500" />
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="inline-block h-0.5 w-3 bg-emerald-500" />
+                <span className="-ml-px inline-block border-y-[3px] border-l-[5px] border-y-transparent border-l-emerald-500" />
               </span>
               {t('tree.legendChildren')}
             </li>
@@ -320,13 +324,13 @@ function TreeCanvas({
       {tipVisible && (
         <Panel
           position="top-center"
-          className="max-w-md rounded-xl border border-emerald-200 bg-white/95 p-3 text-sm shadow-sm backdrop-blur dark:border-emerald-800 dark:bg-stone-900/95"
+          className="!m-2 max-w-[min(100%-1rem,20rem)] rounded-xl border border-emerald-200/80 bg-white/95 px-2.5 py-2 text-xs shadow-sm backdrop-blur sm:!m-3 sm:max-w-md sm:p-3 sm:text-sm dark:border-emerald-800/80 dark:bg-stone-900/95"
         >
           <div className="flex items-start gap-2">
-            <p className="flex-1 text-stone-700 dark:text-stone-200">{t('tree.tip')}</p>
+            <p className="flex-1 leading-snug text-stone-700 dark:text-stone-200">{t('tree.tip')}</p>
             <button
               type="button"
-              className="icon-btn shrink-0"
+              className="icon-btn !h-8 !w-8 shrink-0"
               onClick={dismissTip}
               aria-label={t('common.close')}
             >
@@ -335,39 +339,36 @@ function TreeCanvas({
           </div>
         </Panel>
       )}
-      <Panel position="top-right" className="flex flex-col gap-1.5 !m-3">
+      <Panel position="top-right" className="!m-2 flex gap-1.5 sm:!m-3 sm:flex-col">
         <button
           type="button"
-          className="btn-secondary !text-xs"
+          className="rounded-xl border border-stone-200/90 bg-white/95 px-2.5 py-2 text-xs font-semibold text-stone-700 shadow-sm backdrop-blur hover:border-emerald-400 hover:text-emerald-800 dark:border-stone-700 dark:bg-stone-900/95 dark:text-stone-200 dark:hover:border-emerald-600 dark:hover:text-emerald-300"
           onClick={() => focusTopOfTree()}
         >
           {t('tree.zoomReadable')}
         </button>
         <button
           type="button"
-          className="btn-secondary !text-xs"
+          className="rounded-xl border border-stone-200/90 bg-white/95 px-2.5 py-2 text-xs font-semibold text-stone-700 shadow-sm backdrop-blur hover:border-emerald-400 hover:text-emerald-800 dark:border-stone-700 dark:bg-stone-900/95 dark:text-stone-200 dark:hover:border-emerald-600 dark:hover:text-emerald-300"
           onClick={() => fitView({ padding: 0.16, duration: 500, maxZoom: startZoom })}
         >
           {t('tree.fitTree')}
         </button>
       </Panel>
-      <Panel position="bottom-left" className="!m-3 !mb-20 lg:!mb-3">
+      <Panel position="bottom-left" className="!m-3 !mb-20 hidden sm:block lg:!mb-3">
         <MadeByKadir align="left" />
       </Panel>
       <Controls
         showInteractive={false}
         position="bottom-right"
-        className={`!mb-16 lg:!mb-0 ${easyMode ? 'tree-controls-easy' : ''}`}
+        className={`family-tree-controls !mb-[4.75rem] !mr-2 overflow-hidden rounded-xl border border-stone-200/90 shadow-md sm:!mb-16 lg:!mb-3 lg:!mr-3 ${easyMode ? 'tree-controls-easy' : ''}`}
       />
 
-      {/* Collapsible minimap: a toggle sits at the bottom-right corner; the map
-          floats just above it and can be hidden to free up canvas. Hidden on
-          phones where it would crowd the view. */}
       <Panel position="bottom-right" className="!bottom-16 !right-3 hidden md:block lg:!bottom-16">
         <button
           type="button"
           onClick={() => setMinimapOpen((v) => !v)}
-          className="flex items-center gap-1.5 rounded-lg border border-stone-300 bg-white/90 px-2.5 py-1.5 text-xs font-semibold text-stone-600 shadow-sm backdrop-blur transition-colors hover:border-emerald-400 hover:text-emerald-700 dark:border-stone-600 dark:bg-stone-800/90 dark:text-stone-300"
+          className="flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white/95 px-2.5 py-1.5 text-xs font-semibold text-stone-600 shadow-sm backdrop-blur transition-colors hover:border-emerald-400 hover:text-emerald-700 dark:border-stone-600 dark:bg-stone-800/95 dark:text-stone-300"
           aria-pressed={minimapOpen}
         >
           <Map className="h-3.5 w-3.5" aria-hidden />
@@ -376,12 +377,12 @@ function TreeCanvas({
       </Panel>
       {minimapOpen && (
         <MiniMap
-          className="!hidden !bottom-24 md:!block"
+          className="!hidden !bottom-24 !overflow-hidden !rounded-xl !border !border-stone-200 md:!block dark:!border-stone-700"
           pannable
           zoomable
-          nodeStrokeWidth={4}
-          nodeColor="#a8a29e"
-          maskColor="rgb(120 113 108 / 0.15)"
+          nodeStrokeWidth={3}
+          nodeColor={dark ? '#78716c' : '#a8a29e'}
+          maskColor={dark ? 'rgb(0 0 0 / 0.45)' : 'rgb(68 64 60 / 0.12)'}
         />
       )}
     </ReactFlow>
@@ -587,34 +588,44 @@ export function TreePage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="border-b border-stone-200 bg-white px-4 py-3 dark:border-stone-800 dark:bg-stone-900">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2">
+      <div className="border-b border-stone-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3 dark:border-stone-800 dark:bg-stone-900">
+        <div className="mx-auto flex max-w-[1600px] flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <TreeSearch onSelect={focusPerson} large />
 
-          <div className="ml-auto flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-1.5 sm:ml-auto">
             <button
               type="button"
-              className="btn-secondary"
+              className="icon-btn !min-h-10 !min-w-10 sm:hidden"
+              disabled={exportBusy || flowNodes.length === 0}
+              onClick={() => void runExport('share')}
+              title={t('tree.shareTitle')}
+              aria-label={t('tree.share')}
+            >
+              <Share2 className="h-4 w-4" aria-hidden />
+            </button>
+            <button
+              type="button"
+              className="btn-secondary !hidden !min-h-10 sm:!inline-flex"
               disabled={exportBusy || flowNodes.length === 0}
               onClick={() => void runExport('png')}
               title={t('tree.pngTitle')}
             >
               <Download className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">{t('tree.png')}</span>
+              <span className="hidden md:inline">{t('tree.png')}</span>
             </button>
             <button
               type="button"
-              className="btn-secondary"
+              className="btn-secondary !hidden !min-h-10 md:!inline-flex"
               disabled={exportBusy || flowNodes.length === 0}
               onClick={() => void runExport('print')}
               title={t('tree.printTitle')}
             >
               <Printer className="h-4 w-4" aria-hidden />
-              <span className="hidden md:inline">{t('tree.print')}</span>
+              <span className="hidden lg:inline">{t('tree.print')}</span>
             </button>
             <button
               type="button"
-              className="btn-secondary"
+              className="btn-secondary !hidden !min-h-10 sm:!inline-flex"
               disabled={exportBusy || flowNodes.length === 0}
               onClick={() => void runExport('share')}
               title={t('tree.shareTitle')}
@@ -625,23 +636,24 @@ export function TreePage() {
             {!editMode && (
               <button
                 type="button"
-                className="btn-secondary"
+                className="icon-btn !min-h-10 !min-w-10 sm:!min-w-0 sm:!w-auto sm:!gap-1.5 sm:!px-3 sm:!text-sm"
                 onClick={() => setJoinOpen(true)}
                 title={t('tree.addYourselfTitle')}
+                aria-label={t('tree.addYourself')}
               >
                 <UserRoundPlus className="h-4 w-4" aria-hidden />
                 <span className="hidden sm:inline">{t('tree.addYourself')}</span>
               </button>
             )}
             {editMode && (
-              <button type="button" className="btn-primary" onClick={() => setForm({})}>
+              <button type="button" className="btn-primary !min-h-10" onClick={() => setForm({})}>
                 <UserPlus className="h-4 w-4" aria-hidden />
-                {t('tree.addPerson')}
+                <span className="hidden sm:inline">{t('tree.addPerson')}</span>
               </button>
             )}
             <button
               type="button"
-              className={editMode ? 'btn-primary' : 'btn-secondary'}
+              className={`${editMode ? 'btn-primary' : 'btn-secondary'} !min-h-10 !px-2.5 sm:!px-3`}
               onClick={() => {
                 if (!canEdit) setUnlockOpen(true);
                 else setEditMode((on) => !on);
@@ -660,20 +672,24 @@ export function TreePage() {
           </div>
         </div>
         {branchRoot && (
-          <div className="mx-auto mt-2 flex max-w-[1600px] flex-wrap items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
-            <GitBranch className="h-4 w-4 shrink-0" aria-hidden />
-            <span className="min-w-0 flex-1 font-medium">
+          <div className="mx-auto mt-2 flex max-w-[1600px] items-center gap-2 rounded-xl bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-900 sm:px-3 sm:py-2 sm:text-sm dark:bg-emerald-950/40 dark:text-emerald-100">
+            <GitBranch className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
+            <span className="min-w-0 flex-1 truncate font-medium">
               {t('tree.focusBanner', { name: fullName(branchRoot) })}
             </span>
-            <button type="button" className="btn-secondary !py-1 !text-xs" onClick={() => setBranchRootId(null)}>
+            <button
+              type="button"
+              className="shrink-0 rounded-lg border border-emerald-200 bg-white/80 px-2 py-1 text-xs font-semibold dark:border-emerald-800 dark:bg-stone-900/60"
+              onClick={() => setBranchRootId(null)}
+            >
               {t('tree.focusClear')}
             </button>
           </div>
         )}
       </div>
 
-      <div className="relative min-h-[420px] flex-1" style={{ height: 'calc(100dvh - 12rem)' }}>
-        <div className="absolute inset-0 bg-slate-300 dark:bg-stone-950">
+      <div className="relative min-h-0 flex-1" style={{ minHeight: 'calc(100dvh - 11rem)' }}>
+        <div className="absolute inset-0 bg-stone-100 dark:bg-stone-950">
           <TreeInteractionContext.Provider value={interaction}>
             <ReactFlowProvider>
               <TreeCanvas

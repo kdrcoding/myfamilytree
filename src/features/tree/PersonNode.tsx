@@ -56,12 +56,12 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
         onClick={() => onOpen(person.id)}
         aria-label={t('tree.openDetails', { name })}
         title={name}
-        className={`flex h-full w-full items-center gap-2.5 rounded-xl border border-l-4 bg-white px-3 text-left shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-emerald-500 dark:bg-stone-900 ${
+        className={`flex h-full w-full items-center gap-2.5 rounded-xl border border-l-4 bg-white px-3 text-left shadow-sm ring-1 ring-stone-900/5 transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-500 dark:bg-stone-900 dark:ring-white/5 dark:hover:shadow-black/40 ${
           GENDER_ACCENT[person.gender]
         } ${
           person.isDeceased
             ? 'border-dashed border-stone-400 dark:border-stone-600'
-            : 'border-stone-300 dark:border-stone-700'
+            : 'border-stone-200 dark:border-stone-700'
         }`}
       >
         <Avatar person={person} size="sm" />

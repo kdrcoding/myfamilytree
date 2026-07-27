@@ -15,7 +15,7 @@ function GenLabelNodeComponent({ data }: NodeProps) {
   const align = orientation === 'horizontal' ? 'justify-center' : 'justify-end';
   return (
     <div className={`pointer-events-none flex h-8 w-full items-center ${align} pr-3`}>
-      <span className="rounded-full border border-stone-300 bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-wider text-stone-600 shadow-sm backdrop-blur dark:border-stone-600 dark:bg-stone-800/90 dark:text-stone-300">
+      <span className="rounded-full border border-stone-200/90 bg-white/95 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-stone-500 shadow-sm backdrop-blur dark:border-stone-600 dark:bg-stone-800/95 dark:text-stone-300">
         {t('tree.generationN', { n: generation })}
       </span>
     </div>
