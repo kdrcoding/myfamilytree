@@ -13,13 +13,10 @@ import { CARD_H, CARD_W } from './layout';
 import type { PersonFlowNode } from './layout';
 import { useTreeInteraction } from './TreeInteractionContext';
 
-// Softer left-border accents: the gender is still signalled, but the strong
-// saturated bar is toned down so a wall of cards reads calmly. The clear
-// gender ICON on the card carries the primary signal.
 const GENDER_ACCENT = {
-  male: 'border-l-sky-300 dark:border-l-sky-700/70',
-  female: 'border-l-rose-300 dark:border-l-rose-700/70',
-  unspecified: 'border-l-violet-300 dark:border-l-violet-700/70',
+  male: 'border-l-sky-400 dark:border-l-sky-600',
+  female: 'border-l-rose-400 dark:border-l-rose-600',
+  unspecified: 'border-l-violet-400 dark:border-l-violet-600',
 };
 
 const HANDLE = '!h-1.5 !w-1.5 !min-h-0 !min-w-0 !border-0 !bg-transparent';
@@ -57,7 +54,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
         onClick={() => onOpen(person.id)}
         aria-label={t('tree.openDetails', { name })}
         title={name}
-        className={`flex h-full w-full items-center gap-2.5 rounded-xl border border-l-4 bg-white px-3 text-left shadow-sm ring-1 ring-stone-900/5 transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-500 dark:bg-stone-900 dark:ring-white/5 dark:hover:shadow-black/40 ${
+        className={`flex h-full w-full items-center gap-2.5 rounded-xl border border-l-4 bg-white px-3 text-left shadow-[0_1px_3px_0_rgb(0_0_0_0.06)] ring-1 ring-stone-900/5 transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-500 active:translate-y-0 dark:bg-stone-900 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.3)] dark:ring-white/5 dark:hover:shadow-lg dark:hover:shadow-black/40 ${
           GENDER_ACCENT[person.gender]
         } ${
           person.isDeceased
@@ -148,7 +145,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
               ? t('tree.expandBranch', { n: data.hiddenCount })
               : t('tree.collapseBranch')
           }
-          className="absolute -bottom-3.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border border-stone-300 bg-white px-2 py-0.5 text-[10px] font-semibold text-stone-600 shadow-sm transition-colors hover:border-emerald-400 hover:text-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300"
+          className="absolute -bottom-3.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border border-stone-300 bg-white px-2 py-0.5 text-[10px] font-semibold text-stone-600 shadow-sm transition-all hover:border-emerald-400 hover:text-emerald-700 hover:shadow focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300 dark:hover:border-emerald-500"
         >
           {data.collapsed ? (
             <>

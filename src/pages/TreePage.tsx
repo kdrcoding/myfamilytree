@@ -11,7 +11,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import type { Edge, EdgeTypes, Node, NodeTypes, ReactFlowInstance } from '@xyflow/react';
-import { Lock, LockOpen, Map, Search, UserPlus, UserRoundPlus, X, Download, Printer, Share2 } from 'lucide-react';
+import { Lock, LockOpen, Map, Maximize2, Search, UserPlus, UserRoundPlus, X, Download, Printer, Share2, ZoomIn } from 'lucide-react';
 import type { FamilyPerson, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -95,7 +95,7 @@ function TreeSearch({
         aria-expanded={open && results.length > 0}
         aria-label={t('tree.searchLabel')}
         placeholder={t(large ? 'tree.searchPlaceholderEasy' : 'tree.searchPlaceholder')}
-        className={`input ${large ? '!py-3.5 !pl-11 !pr-10 !text-base' : '!pl-9'}`}
+        className={`tree-search-input ${large ? '!py-3.5 !pl-11 !pr-10 !text-base' : '!pl-9'}`}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -136,7 +136,7 @@ function TreeSearch({
         </button>
       )}
       {open && query.trim() && (
-        <ul className="absolute z-30 mt-1 max-h-80 w-full overflow-y-auto rounded-xl border border-stone-200 bg-white p-1 shadow-lg dark:border-stone-700 dark:bg-stone-900">
+        <ul className="tree-search-dropdown">
           {results.length === 0 && (
             <li className={`px-3 py-2 text-stone-400 ${large ? 'text-base' : 'text-sm'}`}>
               {t('tree.noMatch', { q: query })}
@@ -146,9 +146,7 @@ function TreeSearch({
             <li key={p.id}>
               <button
                 type="button"
-                className={`flex w-full items-center gap-3 rounded-lg px-3 text-left hover:bg-emerald-50 dark:hover:bg-emerald-950/50 ${
-                  large ? 'py-3' : 'py-2'
-                } ${i === activeIndex ? 'bg-emerald-50 dark:bg-emerald-950/50' : ''}`}
+                className={`tree-search-result ${large ? 'py-3' : 'py-2'} ${i === activeIndex ? 'bg-emerald-50 dark:bg-emerald-950/50' : ''}`}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => select(p)}
               >
@@ -287,75 +285,78 @@ function TreeCanvas({
       {!easyMode && (
         <Panel
           position="top-left"
-          className="!m-2 hidden rounded-xl border border-stone-200/80 bg-white/95 p-2.5 text-[11px] shadow-sm backdrop-blur sm:!m-3 sm:block dark:border-stone-700/80 dark:bg-stone-900/95"
+          className="!m-2 hidden sm:!m-3 sm:block"
         >
-          <p className="mb-1 font-semibold text-stone-700 dark:text-stone-200">
-            {t('tree.legendTitle')}
-          </p>
-          <ul className="space-y-1 text-stone-600 dark:text-stone-300">
-            <li className="flex items-center gap-2">
-              <span
-                aria-hidden
-                className="inline-block h-0.5 w-5 rounded bg-rose-400 dark:bg-rose-500"
-              />
-              {t('tree.legendMarried')}
-            </li>
-            <li className="flex items-center gap-2">
-              <svg width="20" height="2" aria-hidden className="shrink-0">
-                <line
-                  x1="0"
-                  y1="1"
-                  x2="20"
-                  y2="1"
-                  strokeWidth="2"
-                  strokeDasharray="2 4"
-                  className="stroke-stone-400 dark:stroke-stone-500"
+          <div className="tree-legend">
+            <p className="mb-1.5 font-semibold text-stone-700 dark:text-stone-200">
+              {t('tree.legendTitle')}
+            </p>
+            <ul className="space-y-1.5 text-stone-600 dark:text-stone-300">
+              <li className="flex items-center gap-2">
+                <span
+                  aria-hidden
+                  className="inline-block h-0.5 w-5 rounded bg-rose-400 dark:bg-rose-500"
                 />
-              </svg>
-              {t('tree.legendDivorced')}
-            </li>
-            <li className="flex items-center gap-2">
-              <span aria-hidden className="flex items-center">
-                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="inline-block h-0.5 w-3 bg-emerald-500" />
-                <span className="-ml-px inline-block border-y-[3px] border-l-[5px] border-y-transparent border-l-emerald-500" />
-              </span>
-              {t('tree.legendChildren')}
-            </li>
-          </ul>
+                <span>{t('tree.legendMarried')}</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <svg width="20" height="2" aria-hidden className="shrink-0">
+                  <line
+                    x1="0"
+                    y1="1"
+                    x2="20"
+                    y2="1"
+                    strokeWidth="2"
+                    strokeDasharray="2 4"
+                    className="stroke-stone-400 dark:stroke-stone-500"
+                  />
+                </svg>
+                <span>{t('tree.legendDivorced')}</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <span aria-hidden className="flex items-center">
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="inline-block h-0.5 w-3 bg-emerald-500" />
+                  <span className="-ml-px inline-block border-y-[3px] border-l-[5px] border-y-transparent border-l-emerald-500" />
+                </span>
+                <span>{t('tree.legendChildren')}</span>
+              </li>
+            </ul>
+          </div>
         </Panel>
       )}
       {tipVisible && (
-        <Panel
-          position="top-center"
-          className="!m-2 max-w-[min(100%-1rem,20rem)] rounded-xl border border-emerald-200/80 bg-white/95 px-2.5 py-2 text-xs shadow-sm backdrop-blur sm:!m-3 sm:max-w-md sm:p-3 sm:text-sm dark:border-emerald-800/80 dark:bg-stone-900/95"
-        >
-          <div className="flex items-start gap-2">
-            <p className="flex-1 leading-snug text-stone-700 dark:text-stone-200">{t('tree.tip')}</p>
-            <button
-              type="button"
-              className="icon-btn !h-8 !w-8 shrink-0"
-              onClick={dismissTip}
-              aria-label={t('common.close')}
-            >
-              <X className="h-4 w-4" aria-hidden />
-            </button>
+        <Panel position="top-center" className="!m-2 sm:!m-3">
+          <div className="tree-tip">
+            <div className="flex items-start gap-2">
+              <p className="flex-1 leading-snug text-stone-700 dark:text-stone-200">{t('tree.tip')}</p>
+              <button
+                type="button"
+                className="icon-btn !h-8 !w-8 shrink-0"
+                onClick={dismissTip}
+                aria-label={t('common.close')}
+              >
+                <X className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
           </div>
         </Panel>
       )}
       <Panel position="top-right" className="!m-2 flex gap-1.5 sm:!m-3 sm:flex-col">
         <button
           type="button"
-          className="rounded-xl border border-stone-200/90 bg-white/95 px-2.5 py-2 text-xs font-semibold text-stone-700 shadow-sm backdrop-blur hover:border-emerald-400 hover:text-emerald-800 dark:border-stone-700 dark:bg-stone-900/95 dark:text-stone-200 dark:hover:border-emerald-600 dark:hover:text-emerald-300"
+          className="tree-action-btn inline-flex items-center gap-1.5"
           onClick={() => focusTopOfTree()}
         >
+          <ZoomIn className="h-3.5 w-3.5" aria-hidden />
           {t('tree.zoomReadable')}
         </button>
         <button
           type="button"
-          className="rounded-xl border border-stone-200/90 bg-white/95 px-2.5 py-2 text-xs font-semibold text-stone-700 shadow-sm backdrop-blur hover:border-emerald-400 hover:text-emerald-800 dark:border-stone-700 dark:bg-stone-900/95 dark:text-stone-200 dark:hover:border-emerald-600 dark:hover:text-emerald-300"
+          className="tree-action-btn inline-flex items-center gap-1.5"
           onClick={() => fitView({ padding: 0.16, duration: 500, maxZoom: startZoom })}
         >
+          <Maximize2 className="h-3.5 w-3.5" aria-hidden />
           {t('tree.fitTree')}
         </button>
       </Panel>
@@ -368,11 +369,11 @@ function TreeCanvas({
         className={`family-tree-controls !mb-[4.75rem] !mr-2 overflow-hidden rounded-xl border border-stone-200/90 shadow-md sm:!mb-16 lg:!mb-3 lg:!mr-3 ${easyMode ? 'tree-controls-easy' : ''}`}
       />
 
-      <Panel position="bottom-right" className="!bottom-16 !right-3 hidden md:block lg:!bottom-16">
+      <Panel position="bottom-right" className="!bottom-16 !right-3 hidden md:block">
         <button
           type="button"
           onClick={() => setMinimapOpen((v) => !v)}
-          className="flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white/95 px-2.5 py-1.5 text-xs font-semibold text-stone-600 shadow-sm backdrop-blur transition-colors hover:border-emerald-400 hover:text-emerald-700 dark:border-stone-600 dark:bg-stone-800/95 dark:text-stone-300"
+          className="tree-action-btn inline-flex items-center gap-1.5 px-2.5 py-1.5"
           aria-pressed={minimapOpen}
         >
           <Map className="h-3.5 w-3.5" aria-hidden />
@@ -381,7 +382,7 @@ function TreeCanvas({
       </Panel>
       {minimapOpen && (
         <MiniMap
-          className="!hidden !bottom-24 !overflow-hidden !rounded-xl !border !border-stone-200 md:!block dark:!border-stone-700"
+          className="!hidden !bottom-24 !overflow-hidden !rounded-xl !border !border-stone-200 !shadow-md md:!block dark:!border-stone-700"
           pannable
           zoomable
           nodeStrokeWidth={3}
@@ -579,7 +580,7 @@ export function TreePage() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="border-b border-stone-200 bg-white px-3 py-2.5 sm:px-4 sm:py-3 dark:border-stone-800 dark:bg-stone-900">
+      <div className="tree-page-toolbar">
         <div className="mx-auto flex max-w-[1600px] flex-col gap-2 sm:flex-row sm:items-center">
           <TreeSearch onSelect={focusPerson} large />
 
@@ -644,7 +645,7 @@ export function TreePage() {
       </div>
 
       <div className="relative min-h-0 flex-1" style={{ minHeight: 'calc(100dvh - 11rem)' }}>
-        <div className="absolute inset-0 bg-stone-100 dark:bg-stone-950">
+        <div className="absolute inset-0 bg-stone-50 dark:bg-stone-950">
           <TreeInteractionContext.Provider value={interaction}>
             <ReactFlowProvider>
               <TreeCanvas
@@ -704,10 +705,12 @@ export function TreePage() {
 function EmptyTreeState({ onAdd, children }: { onAdd: () => void; children?: React.ReactNode }) {
   const t = useT();
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-      <BrandMark size="lg" className="!h-14 !w-14" />
-      <h1 className="text-xl font-semibold">{t('tree.emptyTitle')}</h1>
-      <p className="max-w-md text-sm text-stone-500 dark:text-stone-400">{t('tree.emptyText')}</p>
+    <div className="tree-empty">
+      <BrandMark size="lg" className="!h-16 !w-16 !rounded-[1.35rem] shadow-lg ring-1 ring-stone-900/5 dark:ring-white/10" />
+      <div>
+        <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">{t('tree.emptyTitle')}</h1>
+        <p className="mt-2 max-w-md text-sm text-stone-500 dark:text-stone-400">{t('tree.emptyText')}</p>
+      </div>
       <button type="button" className="btn-primary" onClick={onAdd}>
         <UserPlus className="h-4 w-4" aria-hidden /> {t('tree.emptyBtn')}
       </button>
