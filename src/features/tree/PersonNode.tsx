@@ -54,7 +54,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
         onClick={() => onOpen(person.id)}
         aria-label={t('tree.openDetails', { name })}
         title={name}
-        className={`flex h-full w-full items-center gap-2.5 rounded-xl border border-l-4 bg-white px-3 text-left shadow-[0_1px_3px_0_rgb(0_0_0_0.06)] ring-1 ring-stone-900/5 transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-500 active:translate-y-0 dark:bg-stone-900 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.3)] dark:ring-white/5 dark:hover:shadow-lg dark:hover:shadow-black/40 ${
+        className={`tree-person-card flex h-full w-full items-center gap-2.5 rounded-xl border border-l-4 bg-white px-3 text-left shadow-[0_1px_3px_0_rgb(0_0_0_0.06)] ring-1 ring-stone-900/5 transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-500 active:translate-y-0 dark:bg-stone-900 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.3)] dark:ring-white/5 dark:hover:shadow-lg dark:hover:shadow-black/40 ${
           GENDER_ACCENT[person.gender]
         } ${
           person.isDeceased
@@ -65,7 +65,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
         <Avatar person={person} size="sm" />
         <span className="min-w-0 flex-1">
           <span
-            className="block text-[15px] font-semibold leading-tight text-stone-900 dark:text-stone-100"
+            className="tree-person-name block text-[15px] font-semibold leading-tight text-stone-900 dark:text-stone-100"
             style={{
               display: '-webkit-box',
               WebkitLineClamp: 2,
@@ -76,9 +76,9 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
             {name}
           </span>
           {person.nickname && (
-            <span className="block truncate text-[13px] text-stone-400">“{person.nickname}”</span>
+            <span className="tree-person-meta block truncate text-[13px] text-stone-400">“{person.nickname}”</span>
           )}
-          <span className="block truncate text-[13px] text-stone-500 dark:text-stone-400">
+          <span className="tree-person-meta block truncate text-[13px] text-stone-500 dark:text-stone-400">
             {years || getLabel(person)}
           </span>
           <span className="mt-1 flex gap-1">
@@ -145,7 +145,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
               ? t('tree.expandBranch', { n: data.hiddenCount })
               : t('tree.collapseBranch')
           }
-          className="absolute -bottom-3.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border border-stone-300 bg-white px-2 py-0.5 text-[10px] font-semibold text-stone-600 shadow-sm transition-all hover:border-emerald-400 hover:text-emerald-700 hover:shadow focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300 dark:hover:border-emerald-500"
+          className="tree-branch-toggle absolute -bottom-3.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border border-stone-300 bg-white px-2 py-0.5 text-[10px] font-semibold text-stone-600 shadow-sm transition-all hover:border-emerald-400 hover:text-emerald-700 hover:shadow focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300 dark:hover:border-emerald-500"
         >
           {data.collapsed ? (
             <>

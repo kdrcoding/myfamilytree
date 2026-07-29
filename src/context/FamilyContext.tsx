@@ -12,7 +12,7 @@ import { useToast } from './ToastContext';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { logChange, summarizeFamilyChange } from '../lib/auditLog';
 import type { AuditAction } from '../lib/auditLog';
-import { autoBackup } from '../lib/backups';
+import { autoBackup, forceBackup } from '../lib/backups';
 import { diffFamily, fetchFamily, isEmptyDiff, markSeeded, pushDiff } from '../lib/familyDb';
 import { normalizeCountry } from '../utils/countries';
 import { validateFamilyData } from '../utils/validation';
@@ -46,14 +46,14 @@ interface FamilyContextValue {
   updatePerson: (person: FamilyPerson, parentIds: string[], spouseIds: string[]) => void;
   /** Mark or unmark a couple as divorced (they stay linked as ex-spouses). */
   setDivorcedStatus: (aId: string, bId: string, divorced: boolean) => void;
-  deletePerson: (id: string) => void;
-  replaceAll: (people: FamilyPerson[]) => void;
+  deletePerson: (id: string) => Promise<boolean>;
+  replaceAll: (people: FamilyPerson[]) => Promise<boolean>;
   /** Owner tool: replace many members' photo values in one save (migration). */
   bulkSetPhotos: (updates: Record<string, string>) => Promise<boolean>;
   /** Owner tool: snap every recognisable country spelling to the canonical one. */
   normalizeAllCountries: () => Promise<boolean>;
   /** Explicit setup action: fill the database with the bundled dataset. */
-  resetToSample: () => void;
+  resetToSample: () => Promise<boolean>;
   exportData: () => FamilyData;
 }
 
@@ -198,12 +198,21 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
       if (isEmptyDiff(diff)) return Promise.resolve(true);
       const summary = summarizeFamilyChange(prev, next);
       pendingPushes.current += 1;
-      const pushed = pushQueue.current.then(() =>
-        pushDiff(diff).then(() => {
+      const destructive = action === 'delete' || action === 'import' || action === 'reset';
+      const pushed = pushQueue.current.then(async () => {
+        if (destructive && isOwner) {
+          try {
+            await forceBackup();
+          } catch (error) {
+            // Older installations may not have the backup migration yet.
+            console.error('Pre-change backup failed:', error);
+          }
+        }
+        return pushDiff(diff).then(() => {
           if (summary) logChange(action, summary);
           return true;
-        }),
-      );
+        });
+      });
       pushQueue.current = pushed
         .catch(() => undefined)
         .finally(() => {
@@ -228,7 +237,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         return false;
       });
     },
-    [toast, language, load],
+    [toast, language, load, isOwner],
   );
 
   const index = useMemo(() => buildIndex(people), [people]);
@@ -292,8 +301,8 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         if (!isOwner) return;
         void mutate((current) => setDivorced(current, aId, bId, divorced), 'divorce');
       },
-      deletePerson: (id) => void mutate((current) => removePerson(current, id), 'delete'),
-      replaceAll: (newPeople) => void mutate(() => normalizePeople(newPeople), 'import'),
+      deletePerson: (id) => mutate((current) => removePerson(current, id), 'delete'),
+      replaceAll: (newPeople) => mutate(() => normalizePeople(newPeople), 'import'),
       bulkSetPhotos: (updates) =>
         mutate(
           (current) =>
@@ -311,11 +320,11 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
             }),
           'edit',
         ),
-      resetToSample: () => {
-        void mutate(() => DEFAULT_DATA, 'reset').then((saved) => {
+      resetToSample: () =>
+        mutate(() => DEFAULT_DATA, 'reset').then((saved) => {
           if (saved) void markSeeded('default-dataset');
-        });
-      },
+          return saved;
+        }),
       exportData: () => ({
         version: FAMILY_DATA_VERSION,
         exportedAt: new Date().toISOString(),

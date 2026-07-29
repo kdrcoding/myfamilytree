@@ -451,7 +451,10 @@ export function SettingsPage() {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const privacy = settings.privacy;
-  const easy = role !== 'owner' && Boolean(settings.easyMode);
+  // The switch reflects the user's actual accessibility preference. Owners
+  // still keep every administrative section visible while Easy Mode is on.
+  const easy = Boolean(settings.easyMode);
+  const hideAdvanced = role !== 'owner' && easy && !showAdvanced;
   const roleLabel =
     role === 'owner'
       ? t('settings.roleOwner')
@@ -561,7 +564,7 @@ export function SettingsPage() {
         </div>
       </section>
 
-      {easy && !showAdvanced && (
+      {hideAdvanced && (
         <button
           type="button"
           className="btn-secondary mt-4 w-full"
@@ -571,7 +574,7 @@ export function SettingsPage() {
         </button>
       )}
 
-      {(!easy || showAdvanced) && (
+      {!hideAdvanced && (
         <>
       {/* Privacy — owner-only: controls what the whole family's data hides publicly. */}
       {canDelete && (
@@ -750,7 +753,7 @@ export function SettingsPage() {
 
       {canDelete && <JoinRequestsCard />}
       {canDelete && <ChangeLogCard />}
-      {(!easy || showAdvanced) && (
+      {!hideAdvanced && (
         <>
           {canDelete && <BackupsCard />}
           {canDelete && <PhotosCard />}

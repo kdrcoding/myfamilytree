@@ -98,7 +98,8 @@ export function useDataTransfer() {
         danger: true,
       });
       if (!proceed) return;
-      replaceAll(result.data.people);
+      const saved = await replaceAll(result.data.people);
+      if (!saved) return;
       toast(t('data.imported', { n: result.data.people.length }));
     },
     [addPerson, confirm, isOwner, people, replaceAll, toast, t],
@@ -116,7 +117,8 @@ export function useDataTransfer() {
       danger: true,
     });
     if (!proceed) return;
-    resetToSample();
+    const saved = await resetToSample();
+    if (!saved) return;
     toast(t('data.restored'));
   }, [confirm, isOwner, resetToSample, toast, t]);
 

@@ -4,6 +4,7 @@ import { ImagePlus, Search, X } from 'lucide-react';
 import type { FamilyPerson, Gender, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useFamily } from '../context/FamilyContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
 import type { TKey } from '../i18n/translations';
@@ -30,6 +31,8 @@ interface PersonFormModalProps {
    * approve — the person is not added to the live tree until then.
    */
   selfJoin?: boolean;
+  /** Return to the previous step of a multi-step creation flow. */
+  onBack?: () => void;
   onClose: () => void;
   onSaved?: (id: string) => void;
 }
@@ -321,11 +324,13 @@ export function PersonFormModal({
   person,
   link,
   selfJoin,
+  onBack,
   onClose,
   onSaved,
 }: PersonFormModalProps) {
   const { people, index, getPerson, addPerson, updatePerson } = useFamily();
   const { canDelete: isOwner } = useAuth();
+  const confirm = useConfirm();
   const { toast } = useToast();
   const t = useT();
   const language = useLanguage();
@@ -540,6 +545,29 @@ export function PersonFormModal({
       biography: values.biography.trim() || undefined,
     };
 
+    if (!isEdit) {
+      const normalizedName = `${trimmed.firstName} ${trimmed.lastName}`.trim().toLocaleLowerCase();
+      const duplicate = people.find((candidate) => {
+        const candidateName = `${candidate.firstName} ${candidate.lastName}`
+          .trim()
+          .toLocaleLowerCase();
+        return (
+          normalizedName.length > 0 &&
+          candidateName === normalizedName &&
+          Boolean(trimmed.birthDate) &&
+          trimmed.birthDate === candidate.birthDate
+        );
+      });
+      if (duplicate) {
+        const proceed = await confirm({
+          title: t('form.duplicateTitle'),
+          message: t('form.duplicateMessage', { name: fullName(duplicate) }),
+          confirmLabel: t('form.duplicateContinue'),
+        });
+        if (!proceed) return false;
+      }
+    }
+
     // The change is about to be committed to app state (FamilyContext handles
     // the database write, retry and rollback); the recovery draft is done.
     clearDraft();
@@ -588,7 +616,8 @@ export function PersonFormModal({
           return false;
         }
       } else {
-        addPerson(newPerson, effectiveLink);
+        const saved = await addPerson(newPerson, effectiveLink);
+        if (!saved) return false;
         toast(t('form.addedToast', { name: personLabel }));
       }
       onSaved?.(id);
@@ -952,8 +981,12 @@ export function PersonFormModal({
             scroll area; the negative bottom/margin let the bar cover that
             strip so scrolled content never peeks out underneath it. */}
         <div className="sticky bottom-[calc(-1*max(1.25rem,env(safe-area-inset-bottom)))] z-10 -mx-5 mb-[calc(-1*max(1.25rem,env(safe-area-inset-bottom)))] mt-6 flex flex-wrap justify-end gap-2 border-t border-stone-200 bg-white px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 dark:border-stone-700 dark:bg-stone-900">
-          <button type="button" className="btn-secondary" onClick={handleClose}>
-            {t('common.cancel')}
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={selfJoin && onBack ? onBack : handleClose}
+          >
+            {selfJoin && onBack ? t('common.back') : t('common.cancel')}
           </button>
           {!isEdit && !selfJoin && (
             <button

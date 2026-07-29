@@ -65,7 +65,8 @@ export function MembersPage() {
       danger: true,
     });
     if (!proceed) return;
-    deletePerson(person.id);
+    const saved = await deletePerson(person.id);
+    if (!saved) return;
     setDetailsId(null);
     toast(t('delete.done', { name: fullName(person) }));
   };

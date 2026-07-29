@@ -353,6 +353,30 @@ html.easy .tree-controls-easy .react-flow__controls-button,
 html.easy .tree-easy .react-flow__node-person {
   filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.1));
 }
+html.easy .tree-easy .tree-person-card {
+  border-width: 2px;
+  border-left-width: 6px;
+}
+html.easy .tree-easy .tree-person-name {
+  font-size: 17px;
+  line-height: 1.2;
+}
+html.easy .tree-easy .tree-person-meta {
+  font-size: 14px;
+}
+html.easy .tree-easy .tree-branch-toggle {
+  min-width: 34px;
+  min-height: 28px;
+  font-size: 12px;
+}
+html.easy .tree-easy .react-flow__edge-path {
+  stroke-width: 3.5;
+  opacity: 0.9;
+}
+html.easy .tree-easy .edge-child-flow {
+  animation: none;
+  opacity: 1;
+}
 
 /* React Flow chrome in dark mode */
 .dark .react-flow__minimap {
@@ -502,4 +526,3 @@ html.easy .tree-easy .react-flow__node-person {
     animation: none;
   }
 }
-

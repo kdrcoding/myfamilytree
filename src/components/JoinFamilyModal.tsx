@@ -42,6 +42,7 @@ export function JoinFamilyModal({ onClose }: JoinFamilyModalProps) {
       <PersonFormModal
         selfJoin
         link={noConnection || !targetId ? undefined : { kind, targetId }}
+        onBack={() => setStep(1)}
         onClose={onClose}
       />
     );

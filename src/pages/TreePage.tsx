@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Background,
   BackgroundVariant,
@@ -11,7 +11,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import type { Edge, EdgeTypes, Node, NodeTypes, ReactFlowInstance } from '@xyflow/react';
-import { Lock, LockOpen, Map, Maximize2, Search, UserPlus, UserRoundPlus, X, Download, Printer, Share2, ZoomIn } from 'lucide-react';
+import { Lock, LockOpen, Map, Maximize2, Search, UserPlus, UserRoundPlus, Users, X, Download, Printer, Share2, ZoomIn } from 'lucide-react';
 import type { FamilyPerson, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -396,9 +396,9 @@ function TreeCanvas({
 
 export function TreePage() {
   const { people, index, deletePerson } = useFamily();
-  const { role, canEdit, canDelete } = useAuth();
+  const { canEdit, canDelete } = useAuth();
   const { settings } = useSettings();
-  const easy = role !== 'owner' && Boolean(settings.easyMode);
+  const easy = Boolean(settings.easyMode);
   const { toast } = useToast();
   const confirm = useConfirm();
   const t = useT();
@@ -549,7 +549,8 @@ export function TreePage() {
         danger: true,
       });
       if (!proceed) return;
-      deletePerson(person.id);
+      const saved = await deletePerson(person.id);
+      if (!saved) return;
       setDetailsId(null);
       toast(t('delete.done', { name: fullName(person) }));
     },
@@ -585,6 +586,14 @@ export function TreePage() {
           <TreeSearch onSelect={focusPerson} large />
 
           <div className="flex items-center gap-1.5 sm:ml-auto">
+            <Link
+              to="/members"
+              className="btn-secondary !min-h-10 !px-2.5 sm:!px-3"
+              aria-label={t('tree.listView')}
+            >
+              <Users className="h-4 w-4" aria-hidden />
+              <span className="hidden sm:inline">{t('tree.listView')}</span>
+            </Link>
             {editMode && (
               <button type="button" className="btn-primary !min-h-10" onClick={() => setForm({})}>
                 <UserPlus className="h-4 w-4" aria-hidden />

@@ -137,6 +137,7 @@ export const ruOverrides: Record<string, string> = {
     'Подсказка: введите имя сверху, чтобы перейти к человеку. Тяните, чтобы двигать · щипок или +/− для масштаба.',
   'tree.zoomReadable': 'Крупнее (читаемо)',
   'tree.fitTree': 'Показать всё древо',
+  'tree.listView': 'Список людей',
   'tree.editMode': 'Режим правки',
   'tree.editing': 'Редактирование',
 
@@ -159,6 +160,7 @@ export const ruOverrides: Record<string, string> = {
     'Выберите двух людей — сайт скажет простыми словами, кто кому кем приходится.',
 
   'common.cancel': 'Отмена',
+  'common.back': 'Назад',
   'common.close': 'Закрыть',
   'common.confirm': 'Подтвердить',
   'common.unnamed': 'Без имени',
@@ -538,6 +540,9 @@ export const ruOverrides: Record<string, string> = {
   'form.searchIn': 'Поиск в {label}…',
   'form.saveAnotherTitle': 'Сохранить и сразу начать следующего',
   'form.draftRestored': 'Восстановлены несохранённые изменения.',
+  'form.duplicateTitle': 'Возможный дубликат',
+  'form.duplicateMessage': 'У {name} уже совпадают имя и дата рождения. Всё равно добавить ещё одного человека?',
+  'form.duplicateContinue': 'Всё равно добавить',
   'form.updatedRestrictedToast': '{name} обновлён(а) — заполнены только пустые поля.',
 
   // Data transfer
