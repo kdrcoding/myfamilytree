@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { ChevronDown, Languages, Loader2, LogOut, Menu, Moon, Sun, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -18,6 +18,7 @@ export function Layout() {
   const confirm = useConfirm();
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const t = useT();
   const isTreePage = location.pathname === '/tree';
@@ -27,6 +28,24 @@ export function Layout() {
     setMenuOpen(false);
     setMoreOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onDoc = (e: MouseEvent | TouchEvent) => {
+      if (!moreRef.current?.contains(e.target as Node)) setMoreOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMoreOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('touchstart', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('touchstart', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [moreOpen]);
 
   const handleSignOut = async () => {
     const proceed = await confirm({
@@ -97,7 +116,7 @@ export function Layout() {
               </NavLink>
             ))}
             {moreNav.length > 0 && (
-              <div className="relative">
+              <div className="relative" ref={moreRef}>
                 <button
                   type="button"
                   className={linkClass({ isActive: moreOpen })}
@@ -132,7 +151,7 @@ export function Layout() {
             )}
           </nav>
 
-          <div className="ml-auto flex items-center gap-0.5 lg:ml-2">
+          <div className="ml-auto flex items-center gap-0.5 lg:ml-4">
             <OverflowMenu
               label={t('nav.more')}
               items={[
