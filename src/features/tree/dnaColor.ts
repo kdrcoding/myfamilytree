@@ -29,10 +29,13 @@ export interface DnaPalette {
  * - Same couple (brothers/sisters) → identical palette
  * - Cousins share grandparents → similar hue band, small offset per dad/mom couple
  * - Unrelated branches → different base hues
+ * - As generations go down, hue shifts and saturation/lightness fade
+ *   so the tree shows a natural progression like inherited DNA.
  */
 export function dnaPaletteForParents(
   parentIds: string[],
   index: PersonIndex,
+  generation = 0,
 ): DnaPalette {
   const sorted = [...parentIds].filter(Boolean).sort();
   const coupleKey = sorted.join('|') || 'unknown';
@@ -48,12 +51,19 @@ export function dnaPaletteForParents(
   const baseHue = hashString(familyKey) % 360;
   // Cousins: same baseHue, different couple → ± up to 28° so they stay related-looking
   const coupleOffset = (hashString(coupleKey) % 57) - 28;
-  const hue = (baseHue + coupleOffset + 360) % 360;
+  // Each generation shifts hue +12° so the colour walks down the branch
+  const genShift = generation * 12;
+  const hue = (baseHue + coupleOffset + genShift + 360) % 360;
 
-  // Keep strands vivid but readable on light and dark canvases
+  // Fade saturation/lightness slightly each generation → visual depth
+  const sat = Math.max(58, 72 - generation * 3);
+  const light = Math.max(32, 42 - generation * 2);
+  const darkLight = Math.max(24, 32 - generation * 1.5);
+  const trunkLight = Math.max(30, 38 - generation * 2);
+
   return {
-    a: hsl(hue, 72, 42),
-    b: hsl((hue + 18) % 360, 65, 32),
-    trunk: hsl(hue, 55, 38),
+    a: hsl(hue, sat, light),
+    b: hsl((hue + 18) % 360, Math.max(50, 65 - generation * 3), darkLight),
+    trunk: hsl(hue, Math.max(42, 55 - generation * 3), trunkLight),
   };
 }

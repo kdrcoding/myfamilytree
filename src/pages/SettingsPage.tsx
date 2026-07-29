@@ -536,18 +536,6 @@ export function SettingsPage() {
         </button>
       </section>
 
-      {/* Custom domain tip */}
-      <section className="card mt-4 p-6">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <Globe className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.domainTitle')}
-        </h2>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('settings.domainIntro')}</p>
-        <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">{t('settings.domainSteps')}</p>
-        <p className="mt-3 break-all rounded-xl bg-stone-50 px-3 py-2 text-sm font-medium dark:bg-stone-800/60">
-          {typeof window !== 'undefined' ? window.location.origin : 'https://myfamilytree-kdr6.vercel.app'}
-        </p>
-      </section>
-
       {/* Theme */}
       <section className="card mt-4 p-6">
         <h2 className="flex items-center gap-2 font-semibold">

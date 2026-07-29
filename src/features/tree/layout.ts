@@ -457,11 +457,11 @@ export function computeTreeLayout(
   }[] = [];
 
   const paletteByCouple = new Map<string, DnaPalette>();
-  const paletteFor = (parentIds: string[]): DnaPalette => {
+  const paletteFor = (parentIds: string[], generation = 0): DnaPalette => {
     const key = [...parentIds].sort().join('|');
     let palette = paletteByCouple.get(key);
     if (!palette) {
-      palette = dnaPaletteForParents(parentIds, index);
+      palette = dnaPaletteForParents(parentIds, index, generation);
       paletteByCouple.set(key, palette);
     }
     return palette;
@@ -481,7 +481,8 @@ export function computeTreeLayout(
     if (junctionId) {
       const jNode = junctionNodes.find((n) => n.id === junctionId);
       const sourceX = jNode ? jNode.position.x : 0;
-      const palette = paletteFor(placedParents);
+      const childGen = depthByNode.get(person.id) ?? 0;
+      const palette = paletteFor(placedParents, childGen);
       if (jNode) {
         jNode.data = { ...jNode.data, dnaColor: palette.trunk };
       }
@@ -521,7 +522,8 @@ export function computeTreeLayout(
   };
 
   for (const draft of childEdgeDrafts) {
-    const palette = paletteFor(draft.parentIds);
+    const childGen = depthByNode.get(draft.target) ?? 0;
+    const palette = paletteFor(draft.parentIds, childGen);
     edges.push({
       id: draft.id,
       source: draft.source,
