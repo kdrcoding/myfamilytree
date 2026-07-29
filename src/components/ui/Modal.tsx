@@ -82,9 +82,6 @@ export function Modal({ onClose, children, labelledBy, size = 'md' }: ModalProps
       if (modalStack.length === 0) document.body.style.overflow = '';
       previous?.focus();
     };
-    // Mount-only by design: initial focus, the stack entry and the scroll
-    // lock belong to the dialog's lifetime, not to any prop identity.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return createPortal(

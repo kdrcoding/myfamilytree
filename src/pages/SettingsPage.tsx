@@ -451,7 +451,7 @@ export function SettingsPage() {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const privacy = settings.privacy;
-  const easy = Boolean(settings.easyMode);
+  const easy = role !== 'owner' && Boolean(settings.easyMode);
   const roleLabel =
     role === 'owner'
       ? t('settings.roleOwner')

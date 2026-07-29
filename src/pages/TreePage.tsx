@@ -396,9 +396,9 @@ function TreeCanvas({
 
 export function TreePage() {
   const { people, index, deletePerson } = useFamily();
-  const { canEdit, canDelete } = useAuth();
+  const { role, canEdit, canDelete } = useAuth();
   const { settings } = useSettings();
-  const easy = Boolean(settings.easyMode);
+  const easy = role !== 'owner' && Boolean(settings.easyMode);
   const { toast } = useToast();
   const confirm = useConfirm();
   const t = useT();

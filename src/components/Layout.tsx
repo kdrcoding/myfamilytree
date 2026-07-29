@@ -14,7 +14,7 @@ import { BrandLogo } from './BrandLogo';
 
 export function Layout() {
   const { settings, toggleTheme, setLanguage } = useSettings();
-  const { signOut } = useAuth();
+  const { role, signOut } = useAuth();
   const confirm = useConfirm();
   const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -22,7 +22,9 @@ export function Layout() {
   const location = useLocation();
   const t = useT();
   const isTreePage = location.pathname === '/tree';
-  const easy = Boolean(settings.easyMode);
+  // Keep the shared family experience simple. The owner always gets the
+  // complete navigation and administrative surface.
+  const easy = role !== 'owner' && Boolean(settings.easyMode);
 
   useEffect(() => {
     setMenuOpen(false);

@@ -41,7 +41,7 @@ interface FamilyContextValue {
   getPerson: (id: string) => FamilyPerson | undefined;
   getLabel: (person: FamilyPerson) => string;
   /** Create a person, optionally attached to an existing relative. */
-  addPerson: (person: FamilyPerson, link?: RelationLink) => void;
+  addPerson: (person: FamilyPerson, link?: RelationLink) => Promise<boolean>;
   /** Update fields and replace the person's parent/spouse relationships. */
   updatePerson: (person: FamilyPerson, parentIds: string[], spouseIds: string[]) => void;
   /** Mark or unmark a couple as divorced (they stay linked as ex-spouses). */
@@ -252,7 +252,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         return translate(language, 'rel.genN', { n: rel.generation });
       },
       addPerson: (person, link) => {
-        void mutate((current) => {
+        return mutate((current) => {
           let next = [...current, person];
           if (link) next = applyRelationLink(next, person.id, link);
           return next;

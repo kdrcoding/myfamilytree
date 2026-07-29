@@ -64,7 +64,8 @@ export function JoinRequestsCard() {
         const newId = generatePersonId(person.firstName, person.lastName, existing);
         person = { ...person, id: newId };
       }
-      addPerson(person, req.link ?? undefined);
+      const saved = await addPerson(person, req.link ?? undefined);
+      if (!saved) return;
       await markJoinRequestApproved(req.id);
       toast(t('joinReq.approvedToast', { name: fullName(person) }));
       refresh();

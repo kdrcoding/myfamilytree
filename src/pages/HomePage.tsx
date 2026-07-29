@@ -5,6 +5,7 @@ import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { PersonSearch } from '../components/PersonSearch';
 import { BrandMark } from '../components/BrandLogo';
 import { useFamily } from '../context/FamilyContext';
+import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
@@ -30,7 +31,8 @@ export function HomePage() {
   const language = useLanguage();
   const [joinOpen, setJoinOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  const easy = Boolean(settings.easyMode);
+  const { role } = useAuth();
+  const easy = role !== 'owner' && Boolean(settings.easyMode);
   const stats = useMemo(() => computeStats(people), [people]);
   const founders = useMemo(() => findFounders(people).slice(0, 2), [people]);
 
