@@ -1,15 +1,15 @@
-import { CircleHelp, Flower2, Mars, Venus } from 'lucide-react';
+import { CircleHelp, Crown, Flower2, Gem } from 'lucide-react';
 import type { FamilyPerson, Gender } from '../types/family';
 import { useT } from '../i18n/useT';
 
-const GENDER_META: Record<Gender, { icon: typeof Mars; className: string }> = {
+const GENDER_META: Record<Gender, { icon: typeof Crown; className: string }> = {
   male: {
-    icon: Mars,
+    icon: Crown,
     className:
       'border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-300',
   },
   female: {
-    icon: Venus,
+    icon: Gem,
     className:
       'border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-300',
   },

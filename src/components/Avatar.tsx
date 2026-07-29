@@ -1,4 +1,4 @@
-import { User, UserRound, CircleUser } from 'lucide-react';
+import { CircleUser, Crown, Gem } from 'lucide-react';
 import type { FamilyPerson } from '../types/family';
 import { fullName, initials } from '../utils/family';
 import { usePhotoUrl } from '../context/PhotoUrlsContext';
@@ -23,8 +23,8 @@ const GENDER_STYLES = {
 };
 
 const GENDER_ICONS = {
-  male: User,
-  female: UserRound,
+  male: Crown,
+  female: Gem,
   unspecified: CircleUser,
 };
 
@@ -59,8 +59,13 @@ export function Avatar({ person, size = 'md' }: AvatarProps) {
         person.isDeceased ? 'opacity-75 saturate-50' : ''
       }`}
     >
-      {size === 'lg' && <Icon className="mb-0.5 h-7 w-7" />}
-      {initials(person)}
+      {size === 'lg' ? (
+        <><Icon className="mb-0.5 h-7 w-7" />{initials(person)}</>
+      ) : size === 'md' ? (
+        <><Icon className="mb-0.5 h-5 w-5" />{initials(person)}</>
+      ) : (
+        <Icon className="h-5 w-5" />
+      )}
     </span>
   );
 }
