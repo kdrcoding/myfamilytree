@@ -134,14 +134,14 @@ export function RelatedPage() {
         <p className="text-sm font-semibold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
           {t('related.kicker')}
         </p>
-        <h1 className="mt-1 flex items-center gap-2 text-3xl font-extrabold tracking-tight">
+        <h1 className="mt-1 flex items-center gap-2 text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-50">
           <GitBranch className="h-8 w-8 text-emerald-600" aria-hidden />
           {t('related.title')}
         </h1>
         <p className="mt-2 text-stone-600 dark:text-stone-400">{t('related.intro')}</p>
       </header>
 
-      <section className="card space-y-5 p-5 sm:p-6">
+      <section className="card space-y-5 p-5 shadow-[0_1px_3px_0_rgb(0_0_0_0.04)] sm:p-6 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.2)]">
         <div>
           <p className="mb-2 text-base font-semibold text-stone-800 dark:text-stone-200">
             {t('related.pickFirst')}
@@ -171,7 +171,7 @@ export function RelatedPage() {
 
       {result && (
         <section
-          className="card mt-6 p-6 text-center"
+          className="card mt-6 overflow-hidden border-t-4 border-t-emerald-500 p-6 text-center shadow-[0_1px_3px_0_rgb(0_0_0_0.06)] dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.3)]"
           aria-live="polite"
         >
           <div className="flex justify-center -space-x-2">

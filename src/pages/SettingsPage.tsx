@@ -461,10 +461,10 @@ export function SettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-      <h1 className="text-2xl font-bold tracking-tight">{t('settings.title')}</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">{t('settings.title')}</h1>
 
       {/* Easy Mode — first, so older relatives find it immediately */}
-      <section className="card mt-6 border-emerald-300 p-6 dark:border-emerald-800">
+      <section className="card mt-6 border-emerald-300 p-6 shadow-[0_1px_3px_0_rgb(0_0_0_0.04)] dark:border-emerald-800 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.2)]">
         <h2 className="flex items-center gap-2 font-semibold">
           <Eye className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.easyTitle')}
         </h2>
@@ -480,7 +480,7 @@ export function SettingsPage() {
       </section>
 
       {/* Language */}
-      <section className="card mt-4 p-6">
+      <section className="card mt-4 p-6 shadow-[0_1px_3px_0_rgb(0_0_0_0.04)] dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.2)]">
         <h2 className="flex items-center gap-2 font-semibold">
           <Languages className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.language')}
         </h2>

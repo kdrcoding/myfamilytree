@@ -94,7 +94,9 @@ export function TimelinePage() {
         <p className="text-sm font-semibold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
           {t('timeline.kicker')}
         </p>
-        <h1 className="mt-1 text-3xl font-extrabold tracking-tight">{t('timeline.title')}</h1>
+        <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-50">
+          {t('timeline.title')}
+        </h1>
         <p className="mt-2 text-stone-600 dark:text-stone-400">{t('timeline.intro')}</p>
       </header>
 
@@ -105,22 +107,24 @@ export function TimelinePage() {
       )}
 
       {groups.length === 0 ? (
-        <div className="card p-8 text-center text-stone-500">
-          <Gem className="mx-auto h-8 w-8 text-stone-300" aria-hidden />
-          <p className="mt-3">{t('timeline.empty')}</p>
+        <div className="card p-10 text-center text-stone-500">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-800">
+            <Gem className="h-6 w-6 text-stone-300" aria-hidden />
+          </div>
+          <p className="text-sm">{t('timeline.empty')}</p>
         </div>
       ) : (
         <ol className="relative space-y-8 border-l-2 border-emerald-200 pl-6 dark:border-emerald-900">
           {groups.map(({ year, events: yearEvents }) => (
             <li key={year}>
-              <h2 className="sticky top-16 z-10 -ml-[1.65rem] mb-4 inline-flex rounded-full bg-emerald-700 px-3 py-1 text-sm font-bold text-white shadow">
+              <h2 className="sticky top-16 z-10 -ml-[1.65rem] mb-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-700 px-3.5 py-1 text-sm font-bold text-white shadow-md shadow-emerald-900/20">
                 {year}
               </h2>
               <ul className="space-y-3">
                 {yearEvents.map((event) => {
                   const person = getPerson(event.personIds[0]);
                   return (
-                    <li key={event.id} className="card relative p-4">
+                    <li key={event.id} className="card relative p-4 transition-shadow hover:shadow-md">
                       <span className="absolute -left-[1.9rem] top-5 flex h-5 w-5 items-center justify-center rounded-full bg-white ring-2 ring-emerald-300 dark:bg-stone-950 dark:ring-emerald-800">
                         <EventIcon kind={event.kind} />
                       </span>

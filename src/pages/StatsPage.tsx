@@ -31,8 +31,8 @@ function StatCard({
   hint?: string;
 }) {
   return (
-    <div className="card flex items-start gap-3 p-4">
-      <span className="rounded-xl bg-emerald-100 p-2 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+    <div className="card flex items-start gap-3 p-4 transition-shadow hover:shadow-md">
+      <span className="rounded-xl bg-emerald-100 p-2.5 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
         {icon}
       </span>
       <div className="min-w-0">
@@ -42,7 +42,7 @@ function StatCard({
         <p className="mt-0.5 truncate text-xl font-bold text-stone-900 dark:text-stone-100">
           {value}
         </p>
-        {hint && <p className="text-xs text-stone-500 dark:text-stone-400">{hint}</p>}
+        {hint && <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{hint}</p>}
       </div>
     </div>
   );
@@ -63,7 +63,7 @@ function BarChart({
   const total = data.reduce((sum, d) => sum + d.count, 0);
   const rows = data.filter((d) => d.count > 0);
   return (
-    <div className="card p-5">
+    <div className="card p-5 shadow-[0_1px_3px_0_rgb(0_0_0_0.04)] dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.2)]">
       <h2 className="font-semibold text-stone-900 dark:text-stone-100">{title}</h2>
       {rows.length === 0 ? (
         <p className="mt-3 text-sm text-stone-400">—</p>
@@ -113,7 +113,7 @@ export function StatsPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold tracking-tight">{t('stats.title')}</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">{t('stats.title')}</h1>
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('stats.subtitle')}</p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

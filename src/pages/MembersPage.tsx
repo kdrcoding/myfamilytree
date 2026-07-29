@@ -74,7 +74,9 @@ export function MembersPage() {
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('members.title')}</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+            {t('members.title')}
+          </h1>
           <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
             {t('members.shown', { shown: visible.length, total: people.length })}
           </p>
@@ -88,7 +90,7 @@ export function MembersPage() {
         </button>
       </div>
 
-      <div className="card mt-5 flex flex-wrap items-end gap-3 p-4">
+      <div className="card mt-5 flex flex-wrap items-end gap-3 p-4 shadow-[0_1px_3px_0_rgb(0_0_0_0.04)] sm:p-5 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.2)]">
         <label className="relative block w-full sm:w-64">
           <span className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">
             {t('members.search')}
@@ -130,16 +132,15 @@ export function MembersPage() {
       </div>
 
       {visible.length === 0 ? (
-        <div className="mt-10 flex flex-col items-center gap-3 py-16 text-center">
-          <Users className="h-10 w-10 text-stone-300 dark:text-stone-600" aria-hidden />
+        <div className="mt-10 flex flex-col items-center gap-4 py-20 text-center">
+          <div className="rounded-2xl bg-stone-100 p-5 dark:bg-stone-800">
+            <Users className="h-10 w-10 text-stone-300 dark:text-stone-600" aria-hidden />
+          </div>
           <p className="text-sm text-stone-500 dark:text-stone-400">{t('members.noMatch')}</p>
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((person, i) => (
-            // Staggered reveal, capped so a large family doesn't wait seconds
-            // for the last card. Re-sorting reuses the same keys, so cards
-            // animate once on mount, not on every reorder.
             <div
               key={person.id}
               className="animate-rise-in"
