@@ -39,7 +39,7 @@ export function BottomNav() {
                 }
               >
                 <Icon className="h-6 w-6" aria-hidden />
-                <span className="max-w-full truncate text-[11px] font-bold leading-tight sm:text-xs">
+                <span className="max-w-full truncate text-xs font-bold leading-tight">
                   {t(tab.labelKey)}
                 </span>
               </NavLink>

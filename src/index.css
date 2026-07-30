@@ -87,6 +87,7 @@
   }
   body {
     @apply antialiased;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
     /* Disable the browser's pull-to-refresh gesture. On phones a long edit
        form lives in a scrollable modal; swiping down to scroll up past the top
        would otherwise trigger a full page reload and wipe the user's unsaved
@@ -420,6 +421,13 @@ html.easy .tree-easy .edge-child-flow {
   position: relative;
 }
 
+html:not(.dark) .home-hero {
+  background:
+    radial-gradient(ellipse 90% 70% at 10% 15%, rgb(16 185 129 / 0.12), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 85%, rgb(6 78 59 / 0.08), transparent 55%),
+    linear-gradient(160deg, #f0f7f4 0%, #e3efe9 35%, #edf5ee 65%, #f5f0eb 100%);
+}
+
 .home-hero::after {
   content: '';
   position: absolute;
@@ -524,5 +532,55 @@ html.easy .tree-easy .edge-child-flow {
   .home-hero__actions,
   .home-section {
     animation: none;
+  }
+}
+
+/* Print styles: hide nav, buttons, overlays; force light background */
+@media print {
+  nav,
+  .bottom-nav,
+  .top-nav,
+  button,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .react-flow__controls,
+  .react-flow__minimap,
+  .leaflet-control-zoom,
+  .leaflet-control-attribution,
+  .toast,
+  [role='dialog'],
+  [role='tooltip'] {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .card,
+  .home-section-card,
+  .home-stat-card {
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+  .home-hero {
+    background: #f5f5f4 !important;
+    color: #1c1917 !important;
+    padding: 1rem !important;
+  }
+  .react-flow__renderer,
+  .react-flow__pane {
+    background: #fff !important;
+  }
+  .leaflet-container {
+    background: #f5f5f4 !important;
+  }
+  a {
+    color: #000 !important;
+    text-decoration: underline !important;
+  }
+  @page {
+    margin: 1.5cm;
   }
 }

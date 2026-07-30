@@ -46,7 +46,7 @@ export function FilterPanel({
         <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
         {t('filters.title')}
         {activeCount > 0 && (
-          <span className="rounded-full bg-emerald-700 px-1.5 text-[11px] font-bold text-white dark:bg-emerald-600">
+          <span className="rounded-full bg-emerald-700 px-1.5 text-xs font-bold text-white dark:bg-emerald-600">
             {activeCount}
           </span>
         )}

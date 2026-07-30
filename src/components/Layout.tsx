@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { ChevronDown, Languages, Loader2, LogOut, Menu, Moon, Sun, X } from 'lucide-react';
+import { ChevronDown, Languages, LogOut, Menu, Moon, Sun, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useSettings } from '../context/SettingsContext';
@@ -8,6 +8,7 @@ import { languageCodeLabel, nextLanguage } from '../types/family';
 import { useT } from '../i18n/useT';
 import { MadeByKadir } from './MadeByKadir';
 import { BottomNav } from './BottomNav';
+import { PageSkeleton } from './PageSkeleton';
 import { WelcomeTour } from './WelcomeTour';
 import { OverflowMenu } from './OverflowMenu';
 import { BrandLogo } from './BrandLogo';
@@ -233,14 +234,7 @@ export function Layout() {
         tabIndex={-1}
         className={`flex flex-1 flex-col outline-none ${isTreePage ? 'pb-16 lg:pb-0' : 'pb-20 lg:pb-0'}`}
       >
-        <Suspense
-          fallback={
-            <div className="flex flex-1 items-center justify-center gap-2 p-10 text-stone-500">
-              <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
-              {t('db.loading')}
-            </div>
-          }
-        >
+        <Suspense fallback={<PageSkeleton />}>
           <Outlet />
         </Suspense>
         {!isTreePage && (
