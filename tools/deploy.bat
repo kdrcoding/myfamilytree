@@ -89,13 +89,17 @@ git config user.name "Kadir Ravshanov"
 git config user.email "m.qodir99@gmail.com"
 git add -A
 git commit -m "Update family tree" >nul 2>nul
+
+echo Pulling latest changes from GitHub...
+git pull origin main --rebase >nul 2>nul
+
+echo Pushing to GitHub...
 git push origin main
 if errorlevel 1 (
     echo.
-    echo [HINT] If the push was rejected because the histories differ,
-    echo open a terminal in this folder, run this ONCE, then deploy again:
+    echo [HINT] If the push was rejected, open terminal and run this ONCE, then deploy again:
     echo.
-    echo     git push --force-with-lease origin main
+    echo     git fetch origin ^&^& git push --force-with-lease origin main
     goto :fail
 )
 echo.
