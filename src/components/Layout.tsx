@@ -232,7 +232,7 @@ export function Layout() {
       <div
         id="main"
         tabIndex={-1}
-        className={`flex flex-1 flex-col outline-none ${isTreePage ? 'pb-16 lg:pb-0' : 'pb-20 lg:pb-0'}`}
+        className={`flex flex-1 flex-col outline-none $'pb-20 lg:pb-0'`}
       >
         <Suspense fallback={<PageSkeleton />}>
           <Outlet />

@@ -4,7 +4,7 @@ title Family Tree - One-click deploy
 cd /d "%~dp0.."
 
 echo ============================================
-echo   Hartley Family Tree - one-click deploy
+echo   Kadir's family tree - one-click deploy
 echo ============================================
 echo.
 
