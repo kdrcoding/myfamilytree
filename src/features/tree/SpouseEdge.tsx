@@ -4,8 +4,8 @@ import { useT } from '../../i18n/useT';
 import { useTreeInteraction } from './TreeInteractionContext';
 
 /**
- * Marriage line with interlocking wedding rings. Sized for finger taps on
- * phones — the rose badge is the cue that the couple is tappable / editable.
+ * Marriage line with small interlocking rings. Soft gold — not a giant pink badge.
+ * Hit area stays larger than the drawing so taps still work on phones.
  */
 function SpouseEdgeComponent({ sourceX, sourceY, targetX, targetY, source, target, data }: EdgeProps) {
   const { onOpenCouple } = useTreeInteraction();
@@ -15,7 +15,6 @@ function SpouseEdgeComponent({ sourceX, sourceY, targetX, targetY, source, targe
   const midY = (sourceY + targetY) / 2;
   const path = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
 
-  // Bigger on touch devices so the rings read as a control, not decoration.
   const [touchy, setTouchy] = useState(false);
   useEffect(() => {
     const mq = window.matchMedia('(pointer: coarse), (hover: none)');
@@ -25,12 +24,12 @@ function SpouseEdgeComponent({ sourceX, sourceY, targetX, targetY, source, targe
     return () => mq.removeEventListener('change', sync);
   }, []);
 
-  const r = touchy ? 8.5 : 7;
-  const dx = touchy ? 5 : 4.2;
-  const ringStroke = touchy ? 2.85 : 2.55;
-  const padRx = touchy ? 22 : 18;
-  const padRy = touchy ? 14 : 12;
-  const hitR = touchy ? 30 : 24;
+  const r = touchy ? 5.25 : 4.75;
+  const dx = touchy ? 3.1 : 2.85;
+  const ringStroke = touchy ? 1.85 : 1.7;
+  const padRx = touchy ? 12.5 : 11;
+  const padRy = touchy ? 9 : 8;
+  const hitR = touchy ? 20 : 16;
 
   const open = (event: { stopPropagation: () => void; preventDefault?: () => void }) => {
     event.stopPropagation();
@@ -43,7 +42,7 @@ function SpouseEdgeComponent({ sourceX, sourceY, targetX, targetY, source, targe
       <path
         d={path}
         fill="none"
-        strokeWidth={touchy ? 11 : 9}
+        strokeWidth={touchy ? 8 : 7}
         strokeLinecap="round"
         className="spouse-edge__halo pointer-events-none"
         aria-hidden
@@ -51,26 +50,25 @@ function SpouseEdgeComponent({ sourceX, sourceY, targetX, targetY, source, targe
       <path
         d={path}
         fill="none"
-        strokeWidth={divorced ? 2.25 : touchy ? 3.25 : 2.85}
+        strokeWidth={divorced ? 2 : touchy ? 2.35 : 2.1}
         strokeLinecap="round"
         strokeDasharray={divorced ? '3 5' : undefined}
         className="spouse-edge__line pointer-events-none"
       />
 
-      {/* Soft rose badge — reads as a button between the two people */}
       <ellipse
         cx={midX}
         cy={midY}
         rx={padRx}
         ry={padRy}
-        className={`spouse-edge__badge pointer-events-none ${divorced ? '' : 'spouse-edge__badge--glow'}`}
+        className="spouse-edge__badge pointer-events-none"
         aria-hidden
       />
       <ellipse
         cx={midX}
         cy={midY}
-        rx={padRx - 1.5}
-        ry={padRy - 1.5}
+        rx={padRx - 1.25}
+        ry={padRy - 1.25}
         className="spouse-edge__badge-inner pointer-events-none"
         aria-hidden
       />
@@ -80,13 +78,12 @@ function SpouseEdgeComponent({ sourceX, sourceY, targetX, targetY, source, targe
         <circle cx={dx} cy={0} r={r} fill="none" strokeWidth={ringStroke} className="spouse-edge__ring" />
         {!divorced && (
           <>
-            <circle cx={-dx - 2} cy={-3} r={1.35} className="spouse-edge__shine" />
-            <circle cx={dx - 2} cy={-3} r={1.35} className="spouse-edge__shine" />
+            <circle cx={-dx - 1.4} cy={-2.2} r={0.9} className="spouse-edge__shine" />
+            <circle cx={dx - 1.4} cy={-2.2} r={0.9} className="spouse-edge__shine" />
           </>
         )}
       </g>
 
-      {/* Finger-sized hit target */}
       <circle
         cx={midX}
         cy={midY}
@@ -95,7 +92,7 @@ function SpouseEdgeComponent({ sourceX, sourceY, targetX, targetY, source, targe
         fillOpacity={0.01}
         stroke="#fff"
         strokeOpacity={0.01}
-        strokeWidth={10}
+        strokeWidth={8}
         className="spouse-edge__hit"
         role="button"
         tabIndex={0}

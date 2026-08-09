@@ -310,11 +310,11 @@ function TreeCanvas({
               <li className="flex items-center gap-2">
                 <span
                   aria-hidden
-                  className="relative inline-flex h-5 w-9 items-center justify-center rounded-full bg-rose-100 ring-1 ring-rose-400 dark:bg-rose-950 dark:ring-rose-500"
+                  className="relative inline-flex h-5 w-9 items-center justify-center rounded-full bg-amber-50 ring-1 ring-amber-700/25 dark:bg-amber-950/40 dark:ring-amber-600/40"
                 >
                   <span className="relative z-[1] flex -space-x-1">
-                    <span className="inline-block h-3 w-3 rounded-full border-[2px] border-rose-600 bg-transparent dark:border-rose-300" />
-                    <span className="inline-block h-3 w-3 rounded-full border-[2px] border-rose-600 bg-transparent dark:border-rose-300" />
+                    <span className="inline-block h-3 w-3 rounded-full border-[2px] border-amber-800 bg-transparent dark:border-amber-400" />
+                    <span className="inline-block h-3 w-3 rounded-full border-[2px] border-amber-800 bg-transparent dark:border-amber-400" />
                   </span>
                 </span>
                 <span>{t('tree.legendMarried')}</span>
@@ -368,11 +368,11 @@ function TreeCanvas({
             <div className="flex items-start gap-2">
               <span
                 aria-hidden
-                className="mt-0.5 inline-flex h-8 w-11 shrink-0 items-center justify-center rounded-full bg-rose-100 ring-1 ring-rose-400 dark:bg-rose-950 dark:ring-rose-500"
+                className="mt-0.5 inline-flex h-8 w-11 shrink-0 items-center justify-center rounded-full bg-amber-50 ring-1 ring-amber-700/25 dark:bg-amber-950/40 dark:ring-amber-600/40"
               >
                 <span className="flex -space-x-1">
-                  <span className="inline-block h-3.5 w-3.5 rounded-full border-[2px] border-rose-600 bg-transparent dark:border-rose-300" />
-                  <span className="inline-block h-3.5 w-3.5 rounded-full border-[2px] border-rose-600 bg-transparent dark:border-rose-300" />
+                  <span className="inline-block h-3.5 w-3.5 rounded-full border-[2px] border-amber-800 bg-transparent dark:border-amber-400" />
+                  <span className="inline-block h-3.5 w-3.5 rounded-full border-[2px] border-amber-800 bg-transparent dark:border-amber-400" />
                 </span>
               </span>
               <p className="flex-1 leading-snug text-stone-700 dark:text-stone-200">{t('tree.ringsTip')}</p>

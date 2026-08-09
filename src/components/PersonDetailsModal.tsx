@@ -5,7 +5,6 @@ import {
   Cake,
   Flower2,
   Heart,
-  HeartCrack,
   Link as LinkIcon,
   MapPin,
   Pencil,
@@ -14,7 +13,6 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { FamilyPerson } from '../types/family';
-import { useConfirm } from '../context/ConfirmContext';
 import { useFamily } from '../context/FamilyContext';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { useLanguage, useT } from '../i18n/useT';
@@ -105,24 +103,20 @@ function RelativeChips({
 }
 
 /**
- * Spouse list with divorce status: a "divorced" badge on ex-partners and,
- * in edit mode, a per-spouse button to mark / unmark the divorce.
+ * Spouse list — shows a “divorced” note when already recorded; no toggle to mark it.
  */
 function SpouseChips({
   title,
   person,
   spouses,
-  editMode,
   onNavigate,
 }: {
   title: string;
   person: FamilyPerson;
   spouses: FamilyPerson[];
-  editMode: boolean;
+  editMode?: boolean;
   onNavigate: (id: string) => void;
 }) {
-  const { setDivorcedStatus } = useFamily();
-  const confirm = useConfirm();
   const t = useT();
   if (spouses.length === 0) return null;
   return (
@@ -134,70 +128,24 @@ function SpouseChips({
         {spouses.map((spouse) => {
           const divorced = isDivorced(person, spouse);
           return (
-            <span key={spouse.id} className="inline-flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => onNavigate(spouse.id)}
-                className={`rounded-full border px-3.5 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                  divorced
-                    ? 'border-stone-300 bg-stone-100 text-stone-500 dark:border-stone-600 dark:bg-stone-800/60 dark:text-stone-400'
-                    : 'border-stone-300 bg-stone-50 text-stone-700 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-emerald-950/60'
-                }`}
-              >
-                {fullName(spouse)}
-                {spouse.isDeceased ? ` · ${t('common.deceasedShort')}` : ''}
-                {divorced && (
-                  <span className="ml-1 text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                    · {t('person.divorced')}
-                  </span>
-                )}
-              </button>
-              {editMode && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    void (async () => {
-                      const proceed = await confirm({
-                        title: divorced
-                          ? t('couple.remarryConfirmTitle')
-                          : t('couple.divorceConfirmTitle'),
-                        message: divorced
-                          ? t('couple.remarryConfirmMsg')
-                          : t('couple.divorceConfirmMsg'),
-                        confirmLabel: divorced
-                          ? t('couple.markMarried')
-                          : t('couple.divorceConfirmBtn'),
-                        danger: !divorced,
-                      });
-                      if (!proceed) return;
-                      setDivorcedStatus(person.id, spouse.id, !divorced);
-                    })();
-                  }}
-                  title={
-                    divorced
-                      ? t('person.unmarkDivorced', { name: fullName(spouse) })
-                      : t('person.markDivorced', { name: fullName(spouse) })
-                  }
-                  aria-label={
-                    divorced
-                      ? t('person.unmarkDivorced', { name: fullName(spouse) })
-                      : t('person.markDivorced', { name: fullName(spouse) })
-                  }
-                  aria-pressed={divorced}
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                    divorced
-                      ? 'border-amber-400 bg-amber-50 text-amber-600 hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
-                      : 'border-stone-300 bg-white text-stone-400 hover:border-amber-400 hover:text-amber-600 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-500 dark:hover:text-amber-400'
-                  }`}
-                >
-                  {divorced ? (
-                    <Heart className="h-3.5 w-3.5" aria-hidden />
-                  ) : (
-                    <HeartCrack className="h-3.5 w-3.5" aria-hidden />
-                  )}
-                </button>
+            <button
+              key={spouse.id}
+              type="button"
+              onClick={() => onNavigate(spouse.id)}
+              className={`rounded-full border px-3.5 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                divorced
+                  ? 'border-stone-300 bg-stone-100 text-stone-500 dark:border-stone-600 dark:bg-stone-800/60 dark:text-stone-400'
+                  : 'border-stone-300 bg-stone-50 text-stone-700 hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-emerald-950/60'
+              }`}
+            >
+              {fullName(spouse)}
+              {spouse.isDeceased ? ` · ${t('common.deceasedShort')}` : ''}
+              {divorced && (
+                <span className="ml-1 text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                  · {t('person.divorced')}
+                </span>
               )}
-            </span>
+            </button>
           );
         })}
       </div>

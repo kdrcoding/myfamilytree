@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Heart, HeartCrack, Pencil } from 'lucide-react';
 import type { FamilyPerson } from '../types/family';
 import { useAuth } from '../context/AuthContext';
-import { useConfirm } from '../context/ConfirmContext';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
@@ -40,10 +39,9 @@ function pad2(n: number): string {
 export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAnniversaryModalProps) {
   const t = useT();
   const language = useLanguage();
-  const { canEdit, canDelete } = useAuth();
-  const { updatePerson, setDivorcedStatus, getPerson } = useFamily();
+  const { canEdit } = useAuth();
+  const { updatePerson, getPerson } = useFamily();
   const { toast } = useToast();
-  const confirm = useConfirm();
 
   // Prefer live records from the index (modal props may be a snapshot).
   const liveA = getPerson(a.id) ?? a;
@@ -122,7 +120,7 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
           className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
             divorced
               ? 'bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400'
-              : 'bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-300'
+              : 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
           }`}
         >
           {divorced ? (
@@ -162,10 +160,10 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
             divorced ? 'opacity-50' : ''
           }`}
         >
-          <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded bg-rose-400 dark:bg-rose-500" />
+          <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded bg-amber-700/70 dark:bg-amber-500/80" />
           <span className="relative z-[1] flex -space-x-1">
-            <span className="inline-block h-3 w-3 rounded-full border-2 border-rose-500 bg-transparent dark:border-rose-400" />
-            <span className="inline-block h-3 w-3 rounded-full border-2 border-rose-500 bg-transparent dark:border-rose-400" />
+            <span className="inline-block h-3 w-3 rounded-full border-2 border-amber-800 bg-transparent dark:border-amber-400" />
+            <span className="inline-block h-3 w-3 rounded-full border-2 border-amber-800 bg-transparent dark:border-amber-400" />
           </span>
         </span>
         <button
@@ -299,7 +297,7 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
                   </span>
                 )}
                 {yearsLabel && (
-                  <span className="mt-1 block text-sm font-semibold text-rose-700 dark:text-rose-300">
+                  <span className="mt-1 block text-sm font-semibold text-amber-800 dark:text-amber-300">
                     {yearsLabel}
                   </span>
                 )}
@@ -321,29 +319,6 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
           >
             <Pencil className="h-4 w-4" aria-hidden />
             {marriedOn || place || note ? t('couple.editDetails') : t('couple.addDetails')}
-          </button>
-        )}
-        {canDelete && (
-          <button
-            type="button"
-            className="btn-secondary w-full !min-h-11"
-            onClick={() => {
-              void (async () => {
-                const proceed = await confirm({
-                  title: divorced ? t('couple.remarryConfirmTitle') : t('couple.divorceConfirmTitle'),
-                  message: divorced ? t('couple.remarryConfirmMsg') : t('couple.divorceConfirmMsg'),
-                  confirmLabel: divorced
-                    ? t('couple.markMarried')
-                    : t('couple.divorceConfirmBtn'),
-                  danger: !divorced,
-                });
-                if (!proceed) return;
-                setDivorcedStatus(liveA.id, liveB.id, !divorced);
-                toast(divorced ? t('couple.markedMarried') : t('couple.markedDivorced'));
-              })();
-            }}
-          >
-            {divorced ? t('couple.markMarried') : t('couple.markDivorced')}
           </button>
         )}
         <button type="button" className="btn-secondary w-full !min-h-11" onClick={onClose}>

@@ -209,13 +209,13 @@ html:not(.dark) .text-stone-400 {
   stroke: var(--color-stone-600);
 }
 .edge-spouse .react-flow__edge-path {
-  stroke: var(--color-rose-400);
+  stroke: #b45309;
   stroke-width: 2;
 }
 .dark .edge-spouse .react-flow__edge-path {
-  stroke: var(--color-rose-600);
+  stroke: #d97706;
 }
-/* Divorced couples: a broken grey line instead of the rose marriage line. */
+/* Divorced couples: a broken grey line instead of the marriage line. */
 .edge-divorced .react-flow__edge-path {
   stroke: var(--color-stone-400);
   stroke-width: 2;
@@ -225,18 +225,18 @@ html:not(.dark) .text-stone-400 {
   stroke: var(--color-stone-500);
 }
 
-/* Custom spouse edge — rose badge + interlocking wedding rings (tap to edit) */
+/* Custom spouse edge — small gold rings (tap to edit wedding details) */
 .spouse-edge__halo {
-  stroke: #f5f5f4;
+  stroke: var(--tree-canvas-bg, #dce8e2);
 }
 .dark .spouse-edge__halo {
   stroke: var(--color-stone-950);
 }
 .spouse-edge__line {
-  stroke: var(--color-rose-400);
+  stroke: #b45309;
 }
 .dark .spouse-edge__line {
-  stroke: var(--color-rose-500);
+  stroke: #d97706;
 }
 .spouse-edge--divorced .spouse-edge__line {
   stroke: var(--color-stone-400);
@@ -245,13 +245,13 @@ html:not(.dark) .text-stone-400 {
   stroke: var(--color-stone-500);
 }
 .spouse-edge__badge {
-  fill: #ffe4e6;
-  stroke: #fb7185;
-  stroke-width: 1.5;
+  fill: #faf6ef;
+  stroke: #d6c4a3;
+  stroke-width: 1;
 }
 .dark .spouse-edge__badge {
-  fill: #4c0519;
-  stroke: #fb7185;
+  fill: #292524;
+  stroke: #78716c;
 }
 .spouse-edge--divorced .spouse-edge__badge {
   fill: #f5f5f4;
@@ -262,11 +262,11 @@ html:not(.dark) .text-stone-400 {
   stroke: var(--color-stone-500);
 }
 .spouse-edge__badge-inner {
-  fill: #fff1f2;
+  fill: #fffdf8;
   stroke: none;
 }
 .dark .spouse-edge__badge-inner {
-  fill: #881337;
+  fill: #1c1917;
 }
 .spouse-edge--divorced .spouse-edge__badge-inner {
   fill: #fafaf9;
@@ -274,28 +274,11 @@ html:not(.dark) .text-stone-400 {
 .dark .spouse-edge--divorced .spouse-edge__badge-inner {
   fill: var(--color-stone-800);
 }
-.spouse-edge__badge--glow {
-  animation: spouse-ring-pulse 2.4s ease-in-out infinite;
-}
-@keyframes spouse-ring-pulse {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 0 rgba(244, 63, 94, 0));
-  }
-  50% {
-    filter: drop-shadow(0 0 5px rgba(244, 63, 94, 0.45));
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .spouse-edge__badge--glow {
-    animation: none;
-  }
-}
 .spouse-edge__ring {
-  stroke: var(--color-rose-600);
+  stroke: #92400e;
 }
 .dark .spouse-edge__ring {
-  stroke: var(--color-rose-300);
+  stroke: #fbbf24;
 }
 .spouse-edge--divorced .spouse-edge__ring {
   stroke: var(--color-stone-400);
@@ -304,11 +287,12 @@ html:not(.dark) .text-stone-400 {
   stroke: var(--color-stone-500);
 }
 .spouse-edge__shine {
-  fill: #fecdd3;
+  fill: #fde68a;
+  opacity: 0.85;
 }
 .dark .spouse-edge__shine {
-  fill: #fda4af;
-  opacity: 0.9;
+  fill: #fcd34d;
+  opacity: 0.75;
 }
 .spouse-edge__hit {
   pointer-events: all;

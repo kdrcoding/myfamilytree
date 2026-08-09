@@ -207,9 +207,9 @@ export const en = {
   'tree.resetView': 'Reset view',
   'tree.zoomReadable': 'Zoom in (readable)',
   'tree.tip':
-    'Tip: type a name to jump. Drag to move · pinch to zoom. Tap the rose rings between a couple to see or edit their wedding date.',
+    'Tip: type a name to jump. Drag to move · pinch to zoom. Tap the rings between a couple to see or edit their wedding date.',
   'tree.ringsTip':
-    'Tap the rose rings between two people to open their wedding date — you can add or edit it there.',
+    'Tap the rings between two people to open their wedding date — you can add or edit it there.',
   'tree.copyLink': 'Copy share link',
   'tree.linkCopied': 'Share link copied to clipboard.',
   'tree.linkCopyFail': 'Link added to the address bar — copy it from there.',
@@ -226,7 +226,7 @@ export const en = {
   'tree.pngFail': 'PNG export failed.',
   'tree.pngEmpty': 'There is nothing to export yet.',
   'tree.legendTitle': 'How to read the tree',
-  'tree.legendMarried': 'Tap rose rings — wedding date / edit',
+  'tree.legendMarried': 'Tap rings — wedding date / edit',
   'couple.title': 'Couple',
   'couple.tapHint': 'Wedding rings — tap for date and details',
   'couple.subtitle': 'Wedding date and anniversary for this pair',
@@ -1038,9 +1038,9 @@ export const uz: Record<TKey, string> = {
   'tree.resetView': 'Ko‘rinishni tiklash',
   'tree.zoomReadable': 'Kattalashtirish (o‘qiladi)',
   'tree.tip':
-    'Maslahat: ism yozib toping. Surish · chimding. Er-xotin orasidagi pushti uzuklarni bosing — nikoh sanasini ko‘rish yoki tahrirlash.',
+    'Maslahat: ism yozib toping. Surish · chimding. Er-xotin orasidagi uzuklarni bosing — nikoh sanasini ko‘rish yoki tahrirlash.',
   'tree.ringsTip':
-    'Ikki odam orasidagi pushti uzuklarni bosing — nikoh sanasini ochasiz, qo‘shish yoki tahrirlash mumkin.',
+    'Ikki odam orasidagi uzuklarni bosing — nikoh sanasini ochasiz, qo‘shish yoki tahrirlash mumkin.',
   'tree.copyLink': 'Havolani nusxalash',
   'tree.linkCopied': 'Havola nusxalandi.',
   'tree.linkCopyFail': 'Havola manzil satriga qo‘shildi — o‘sha yerdan nusxalang.',
@@ -1057,7 +1057,7 @@ export const uz: Record<TKey, string> = {
   'tree.pngFail': 'PNG eksport qilinmadi.',
   'tree.pngEmpty': 'Hozircha eksport qiladigan narsa yo‘q.',
   'tree.legendTitle': "Shajarani qanday o'qish kerak",
-  'tree.legendMarried': 'Pushti uzuklar — nikoh sanasi / tahrir',
+  'tree.legendMarried': 'Uzuklar — nikoh sanasi / tahrir',
   'couple.title': 'Juftlik',
   'couple.tapHint': 'Nikoh uzuklari — sana va ma’lumot uchun bosing',
   'couple.subtitle': 'Ushbu juftlikning nikoh sanasi va yubileyi',
