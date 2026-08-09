@@ -74,6 +74,13 @@ export function languageCodeLabel(language: AppLanguage): string {
   return language === 'uz' ? 'UZ' : language === 'ru' ? 'RU' : 'EN';
 }
 
+/** Native language name for menus and selects. */
+export function languageDisplayName(language: AppLanguage): string {
+  if (language === 'uz') return "O'zbekcha";
+  if (language === 'ru') return 'Русский';
+  return 'English';
+}
+
 export function normalizeLanguage(value: unknown): AppLanguage {
   if (value === 'en' || value === 'ru' || value === 'uz') return value;
   return 'uz';

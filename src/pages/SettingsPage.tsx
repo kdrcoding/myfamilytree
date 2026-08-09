@@ -7,7 +7,6 @@ import {
   Globe,
   Images,
   KeyRound,
-  Languages,
   Link2,
   LogOut,
   Moon,
@@ -21,6 +20,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
 import { useDataTransfer } from '../hooks/useDataTransfer';
@@ -39,6 +39,8 @@ import { downscalePhoto } from '../utils/image';
 import { ToggleSwitch } from '../components/ui/ToggleSwitch';
 import { JoinRequestsCard } from '../components/JoinRequestsCard';
 import { UnlockModal } from '../components/UnlockModal';
+import { BrandMark } from '../components/BrandLogo';
+import { LanguageSelect } from '../components/LanguageSelect';
 
 /** Translated label for a changed field in the change log. */
 const FIELD_LABEL_KEYS: Record<string, TKey> = {
@@ -114,17 +116,17 @@ function ChangeLogCard() {
   const visible = showAll ? entries : entries.slice(0, LOG_PREVIEW_COUNT);
 
   return (
-    <section className="card mt-4 p-6">
+    <section className="card mt-3 p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="flex items-center gap-2 font-semibold">
-            <ScrollText className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.logTitle')}
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <ScrollText className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.logTitle')}
           </h2>
-          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('settings.logIntro')}</p>
+          <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{t('settings.logIntro')}</p>
         </div>
         <button
           type="button"
-          className="btn-secondary !px-3 text-sm"
+          className="btn-secondary !px-3 !py-1.5 text-sm"
           onClick={refresh}
           disabled={loading || !ready}
         >
@@ -255,11 +257,11 @@ function BackupsCard() {
   };
 
   return (
-    <section className="card mt-4 p-6">
-      <h2 className="flex items-center gap-2 font-semibold">
-        <Archive className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.backupsTitle')}
+    <section className="card mt-3 p-4">
+      <h2 className="flex items-center gap-2 text-sm font-semibold">
+        <Archive className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.backupsTitle')}
       </h2>
-      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+      <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
         {t('settings.backupsIntro')}
       </p>
       {unavailable && (
@@ -333,11 +335,11 @@ function CountriesCard() {
   };
 
   return (
-    <section className="card mt-4 p-6">
-      <h2 className="flex items-center gap-2 font-semibold">
-        <Globe className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.countriesTitle')}
+    <section className="card mt-3 p-4">
+      <h2 className="flex items-center gap-2 text-sm font-semibold">
+        <Globe className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.countriesTitle')}
       </h2>
-      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+      <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
         {t('settings.countriesIntro')}
       </p>
       {fixable === 0 ? (
@@ -409,11 +411,11 @@ function PhotosCard() {
   };
 
   return (
-    <section className="card mt-4 p-6">
-      <h2 className="flex items-center gap-2 font-semibold">
-        <Images className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.photosTitle')}
+    <section className="card mt-3 p-4">
+      <h2 className="flex items-center gap-2 text-sm font-semibold">
+        <Images className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.photosTitle')}
       </h2>
-      <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('settings.photosIntro')}</p>
+      <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{t('settings.photosIntro')}</p>
       {embedded.length === 0 ? (
         <p className="mt-3 text-sm text-emerald-700 dark:text-emerald-400">
           {t('settings.photosNone')}
@@ -441,8 +443,9 @@ function PhotosCard() {
 }
 
 export function SettingsPage() {
-  const { settings, setTheme, setLanguage, setPrivacy, setEasyMode } = useSettings();
+  const { settings, setTheme, setPrivacy, setEasyMode } = useSettings();
   const { role, canEdit, canDelete, signOut } = useAuth();
+  const confirm = useConfirm();
   const { exportJson, importFromFile, resetSample } = useDataTransfer();
   const { toast } = useToast();
   const t = useT();
@@ -464,17 +467,58 @@ export function SettingsPage() {
         ? t('settings.roleEditor')
         : t('settings.roleViewer');
 
-  return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
-      <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">{t('settings.title')}</h1>
+  const handleSignOut = async () => {
+    const proceed = await confirm({
+      title: t('nav.signOutConfirmTitle'),
+      message: t('nav.signOutConfirmMsg'),
+      confirmLabel: t('nav.signOut'),
+    });
+    if (proceed) signOut();
+  };
 
-      {/* Easy Mode — first, so older relatives find it immediately */}
-      <section className="card mt-6 border-emerald-300 p-6 shadow-[0_1px_3px_0_rgb(0_0_0_0.04)] dark:border-emerald-800 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.2)]">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <Eye className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.easyTitle')}
-        </h2>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('settings.easyIntro')}</p>
-        <div className="mt-3">
+  return (
+    <div className="mx-auto w-full max-w-3xl px-4 py-5 sm:px-6 sm:py-8">
+      <header className="flex items-center gap-3">
+        <BrandMark size="md" title={t('site.title')} />
+        <h1 className="text-lg font-bold tracking-tight text-stone-900 sm:text-xl dark:text-stone-50">
+          {t('settings.title')}
+        </h1>
+      </header>
+
+      {/* Language, theme, and Easy Mode — one compact card (no duplicates). */}
+      <section className="card mt-4 space-y-3 border-emerald-300 p-4 dark:border-emerald-800">
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            {t('settings.language')}
+          </label>
+          <LanguageSelect />
+        </div>
+
+        <div>
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            {t('settings.theme')}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              className={`${settings.theme === 'light' ? 'btn-primary' : 'btn-secondary'} !min-h-10 justify-center`}
+              onClick={() => setTheme('light')}
+              aria-pressed={settings.theme === 'light'}
+            >
+              <Sun className="h-4 w-4" aria-hidden /> {t('settings.light')}
+            </button>
+            <button
+              type="button"
+              className={`${settings.theme === 'dark' ? 'btn-primary' : 'btn-secondary'} !min-h-10 justify-center`}
+              onClick={() => setTheme('dark')}
+              aria-pressed={settings.theme === 'dark'}
+            >
+              <Moon className="h-4 w-4" aria-hidden /> {t('settings.dark')}
+            </button>
+          </div>
+        </div>
+
+        <div className="border-t border-stone-100 pt-2 dark:border-stone-800">
           <ToggleSwitch
             label={t('settings.easyLabel')}
             description={t('settings.easyDesc')}
@@ -484,51 +528,18 @@ export function SettingsPage() {
         </div>
       </section>
 
-      {/* Language */}
-      <section className="card mt-4 p-6 shadow-[0_1px_3px_0_rgb(0_0_0_0.04)] dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.2)]">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <Languages className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.language')}
-        </h2>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            className={settings.language === 'uz' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => setLanguage('uz')}
-            aria-pressed={settings.language === 'uz'}
-          >
-            O'zbekcha
-          </button>
-          <button
-            type="button"
-            className={settings.language === 'en' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => setLanguage('en')}
-            aria-pressed={settings.language === 'en'}
-          >
-            English
-          </button>
-          <button
-            type="button"
-            className={settings.language === 'ru' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => setLanguage('ru')}
-            aria-pressed={settings.language === 'ru'}
-          >
-            Русский
-          </button>
-        </div>
-      </section>
-
       {/* Invite relatives */}
-      <section className="card mt-4 p-6">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <Link2 className="h-5 w-5 text-emerald-600" aria-hidden /> {t('invite.title')}
+      <section className="card mt-3 p-4">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <Link2 className="h-4 w-4 text-emerald-600" aria-hidden /> {t('invite.title')}
         </h2>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('invite.intro')}</p>
-        <p className="mt-2 break-all rounded-xl bg-stone-50 px-3 py-2 text-sm font-medium dark:bg-stone-800/60">
+        <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{t('invite.intro')}</p>
+        <p className="mt-2 break-all rounded-lg bg-stone-50 px-3 py-2 text-sm font-medium dark:bg-stone-800/60">
           {inviteUrl()}
         </p>
         <button
           type="button"
-          className="btn-primary mt-3"
+          className="btn-primary mt-2.5 !min-h-10"
           onClick={() => {
             void navigator.clipboard.writeText(inviteUrl()).then(
               () => toast(t('invite.copied'), 'success'),
@@ -541,35 +552,10 @@ export function SettingsPage() {
         </button>
       </section>
 
-      {/* Theme */}
-      <section className="card mt-4 p-6">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <Sun className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.theme')}
-        </h2>
-        <div className="mt-3 flex gap-2">
-          <button
-            type="button"
-            className={settings.theme === 'light' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => setTheme('light')}
-            aria-pressed={settings.theme === 'light'}
-          >
-            <Sun className="h-4 w-4" aria-hidden /> {t('settings.light')}
-          </button>
-          <button
-            type="button"
-            className={settings.theme === 'dark' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => setTheme('dark')}
-            aria-pressed={settings.theme === 'dark'}
-          >
-            <Moon className="h-4 w-4" aria-hidden /> {t('settings.dark')}
-          </button>
-        </div>
-      </section>
-
       {hideAdvanced && (
         <button
           type="button"
-          className="btn-secondary mt-4 w-full"
+          className="btn-secondary mt-3 w-full !min-h-10"
           onClick={() => setShowAdvanced(true)}
         >
           {t('settings.showAdvanced')}
@@ -580,15 +566,15 @@ export function SettingsPage() {
         <>
       {/* Privacy — owner-only: controls what the whole family's data hides publicly. */}
       {canDelete && (
-      <section className="card mt-4 p-6">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <ShieldCheck className="h-5 w-5 text-emerald-600" aria-hidden />{' '}
+      <section className="card mt-3 p-4">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden />{' '}
           {t('settings.privacyTitle')}
         </h2>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+        <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
           {t('settings.privacyIntro')}
         </p>
-        <div className="mt-3 divide-y divide-stone-100 dark:divide-stone-800">
+        <div className="mt-2 divide-y divide-stone-100 dark:divide-stone-800">
           <ToggleSwitch
             label={t('settings.enable')}
             description={t('settings.enableDesc')}
@@ -645,30 +631,30 @@ export function SettingsPage() {
       )}
 
       {/* Access */}
-      <section className="card mt-4 p-6">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <KeyRound className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.accessTitle')}
+      <section className="card mt-3 p-4">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <KeyRound className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.accessTitle')}
         </h2>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+        <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
           {t('settings.accessIntro')}
         </p>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
           <span className="badge border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
             <Eye className="h-3 w-3" aria-hidden />
             {t('settings.currentRole', { role: roleLabel })}
           </span>
           {canEdit ? (
-            <button type="button" className="btn-secondary" onClick={signOut}>
+            <button type="button" className="btn-secondary !min-h-10" onClick={() => void handleSignOut()}>
               <LogOut className="h-4 w-4" aria-hidden /> {t('settings.signOut')}
             </button>
           ) : (
-            <button type="button" className="btn-secondary" onClick={() => setUnlockOpen(true)}>
+            <button type="button" className="btn-secondary !min-h-10" onClick={() => setUnlockOpen(true)}>
               <KeyRound className="h-4 w-4" aria-hidden /> {t('settings.unlock')}
             </button>
           )}
         </div>
         {canDelete && (
-        <details className="mt-4 rounded-xl bg-stone-50 p-3 text-sm dark:bg-stone-800/60">
+        <details className="mt-3 rounded-lg bg-stone-50 p-3 text-sm dark:bg-stone-800/60">
           <summary className="cursor-pointer font-medium text-stone-700 dark:text-stone-300">
             {t('settings.howChange')}
           </summary>
@@ -710,13 +696,13 @@ export function SettingsPage() {
 
       {/* Data management — owner-only: export/import/restore act on the whole dataset. */}
       {canDelete && (
-      <section className="card mt-4 p-6">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <Database className="h-5 w-5 text-emerald-600" aria-hidden /> {t('settings.dataTitle')}
+      <section className="card mt-3 p-4">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <Database className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.dataTitle')}
         </h2>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('settings.dataIntro')}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button type="button" className="btn-secondary" onClick={exportJson}>
+        <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{t('settings.dataIntro')}</p>
+        <div className="mt-2.5 flex flex-wrap gap-2">
+          <button type="button" className="btn-secondary !min-h-10" onClick={exportJson}>
             <Download className="h-4 w-4" aria-hidden /> {t('settings.exportBackup')}
           </button>
           {canEdit && (
@@ -734,7 +720,7 @@ export function SettingsPage() {
               />
               <button
                 type="button"
-                className="btn-secondary"
+                className="btn-secondary !min-h-10"
                 onClick={() => importInputRef.current?.click()}
               >
                 <Upload className="h-4 w-4" aria-hidden /> {t('settings.importBackup')}
@@ -742,7 +728,7 @@ export function SettingsPage() {
             </>
           )}
           {canDelete && (
-            <button type="button" className="btn-danger" onClick={resetSample}>
+            <button type="button" className="btn-danger !min-h-10" onClick={resetSample}>
               <RotateCcw className="h-4 w-4" aria-hidden /> {t('settings.restore')}
             </button>
           )}

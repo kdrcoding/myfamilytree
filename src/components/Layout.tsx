@@ -1,10 +1,9 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { ChevronDown, Languages, LogOut, Menu, Moon, Sun, X } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, Moon, Sun, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useSettings } from '../context/SettingsContext';
-import { languageCodeLabel, nextLanguage } from '../types/family';
 import { useT } from '../i18n/useT';
 import { MadeByKadir } from './MadeByKadir';
 import { BottomNav } from './BottomNav';
@@ -12,9 +11,10 @@ import { PageSkeleton } from './PageSkeleton';
 import { WelcomeTour } from './WelcomeTour';
 import { OverflowMenu } from './OverflowMenu';
 import { BrandLogo } from './BrandLogo';
+import { LanguageMenuButton } from './LanguageSelect';
 
 export function Layout() {
-  const { settings, toggleTheme, setLanguage } = useSettings();
+  const { settings, toggleTheme } = useSettings();
   const { role, signOut } = useAuth();
   const confirm = useConfirm();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -23,6 +23,7 @@ export function Layout() {
   const location = useLocation();
   const t = useT();
   const isTreePage = location.pathname === '/tree';
+  const isSettingsPage = location.pathname === '/settings';
   // Keep the shared family experience simple. The owner always gets the
   // complete navigation and administrative surface.
   const easy = role !== 'owner' && Boolean(settings.easyMode);
@@ -59,8 +60,6 @@ export function Layout() {
     if (proceed) signOut();
   };
 
-  const cycleLanguage = () => setLanguage(nextLanguage(settings.language));
-
   // Primary destinations — keep the top bar short and clear.
   const primaryNav = [
     { to: '/', label: t('nav.home') },
@@ -87,13 +86,6 @@ export function Layout() {
         ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200'
         : 'text-stone-700 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-stone-100'
     }`;
-
-  const langTitle =
-    settings.language === 'uz'
-      ? 'Switch to English'
-      : settings.language === 'en'
-        ? 'Переключить на русский'
-        : "O'zbekchaga o'tish";
 
   return (
     <div className="flex min-h-dvh flex-col bg-stone-100 text-stone-900 dark:bg-stone-950 dark:text-stone-100">
@@ -156,41 +148,35 @@ export function Layout() {
           </nav>
 
           <div className="ml-auto flex items-center gap-0.5 lg:ml-4">
-            <button
-              type="button"
-              className="icon-btn !min-h-10 !min-w-10 !gap-0.5 text-xs font-bold"
-              onClick={cycleLanguage}
-              title={t('nav.langCycle')}
-              aria-label={t('nav.langCycle')}
-            >
-              <Languages className="h-4 w-4" aria-hidden />
-              <span className="tabular-nums">{languageCodeLabel(settings.language)}</span>
-            </button>
+            {/* Language lives on Settings when that page is open — avoid two pickers. */}
+            {!isSettingsPage && <LanguageMenuButton />}
             {/* Desktop chrome — phone uses bottom tabs + Settings for these. */}
             <div className="hidden lg:contents">
-              <OverflowMenu
-                label={t('nav.more')}
-                items={[
-                  {
-                    id: 'theme',
-                    label: settings.theme === 'dark' ? t('nav.themeLight') : t('nav.themeDark'),
-                    icon:
-                      settings.theme === 'dark' ? (
-                        <Sun className="h-4 w-4" aria-hidden />
-                      ) : (
-                        <Moon className="h-4 w-4" aria-hidden />
-                      ),
-                    onClick: toggleTheme,
-                  },
-                  {
-                    id: 'signout',
-                    label: t('nav.signOut'),
-                    icon: <LogOut className="h-4 w-4" aria-hidden />,
-                    onClick: () => void handleSignOut(),
-                    danger: true,
-                  },
-                ]}
-              />
+              {!isSettingsPage && (
+                <OverflowMenu
+                  label={t('nav.more')}
+                  items={[
+                    {
+                      id: 'theme',
+                      label: settings.theme === 'dark' ? t('nav.themeLight') : t('nav.themeDark'),
+                      icon:
+                        settings.theme === 'dark' ? (
+                          <Sun className="h-4 w-4" aria-hidden />
+                        ) : (
+                          <Moon className="h-4 w-4" aria-hidden />
+                        ),
+                      onClick: toggleTheme,
+                    },
+                    {
+                      id: 'signout',
+                      label: t('nav.signOut'),
+                      icon: <LogOut className="h-4 w-4" aria-hidden />,
+                      onClick: () => void handleSignOut(),
+                      danger: true,
+                    },
+                  ]}
+                />
+              )}
             </div>
             {moreNav.length > 0 && (
               <button
@@ -231,7 +217,6 @@ export function Layout() {
                 </li>
               ))}
             </ul>
-            <p className="sr-only">{langTitle}</p>
           </nav>
         )}
       </header>
