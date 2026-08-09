@@ -238,12 +238,12 @@ function TreeCanvas({
   useEffect(() => {
     if (!focusId) return;
     const node = nodes.find((n) => n.id === focusId);
-    if (node) {
-      setCenter(node.position.x + CARD_W / 2, node.position.y + CARD_H / 2, {
-        zoom: Math.max(getZoom(), focusZoom),
-        duration: 600,
-      });
-    }
+    // Collapsed branches / stale deep-links: keep focusId until the node exists.
+    if (!node) return;
+    setCenter(node.position.x + CARD_W / 2, node.position.y + CARD_H / 2, {
+      zoom: Math.max(getZoom(), focusZoom),
+      duration: 600,
+    });
     onFocused();
   }, [focusId, nodes, setCenter, getZoom, focusZoom, onFocused]);
 
@@ -282,8 +282,10 @@ function TreeCanvas({
       nodesConnectable={false}
       nodesFocusable={false}
       edgesFocusable={false}
+      preventScrolling
       zoomOnDoubleClick={false}
       zoomOnScroll
+      zoomOnPinch
       panOnScroll={false}
       panOnDrag
       proOptions={{ hideAttribution: true }}
@@ -386,7 +388,7 @@ function TreeCanvas({
           </div>
         </Panel>
       )}
-      <Panel position="top-right" className="!m-2 flex gap-1.5 sm:!m-3 sm:flex-col">
+      <Panel position="top-right" className="!m-2 hidden gap-1.5 sm:!m-3 sm:flex sm:flex-col">
         <button
           type="button"
           className="tree-action-btn inline-flex items-center gap-1.5"
@@ -397,23 +399,23 @@ function TreeCanvas({
         </button>
         <button
           type="button"
-          className="tree-action-btn inline-flex items-center gap-1.5"
+          className="tree-action-btn inline-flex items-center justify-center gap-1.5"
           onClick={() => fitView({ padding: 0.16, duration: 500, maxZoom: startZoom })}
         >
           <Maximize2 className="h-3.5 w-3.5" aria-hidden />
           {t('tree.fitTree')}
         </button>
       </Panel>
-      <Panel position="bottom-left" className="!m-3 !mb-20 hidden sm:block lg:!mb-3">
+      <Panel position="bottom-left" className="!m-3 mb-[calc(var(--bottom-nav-h)+0.5rem)] hidden sm:block lg:!mb-3">
         <MadeByKadir align="left" />
       </Panel>
       <Controls
         showInteractive={false}
         position="bottom-right"
-        className={`family-tree-controls !mb-[4.75rem] !mr-2 overflow-hidden rounded-xl border border-stone-200/90 shadow-md sm:!mb-16 lg:!mb-3 lg:!mr-3 ${easyMode ? 'tree-controls-easy' : ''}`}
+        className={`family-tree-controls !mr-2 overflow-hidden rounded-xl border border-stone-200/90 shadow-md lg:!mr-3 ${easyMode ? 'tree-controls-easy' : ''}`}
       />
 
-      <Panel position="bottom-right" className="!bottom-16 !right-3 hidden md:block">
+      <Panel position="bottom-right" className="!bottom-[calc(var(--bottom-nav-h)+3.5rem)] !right-3 hidden md:block lg:!bottom-20">
         <button
           type="button"
           onClick={() => setMinimapOpen((v) => !v)}
@@ -493,7 +495,13 @@ export function TreePage() {
     }
   }, [searchParams, setSearchParams]);
 
-  const layout = useMemo(() => computeTreeLayout(people, collapsed), [people, collapsed]);
+  const layout = useMemo(
+    () =>
+      computeTreeLayout(people, collapsed, {
+        spacing: isPhone ? 'compact' : 'comfortable',
+      }),
+    [people, collapsed, isPhone],
+  );
   const flowNodes = useMemo(
     () => [...layout.genLabelNodes, ...layout.nodes, ...layout.junctionNodes] as Node[],
     [layout],

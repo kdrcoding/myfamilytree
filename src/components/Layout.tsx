@@ -239,7 +239,7 @@ export function Layout() {
       <div
         id="main"
         tabIndex={-1}
-        className={`flex min-h-0 flex-1 flex-col outline-none pb-20 lg:pb-0 ${
+        className={`flex min-h-0 flex-1 flex-col outline-none pb-[var(--bottom-nav-h)] lg:pb-0 ${
           isTreePage ? 'overflow-hidden' : ''
         }`}
       >

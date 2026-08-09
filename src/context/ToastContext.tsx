@@ -52,7 +52,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {/* Each toast is its own role="status" live region — no aria-live here,
           nested live regions double-announce on some screen readers. */}
-      <div className="pointer-events-none fixed bottom-4 left-1/2 z-[80] flex w-full max-w-sm -translate-x-1/2 flex-col gap-2 px-4 sm:left-auto sm:right-4 sm:translate-x-0">
+      <div className="pointer-events-none fixed bottom-[calc(var(--bottom-nav-h)+0.75rem)] left-1/2 z-[80] flex w-full max-w-sm -translate-x-1/2 flex-col gap-2 px-4 lg:bottom-4 lg:left-auto lg:right-4 lg:translate-x-0">
         {toasts.map((item) => {
           const Icon = ICONS[item.type];
           return (

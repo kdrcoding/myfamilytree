@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Heart, HeartCrack, Pencil } from 'lucide-react';
 import type { FamilyPerson } from '../types/family';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../context/ConfirmContext';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
@@ -42,6 +43,7 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
   const { canEdit, canDelete } = useAuth();
   const { updatePerson, setDivorcedStatus, getPerson } = useFamily();
   const { toast } = useToast();
+  const confirm = useConfirm();
 
   // Prefer live records from the index (modal props may be a snapshot).
   const liveA = getPerson(a.id) ?? a;
@@ -326,8 +328,19 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
             type="button"
             className="btn-secondary w-full !min-h-11"
             onClick={() => {
-              setDivorcedStatus(liveA.id, liveB.id, !divorced);
-              toast(divorced ? t('couple.markedMarried') : t('couple.markedDivorced'));
+              void (async () => {
+                const proceed = await confirm({
+                  title: divorced ? t('couple.remarryConfirmTitle') : t('couple.divorceConfirmTitle'),
+                  message: divorced ? t('couple.remarryConfirmMsg') : t('couple.divorceConfirmMsg'),
+                  confirmLabel: divorced
+                    ? t('couple.markMarried')
+                    : t('couple.divorceConfirmBtn'),
+                  danger: !divorced,
+                });
+                if (!proceed) return;
+                setDivorcedStatus(liveA.id, liveB.id, !divorced);
+                toast(divorced ? t('couple.markedMarried') : t('couple.markedDivorced'));
+              })();
             }}
           >
             {divorced ? t('couple.markMarried') : t('couple.markDivorced')}

@@ -99,7 +99,7 @@ export function HomePage() {
         : t('home.bdayInDays', { n: daysUntil });
 
   return (
-    <div className="home-page pb-14">
+    <div className="home-page">
       {/* Full-bleed heritage hero — brand first, one composition */}
       <section className="home-hero overflow-hidden text-stone-50" aria-labelledby="home-brand">
         <div className="home-hero__atmosphere" aria-hidden>
@@ -120,7 +120,7 @@ export function HomePage() {
           </svg>
         </div>
 
-        <div className="relative mx-auto max-w-3xl px-5 pb-14 pt-10 sm:px-8 sm:pb-18 sm:pt-14">
+        <div className="relative mx-auto max-w-3xl px-5 pb-14 pt-10 sm:px-8 sm:pb-16 sm:pt-14">
           <div className="home-hero__mark">
             <BrandMark size="lg" title={t('site.title')} className="!h-[4.5rem] !w-[4.5rem] !rounded-[1.25rem] shadow-lg ring-1 ring-white/10" />
           </div>

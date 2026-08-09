@@ -97,6 +97,12 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  :root {
+    /* Bottom tab bar ≈ content height + safe-area (notched iPhones). */
+    --bottom-nav-h: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
+
   /* Honour the OS "reduce motion" setting: strip animations and transitions
      for users who get motion sickness or simply prefer a calmer UI. */
   @media (prefers-reduced-motion: reduce) {
@@ -407,6 +413,10 @@ html:not(.dark) .text-stone-400 {
 .family-tree-canvas .react-flow__renderer,
 .family-tree-canvas .react-flow__pane {
   cursor: grab;
+  /* Keep iOS from stealing pan/pinch as page scroll or browser zoom. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .family-tree-canvas .react-flow__pane:active {
   cursor: grabbing;
@@ -415,6 +425,13 @@ html:not(.dark) .text-stone-400 {
 .family-tree-controls {
   background: rgb(255 255 255 / 0.95) !important;
   box-shadow: 0 4px 14px rgb(28 25 23 / 0.08) !important;
+  /* Sit above the bottom tab bar on phones. */
+  margin-bottom: calc(var(--bottom-nav-h) + 0.5rem) !important;
+}
+@media (min-width: 1024px) {
+  .family-tree-controls {
+    margin-bottom: 0.75rem !important;
+  }
 }
 .family-tree-controls .react-flow__controls-button {
   background: transparent;

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { FamilyPerson } from '../types/family';
+import { useConfirm } from '../context/ConfirmContext';
 import { useFamily } from '../context/FamilyContext';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { useLanguage, useT } from '../i18n/useT';
@@ -121,6 +122,7 @@ function SpouseChips({
   onNavigate: (id: string) => void;
 }) {
   const { setDivorcedStatus } = useFamily();
+  const confirm = useConfirm();
   const t = useT();
   if (spouses.length === 0) return null;
   return (
@@ -153,7 +155,24 @@ function SpouseChips({
               {editMode && (
                 <button
                   type="button"
-                  onClick={() => setDivorcedStatus(person.id, spouse.id, !divorced)}
+                  onClick={() => {
+                    void (async () => {
+                      const proceed = await confirm({
+                        title: divorced
+                          ? t('couple.remarryConfirmTitle')
+                          : t('couple.divorceConfirmTitle'),
+                        message: divorced
+                          ? t('couple.remarryConfirmMsg')
+                          : t('couple.divorceConfirmMsg'),
+                        confirmLabel: divorced
+                          ? t('couple.markMarried')
+                          : t('couple.divorceConfirmBtn'),
+                        danger: !divorced,
+                      });
+                      if (!proceed) return;
+                      setDivorcedStatus(person.id, spouse.id, !divorced);
+                    })();
+                  }}
                   title={
                     divorced
                       ? t('person.unmarkDivorced', { name: fullName(spouse) })

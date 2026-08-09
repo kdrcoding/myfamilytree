@@ -707,7 +707,7 @@ export function PersonFormModal({
               <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
                 {t('form.photo')}
               </span>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 {values.photo && photoPreviewUrl ? (
                   <img
                     src={photoPreviewUrl}

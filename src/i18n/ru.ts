@@ -758,6 +758,12 @@ export const ruOverrides: Record<string, string> = {
   'couple.markMarried': 'Отметить как в браке',
   'couple.markedDivorced': 'Отмечено: в разводе',
   'couple.markedMarried': 'Отмечено: снова в браке',
+  'couple.divorceConfirmTitle': 'Отметить как в разводе?',
+  'couple.divorceConfirmMsg':
+    'На дереве линия пары изменится (пунктир вместо колец). Позже можно отменить.',
+  'couple.divorceConfirmBtn': 'Отметить развод',
+  'couple.remarryConfirmTitle': 'Снова отметить как в браке?',
+  'couple.remarryConfirmMsg': 'На дереве снова появятся свадебные кольца для этой пары.',
   'tree.legendChildren': 'Их дети — стрелка к ребёнку',
   'tree.emptyText': 'Добавьте первого члена семьи или восстановите встроенные данные на странице Настроек.',
   'tree.roleOwner': 'владелец',
