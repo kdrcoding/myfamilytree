@@ -1,10 +1,24 @@
-import { Heart, HeartCrack } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Heart, HeartCrack, Pencil } from 'lucide-react';
 import type { FamilyPerson } from '../types/family';
+import { useAuth } from '../context/AuthContext';
+import { useFamily } from '../context/FamilyContext';
+import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
-import { formatDate, formatMonthDay } from '../utils/dates';
-import { fullName, isDivorced, marriageDateOf } from '../utils/family';
+import { formatDate, formatMonthDay, isValidDateString } from '../utils/dates';
+import {
+  fullName,
+  isDivorced,
+  marriageDateOf,
+  marriageNoteOf,
+  marriagePlaceOf,
+  withMarriageDate,
+  withMarriageNote,
+  withMarriagePlace,
+} from '../utils/family';
 import { getCoupleAnniversary } from '../utils/anniversaries';
 import { Avatar } from './Avatar';
+import { DateField } from './DateField';
 import { Modal } from './ui/Modal';
 
 interface CoupleAnniversaryModalProps {
@@ -19,15 +33,38 @@ function pad2(n: number): string {
 }
 
 /**
- * Shown when someone taps the wedding rings between two people on the tree.
- * Makes marriage date + anniversary easy to understand at a glance.
+ * Tap wedding rings on the tree → see anniversary, and (if you can edit)
+ * fill in wedding date, place, and a short note with a few taps.
  */
 export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAnniversaryModalProps) {
   const t = useT();
   const language = useLanguage();
-  const marriedOn = marriageDateOf(a, b);
-  const divorced = isDivorced(a, b);
-  const anniversary = getCoupleAnniversary(a, b);
+  const { canEdit, canDelete } = useAuth();
+  const { updatePerson, setDivorcedStatus, getPerson } = useFamily();
+  const { toast } = useToast();
+
+  // Prefer live records from the index (modal props may be a snapshot).
+  const liveA = getPerson(a.id) ?? a;
+  const liveB = getPerson(b.id) ?? b;
+
+  const marriedOn = marriageDateOf(liveA, liveB);
+  const place = marriagePlaceOf(liveA, liveB);
+  const note = marriageNoteOf(liveA, liveB);
+  const divorced = isDivorced(liveA, liveB);
+  const anniversary = getCoupleAnniversary(liveA, liveB);
+
+  const [editing, setEditing] = useState(() => canEdit && !marriedOn);
+  const [dateDraft, setDateDraft] = useState(marriedOn ?? '');
+  const [placeDraft, setPlaceDraft] = useState(place ?? '');
+  const [noteDraft, setNoteDraft] = useState(note ?? '');
+  const [dateError, setDateError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setDateDraft(marriedOn ?? '');
+    setPlaceDraft(place ?? '');
+    setNoteDraft(note ?? '');
+  }, [marriedOn, place, note, liveA.id, liveB.id]);
 
   const whenLabel =
     anniversary == null
@@ -55,6 +92,26 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
         : anniversary.isToday
           ? t('home.annivYearsToday', { n: anniversary.years })
           : t('home.annivYears', { n: anniversary.years });
+
+  const save = async () => {
+    const trimmedDate = dateDraft.trim();
+    if (trimmedDate && !isValidDateString(trimmedDate)) {
+      setDateError(t('couple.invalidDate'));
+      return;
+    }
+    setDateError('');
+    setSaving(true);
+    try {
+      let next = withMarriageDate(liveA, liveB.id, trimmedDate);
+      next = withMarriagePlace(next, liveB.id, placeDraft);
+      next = withMarriageNote(next, liveB.id, noteDraft);
+      await Promise.resolve(updatePerson(next, next.parentIds, next.spouseIds));
+      toast(t('couple.saved'));
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Modal onClose={onClose} labelledBy="couple-title" size="sm">
@@ -89,12 +146,12 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
           className="flex min-w-0 flex-1 flex-col items-center gap-1.5 rounded-xl p-2 transition-colors hover:bg-stone-50 dark:hover:bg-stone-800/60"
           onClick={() => {
             onClose();
-            onOpenPerson(a.id);
+            onOpenPerson(liveA.id);
           }}
         >
-          <Avatar person={a} size="lg" />
+          <Avatar person={liveA} size="lg" />
           <span className="line-clamp-2 text-sm font-semibold text-stone-800 dark:text-stone-100">
-            {fullName(a)}
+            {fullName(liveA)}
           </span>
         </button>
         <span
@@ -114,65 +171,172 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
           className="flex min-w-0 flex-1 flex-col items-center gap-1.5 rounded-xl p-2 transition-colors hover:bg-stone-50 dark:hover:bg-stone-800/60"
           onClick={() => {
             onClose();
-            onOpenPerson(b.id);
+            onOpenPerson(liveB.id);
           }}
         >
-          <Avatar person={b} size="lg" />
+          <Avatar person={liveB} size="lg" />
           <span className="line-clamp-2 text-sm font-semibold text-stone-800 dark:text-stone-100">
-            {fullName(b)}
+            {fullName(liveB)}
           </span>
         </button>
       </div>
 
-      <dl className="mt-5 space-y-3 rounded-2xl bg-stone-50 p-4 text-left dark:bg-stone-800/50">
-        <div>
-          <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
-            {t('couple.marriedOn')}
-          </dt>
-          <dd className="mt-0.5 text-base font-semibold text-stone-900 dark:text-stone-100">
-            {marriedOn ? formatDate(marriedOn, language) : t('couple.noDate')}
-          </dd>
-          {marriedOn && !divorced && anniversary && (
-            <dd className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
-              {t('couple.weddingDay', {
-                day: formatMonthDay(anniversary.month, anniversary.day, language),
-              })}
-            </dd>
-          )}
-          {marriedOn && !divorced && !anniversary && (
-            <dd className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
-              {t('couple.weddingDayKnown')}
-            </dd>
-          )}
+      {editing && canEdit ? (
+        <div className="mt-5 space-y-4 text-left">
+          <DateField
+            label={t('couple.marriedOn')}
+            value={dateDraft}
+            onChange={(v) => {
+              setDateDraft(v);
+              setDateError('');
+            }}
+            error={dateError}
+            hint={t('couple.dateHint')}
+          />
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+              {t('couple.place')}
+            </span>
+            <input
+              type="text"
+              className="input"
+              value={placeDraft}
+              maxLength={120}
+              placeholder={t('couple.placePlaceholder')}
+              onChange={(e) => setPlaceDraft(e.target.value)}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+              {t('couple.notes')}
+            </span>
+            <textarea
+              className="input min-h-[4.5rem] resize-y"
+              value={noteDraft}
+              maxLength={500}
+              placeholder={t('couple.notesPlaceholder')}
+              onChange={(e) => setNoteDraft(e.target.value)}
+            />
+          </label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              className="btn-primary flex-1 !min-h-11"
+              disabled={saving}
+              onClick={() => void save()}
+            >
+              {saving ? t('memories.saving') : t('form.save')}
+            </button>
+            <button
+              type="button"
+              className="btn-secondary flex-1 !min-h-11"
+              disabled={saving}
+              onClick={() => {
+                setEditing(false);
+                setDateDraft(marriedOn ?? '');
+                setPlaceDraft(place ?? '');
+                setNoteDraft(note ?? '');
+                setDateError('');
+              }}
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
         </div>
-        {anniversary && !divorced && (
+      ) : (
+        <dl className="mt-5 space-y-3 rounded-2xl bg-stone-50 p-4 text-left dark:bg-stone-800/50">
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
-              {t('couple.nextAnniversary')}
+              {t('couple.marriedOn')}
             </dt>
             <dd className="mt-0.5 text-base font-semibold text-stone-900 dark:text-stone-100">
-              {whenLabel}
-              {nextDateLabel && (
-                <span className="mt-0.5 block text-sm font-medium text-stone-600 dark:text-stone-300">
-                  {nextDateLabel}
-                </span>
-              )}
-              {yearsLabel && (
-                <span className="mt-1 block text-sm font-semibold text-rose-700 dark:text-rose-300">
-                  {yearsLabel}
-                </span>
-              )}
+              {marriedOn ? formatDate(marriedOn, language) : t('couple.noDate')}
             </dd>
+            {marriedOn && !divorced && anniversary && (
+              <dd className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
+                {t('couple.weddingDay', {
+                  day: formatMonthDay(anniversary.month, anniversary.day, language),
+                })}
+              </dd>
+            )}
           </div>
-        )}
-        {!marriedOn && (
-          <p className="text-sm text-stone-500 dark:text-stone-400">{t('couple.addDateHint')}</p>
-        )}
-      </dl>
+          {(place || note) && (
+            <>
+              {place && (
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                    {t('couple.place')}
+                  </dt>
+                  <dd className="mt-0.5 text-base font-medium text-stone-900 dark:text-stone-100">
+                    {place}
+                  </dd>
+                </div>
+              )}
+              {note && (
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                    {t('couple.notes')}
+                  </dt>
+                  <dd className="mt-0.5 whitespace-pre-wrap text-sm text-stone-700 dark:text-stone-200">
+                    {note}
+                  </dd>
+                </div>
+              )}
+            </>
+          )}
+          {anniversary && !divorced && (
+            <div>
+              <dt className="text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                {t('couple.nextAnniversary')}
+              </dt>
+              <dd className="mt-0.5 text-base font-semibold text-stone-900 dark:text-stone-100">
+                {whenLabel}
+                {nextDateLabel && (
+                  <span className="mt-0.5 block text-sm font-medium text-stone-600 dark:text-stone-300">
+                    {nextDateLabel}
+                  </span>
+                )}
+                {yearsLabel && (
+                  <span className="mt-1 block text-sm font-semibold text-rose-700 dark:text-rose-300">
+                    {yearsLabel}
+                  </span>
+                )}
+              </dd>
+            </div>
+          )}
+          {!marriedOn && !canEdit && (
+            <p className="text-sm text-stone-500 dark:text-stone-400">{t('couple.addDateHint')}</p>
+          )}
+        </dl>
+      )}
 
-      <button type="button" className="btn-secondary mt-5 w-full !min-h-11" onClick={onClose}>
-        {t('common.close')}
-      </button>
+      <div className="mt-5 flex flex-col gap-2">
+        {canEdit && !editing && (
+          <button
+            type="button"
+            className="btn-primary w-full !min-h-11 inline-flex items-center justify-center gap-2"
+            onClick={() => setEditing(true)}
+          >
+            <Pencil className="h-4 w-4" aria-hidden />
+            {marriedOn || place || note ? t('couple.editDetails') : t('couple.addDetails')}
+          </button>
+        )}
+        {canDelete && (
+          <button
+            type="button"
+            className="btn-secondary w-full !min-h-11"
+            onClick={() => {
+              setDivorcedStatus(liveA.id, liveB.id, !divorced);
+              toast(divorced ? t('couple.markedMarried') : t('couple.markedDivorced'));
+            }}
+          >
+            {divorced ? t('couple.markMarried') : t('couple.markDivorced')}
+          </button>
+        )}
+        <button type="button" className="btn-secondary w-full !min-h-11" onClick={onClose}>
+          {t('common.close')}
+        </button>
+      </div>
     </Modal>
   );
 }

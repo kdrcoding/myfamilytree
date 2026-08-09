@@ -32,6 +32,10 @@ export interface FamilyPerson {
    * partner's record may carry it; read it through `marriageDateOf`.
    */
   marriageDates?: Record<string, string>;
+  /** Wedding place / city per spouse id — read via `marriagePlaceOf`. */
+  marriagePlaces?: Record<string, string>;
+  /** Short note about the wedding (or the marriage) per spouse id. */
+  marriageNotes?: Record<string, string>;
 }
 
 /** Versioned wrapper stored in LocalStorage and used for import/export. */

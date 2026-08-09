@@ -126,6 +126,12 @@ export function summarizeFamilyChange(
     if (!sameMarriageDates(before.marriageDates, person.marriageDates)) {
       fields.push('marriageDates');
     }
+    if (!sameMarriageDates(before.marriagePlaces, person.marriagePlaces)) {
+      fields.push('marriagePlaces');
+    }
+    if (!sameMarriageDates(before.marriageNotes, person.marriageNotes)) {
+      fields.push('marriageNotes');
+    }
     if (fields.length > 0) updated.push({ name: fullName(person), fields });
   }
 

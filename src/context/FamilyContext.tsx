@@ -26,7 +26,7 @@ import {
   removePerson,
   setDivorced,
   setRelationships,
-  syncMarriageDates,
+  syncMarriageMeta,
 } from '../utils/family';
 import type { PersonIndex } from '../utils/family';
 
@@ -272,25 +272,24 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           const existing = current.find((p) => p.id === person.id);
           if (!existing) return current;
           if (!isOwner) {
-            // Family editors may change any DETAIL field (names, dates, place,
-            // bio, gender, deceased) — including things the owner filled in —
-            // but never relationships or deletion. Force the existing
-            // relationship arrays back on regardless of what the form sent, and
-            // skip setRelationships entirely.
+            // Family editors may change DETAIL fields — including wedding
+            // date/place/notes from the rings modal — but never relationships.
             const updated = {
               ...person,
               parentIds: existing.parentIds,
               spouseIds: existing.spouseIds,
               childIds: existing.childIds,
               divorcedIds: existing.divorcedIds,
-              marriageDates: existing.marriageDates,
             };
-            return current.map((p) => (p.id === person.id ? updated : p));
+            return syncMarriageMeta(
+              current.map((p) => (p.id === person.id ? updated : p)),
+              person.id,
+            );
           }
           const replaced = current.map((p) => (p.id === person.id ? person : p));
-          // Mirror marriage dates onto each spouse so both records agree —
+          // Mirror marriage details onto each spouse so both records agree —
           // the relationship row is derived from either side.
-          return syncMarriageDates(
+          return syncMarriageMeta(
             setRelationships(replaced, person.id, parentIds, spouseIds),
             person.id,
           );

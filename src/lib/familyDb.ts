@@ -25,6 +25,10 @@ export interface RelationshipRow {
   person_b: string;
   /** Marriage date for spouse/divorced rows ("YYYY[-MM[-DD]]"), else null. */
   married_on?: string | null;
+  /** Wedding place / city for spouse/divorced rows. */
+  married_place?: string | null;
+  /** Short note about the wedding / marriage. */
+  married_notes?: string | null;
 }
 
 const GENDERS: Gender[] = ['male', 'female', 'unspecified'];
@@ -71,16 +75,22 @@ export function relationshipRowsFor(people: FamilyPerson[]): Map<string, Relatio
     for (const spouseId of person.spouseIds) {
       const [a, b] = [person.id, spouseId].sort();
       const key = spouseKey(a, b);
-      // Either partner's record may carry the marriage date.
+      // Either partner's record may carry the marriage details.
       const other = byId.get(spouseId);
       const marriedOn =
         person.marriageDates?.[spouseId] ?? other?.marriageDates?.[person.id] ?? null;
+      const marriedPlace =
+        person.marriagePlaces?.[spouseId] ?? other?.marriagePlaces?.[person.id] ?? null;
+      const marriedNotes =
+        person.marriageNotes?.[spouseId] ?? other?.marriageNotes?.[person.id] ?? null;
       rows.set(key, {
         key,
         kind: divorcedPairs.has(key) ? 'divorced' : 'spouse',
         person_a: a,
         person_b: b,
         married_on: marriedOn,
+        married_place: marriedPlace,
+        married_notes: marriedNotes,
       });
     }
     for (const childId of person.childIds) {
@@ -91,6 +101,8 @@ export function relationshipRowsFor(people: FamilyPerson[]): Map<string, Relatio
         person_a: person.id,
         person_b: childId,
         married_on: null,
+        married_place: null,
+        married_notes: null,
       });
     }
   }
@@ -131,6 +143,14 @@ export function peopleFromRows(members: MemberRow[], rels: RelationshipRow[]): F
       if (rel.married_on) {
         a.marriageDates = { ...a.marriageDates, [b.id]: rel.married_on };
         b.marriageDates = { ...b.marriageDates, [a.id]: rel.married_on };
+      }
+      if (rel.married_place) {
+        a.marriagePlaces = { ...a.marriagePlaces, [b.id]: rel.married_place };
+        b.marriagePlaces = { ...b.marriagePlaces, [a.id]: rel.married_place };
+      }
+      if (rel.married_notes) {
+        a.marriageNotes = { ...a.marriageNotes, [b.id]: rel.married_notes };
+        b.marriageNotes = { ...b.marriageNotes, [a.id]: rel.married_notes };
       }
       if (rel.kind === 'divorced') {
         a.divorcedIds = a.divorcedIds ?? [];
@@ -197,7 +217,13 @@ export function diffFamily(prev: FamilyPerson[], next: FamilyPerson[]): FamilyDi
   // updates them in place because the key stays the same.
   const insertRelationships = [...nextRels.values()].filter((r) => {
     const before = prevRels.get(r.key);
-    return !before || before.kind !== r.kind || (before.married_on ?? null) !== (r.married_on ?? null);
+    return (
+      !before ||
+      before.kind !== r.kind ||
+      (before.married_on ?? null) !== (r.married_on ?? null) ||
+      (before.married_place ?? null) !== (r.married_place ?? null) ||
+      (before.married_notes ?? null) !== (r.married_notes ?? null)
+    );
   });
   const deleteRelationshipKeys = [...prevRels.keys()].filter((key) => {
     if (nextRels.has(key)) return false;
@@ -231,12 +257,17 @@ export async function pushDiff(diff: FamilyDiff): Promise<void> {
       .from('family_relationships')
       .upsert(diff.insertRelationships);
     if (error) {
-      // The married_on column arrives with the upgrade SQL. Until the owner
-      // has run it, retry without the field so saves keep working.
-      if (/married_on/i.test(error.message ?? '')) {
+      // Newer marriage columns arrive with upgrade SQL. Until the owner has
+      // run it, retry without those fields so saves keep working.
+      const msg = error.message ?? '';
+      if (/married_on|married_place|married_notes/i.test(msg)) {
+        const stripExtra = /married_place|married_notes/i.test(msg);
+        const stripDate = /married_on/i.test(msg);
         const stripped = diff.insertRelationships.map((row) => {
-          const { key, kind, person_a, person_b } = row;
-          return { key, kind, person_a, person_b };
+          const { key, kind, person_a, person_b, married_on, married_place, married_notes } = row;
+          if (stripDate) return { key, kind, person_a, person_b };
+          if (stripExtra) return { key, kind, person_a, person_b, married_on };
+          return { key, kind, person_a, person_b, married_on, married_place, married_notes };
         });
         const { error: retryError } = await supabase
           .from('family_relationships')

@@ -194,16 +194,52 @@ export function marriageDateOf(a: FamilyPerson, b: FamilyPerson): string | undef
   return a.marriageDates?.[b.id] ?? b.marriageDates?.[a.id];
 }
 
+/** Wedding place for a couple, if either partner recorded it. */
+export function marriagePlaceOf(a: FamilyPerson, b: FamilyPerson): string | undefined {
+  return a.marriagePlaces?.[b.id] ?? b.marriagePlaces?.[a.id];
+}
+
+/** Wedding / marriage note for a couple. */
+export function marriageNoteOf(a: FamilyPerson, b: FamilyPerson): string | undefined {
+  return a.marriageNotes?.[b.id] ?? b.marriageNotes?.[a.id];
+}
+
+function withSpouseMap(
+  person: FamilyPerson,
+  key: 'marriageDates' | 'marriagePlaces' | 'marriageNotes',
+  spouseId: string,
+  value: string,
+): FamilyPerson {
+  const current = { ...(person[key] ?? {}) };
+  const trimmed = value.trim();
+  if (trimmed) current[spouseId] = trimmed;
+  else delete current[spouseId];
+  return { ...person, [key]: Object.keys(current).length > 0 ? current : undefined };
+}
+
 /** Set or clear (empty string) a couple's marriage date on one record. */
 export function withMarriageDate(
   person: FamilyPerson,
   spouseId: string,
   date: string,
 ): FamilyPerson {
-  const current = { ...(person.marriageDates ?? {}) };
-  if (date) current[spouseId] = date;
-  else delete current[spouseId];
-  return { ...person, marriageDates: Object.keys(current).length > 0 ? current : undefined };
+  return withSpouseMap(person, 'marriageDates', spouseId, date);
+}
+
+export function withMarriagePlace(
+  person: FamilyPerson,
+  spouseId: string,
+  place: string,
+): FamilyPerson {
+  return withSpouseMap(person, 'marriagePlaces', spouseId, place);
+}
+
+export function withMarriageNote(
+  person: FamilyPerson,
+  spouseId: string,
+  note: string,
+): FamilyPerson {
+  return withSpouseMap(person, 'marriageNotes', spouseId, note);
 }
 
 /**
@@ -211,11 +247,21 @@ export function withMarriageDate(
  * records agree — the database relationship row is derived from either side.
  */
 export function syncMarriageDates(people: FamilyPerson[], personId: string): FamilyPerson[] {
+  return syncMarriageMeta(people, personId);
+}
+
+/**
+ * Mirror marriage date, place, and notes from `personId` onto each spouse.
+ */
+export function syncMarriageMeta(people: FamilyPerson[], personId: string): FamilyPerson[] {
   const person = people.find((p) => p.id === personId);
   if (!person) return people;
   return people.map((p) => {
     if (p.id === personId || !person.spouseIds.includes(p.id)) return p;
-    return withMarriageDate(p, personId, person.marriageDates?.[p.id] ?? '');
+    let next = withMarriageDate(p, personId, person.marriageDates?.[p.id] ?? '');
+    next = withMarriagePlace(next, personId, person.marriagePlaces?.[p.id] ?? '');
+    next = withMarriageNote(next, personId, person.marriageNotes?.[p.id] ?? '');
+    return next;
   });
 }
 
@@ -385,6 +431,12 @@ export function normalizePeople(people: FamilyPerson[]): FamilyPerson[] {
     const marriageDates = Object.fromEntries(
       Object.entries(p.marriageDates ?? {}).filter(([id]) => ids.has(id) && id !== p.id),
     );
+    const marriagePlaces = Object.fromEntries(
+      Object.entries(p.marriagePlaces ?? {}).filter(([id]) => ids.has(id) && id !== p.id),
+    );
+    const marriageNotes = Object.fromEntries(
+      Object.entries(p.marriageNotes ?? {}).filter(([id]) => ids.has(id) && id !== p.id),
+    );
     return {
       ...clone(p),
       parentIds: [...new Set(p.parentIds.filter((id) => ids.has(id) && id !== p.id))],
@@ -392,6 +444,8 @@ export function normalizePeople(people: FamilyPerson[]): FamilyPerson[] {
       childIds: [...new Set(p.childIds.filter((id) => ids.has(id) && id !== p.id))],
       divorcedIds: divorcedIds.length > 0 ? divorcedIds : undefined,
       marriageDates: Object.keys(marriageDates).length > 0 ? marriageDates : undefined,
+      marriagePlaces: Object.keys(marriagePlaces).length > 0 ? marriagePlaces : undefined,
+      marriageNotes: Object.keys(marriageNotes).length > 0 ? marriageNotes : undefined,
     };
   });
   const divorcedPairs = next.flatMap((p) =>

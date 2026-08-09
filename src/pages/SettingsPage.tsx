@@ -59,6 +59,8 @@ const FIELD_LABEL_KEYS: Record<string, TKey> = {
   children: 'person.children',
   divorced: 'person.divorced',
   marriageDates: 'form.marriageDateShort',
+  marriagePlaces: 'couple.place',
+  marriageNotes: 'couple.notes',
   memories: 'memories.title',
   audio: 'audio.title',
 };
