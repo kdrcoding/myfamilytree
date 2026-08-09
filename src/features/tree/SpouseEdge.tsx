@@ -17,6 +17,12 @@ function SpouseEdgeComponent({ sourceX, sourceY, targetX, targetY, source, targe
   const r = 5.5;
   const dx = 3.2;
 
+  const open = (event: { stopPropagation: () => void; preventDefault?: () => void }) => {
+    event.stopPropagation();
+    event.preventDefault?.();
+    onOpenCouple?.(source, target);
+  };
+
   return (
     <g className={divorced ? 'spouse-edge spouse-edge--divorced' : 'spouse-edge'}>
       <path
@@ -46,25 +52,27 @@ function SpouseEdgeComponent({ sourceX, sourceY, targetX, targetY, source, targe
           </>
         )}
       </g>
-      {/* Large invisible hit target — tap rings to open anniversary card */}
+      {/* Painted (near-invisible) hit target — transparent fills are ignored under visibleStroke */}
       <circle
         cx={midX}
         cy={midY}
-        r={18}
-        fill="transparent"
-        className="spouse-edge__hit cursor-pointer"
+        r={22}
+        fill="#fff"
+        fillOpacity={0.01}
+        stroke="#fff"
+        strokeOpacity={0.01}
+        strokeWidth={8}
+        className="spouse-edge__hit"
         role="button"
         tabIndex={0}
-        onClick={(event) => {
+        aria-label={t('couple.title')}
+        onPointerDown={(event) => {
+          // Stop the canvas from starting a pan before the click fires.
           event.stopPropagation();
-          onOpenCouple?.(source, target);
         }}
+        onClick={open}
         onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            event.stopPropagation();
-            onOpenCouple?.(source, target);
-          }
+          if (event.key === 'Enter' || event.key === ' ') open(event);
         }}
       >
         <title>{t('couple.title')}</title>

@@ -263,12 +263,21 @@ html:not(.dark) .text-stone-400 {
   fill: var(--color-rose-300);
   opacity: 0.85;
 }
+.spouse-edge__hit {
+  pointer-events: all;
+  cursor: pointer;
+}
 .spouse-edge__hit:focus {
   outline: none;
 }
 .spouse-edge__hit:focus-visible {
   stroke: var(--color-emerald-500);
   stroke-width: 2;
+}
+/* React Flow defaults edges to visibleStroke — ring hit circles need fill hits. */
+.react-flow__edge.edge-spouse,
+.react-flow__edge.edge-divorced {
+  pointer-events: all;
 }
 /* Parent -> child lines: colour comes from per-couple DNA data (inline). */
 .edge-child .react-flow__edge-path {
