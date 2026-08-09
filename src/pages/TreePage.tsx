@@ -295,7 +295,7 @@ function TreeCanvas({
         variant={BackgroundVariant.Dots}
         gap={28}
         size={1.25}
-        color={dark ? 'rgba(168, 162, 158, 0.14)' : 'rgba(120, 113, 108, 0.18)'}
+        color={dark ? 'rgba(168, 162, 158, 0.14)' : 'rgba(6, 78, 59, 0.16)'}
       />
       {!easyMode && (
         <Panel
@@ -756,7 +756,7 @@ export function TreePage() {
       </div>
 
       <div className="relative min-h-0 flex-1 overflow-hidden">
-        <div className="absolute inset-0 bg-stone-50 dark:bg-stone-950">
+        <div className="absolute inset-0 tree-canvas-surface">
           <TreeInteractionContext.Provider value={interaction}>
             <ReactFlowProvider>
               <TreeCanvas

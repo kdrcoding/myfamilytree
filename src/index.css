@@ -422,6 +422,42 @@ html:not(.dark) .text-stone-400 {
   cursor: grabbing;
 }
 
+/* Light theme: soft sage field so white-ish cards can lift off the canvas. */
+:root {
+  --tree-canvas-bg: #dce8e2;
+  --tree-canvas-bg-deep: #cfdfd6;
+  --tree-card-bg: #f4faf6;
+  --tree-card-border: rgb(6 78 59 / 0.18);
+  --child-edge-halo: #dce8e2;
+}
+html.dark {
+  --tree-canvas-bg: #0c0a09;
+  --tree-canvas-bg-deep: #0c0a09;
+  --tree-card-bg: #1c1917;
+  --tree-card-border: rgb(255 255 255 / 0.08);
+  --child-edge-halo: #0c0a09;
+}
+
+.tree-canvas-surface {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgb(236 253 245 / 0.55), transparent 55%),
+    linear-gradient(165deg, var(--tree-canvas-bg) 0%, var(--tree-canvas-bg-deep) 100%);
+}
+html.dark .tree-canvas-surface {
+  background: var(--tree-canvas-bg);
+}
+
+.tree-person-card {
+  background-color: var(--tree-card-bg) !important;
+  border-color: var(--tree-card-border);
+  box-shadow:
+    0 1px 2px rgb(28 25 23 / 0.06),
+    0 4px 12px rgb(6 78 59 / 0.08) !important;
+}
+html.dark .tree-person-card {
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35) !important;
+}
+
 .family-tree-controls {
   background: rgb(255 255 255 / 0.95) !important;
   box-shadow: 0 4px 14px rgb(28 25 23 / 0.08) !important;
@@ -457,9 +493,9 @@ html:not(.dark) .text-stone-400 {
   background: var(--color-stone-800);
 }
 
-/* DNA halo: softer on light canvas so coloured strands stay clear */
+/* DNA halo matches the light/dark canvas so strands stay clear */
 .family-tree-canvas--light {
-  --child-edge-halo: #f5f5f4;
+  --child-edge-halo: var(--tree-canvas-bg);
 }
 .family-tree-canvas--dark {
   --child-edge-halo: #0c0a09;
