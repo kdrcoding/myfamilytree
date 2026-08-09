@@ -219,7 +219,7 @@ html:not(.dark) .text-stone-400 {
   stroke: var(--color-stone-500);
 }
 
-/* Custom spouse edge — rose link + interlocking wedding rings */
+/* Custom spouse edge — rose badge + interlocking wedding rings (tap to edit) */
 .spouse-edge__halo {
   stroke: #f5f5f4;
 }
@@ -238,17 +238,58 @@ html:not(.dark) .text-stone-400 {
 .dark .spouse-edge--divorced .spouse-edge__line {
   stroke: var(--color-stone-500);
 }
-.spouse-edge__pad {
-  fill: #f5f5f4;
+.spouse-edge__badge {
+  fill: #ffe4e6;
+  stroke: #fb7185;
+  stroke-width: 1.5;
 }
-.dark .spouse-edge__pad {
-  fill: var(--color-stone-950);
+.dark .spouse-edge__badge {
+  fill: #4c0519;
+  stroke: #fb7185;
+}
+.spouse-edge--divorced .spouse-edge__badge {
+  fill: #f5f5f4;
+  stroke: #a8a29e;
+}
+.dark .spouse-edge--divorced .spouse-edge__badge {
+  fill: var(--color-stone-900);
+  stroke: var(--color-stone-500);
+}
+.spouse-edge__badge-inner {
+  fill: #fff1f2;
+  stroke: none;
+}
+.dark .spouse-edge__badge-inner {
+  fill: #881337;
+}
+.spouse-edge--divorced .spouse-edge__badge-inner {
+  fill: #fafaf9;
+}
+.dark .spouse-edge--divorced .spouse-edge__badge-inner {
+  fill: var(--color-stone-800);
+}
+.spouse-edge__badge--glow {
+  animation: spouse-ring-pulse 2.4s ease-in-out infinite;
+}
+@keyframes spouse-ring-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(244, 63, 94, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 5px rgba(244, 63, 94, 0.45));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spouse-edge__badge--glow {
+    animation: none;
+  }
 }
 .spouse-edge__ring {
-  stroke: var(--color-rose-500);
+  stroke: var(--color-rose-600);
 }
 .dark .spouse-edge__ring {
-  stroke: var(--color-rose-400);
+  stroke: var(--color-rose-300);
 }
 .spouse-edge--divorced .spouse-edge__ring {
   stroke: var(--color-stone-400);
@@ -257,11 +298,11 @@ html:not(.dark) .text-stone-400 {
   stroke: var(--color-stone-500);
 }
 .spouse-edge__shine {
-  fill: var(--color-rose-200);
+  fill: #fecdd3;
 }
 .dark .spouse-edge__shine {
-  fill: var(--color-rose-300);
-  opacity: 0.85;
+  fill: #fda4af;
+  opacity: 0.9;
 }
 .spouse-edge__hit {
   pointer-events: all;
@@ -272,6 +313,7 @@ html:not(.dark) .text-stone-400 {
 }
 .spouse-edge__hit:focus-visible {
   stroke: var(--color-emerald-500);
+  stroke-opacity: 1;
   stroke-width: 2;
 }
 /* React Flow defaults edges to visibleStroke — ring hit circles need fill hits. */

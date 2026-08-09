@@ -21,13 +21,13 @@ const SPACING: Record<
 > = {
   // Tighter spouse/root gaps keep the oldest generation together; a taller
   // level gap leaves room for separate green bus lanes between rows.
-  comfortable: { spouse: 40, sibling: 40, level: 176, root: 48 },
-  compact: { spouse: 36, sibling: 24, level: 140, root: 32 },
+  comfortable: { spouse: 58, sibling: 40, level: 176, root: 48 },
+  compact: { spouse: 52, sibling: 24, level: 140, root: 32 },
 };
 
 const JUNCTION = 10;
 /** Drop the child-junction just below the wedding rings on the marriage line. */
-const JUNCTION_BELOW_RINGS = 14;
+const JUNCTION_BELOW_RINGS = 22;
 // Child connectors run along a "bus" just before the children. Each couple
 // gets its own lane so a long cross-family link crosses other buses instead
 // of running on top of them (see ChildEdge).

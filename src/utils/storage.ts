@@ -23,6 +23,8 @@ export const STORAGE_KEYS = {
   treeSpacing: 'familytree.treeSpacing.v1',
   // Dismissed the one-time "how to use the tree" tip.
   treeTipSeen: 'familytree.treeTipSeen.v1',
+  // Dismissed the one-time “tap the wedding rings” tip on the tree.
+  treeRingsTipSeen: 'familytree.treeRingsTipSeen.v1',
   // First-visit welcome tour completed.
   tourSeen: 'familytree.tourSeen.v1',
   // Dismissed invite banner for this browser session key.
