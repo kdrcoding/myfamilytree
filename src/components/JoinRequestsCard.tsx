@@ -101,7 +101,7 @@ export function JoinRequestsCard() {
   };
 
   return (
-    <section className="card mt-4 p-6">
+    <section className="card mt-3 p-4">
       <h2 className="flex items-center gap-2 font-semibold">
         <UserRoundPlus className="h-5 w-5 text-emerald-600" aria-hidden /> {t('joinReq.title')}
         {requests.length > 0 && (
