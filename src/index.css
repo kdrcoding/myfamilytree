@@ -218,6 +218,58 @@ html:not(.dark) .text-stone-400 {
 .dark .edge-divorced .react-flow__edge-path {
   stroke: var(--color-stone-500);
 }
+
+/* Custom spouse edge — rose link + interlocking wedding rings */
+.spouse-edge__halo {
+  stroke: #f5f5f4;
+}
+.dark .spouse-edge__halo {
+  stroke: var(--color-stone-950);
+}
+.spouse-edge__line {
+  stroke: var(--color-rose-400);
+}
+.dark .spouse-edge__line {
+  stroke: var(--color-rose-500);
+}
+.spouse-edge--divorced .spouse-edge__line {
+  stroke: var(--color-stone-400);
+}
+.dark .spouse-edge--divorced .spouse-edge__line {
+  stroke: var(--color-stone-500);
+}
+.spouse-edge__pad {
+  fill: #f5f5f4;
+}
+.dark .spouse-edge__pad {
+  fill: var(--color-stone-950);
+}
+.spouse-edge__ring {
+  stroke: var(--color-rose-500);
+}
+.dark .spouse-edge__ring {
+  stroke: var(--color-rose-400);
+}
+.spouse-edge--divorced .spouse-edge__ring {
+  stroke: var(--color-stone-400);
+}
+.dark .spouse-edge--divorced .spouse-edge__ring {
+  stroke: var(--color-stone-500);
+}
+.spouse-edge__shine {
+  fill: var(--color-rose-200);
+}
+.dark .spouse-edge__shine {
+  fill: var(--color-rose-300);
+  opacity: 0.85;
+}
+.spouse-edge__hit:focus {
+  outline: none;
+}
+.spouse-edge__hit:focus-visible {
+  stroke: var(--color-emerald-500);
+  stroke-width: 2;
+}
 /* Parent -> child lines: colour comes from per-couple DNA data (inline). */
 .edge-child .react-flow__edge-path {
   stroke-width: 2;

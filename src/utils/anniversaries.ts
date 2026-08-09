@@ -10,6 +10,8 @@ export interface UpcomingAnniversary {
   isToday: boolean;
   /** Years married they reach on this anniversary, when the year is known. */
   years: number | null;
+  /** Calendar year of the next (or today's) anniversary occurrence. */
+  occurrenceYear: number;
 }
 
 /**
@@ -31,6 +33,45 @@ function monthDay(value?: string): { year: number; month: number; day: number } 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
+ * Anniversary info for one couple (or null when there is no wedding day to
+ * celebrate — missing date, divorced, or a partner has died).
+ */
+export function getCoupleAnniversary(
+  a: FamilyPerson,
+  b: FamilyPerson,
+  now: Date = new Date(),
+): UpcomingAnniversary | null {
+  if (a.isDeceased || a.deathDate || b.isDeceased || b.deathDate) return null;
+  if (isDivorced(a, b)) return null;
+  const md = monthDay(marriageDateOf(a, b));
+  if (!md) return null;
+
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const occurrence = (year: number): Date => {
+    const day =
+      md.month === 2 && md.day === 29 && new Date(year, 1, 29).getDate() !== 29 ? 28 : md.day;
+    return new Date(year, md.month - 1, day);
+  };
+
+  let year = today.getFullYear();
+  let next = occurrence(year);
+  if (next < today) next = occurrence(++year);
+
+  const daysUntil = Math.round((next.getTime() - today.getTime()) / DAY_MS);
+  const years = year - md.year;
+  return {
+    a,
+    b,
+    month: md.month,
+    day: md.day,
+    daysUntil,
+    isToday: daysUntil === 0,
+    years: years > 0 && years < 120 ? years : null,
+    occurrenceYear: year,
+  };
+}
+
+/**
  * Every married couple with a known wedding day (month + day), ordered by how
  * soon their next anniversary is. Divorced couples and couples where either
  * partner has died are excluded — an anniversary is celebrated together.
@@ -41,7 +82,6 @@ export function getUpcomingAnniversaries(
   now: Date = new Date(),
 ): UpcomingAnniversary[] {
   const byId = new Map(people.map((p) => [p.id, p]));
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const result: UpcomingAnniversary[] = [];
   const seen = new Set<string>();
 
@@ -53,32 +93,8 @@ export function getUpcomingAnniversaries(
 
       const spouse = byId.get(spouseId);
       if (!spouse) continue;
-      if (person.isDeceased || person.deathDate || spouse.isDeceased || spouse.deathDate) continue;
-      if (isDivorced(person, spouse)) continue;
-      const md = monthDay(marriageDateOf(person, spouse));
-      if (!md) continue;
-
-      const occurrence = (year: number): Date => {
-        const day =
-          md.month === 2 && md.day === 29 && new Date(year, 1, 29).getDate() !== 29 ? 28 : md.day;
-        return new Date(year, md.month - 1, day);
-      };
-
-      let year = today.getFullYear();
-      let next = occurrence(year);
-      if (next < today) next = occurrence(++year);
-
-      const daysUntil = Math.round((next.getTime() - today.getTime()) / DAY_MS);
-      const years = year - md.year;
-      result.push({
-        a: person,
-        b: spouse,
-        month: md.month,
-        day: md.day,
-        daysUntil,
-        isToday: daysUntil === 0,
-        years: years > 0 && years < 120 ? years : null,
-      });
+      const info = getCoupleAnniversary(person, spouse, now);
+      if (info) result.push(info);
     }
   }
 

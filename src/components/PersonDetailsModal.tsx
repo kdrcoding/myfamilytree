@@ -44,6 +44,8 @@ interface PersonDetailsModalProps {
    */
   onRequestEdit?: (person: FamilyPerson) => void;
   onCopyLink?: (person: FamilyPerson) => void;
+  /** Add a spouse or child linked to this person (editors / owners). */
+  onAddRelative?: (kind: 'spouse' | 'child', person: FamilyPerson) => void;
 }
 
 function DetailRow({
@@ -194,6 +196,7 @@ export function PersonDetailsModal({
   onDelete,
   onRequestEdit,
   onCopyLink,
+  onAddRelative,
 }: PersonDetailsModalProps) {
   const { index, generations, getLabel } = useFamily();
   const privacy = usePrivacy();
@@ -340,16 +343,33 @@ export function PersonDetailsModal({
         )}
       </div>
 
+      {editMode && onAddRelative && (
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            className="btn-secondary !min-h-11 flex-1"
+            onClick={() => onAddRelative('spouse', person)}
+          >
+            <Heart className="h-4 w-4" aria-hidden /> {t('person.addSpouse')}
+          </button>
+          <button
+            type="button"
+            className="btn-secondary !min-h-11 flex-1"
+            onClick={() => onAddRelative('child', person)}
+          >
+            <Baby className="h-4 w-4" aria-hidden /> {t('person.addChild')}
+          </button>
+        </div>
+      )}
+
       <div className="mt-5 border-t border-stone-200 pt-4 dark:border-stone-700">
         {editMode ? (
-          // Relatives are added straight from the tree cards (the heart / baby
-          // / parent icons), so this popup only needs Edit and Delete.
           <div className="flex justify-end gap-1.5">
-            <button type="button" className="btn-secondary" onClick={() => onEdit?.(person)}>
+            <button type="button" className="btn-primary !min-h-11 flex-1 sm:flex-none" onClick={() => onEdit?.(person)}>
               <Pencil className="h-4 w-4" aria-hidden /> {t('person.edit')}
             </button>
             {canDelete && (
-              <button type="button" className="btn-danger" onClick={() => onDelete?.(person)}>
+              <button type="button" className="btn-danger !min-h-11" onClick={() => onDelete?.(person)}>
                 <Trash2 className="h-4 w-4" aria-hidden /> {t('person.delete')}
               </button>
             )}

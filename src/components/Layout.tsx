@@ -75,10 +75,11 @@ export function Layout() {
     { to: '/timeline', label: t('nav.timeline'), easy: true },
     { to: '/map', label: t('nav.map'), easy: false },
     { to: '/statistics', label: t('nav.stats'), easy: false },
-    { to: '/about', label: t('nav.about'), easy: false },
+    { to: '/about', label: t('nav.about'), easy: true },
   ].filter((item) => !easy || item.easy);
 
-  const mobileNav = [...primaryNav, ...moreNav];
+  // Phone hamburger: secondary pages only (bottom tabs cover Home/Tree/Members/Settings).
+  const mobileNav = moreNav;
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -155,47 +156,53 @@ export function Layout() {
           </nav>
 
           <div className="ml-auto flex items-center gap-0.5 lg:ml-4">
-            <OverflowMenu
-              label={t('nav.more')}
-              items={[
-                {
-                  id: 'lang',
-                  label: `${t('nav.language')}: ${languageCodeLabel(settings.language)}`,
-                  icon: <Languages className="h-4 w-4" aria-hidden />,
-                  onClick: cycleLanguage,
-                },
-                {
-                  id: 'theme',
-                  label: settings.theme === 'dark' ? t('nav.themeLight') : t('nav.themeDark'),
-                  icon:
-                    settings.theme === 'dark' ? (
-                      <Sun className="h-4 w-4" aria-hidden />
-                    ) : (
-                      <Moon className="h-4 w-4" aria-hidden />
-                    ),
-                  onClick: toggleTheme,
-                },
-                {
-                  id: 'signout',
-                  label: t('nav.signOut'),
-                  icon: <LogOut className="h-4 w-4" aria-hidden />,
-                  onClick: () => void handleSignOut(),
-                  danger: true,
-                },
-              ]}
-            />
             <button
               type="button"
-              className="icon-btn !min-h-11 !gap-1 !px-2.5 text-sm font-bold lg:hidden"
-              onClick={() => setMenuOpen((open) => !open)}
-              aria-expanded={menuOpen}
-              aria-label={menuOpen ? t('nav.menuClose') : t('nav.menuOpen')}
+              className="icon-btn !min-h-10 !min-w-10 !gap-0.5 text-xs font-bold"
+              onClick={cycleLanguage}
+              title={t('nav.langCycle')}
+              aria-label={t('nav.langCycle')}
             >
-              {menuOpen ? <X className="h-6 w-6" aria-hidden /> : <Menu className="h-6 w-6" aria-hidden />}
-              <span className="hidden sm:inline sm:pr-0.5">
-                {menuOpen ? t('nav.menuCloseShort') : t('nav.menu')}
-              </span>
+              <Languages className="h-4 w-4" aria-hidden />
+              <span className="tabular-nums">{languageCodeLabel(settings.language)}</span>
             </button>
+            {/* Desktop chrome — phone uses bottom tabs + Settings for these. */}
+            <div className="hidden lg:contents">
+              <OverflowMenu
+                label={t('nav.more')}
+                items={[
+                  {
+                    id: 'theme',
+                    label: settings.theme === 'dark' ? t('nav.themeLight') : t('nav.themeDark'),
+                    icon:
+                      settings.theme === 'dark' ? (
+                        <Sun className="h-4 w-4" aria-hidden />
+                      ) : (
+                        <Moon className="h-4 w-4" aria-hidden />
+                      ),
+                    onClick: toggleTheme,
+                  },
+                  {
+                    id: 'signout',
+                    label: t('nav.signOut'),
+                    icon: <LogOut className="h-4 w-4" aria-hidden />,
+                    onClick: () => void handleSignOut(),
+                    danger: true,
+                  },
+                ]}
+              />
+            </div>
+            {moreNav.length > 0 && (
+              <button
+                type="button"
+                className="icon-btn !min-h-11 !min-w-11 lg:hidden"
+                onClick={() => setMenuOpen((open) => !open)}
+                aria-expanded={menuOpen}
+                aria-label={menuOpen ? t('nav.menuClose') : t('nav.menuOpen')}
+              >
+                {menuOpen ? <X className="h-6 w-6" aria-hidden /> : <Menu className="h-6 w-6" aria-hidden />}
+              </button>
+            )}
           </div>
         </div>
 
@@ -232,13 +239,15 @@ export function Layout() {
       <div
         id="main"
         tabIndex={-1}
-        className={`flex flex-1 flex-col outline-none $'pb-20 lg:pb-0'`}
+        className={`flex min-h-0 flex-1 flex-col outline-none pb-20 lg:pb-0 ${
+          isTreePage ? 'overflow-hidden' : ''
+        }`}
       >
         <Suspense fallback={<PageSkeleton />}>
           <Outlet />
         </Suspense>
         {!isTreePage && (
-          <footer className="mt-auto border-t border-stone-200 px-4 py-6 dark:border-stone-800">
+          <footer className="mt-auto hidden border-t border-stone-200 px-4 py-6 sm:block dark:border-stone-800">
             <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 sm:flex-row sm:justify-between">
               <p className="text-center text-xs text-stone-500 dark:text-stone-400 sm:text-left">
                 {t('footer.note')}

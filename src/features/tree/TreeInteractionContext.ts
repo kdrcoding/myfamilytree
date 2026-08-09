@@ -11,6 +11,8 @@ export interface TreeInteraction {
   onToggleCollapse: (anchorId: string) => void;
   /** Open the add-person form pre-linked to this relative. */
   onQuickAdd: (kind: RelationKind, personId: string) => void;
+  /** Open the wedding / anniversary card for a couple (tap the rings). */
+  onOpenCouple?: (aId: string, bId: string) => void;
   editMode: boolean;
 }
 
@@ -18,6 +20,7 @@ export const TreeInteractionContext = createContext<TreeInteraction>({
   onOpen: () => {},
   onToggleCollapse: () => {},
   onQuickAdd: () => {},
+  onOpenCouple: () => {},
   editMode: false,
 });
 

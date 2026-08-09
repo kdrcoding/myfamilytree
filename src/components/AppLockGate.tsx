@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Languages, Loader2, LockKeyhole } from 'lucide-react';
+import { Languages, Loader2, LockKeyhole, Smile } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useT } from '../i18n/useT';
@@ -8,45 +8,64 @@ import { languageCodeLabel, nextLanguage } from '../types/family';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { BrandHero } from './BrandLogo';
 
+function readSavedName(): string {
+  return (
+    loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string')?.trim() ??
+    ''
+  );
+}
+
 /**
- * The whole site sits behind a password: without the family or owner
- * password nothing is shown and no family data is loaded. Mount this ABOVE
- * FamilyProvider so the Supabase fetch only happens after unlocking.
+ * Site gate: password only to enter. After every successful unlock, ask for a
+ * first name (change log) — soft welcome, not a second login. Returning sessions
+ * that already have a saved name skip straight into the app.
  */
 export function AppLockGate({ children }: { children: ReactNode }) {
   const { role, ready, signIn } = useAuth();
   const { settings, setLanguage } = useSettings();
   const t = useT();
-  const [name, setName] = useState(
-    () => loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string') ?? '',
-  );
   const [password, setPassword] = useState('');
-  const [nameError, setNameError] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [savedName, setSavedName] = useState(readSavedName);
+  const [nameDraft, setNameDraft] = useState(savedName);
+  const [nameError, setNameError] = useState('');
+  // True right after a password unlock this visit — forces the name step even
+  // if a previous visitor left a name in localStorage on this device.
+  const [awaitingName, setAwaitingName] = useState(false);
 
-  if (ready && role !== 'viewer') return <>{children}</>;
+  const unlocked = ready && role !== 'viewer';
+  const needsName = unlocked && (awaitingName || savedName.length < 2);
 
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    const trimmedName = name.trim().slice(0, 40);
-    if (trimmedName.length < 2) {
-      setNameError(t('gate.nameRequired'));
-      return;
+  // If auth restores a session without a saved name, keep blocking on the name step.
+  useEffect(() => {
+    if (!ready || role === 'viewer') return;
+    if (readSavedName().length < 2) {
+      setAwaitingName(true);
+      setSavedName('');
+      setNameDraft('');
     }
+  }, [ready, role]);
+
+  if (unlocked && !needsName) return <>{children}</>;
+
+  const submitPassword = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!password) {
       setError(t('gate.enter'));
       return;
     }
     setBusy(true);
+    setError('');
     try {
       const found = await signIn(password);
       if (!found) {
         setError(t('gate.wrong'));
       } else {
-        // Remember who this is: every change-log entry is stamped with this
-        // name so the owner can see who on the shared password edited what.
-        saveJson(STORAGE_KEYS.displayName, trimmedName);
+        const existing = readSavedName();
+        setNameDraft(existing);
+        setNameError('');
+        setAwaitingName(true);
       }
     } catch (err) {
       console.error('Sign-in failed:', err);
@@ -56,10 +75,68 @@ export function AppLockGate({ children }: { children: ReactNode }) {
     }
   };
 
+  const submitName = (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmed = nameDraft.trim().slice(0, 40);
+    if (trimmed.length < 2) {
+      setNameError(t('gate.nameRequired'));
+      return;
+    }
+    saveJson(STORAGE_KEYS.displayName, trimmed);
+    setSavedName(trimmed);
+    setAwaitingName(false);
+  };
+
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-stone-50 px-4 py-10 text-stone-900 dark:bg-stone-950 dark:text-stone-100">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-stone-50 px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] text-stone-900 dark:bg-stone-950 dark:text-stone-100">
       {!ready ? (
         <Loader2 className="h-8 w-8 animate-spin text-emerald-600" aria-hidden />
+      ) : needsName ? (
+        <div className="w-full max-w-sm rounded-3xl border border-emerald-200/70 bg-white/90 p-6 shadow-sm sm:p-8 dark:border-stone-700 dark:bg-stone-900/90">
+          <div className="flex flex-col items-center text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+              <Smile className="h-6 w-6" aria-hidden />
+            </span>
+            <h1 className="mt-4 text-xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+              {t('gate.welcomeTitle')}
+            </h1>
+            <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">{t('gate.welcomeIntro')}</p>
+          </div>
+
+          <form onSubmit={submitName} className="mt-6 space-y-4">
+            <label className="block text-left">
+              <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+                {t('gate.yourName')}
+              </span>
+              <input
+                type="text"
+                className="input"
+                value={nameDraft}
+                onChange={(e) => {
+                  setNameDraft(e.target.value);
+                  setNameError('');
+                }}
+                autoComplete="given-name"
+                maxLength={40}
+                autoFocus
+                required
+                minLength={2}
+                placeholder={t('gate.namePlaceholder')}
+              />
+              <span className="mt-1.5 block text-xs leading-relaxed text-stone-400 dark:text-stone-500">
+                {t('gate.nameHint')}
+              </span>
+              {nameError && (
+                <span role="alert" className="mt-1 block text-xs text-red-600 dark:text-red-400">
+                  {nameError}
+                </span>
+              )}
+            </label>
+            <button type="submit" className="btn-primary w-full">
+              {t('gate.welcomeBtn')}
+            </button>
+          </form>
+        </div>
       ) : (
         <div className="card w-full max-w-sm p-6 sm:p-8">
           <BrandHero>
@@ -71,32 +148,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
             <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">{t('gate.intro')}</p>
           </BrandHero>
 
-          <form onSubmit={submit} className="mt-6 space-y-4">
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
-                {t('gate.yourName')}
-              </span>
-              <input
-                type="text"
-                className="input"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setNameError('');
-                }}
-                autoComplete="name"
-                maxLength={40}
-                autoFocus={!name}
-              />
-              <span className="mt-1 block text-xs text-stone-400 dark:text-stone-500">
-                {t('gate.nameHint')}
-              </span>
-              {nameError && (
-                <span role="alert" className="mt-1 block text-xs text-red-600 dark:text-red-400">
-                  {nameError}
-                </span>
-              )}
-            </label>
+          <form onSubmit={submitPassword} className="mt-6 space-y-4">
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
                 {t('gate.password')}
@@ -110,7 +162,8 @@ export function AppLockGate({ children }: { children: ReactNode }) {
                   setError('');
                 }}
                 autoComplete="current-password"
-                autoFocus={Boolean(name)}
+                autoFocus
+                required
               />
               {error && (
                 <span role="alert" className="mt-1 block text-xs text-red-600 dark:text-red-400">

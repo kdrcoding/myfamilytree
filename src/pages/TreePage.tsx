@@ -29,6 +29,7 @@ import { PersonDetailsModal } from '../components/PersonDetailsModal';
 import { PersonFormModal } from '../components/PersonFormModal';
 import { UnlockModal } from '../components/UnlockModal';
 import { OverflowMenu } from '../components/OverflowMenu';
+import type { OverflowMenuItem } from '../components/OverflowMenu';
 import { BrandMark } from '../components/BrandLogo';
 import { Avatar } from '../components/Avatar';
 import { computeTreeLayout, CARD_H, CARD_W } from '../features/tree/layout';
@@ -36,12 +37,14 @@ import { exportTreeAsPng, printTreePoster, shareTreePoster } from '../features/t
 import { JunctionNode } from '../features/tree/JunctionNode';
 import { GenLabelNode } from '../features/tree/GenLabelNode';
 import { ChildEdge } from '../features/tree/ChildEdge';
+import { SpouseEdge } from '../features/tree/SpouseEdge';
 import { PersonNode } from '../features/tree/PersonNode';
 import { TreeInteractionContext } from '../features/tree/TreeInteractionContext';
 import type { TreeInteraction } from '../features/tree/TreeInteractionContext';
+import { CoupleAnniversaryModal } from '../components/CoupleAnniversaryModal';
 
 const nodeTypes: NodeTypes = { person: PersonNode, junction: JunctionNode, genLabel: GenLabelNode };
-const edgeTypes: EdgeTypes = { child: ChildEdge };
+const edgeTypes: EdgeTypes = { child: ChildEdge, spouse: SpouseEdge };
 
 const START_ZOOM = 1.1;
 const START_ZOOM_EASY = 1.25;
@@ -293,10 +296,13 @@ function TreeCanvas({
             </p>
             <ul className="space-y-1.5 text-stone-600 dark:text-stone-300">
               <li className="flex items-center gap-2">
-                <span
-                  aria-hidden
-                  className="inline-block h-0.5 w-5 rounded bg-rose-400 dark:bg-rose-500"
-                />
+                <span aria-hidden className="relative inline-flex h-3 w-7 items-center justify-center">
+                  <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded bg-rose-400 dark:bg-rose-500" />
+                  <span className="relative z-[1] flex -space-x-1">
+                    <span className="inline-block h-2.5 w-2.5 rounded-full border-[1.5px] border-rose-500 bg-transparent dark:border-rose-400" />
+                    <span className="inline-block h-2.5 w-2.5 rounded-full border-[1.5px] border-rose-500 bg-transparent dark:border-rose-400" />
+                  </span>
+                </span>
                 <span>{t('tree.legendMarried')}</span>
               </li>
               <li className="flex items-center gap-2">
@@ -419,10 +425,24 @@ export function TreePage() {
   const [form, setForm] = useState<{ person?: FamilyPerson; link?: RelationLink } | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [exportBusy, setExportBusy] = useState(false);
+  const [coupleIds, setCoupleIds] = useState<[string, string] | null>(null);
+  const [isPhone, setIsPhone] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const onChange = () => setIsPhone(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
 
   useEffect(() => {
     if (!canEdit && editMode) setEditMode(false);
   }, [canEdit, editMode]);
+
+  // Phones: keep cards clean — edit/add happens in the person sheet.
+  const treeToolsOn = isPhone ? false : editMode;
 
   // Invite / join deep link: ?join=1 or ?invite=1 opens Add yourself.
   useEffect(() => {
@@ -483,9 +503,10 @@ export function TreePage() {
       onOpen: (id) => setDetailsId(id),
       onToggleCollapse: toggleCollapse,
       onQuickAdd: (kind, personId) => setForm({ link: { kind, targetId: personId } }),
-      editMode,
+      onOpenCouple: (aId, bId) => setCoupleIds([aId, bId]),
+      editMode: treeToolsOn,
     }),
-    [toggleCollapse, editMode],
+    [toggleCollapse, treeToolsOn],
   );
 
   // Expand every collapsed branch between the founders and this person, then
@@ -582,10 +603,12 @@ export function TreePage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="tree-page-toolbar">
-        <div className="mx-auto flex max-w-[1600px] flex-col gap-2 sm:flex-row sm:items-center">
-          <TreeSearch onSelect={focusPerson} large />
+        <div className="mx-auto flex max-w-[1600px] items-center gap-1.5 sm:gap-3">
+          <div className="min-w-0 flex-1">
+            <TreeSearch onSelect={focusPerson} large />
+          </div>
 
-          <div className="flex items-center gap-1.5 sm:ml-auto">
+          <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
             <Link
               to="/members"
               className="btn-secondary !min-h-10 !px-2.5 sm:!px-3"
@@ -650,10 +673,43 @@ export function TreePage() {
               ]}
             />
           </div>
+
+          {/* Phone: one overflow for extras — Home has Add yourself; Members has Add person */}
+          <div className="sm:hidden">
+            <OverflowMenu
+              items={
+                [
+                  {
+                    id: 'join',
+                    label: t('tree.addYourself'),
+                    icon: <UserRoundPlus className="h-4 w-4" aria-hidden />,
+                    onClick: () => setJoinOpen(true),
+                  },
+                  ...(canEdit
+                    ? [
+                        {
+                          id: 'add',
+                          label: t('tree.addPerson'),
+                          icon: <UserPlus className="h-4 w-4" aria-hidden />,
+                          onClick: () => setForm({}),
+                        } satisfies OverflowMenuItem,
+                      ]
+                    : []),
+                  {
+                    id: 'share',
+                    label: t('tree.share'),
+                    icon: <Share2 className="h-4 w-4" aria-hidden />,
+                    onClick: () => void runExport('share'),
+                    disabled: exportBusy || flowNodes.length === 0,
+                  },
+                ] as OverflowMenuItem[]
+              }
+            />
+          </div>
         </div>
       </div>
 
-      <div className="relative min-h-0 flex-1" style={{ minHeight: 'calc(100dvh - 12rem)' }}>
+      <div className="relative min-h-0 flex-1 overflow-hidden">
         <div className="absolute inset-0 bg-stone-50 dark:bg-stone-950">
           <TreeInteractionContext.Provider value={interaction}>
             <ReactFlowProvider>
@@ -662,7 +718,7 @@ export function TreePage() {
                 edges={layout.edges}
                 focusId={focusId}
                 onFocused={() => setFocusId(null)}
-                easyMode={easy}
+                easyMode={easy || isPhone}
               />
             </ReactFlowProvider>
           </TreeInteractionContext.Provider>
@@ -674,7 +730,7 @@ export function TreePage() {
           personId={detailsId}
           onClose={() => setDetailsId(null)}
           onNavigate={(id) => setDetailsId(id)}
-          editMode={editMode}
+          editMode={canEdit}
           canDelete={canDelete}
           onEdit={(person) => {
             setDetailsId(null);
@@ -683,8 +739,29 @@ export function TreePage() {
           onDelete={handleDelete}
           onRequestEdit={requestEdit}
           onCopyLink={copyPersonLink}
+          onAddRelative={(kind, person) => {
+            setDetailsId(null);
+            setForm({ link: { kind, targetId: person.id } });
+          }}
         />
       )}
+      {coupleIds &&
+        (() => {
+          const a = index.get(coupleIds[0]);
+          const b = index.get(coupleIds[1]);
+          if (!a || !b) return null;
+          return (
+            <CoupleAnniversaryModal
+              a={a}
+              b={b}
+              onClose={() => setCoupleIds(null)}
+              onOpenPerson={(id) => {
+                setCoupleIds(null);
+                setDetailsId(id);
+              }}
+            />
+          );
+        })()}
       {form && (
         <PersonFormModal
           {...form}

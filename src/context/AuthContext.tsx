@@ -97,6 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(() => {
     if (supabase) void supabase.auth.signOut();
     removeKey(AUTH_KEY);
+    // Next visitor must enter their own name after the password.
+    removeKey(STORAGE_KEYS.displayName);
     setRole('viewer');
   }, []);
 
