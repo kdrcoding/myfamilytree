@@ -191,10 +191,8 @@ export function PersonFormModal({
   const t = useT();
   const language = useLanguage();
   const isEdit = person !== undefined;
-  // Family editors can now edit every DETAIL field (names, dates, place, bio,
-  // gender, deceased) exactly like the owner — including things already filled
-  // in. Only relationships and deletion stay owner-only, so `restricted` now
-  // gates just the relationship section and its note below.
+  // Family editors can edit detail fields after login. Relationships,
+  // deceased status, and deletion stay owner-only (see FamilyContext + form).
   const restricted = isEdit && !isOwner;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const firstNameRef = useRef<HTMLInputElement>(null);
@@ -392,8 +390,13 @@ export function PersonFormModal({
       nickname: values.nickname.trim() || undefined,
       gender: values.gender,
       birthDate: values.birthDate.trim() || undefined,
-      deathDate: values.deathDate.trim() || undefined,
-      isDeceased: values.isDeceased,
+      // Deceased status is owner-only — editors keep whatever is already saved.
+      deathDate: isOwner
+        ? values.deathDate.trim() || undefined
+        : isEdit
+          ? person.deathDate
+          : undefined,
+      isDeceased: isOwner ? values.isDeceased : isEdit ? person.isDeceased : false,
       photo,
       city: values.city.trim() || undefined,
       country: values.country.trim() || undefined,
@@ -607,27 +610,47 @@ export function PersonFormModal({
               onChange={(v) => set('birthDate', v)}
               error={err(errors.birthDate)}
             />
-            <div>
-              <label className="flex h-full items-center gap-2 pt-6 text-sm text-stone-700 dark:text-stone-300">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-stone-300 text-emerald-600 focus:ring-emerald-500"
-                  checked={values.isDeceased}
-                  onChange={(e) => {
-                    set('isDeceased', e.target.checked);
-                    if (!e.target.checked) set('deathDate', '');
-                  }}
-                />
-                {t('form.deceasedCheck')}
-              </label>
-            </div>
-            {values.isDeceased && (
-              <DateField
-                label={t('form.deathDate')}
-                value={values.deathDate}
-                onChange={(v) => set('deathDate', v)}
-                error={err(errors.deathDate)}
-              />
+            {isOwner && (
+              <>
+                <div>
+                  <label className="flex h-full items-center gap-2 pt-6 text-sm text-stone-700 dark:text-stone-300">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-stone-300 text-emerald-600 focus:ring-emerald-500"
+                      checked={values.isDeceased}
+                      onChange={(e) => {
+                        const next = e.target.checked;
+                        void (async () => {
+                          const proceed = await confirm({
+                            title: next
+                              ? t('form.deceasedConfirmTitle')
+                              : t('form.livingConfirmTitle'),
+                            message: next
+                              ? t('form.deceasedConfirmMsg')
+                              : t('form.livingConfirmMsg'),
+                            confirmLabel: next
+                              ? t('form.deceasedConfirmBtn')
+                              : t('form.livingConfirmBtn'),
+                            danger: next,
+                          });
+                          if (!proceed) return;
+                          set('isDeceased', next);
+                          if (!next) set('deathDate', '');
+                        })();
+                      }}
+                    />
+                    {t('form.deceasedCheck')}
+                  </label>
+                </div>
+                {values.isDeceased && (
+                  <DateField
+                    label={t('form.deathDate')}
+                    value={values.deathDate}
+                    onChange={(v) => set('deathDate', v)}
+                    error={err(errors.deathDate)}
+                  />
+                )}
+              </>
             )}
             <Field label={t('form.city')}>
               <input

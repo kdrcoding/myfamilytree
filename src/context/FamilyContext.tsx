@@ -274,8 +274,11 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           if (!isOwner) {
             // Family editors may change DETAIL fields — including wedding
             // date/place/notes from the rings modal — but never relationships.
+            // Deceased status stays owner-controlled (matches the form rules).
             const updated = {
               ...person,
+              isDeceased: existing.isDeceased,
+              deathDate: existing.deathDate,
               parentIds: existing.parentIds,
               spouseIds: existing.spouseIds,
               childIds: existing.childIds,

@@ -406,7 +406,7 @@ export const en = {
   'form.oneNameHint':
     'Only one name is needed — first name, last name or nickname. Everything else is optional.',
   'form.restrictedNote':
-    "You're editing as a family member: you can update any of these details, including things already filled in. Only relationships (parents and spouses) and deleting a person are reserved for the owner.",
+    "You're editing as a family member: you can update names, dates, place, photo and biography. Marking someone deceased, relationships (parents and spouses), and deleting a person are reserved for the owner.",
   'form.firstName': 'First name',
   'form.lastName': 'Last name',
   'form.gender': 'Gender',
@@ -420,6 +420,14 @@ export const en = {
   'form.day': 'Day',
   'form.dateHint': 'Tip: the year on its own is enough — add the month and day only if you know them.',
   'form.deceasedCheck': 'This person is deceased',
+  'form.deceasedConfirmTitle': 'Mark as deceased?',
+  'form.deceasedConfirmMsg':
+    'This marks the person as deceased on the family tree. You can still add a death date after confirming.',
+  'form.deceasedConfirmBtn': 'Mark deceased',
+  'form.livingConfirmTitle': 'Mark as living?',
+  'form.livingConfirmMsg':
+    'This removes the deceased status and clears any death date for this person.',
+  'form.livingConfirmBtn': 'Mark living',
   'form.city': 'City',
   'form.country': 'Country',
   'form.occupation': 'Occupation',
@@ -599,6 +607,22 @@ export const en = {
 
   // About page
   'about.title': 'About this family tree',
+  'about.howTitle': 'How to use',
+  'about.howIntro': 'Four short steps — most families only need the first three.',
+  'about.howStep': 'Step {n}',
+  'about.howStep1Title': 'Find someone',
+  'about.howStep1Text':
+    'On Home or Family Tree, type a name in search. Tap a result to open their card.',
+  'about.howStep2Title': 'Edit a person',
+  'about.howStep2Text':
+    'Open anyone, then tap Edit. Change names, dates, photo, and more — save when you are done.',
+  'about.howStep3Title': 'Add a spouse or child',
+  'about.howStep3Text':
+    'Open a person and use Add spouse or Add child on their card. On a computer you can also turn on Edit for + buttons on the tree.',
+  'about.howStep4Title': 'Add yourself',
+  'about.howStep4Text':
+    'New to the tree? Tap Add yourself, say how you connect, and fill in your details — you appear right away.',
+  'about.howOpenTree': 'Open family tree',
   'about.purposeTitle': 'Purpose',
   'about.purposeText':
     "This website keeps our family's story in one living place: who we are, where we come from, and how every branch connects back to the original couple at the top of the tree. It replaces scattered notes, old photo albums and half-remembered dates with something everyone in the family can explore from any phone or computer.",
@@ -608,11 +632,11 @@ export const en = {
   'about.privacyTitle': 'Privacy considerations',
   'about.privacyText':
     'Family sites deserve care. The Settings page has a public privacy mode that hides exact dates, cities, occupations, biographies, photos and the ages of minors. We deliberately store no addresses, phone numbers, email addresses or documents. If you are in this tree and want something changed or removed, tell the family administrator and it will be done.',
-  'about.contributeTitle': 'How to contribute updates',
+  'about.contributeTitle': 'Who can change what',
   'about.contributeText1':
-    'Family members with the family password can unlock edit mode on the Family Tree page to add new people (a new baby, a new spouse) and fill in missing details. Deleting people is reserved for the owner.',
+    'Anyone with the family password can add people and edit details. Open a person to edit them, or add a spouse/child from their card. Marking someone deceased, deleting people, and changing existing relationships is reserved for the owner.',
   'about.contributeText2':
-    'Because this site has no server, your edits are saved in your own browser. To share them with everyone: make your changes, use Export to download the family JSON file, and send it to the owner — they import it and republish the site so everyone sees the update.',
+    'Changes save live for the whole family — no file export needed. Settings → Export is only a backup copy if you want one.',
 
   // Settings page
   'settings.title': 'Settings',
@@ -1199,7 +1223,7 @@ export const uz: Record<TKey, string> = {
   'form.oneNameHint':
     'Faqat bitta nom kifoya — ism, familiya yoki laqab. Qolgan hammasi ixtiyoriy.',
   'form.restrictedNote':
-    "Siz oila a'zosi sifatida tahrirlayapsiz: bu ma'lumotlarning barchasini, hatto to'ldirilganlarini ham o'zgartira olasiz. Faqat qarindoshlik aloqalari (ota-ona va turmush o'rtoqlar) va odamni o'chirish egasiga tegishli.",
+    "Siz oila a'zosi sifatida tahrirlayapsiz: ism, sanalar, joy, rasm va tarjimai holni yangilashingiz mumkin. Vafot etgan deb belgilash, qarindoshlik aloqalari (ota-ona va turmush o'rtoqlar) va odamni o'chirish faqat egasiga tegishli.",
   'form.firstName': 'Ismi',
   'form.lastName': 'Familiyasi',
   'form.gender': 'Jinsi',
@@ -1214,6 +1238,14 @@ export const uz: Record<TKey, string> = {
   'form.day': 'Kun',
   'form.dateHint': "Maslahat: faqat yilning o'zi ham yetarli — oy va kunni bilsangizgina qo'shing.",
   'form.deceasedCheck': 'Bu inson vafot etgan',
+  'form.deceasedConfirmTitle': 'Vafot etgan deb belgilansinmi?',
+  'form.deceasedConfirmMsg':
+    'Bu odam shajarada vafot etgan deb belgilanadi. Tasdiqdan keyin vafot sanasini ham qo‘shishingiz mumkin.',
+  'form.deceasedConfirmBtn': 'Vafot etgan deb belgilash',
+  'form.livingConfirmTitle': 'Tirik deb belgilansinmi?',
+  'form.livingConfirmMsg':
+    'Vafot etgan belgisi olib tashlanadi va vafot sanasi tozalanadi.',
+  'form.livingConfirmBtn': 'Tirik deb belgilash',
   'form.city': 'Shahar',
   'form.country': 'Mamlakat',
   'form.occupation': 'Kasbi',
@@ -1386,6 +1418,22 @@ export const uz: Record<TKey, string> = {
   'stats.perCountry': 'Har mamlakatdagi odamlar',
 
   'about.title': 'Bu shajara haqida',
+  'about.howTitle': 'Qanday foydalanish',
+  'about.howIntro': 'To‘rt qisqa qadam — ko‘pchilikka dastlabki uchtasi yetadi.',
+  'about.howStep': '{n}-qadam',
+  'about.howStep1Title': 'Odamni toping',
+  'about.howStep1Text':
+    'Bosh sahifa yoki Shajarada qidiruvga ism yozing. Natijani bosib kartani oching.',
+  'about.howStep2Title': 'Odamni tahrirlang',
+  'about.howStep2Text':
+    'Istalgan odamni ochib «Tahrirlash»ni bosing. Ism, sana, rasm va boshqalarni o‘zgartiring — saqlang.',
+  'about.howStep3Title': 'Turmush o‘rtoq yoki farzand qo‘shing',
+  'about.howStep3Text':
+    'Odam kartasidan «Turmush o‘rtoq» yoki «Farzand» qo‘shing. Kompyuterda shajarada Tahrirlash bilan + tugmalari ham bor.',
+  'about.howStep4Title': 'O‘zingizni qo‘shing',
+  'about.howStep4Text':
+    'Shajarada yo‘qmisiz? «O‘zingizni qo‘shing»ni bosing, qanday bog‘lanishingizni ayting va ma’lumotlaringizni to‘ldiring.',
+  'about.howOpenTree': 'Shajarani ochish',
   'about.purposeTitle': 'Maqsad',
   'about.purposeText':
     "Bu sayt oilamiz tarixini bir joyda saqlaydi: biz kimmiz, qayerdan kelganmiz va har bir shox shajara tepasidagi asoschi juftlikka qanday bog'lanadi. Tarqoq yozuvlar, eski albomlar va yarim unutilgan sanalar o'rniga — istalgan telefon yoki kompyuterdan ochiladigan yagona manba.",
@@ -1395,11 +1443,11 @@ export const uz: Record<TKey, string> = {
   'about.privacyTitle': 'Maxfiylik masalalari',
   'about.privacyText':
     "Oilaviy saytlarga ehtiyotkorlik kerak. Sozlamalar sahifasida aniq sanalar, shaharlar, kasblar, tarjimai hollar, rasmlar va voyaga yetmaganlar yoshini yashiradigan maxfiylik rejimi bor. Manzillar, telefon raqamlari, elektron pochta va hujjatlarni ataylab saqlamaymiz. Agar siz shu shajarada bo'lsangiz va biror narsani o'zgartirish yoki o'chirishni istasangiz, oila administratoriga ayting — bajariladi.",
-  'about.contributeTitle': "Yangiliklarni qanday qo'shish mumkin",
+  'about.contributeTitle': 'Kim nima o‘zgartira oladi',
   'about.contributeText1':
-    "Oila paroliga ega a'zolar Shajara sahifasida tahrirlash rejimini ochib, yangi odamlarni (yangi chaqaloq, yangi kelin-kuyov) qo'shishlari va bo'sh ma'lumotlarni to'ldirishlari mumkin. O'chirish faqat egasiga tegishli.",
+    'Oila paroliga ega har kim odam qo‘shishi va ma’lumotlarni tahrirlashi mumkin. Odamni ochib tahrirlang yoki kartadan turmush o‘rtoq/farzand qo‘shing. Vafot etgan deb belgilash, o‘chirish va mavjud qarindoshlikni o‘zgartirish faqat egasiga tegishli.',
   'about.contributeText2':
-    "Saytda server yo'q, shuning uchun o'zgarishlaringiz o'z brauzeringizda saqlanadi. Hamma ko'rishi uchun: o'zgarishlarni kiriting, «Eksport» bilan JSON faylni yuklab oling va egasiga yuboring — u import qilib saytni qayta e'lon qiladi.",
+    'O‘zgarishlar butun oila uchun jonli saqlanadi — fayl eksporti shart emas. Sozlamalar → Eksport faqat zaxira nusxa uchun.',
 
   'settings.title': 'Sozlamalar',
   'settings.easyTitle': 'Oson rejim',
