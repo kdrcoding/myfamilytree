@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { ChevronDown, LogOut, Menu, Moon, Sun, X } from 'lucide-react';
+import { ChevronDown, LogOut, Moon, Settings, Sun } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useSettings } from '../context/SettingsContext';
@@ -9,7 +9,6 @@ import { MadeByKadir } from './MadeByKadir';
 import { BottomNav } from './BottomNav';
 import { PageSkeleton } from './PageSkeleton';
 import { WelcomeTour } from './WelcomeTour';
-import { OverflowMenu } from './OverflowMenu';
 import { BrandLogo } from './BrandLogo';
 import { LanguageMenuButton } from './LanguageSelect';
 
@@ -17,19 +16,16 @@ export function Layout() {
   const { settings, toggleTheme } = useSettings();
   const { role, signOut } = useAuth();
   const confirm = useConfirm();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const t = useT();
   const isTreePage = location.pathname === '/tree';
   const isSettingsPage = location.pathname === '/settings';
-  // Keep the shared family experience simple. The owner always gets the
-  // complete navigation and administrative surface.
   const easy = role !== 'owner' && Boolean(settings.easyMode);
+  const isDark = settings.theme === 'dark';
 
   useEffect(() => {
-    setMenuOpen(false);
     setMoreOpen(false);
   }, [location.pathname]);
 
@@ -60,15 +56,12 @@ export function Layout() {
     if (proceed) signOut();
   };
 
-  // Primary destinations — keep the top bar short and clear.
   const primaryNav = [
     { to: '/', label: t('nav.home') },
     { to: '/tree', label: t('nav.tree') },
     { to: '/members', label: t('nav.members') },
-    { to: '/settings', label: t('nav.settings') },
   ];
 
-  // Extra pages live under More / the phone menu.
   const moreNav = [
     { to: '/related', label: t('nav.related'), easy: true },
     { to: '/timeline', label: t('nav.timeline'), easy: true },
@@ -77,30 +70,27 @@ export function Layout() {
     { to: '/about', label: t('nav.about'), easy: true },
   ].filter((item) => !easy || item.easy);
 
-  // Phone hamburger: secondary pages only (bottom tabs cover Home/Tree/Members/Settings).
-  const mobileNav = moreNav;
-
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
       isActive
         ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200'
-        : 'text-stone-700 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-stone-100'
+        : 'text-stone-700 hover:bg-stone-100/80 hover:text-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-stone-100'
     }`;
 
   return (
-    <div className="flex min-h-dvh flex-col bg-stone-100 text-stone-900 dark:bg-stone-950 dark:text-stone-100">
+    <div className="app-shell flex min-h-dvh flex-col text-stone-900 dark:bg-stone-950 dark:text-stone-100">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[90] focus:rounded-lg focus:bg-emerald-700 focus:px-3 focus:py-2 focus:text-white"
       >
         {t('nav.skip')}
       </a>
-      <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/85 backdrop-blur dark:border-stone-800 dark:bg-stone-950/85">
+      <header className="app-header sticky top-0 z-40 border-b backdrop-blur">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:h-16 sm:gap-3 sm:px-6">
           <NavLink
             to="/"
             className="flex min-w-0 items-center gap-2"
-            onClick={() => setMenuOpen(false)}
+            onClick={() => setMoreOpen(false)}
           >
             <BrandLogo size="sm" />
           </NavLink>
@@ -111,114 +101,110 @@ export function Layout() {
                 {item.label}
               </NavLink>
             ))}
-            {moreNav.length > 0 && (
-              <div className="relative" ref={moreRef}>
-                <button
-                  type="button"
-                  className={linkClass({ isActive: moreOpen })}
-                  aria-expanded={moreOpen}
-                  onClick={() => setMoreOpen((v) => !v)}
-                >
-                  {t('nav.more')}
-                  <ChevronDown className="ml-0.5 inline h-4 w-4" aria-hidden />
-                </button>
-                {moreOpen && (
-                  <ul className="absolute right-0 z-50 mt-1 min-w-[11rem] overflow-hidden rounded-2xl border border-stone-200 bg-white py-1 shadow-xl dark:border-stone-700 dark:bg-stone-900">
-                    {moreNav.map((item) => (
-                      <li key={item.to}>
-                        <NavLink
-                          to={item.to}
-                          className={({ isActive }) =>
-                            `block px-4 py-2.5 text-sm font-semibold ${
-                              isActive
-                                ? 'bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-stone-800 hover:bg-stone-100 dark:text-stone-100 dark:hover:bg-stone-800'
-                            }`
-                          }
-                          onClick={() => setMoreOpen(false)}
-                        >
-                          {item.label}
-                        </NavLink>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
+            <NavLink
+              to="/settings"
+              className={({ isActive }) =>
+                `inline-flex items-center justify-center rounded-lg p-2 transition-colors ${
+                  isActive
+                    ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200'
+                    : 'text-stone-700 hover:bg-stone-100/80 dark:text-stone-200 dark:hover:bg-stone-800'
+                }`
+              }
+              aria-label={t('nav.settings')}
+              title={t('nav.settings')}
+            >
+              <Settings className="h-5 w-5" aria-hidden />
+            </NavLink>
           </nav>
 
-          <div className="ml-auto flex items-center gap-0.5 lg:ml-4">
-            {/* Language lives on Settings when that page is open — avoid two pickers. */}
+          <div className="ml-auto flex items-center gap-0.5 lg:ml-3">
             {!isSettingsPage && <LanguageMenuButton />}
-            {/* Desktop chrome — phone uses bottom tabs + Settings for these. */}
-            <div className="hidden lg:contents">
-              {!isSettingsPage && (
-                <OverflowMenu
-                  label={t('nav.more')}
-                  items={[
-                    {
-                      id: 'theme',
-                      label: settings.theme === 'dark' ? t('nav.themeLight') : t('nav.themeDark'),
-                      icon:
-                        settings.theme === 'dark' ? (
-                          <Sun className="h-4 w-4" aria-hidden />
-                        ) : (
-                          <Moon className="h-4 w-4" aria-hidden />
-                        ),
-                      onClick: toggleTheme,
-                    },
-                    {
-                      id: 'signout',
-                      label: t('nav.signOut'),
-                      icon: <LogOut className="h-4 w-4" aria-hidden />,
-                      onClick: () => void handleSignOut(),
-                      danger: true,
-                    },
-                  ]}
-                />
-              )}
-            </div>
-            {moreNav.length > 0 && (
+
+            <button
+              type="button"
+              className="icon-btn !min-h-10 !min-w-10"
+              onClick={toggleTheme}
+              aria-label={isDark ? t('nav.themeLight') : t('nav.themeDark')}
+              title={isDark ? t('nav.themeLight') : t('nav.themeDark')}
+            >
+              {isDark ? <Sun className="h-5 w-5" aria-hidden /> : <Moon className="h-5 w-5" aria-hidden />}
+            </button>
+
+            {/* One compact menu: extra pages + sign out (replaces More + ⋮). */}
+            <div className="relative" ref={moreRef}>
               <button
                 type="button"
-                className="icon-btn !min-h-11 !min-w-11 lg:hidden"
-                onClick={() => setMenuOpen((open) => !open)}
-                aria-expanded={menuOpen}
-                aria-label={menuOpen ? t('nav.menuClose') : t('nav.menuOpen')}
+                className={`icon-btn !min-h-10 !min-w-10 ${
+                  moreOpen ? 'bg-stone-100 dark:bg-stone-800' : ''
+                }`}
+                aria-expanded={moreOpen}
+                aria-haspopup="menu"
+                aria-label={t('nav.more')}
+                title={t('nav.more')}
+                onClick={() => setMoreOpen((v) => !v)}
               >
-                {menuOpen ? <X className="h-6 w-6" aria-hidden /> : <Menu className="h-6 w-6" aria-hidden />}
+                <ChevronDown className={`h-5 w-5 transition-transform ${moreOpen ? 'rotate-180' : ''}`} aria-hidden />
               </button>
-            )}
+              {moreOpen && (
+                <ul
+                  role="menu"
+                  className="absolute right-0 z-50 mt-1 min-w-[12rem] overflow-hidden rounded-2xl border border-stone-200/90 bg-white py-1 shadow-xl dark:border-stone-700 dark:bg-stone-900"
+                >
+                  {moreNav.map((item) => (
+                    <li key={item.to} role="none">
+                      <NavLink
+                        role="menuitem"
+                        to={item.to}
+                        className={({ isActive }) =>
+                          `block px-4 py-2.5 text-sm font-semibold ${
+                            isActive
+                              ? 'bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
+                              : 'text-stone-800 hover:bg-stone-100 dark:text-stone-100 dark:hover:bg-stone-800'
+                          }`
+                        }
+                        onClick={() => setMoreOpen(false)}
+                      >
+                        {item.label}
+                      </NavLink>
+                    </li>
+                  ))}
+                  <li role="none" className="lg:hidden">
+                    <NavLink
+                      role="menuitem"
+                      to="/settings"
+                      className={({ isActive }) =>
+                        `flex items-center gap-2 px-4 py-2.5 text-sm font-semibold ${
+                          isActive
+                            ? 'bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
+                            : 'text-stone-800 hover:bg-stone-100 dark:text-stone-100 dark:hover:bg-stone-800'
+                        }`
+                      }
+                      onClick={() => setMoreOpen(false)}
+                    >
+                      <Settings className="h-4 w-4" aria-hidden />
+                      {t('nav.settings')}
+                    </NavLink>
+                  </li>
+                  <li role="none" className="my-1 border-t border-stone-200 dark:border-stone-700" />
+                  <li role="none">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-sm font-semibold text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40"
+                      onClick={() => {
+                        setMoreOpen(false);
+                        void handleSignOut();
+                      }}
+                    >
+                      <LogOut className="h-4 w-4" aria-hidden />
+                      {t('nav.signOut')}
+                    </button>
+                  </li>
+                </ul>
+              )}
+            </div>
           </div>
         </div>
-
-        {menuOpen && (
-          <nav
-            className="animate-fade-in border-t border-stone-200 bg-white px-3 py-3 lg:hidden dark:border-stone-800 dark:bg-stone-950"
-            aria-label={t('nav.mobileNav')}
-          >
-            <ul className="flex flex-col gap-1">
-              {mobileNav.map((item) => (
-                <li key={item.to}>
-                  <NavLink
-                    to={item.to}
-                    end={item.to === '/'}
-                    className={({ isActive }) =>
-                      `block w-full rounded-2xl px-4 py-3.5 text-lg font-semibold transition-colors ${
-                        isActive
-                          ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200'
-                          : 'bg-stone-50 text-stone-800 hover:bg-stone-100 dark:bg-stone-900 dark:text-stone-100 dark:hover:bg-stone-800'
-                      }`
-                    }
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {item.label}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
       </header>
 
       <div
@@ -232,7 +218,7 @@ export function Layout() {
           <Outlet />
         </Suspense>
         {!isTreePage && (
-          <footer className="mt-auto hidden border-t border-stone-200 px-4 py-6 sm:block dark:border-stone-800">
+          <footer className="mt-auto hidden border-t border-stone-200/80 px-4 py-6 sm:block dark:border-stone-800">
             <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 sm:flex-row sm:justify-between">
               <p className="text-center text-xs text-stone-500 dark:text-stone-400 sm:text-left">
                 {t('footer.note')}
