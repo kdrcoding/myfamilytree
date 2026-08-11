@@ -473,6 +473,35 @@ export const ruOverrides: Record<string, string> = {
   'notify.browserLabel': 'Напоминания в браузере',
   'notify.browserDesc': 'Системное уведомление о днях рождения при открытии сайта.',
 
+  'telegram.title': 'Дни рождения в Telegram',
+  'telegram.intro':
+    'В семейный чат Telegram около выбранного часа — поздравление, возраст и открытка. Связанным людям — ещё и личное сообщение.',
+  'telegram.setupNeeded':
+    'Ещё не активно: выполните supabase/migrations/20260810000001_telegram_birthday_bot.sql в SQL Editor, затем docs/TELEGRAM_BOT.md.',
+  'telegram.enabled': 'Отправлять поздравления',
+  'telegram.enabledDesc': 'Если включено, раз в час проверка и отправка в выбранный час по часовому поясу.',
+  'telegram.botUsername': 'Имя бота (из BotFather)',
+  'telegram.timezone': 'Часовой пояс семьи',
+  'telegram.sendHour': 'Час отправки (местное время)',
+  'telegram.groupLinked': 'Группа подключена (id {id}).',
+  'telegram.groupMissing':
+    'Группы нет — откройте бота, добавьте в семейный чат, затем отправьте /setgroup в группе.',
+  'telegram.openBot': 'Открыть бота',
+  'telegram.testSend': 'Тест сейчас',
+  'telegram.testOk': 'Отправлено открыток: {n}.',
+  'telegram.testSkipped': 'Нечего отправлять ({reason}).',
+  'telegram.testFailed': 'Тест не удался — проверьте логи Edge Function и токен бота.',
+  'telegram.linkPerson': 'Связать человека для ЛС',
+  'telegram.linkPersonDesc':
+    'Создайте личное приглашение. Один раз открыть в Telegram — дальше личное поздравление.',
+  'telegram.createLink': 'Создать ссылку',
+  'telegram.copyLink': 'Копировать',
+  'telegram.linkCreated': 'Ссылка готова — отправьте родственнику.',
+  'telegram.needBotUsername': 'Сначала сохраните имя бота.',
+  'telegram.linkedCount': 'Для ЛС связано: {n}.',
+  'telegram.saved': 'Настройки Telegram сохранены',
+  'telegram.saveFailed': 'Не удалось сохранить настройки Telegram',
+
   'invite.title': 'Пригласить родственников',
   'invite.intro':
     'Поделитесь этой ссылкой. После ввода семейного пароля откроется «Добавить себя».',

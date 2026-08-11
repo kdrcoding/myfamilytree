@@ -1,0 +1,25 @@
+name: Birthday Telegram cron
+
+# Hourly check — the Edge Function only posts when local send_hour matches.
+on:
+  schedule:
+    - cron: '5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger birthday-telegram
+        env:
+          SUPABASE_URL: ${{ secrets.OQARIQ_SUPABASE_URL }}
+          CRON_SECRET: ${{ secrets.OQARIQ_TELEGRAM_CRON_SECRET }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Missing OQARIQ_SUPABASE_URL or OQARIQ_TELEGRAM_CRON_SECRET"
+            exit 1
+          fi
+          curl -fsS -X POST "$SUPABASE_URL/functions/v1/birthday-telegram" \
+            -H "Content-Type: application/json" \
+            -H "x-cron-secret: $CRON_SECRET" \
+            -d '{}'

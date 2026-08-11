@@ -323,6 +323,35 @@ export const en = {
   'notify.browserLabel': 'Browser birthday reminders',
   'notify.browserDesc': 'Show a system notification for birthdays when you open the site.',
 
+  'telegram.title': 'Telegram birthdays',
+  'telegram.intro':
+    'Post Happy Birthday in your family Telegram group at a set local hour — with age and a birthday card. Linked people also get a private message.',
+  'telegram.setupNeeded':
+    'Not active yet: run supabase/migrations/20260810000001_telegram_birthday_bot.sql in the Supabase SQL Editor, then follow docs/TELEGRAM_BOT.md.',
+  'telegram.enabled': 'Send birthday posts',
+  'telegram.enabledDesc': 'When on, the hourly job posts at the hour below in your timezone.',
+  'telegram.botUsername': 'Bot username (from BotFather)',
+  'telegram.timezone': 'Family timezone',
+  'telegram.sendHour': 'Send at (local hour)',
+  'telegram.groupLinked': 'Group connected (id {id}).',
+  'telegram.groupMissing':
+    'No group yet — open the bot, add it to your family group, then send /setgroup in that group.',
+  'telegram.openBot': 'Open bot',
+  'telegram.testSend': 'Test send now',
+  'telegram.testOk': 'Sent {n} birthday card(s).',
+  'telegram.testSkipped': 'Nothing to send ({reason}).',
+  'telegram.testFailed': 'Test send failed — check Edge Function logs and bot token.',
+  'telegram.linkPerson': 'Link a person for DMs',
+  'telegram.linkPersonDesc':
+    'Create a personal invite. They open it in Telegram once — then they get a private birthday wish.',
+  'telegram.createLink': 'Create invite link',
+  'telegram.copyLink': 'Copy link',
+  'telegram.linkCreated': 'Invite link ready — send it to that relative.',
+  'telegram.needBotUsername': 'Save the bot username first.',
+  'telegram.linkedCount': '{n} person(s) linked for DMs.',
+  'telegram.saved': 'Telegram settings saved',
+  'telegram.saveFailed': 'Could not save Telegram settings',
+
   // Invite link
   'invite.title': 'Invite relatives',
   'invite.intro':
@@ -1151,6 +1180,35 @@ export const uz: Record<TKey, string> = {
     'Sarlavhadagi qo‘ng‘iroq tug‘ilgan kunlar, so‘rovlar va yangi hikoyalar uchun.',
   'notify.browserLabel': 'Brauzer tug‘ilgan kun eslatmalari',
   'notify.browserDesc': 'Saytni ochganda tug‘ilgan kun uchun tizim bildirishnomasi.',
+
+  'telegram.title': 'Telegram tug‘ilgan kunlar',
+  'telegram.intro':
+    'Oila Telegram guruhiga belgilangan soatda “Tug‘ilgan kuningiz bilan” yuboradi — yosh va otkritka bilan. Bog‘langan odamga shaxsiy xabar ham ketadi.',
+  'telegram.setupNeeded':
+    'Hali faol emas: Supabase SQL Editor’da 20260810000001_telegram_birthday_bot.sql ni ishga tushiring, keyin docs/TELEGRAM_BOT.md ga qarang.',
+  'telegram.enabled': 'Tug‘ilgan kun xabarlarini yuborish',
+  'telegram.enabledDesc': 'Yoqilganda soatlik vazifa pastdagi soatda (vaqt mintaqasiga ko‘ra) yuboradi.',
+  'telegram.botUsername': 'Bot foydalanuvchi nomi (BotFather)',
+  'telegram.timezone': 'Oila vaqt mintaqasi',
+  'telegram.sendHour': 'Yuborish soati (mahalliy)',
+  'telegram.groupLinked': 'Guruh ulangan (id {id}).',
+  'telegram.groupMissing':
+    'Guruh yo‘q — botni oching, oila guruhiga qo‘shing, keyin guruhda /setgroup yuboring.',
+  'telegram.openBot': 'Botni ochish',
+  'telegram.testSend': 'Hozir sinab yuborish',
+  'telegram.testOk': '{n} ta otkritka yuborildi.',
+  'telegram.testSkipped': 'Yuboriladigan narsa yo‘q ({reason}).',
+  'telegram.testFailed': 'Sinov muvaffaqiyatsiz — Edge Function loglari va bot tokenini tekshiring.',
+  'telegram.linkPerson': 'DM uchun odamni bog‘lash',
+  'telegram.linkPersonDesc':
+    'Shaxsiy taklif yarating. Ular Telegramda bir marta ochadi — keyin shaxsiy tabrik oladi.',
+  'telegram.createLink': 'Taklif havolasi',
+  'telegram.copyLink': 'Havolani nusxa',
+  'telegram.linkCreated': 'Taklif tayyor — o‘sha qarindoshga yuboring.',
+  'telegram.needBotUsername': 'Avval bot nomini saqlang.',
+  'telegram.linkedCount': 'DM uchun {n} kishi bog‘langan.',
+  'telegram.saved': 'Telegram sozlamalari saqlandi',
+  'telegram.saveFailed': 'Telegram sozlamalarini saqlab bo‘lmadi',
 
   'invite.title': 'Qarindoshlarni taklif qilish',
   'invite.intro':

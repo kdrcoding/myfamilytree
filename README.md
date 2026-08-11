@@ -109,6 +109,11 @@ tier), so an edit made by the owner is immediately visible to **every visitor on
 every device**. LocalStorage is only used for per-browser preferences (theme,
 language, privacy switches, collapsed branches) and the remembered password.
 
+### Telegram birthday bot (optional)
+
+Posts Happy Birthday in a family Telegram group at a local hour (age + card),
+and DMs linked people. Setup: [docs/TELEGRAM_BOT.md](docs/TELEGRAM_BOT.md).
+
 ### 1. Create the Supabase project
 
 1. Sign up at [supabase.com](https://supabase.com) (free) and click **New project**.

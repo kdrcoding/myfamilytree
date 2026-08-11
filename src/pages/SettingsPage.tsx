@@ -39,6 +39,7 @@ import { downscalePhoto } from '../utils/image';
 import { ToggleSwitch } from '../components/ui/ToggleSwitch';
 import { JoinRequestsCard } from '../components/JoinRequestsCard';
 import { UnlockModal } from '../components/UnlockModal';
+import { TelegramBirthdaysCard } from '../components/TelegramBirthdaysCard';
 import { BrandMark } from '../components/BrandLogo';
 import { LanguageSelect } from '../components/LanguageSelect';
 
@@ -740,6 +741,7 @@ export function SettingsPage() {
       )}
 
       {canDelete && <JoinRequestsCard />}
+      {canDelete && <TelegramBirthdaysCard />}
       {canDelete && <ChangeLogCard />}
       {!hideAdvanced && (
         <>

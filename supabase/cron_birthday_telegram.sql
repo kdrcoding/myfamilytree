@@ -1,0 +1,2 @@
+-- Optional cron for Oq-Ariq birthday-telegram (prefer GitHub Action).
+-- See docs/TELEGRAM_BOT.md
