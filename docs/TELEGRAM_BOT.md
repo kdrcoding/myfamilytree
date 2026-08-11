@@ -59,3 +59,9 @@ Settings → **Telegram birthdays**:
 3. Add bot to group → `/setgroup`
 4. **Test send** — group gets wish + link + buttons
 5. Tap **I’m celebrating** to leave your Telegram name on the page
+
+## Notes
+
+- Cron runs hourly via GitHub Actions. Posts start at the configured **send hour**
+  (family timezone) and will still catch up later the same day if Actions is delayed.
+- One post per person per year (`telegram_birthday_sent`).

@@ -78,10 +78,13 @@ Deno.serve(async (req) => {
 
     const tz = settings.timezone || 'America/Los_Angeles';
     const local = localParts(tz);
-    if (!force && local.hour !== settings.send_hour) {
+    // Exact hour match is fragile: GitHub Actions cron is often delayed 10–50+
+    // minutes. Once local time reaches send_hour on a birthday day, keep trying
+    // later hours the same day. telegram_birthday_sent prevents double posts.
+    if (!force && local.hour < settings.send_hour) {
       return jsonResponse({
         ok: true,
-        skipped: 'wrong_hour',
+        skipped: 'before_send_hour',
         localHour: local.hour,
         sendHour: settings.send_hour,
         timezone: tz,
@@ -108,56 +111,62 @@ Deno.serve(async (req) => {
     });
 
     const bot = (settings.bot_username || '').replace(/^@/, '');
-    const results: { personId: string; group: boolean }[] = [];
+    const results: { personId: string; group: boolean; error?: string }[] = [];
 
     for (const person of celebrating) {
-      const md = monthDay(person.birth_date);
-      const age = md ? ageTurning(md, local.year) : null;
-      const name = displayName(person);
-      const photoUrl = person.photo ? await db.signPhoto(person.photo) : null;
-      const png = await buildBirthdayCardPng({ name, age, photoUrl });
-      const pageUrl = birthdayPageUrl(person.id);
-      const wish = birthdayWishCaption(name, age);
-      const caption = `${wish}\n\n🔗 Open the birthday page (no password):\n${pageUrl}`;
+      try {
+        const md = monthDay(person.birth_date);
+        const age = md ? ageTurning(md, local.year) : null;
+        const name = displayName(person);
+        const photoUrl = person.photo ? await db.signPhoto(person.photo) : null;
+        const png = await buildBirthdayCardPng({ name, age, photoUrl });
+        const pageUrl = birthdayPageUrl(person.id);
+        const wish = birthdayWishCaption(name, age);
+        const caption = `${wish}\n\n🔗 Open the birthday page (no password):\n${pageUrl}`;
 
-      const keyboard: { text: string; url: string }[][] = [
-        [{ text: '🎉 Open birthday page', url: pageUrl }],
-      ];
-      if (bot) {
-        const payload = `cheer_${person.id}_${local.year}`;
-        if (payload.length <= 64) {
-          keyboard.push([
-            {
-              text: "💛 I'm celebrating",
-              url: `https://t.me/${bot}?start=${payload}`,
-            },
-          ]);
+        const keyboard: { text: string; url: string }[][] = [
+          [{ text: '🎉 Open birthday page', url: pageUrl }],
+        ];
+        if (bot) {
+          const payload = `cheer_${person.id}_${local.year}`;
+          if (payload.length <= 64) {
+            keyboard.push([
+              {
+                text: "💛 I'm celebrating",
+                url: `https://t.me/${bot}?start=${payload}`,
+              },
+            ]);
+          }
+        } else {
+          console.warn('bot_username missing — celebrate button skipped');
         }
-      } else {
-        console.warn('bot_username missing — celebrate button skipped');
-      }
 
-      let groupOk = false;
-      if (settings.group_chat_id) {
-        const form = new FormData();
-        form.set('chat_id', settings.group_chat_id);
-        form.set('caption', caption.slice(0, 1024));
-        form.set('photo', new Blob([png], { type: 'image/png' }), 'birthday.png');
-        form.set('reply_markup', JSON.stringify({ inline_keyboard: keyboard }));
-        await telegramApi('sendPhoto', form);
-        groupOk = true;
-      }
+        let groupOk = false;
+        if (settings.group_chat_id) {
+          const form = new FormData();
+          form.set('chat_id', settings.group_chat_id);
+          form.set('caption', caption.slice(0, 1024));
+          form.set('photo', new Blob([png], { type: 'image/png' }), 'birthday.png');
+          form.set('reply_markup', JSON.stringify({ inline_keyboard: keyboard }));
+          await telegramApi('sendPhoto', form);
+          groupOk = true;
+        }
 
-      if (!(force && testPersonId && body.skipDedupe)) {
-        await db.rest('telegram_birthday_sent', {
-          method: 'POST',
-          query: { on_conflict: 'person_id,year' },
-          headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-          body: JSON.stringify({ person_id: person.id, year: local.year }),
-        });
-      }
+        if (!(force && testPersonId && body.skipDedupe)) {
+          await db.rest('telegram_birthday_sent', {
+            method: 'POST',
+            query: { on_conflict: 'person_id,year' },
+            headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify({ person_id: person.id, year: local.year }),
+          });
+        }
 
-      results.push({ personId: person.id, group: groupOk });
+        results.push({ personId: person.id, group: groupOk });
+      } catch (personError) {
+        const msg = personError instanceof Error ? personError.message : String(personError);
+        console.error('birthday send failed', person.id, personError);
+        results.push({ personId: person.id, group: false, error: msg });
+      }
     }
 
     return jsonResponse({
@@ -165,7 +174,7 @@ Deno.serve(async (req) => {
       timezone: tz,
       local,
       appUrl: publicAppUrl(),
-      count: results.length,
+      count: results.filter((r) => r.group).length,
       results,
     });
   } catch (error) {

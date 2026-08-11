@@ -1,6 +1,7 @@
 name: Birthday Telegram cron
 
-# Hourly check — the Edge Function only posts when local send_hour matches.
+# Hourly check — Edge Function posts from send_hour onward (same local day),
+# with telegram_birthday_sent preventing duplicate posts if cron is delayed.
 on:
   schedule:
     - cron: '5 * * * *'
