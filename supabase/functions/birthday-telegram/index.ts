@@ -12,9 +12,11 @@ import {
   type FamilyMemberRow,
 } from '../_shared/telegram.ts';
 import { buildBirthdayCardPng } from '../_shared/birthdayCard.ts';
+import { birthdayPageUrl, birthdayWishCaption, publicAppUrl } from '../_shared/wishes.ts';
 
 type SettingsRow = {
   group_chat_id: string | null;
+  bot_username: string | null;
   timezone: string;
   send_hour: number;
   enabled: boolean;
@@ -28,7 +30,6 @@ async function assertAuthorized(req: Request): Promise<void> {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
   if (serviceKey && auth === `Bearer ${serviceKey}`) return;
 
-  // Owner JWT from the app (functions.invoke).
   if (!auth.startsWith('Bearer ')) {
     throw new Error('Unauthorized');
   }
@@ -90,12 +91,6 @@ Deno.serve(async (req) => {
       query: { select: 'id,first_name,last_name,nickname,birth_date,death_date,is_deceased,photo' },
     });
 
-    const links = await db.rest<{ person_id: string; chat_id: number }[]>(
-      'telegram_person_links',
-      { query: { select: 'person_id,chat_id' } },
-    );
-    const chatByPerson = new Map(links.map((l) => [l.person_id, l.chat_id]));
-
     const already = await db.rest<{ person_id: string }[]>('telegram_birthday_sent', {
       query: { select: 'person_id', year: `eq.${local.year}` },
     });
@@ -111,7 +106,8 @@ Deno.serve(async (req) => {
       return true;
     });
 
-    const results: { personId: string; group: boolean; dm: boolean }[] = [];
+    const bot = (settings.bot_username || '').replace(/^@/, '');
+    const results: { personId: string; group: boolean }[] = [];
 
     for (const person of celebrating) {
       const md = monthDay(person.birth_date);
@@ -119,43 +115,36 @@ Deno.serve(async (req) => {
       const name = displayName(person);
       const photoUrl = person.photo ? await db.signPhoto(person.photo) : null;
       const png = await buildBirthdayCardPng({ name, age, photoUrl });
-      const caption =
-        age != null
-          ? `🎂 Happy birthday, ${name}! Turning ${age} today.`
-          : `🎂 Happy birthday, ${name}!`;
+      const pageUrl = birthdayPageUrl(person.id);
+      const wish = birthdayWishCaption(name, age);
+      const caption = `${wish}\n\n🔗 ${pageUrl}`;
+
+      const keyboard: { text: string; url: string }[][] = [
+        [{ text: '🎉 Open birthday page', url: pageUrl }],
+      ];
+      if (bot) {
+        const payload = `cheer_${person.id}_${local.year}`;
+        if (payload.length <= 64) {
+          keyboard.push([
+            {
+              text: "💛 I'm celebrating",
+              url: `https://t.me/${bot}?start=${payload}`,
+            },
+          ]);
+        }
+      }
 
       let groupOk = false;
-      let dmOk = false;
-
       if (settings.group_chat_id) {
         const form = new FormData();
         form.set('chat_id', settings.group_chat_id);
-        form.set('caption', caption);
+        form.set('caption', caption.slice(0, 1024));
         form.set('photo', new Blob([png], { type: 'image/png' }), 'birthday.png');
+        form.set('reply_markup', JSON.stringify({ inline_keyboard: keyboard }));
         await telegramApi('sendPhoto', form);
         groupOk = true;
       }
 
-      const dmChat = chatByPerson.get(person.id);
-      if (dmChat) {
-        try {
-          const form = new FormData();
-          form.set('chat_id', String(dmChat));
-          form.set(
-            'caption',
-            age != null
-              ? `🎂 Happy birthday, ${name}! Wishing you a wonderful ${age}!`
-              : `🎂 Happy birthday, ${name}!`,
-          );
-          form.set('photo', new Blob([png], { type: 'image/png' }), 'birthday.png');
-          await telegramApi('sendPhoto', form);
-          dmOk = true;
-        } catch (err) {
-          console.error('DM failed for', person.id, err);
-        }
-      }
-
-      // Don't record dedupe for pure test of a specific person unless requested.
       if (!(force && testPersonId && body.skipDedupe)) {
         await db.rest('telegram_birthday_sent', {
           method: 'POST',
@@ -165,13 +154,14 @@ Deno.serve(async (req) => {
         });
       }
 
-      results.push({ personId: person.id, group: groupOk, dm: dmOk });
+      results.push({ personId: person.id, group: groupOk });
     }
 
     return jsonResponse({
       ok: true,
       timezone: tz,
       local,
+      appUrl: publicAppUrl(),
       count: results.length,
       results,
     });

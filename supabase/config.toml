@@ -9,3 +9,6 @@ verify_jwt = false
 
 [functions.birthday-telegram]
 verify_jwt = false
+
+[functions.birthday-public]
+verify_jwt = false

@@ -1,7 +1,8 @@
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AppLockGate } from './components/AppLockGate';
 import { Layout } from './components/Layout';
+import { PageSkeleton } from './components/PageSkeleton';
 import { AuthProvider } from './context/AuthContext';
 import { ConfirmProvider } from './context/ConfirmContext';
 import { FamilyProvider } from './context/FamilyContext';
@@ -9,9 +10,6 @@ import { PhotoUrlsProvider } from './context/PhotoUrlsContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { ToastProvider } from './context/ToastContext';
 
-// Pages are loaded on demand so the first paint doesn't ship the heavy tree
-// (React Flow), map (Leaflet) and export code up front — a big win on phones.
-// Each `.then` adapts our named page export to the default React.lazy wants.
 const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })));
 const TreePage = lazy(() => import('./pages/TreePage').then((m) => ({ default: m.TreePage })));
 const MembersPage = lazy(() =>
@@ -32,6 +30,34 @@ const SettingsPage = lazy(() =>
 const NotFoundPage = lazy(() =>
   import('./pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })),
 );
+const BirthdayPublicPage = lazy(() =>
+  import('./pages/BirthdayPublicPage').then((m) => ({ default: m.BirthdayPublicPage })),
+);
+
+function LockedApp() {
+  return (
+    <AppLockGate>
+      <FamilyProvider>
+        <PhotoUrlsProvider>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route index element={<HomePage />} />
+              <Route path="tree" element={<TreePage />} />
+              <Route path="members" element={<MembersPage />} />
+              <Route path="map" element={<MapPage />} />
+              <Route path="timeline" element={<TimelinePage />} />
+              <Route path="related" element={<RelatedPage />} />
+              <Route path="statistics" element={<StatsPage />} />
+              <Route path="about" element={<AboutPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
+        </PhotoUrlsProvider>
+      </FamilyProvider>
+    </AppLockGate>
+  );
+}
 
 export default function App() {
   return (
@@ -39,30 +65,15 @@ export default function App() {
       <ToastProvider>
         <ConfirmProvider>
           <AuthProvider>
-            {/* The whole site is password-gated: family data is only fetched
-                after unlocking with the family or owner password. */}
-            <AppLockGate>
-              <FamilyProvider>
-                <PhotoUrlsProvider>
-                  <BrowserRouter basename={import.meta.env.BASE_URL}>
-                  <Routes>
-                    <Route element={<Layout />}>
-                      <Route index element={<HomePage />} />
-                      <Route path="tree" element={<TreePage />} />
-                      <Route path="members" element={<MembersPage />} />
-                      <Route path="map" element={<MapPage />} />
-                      <Route path="timeline" element={<TimelinePage />} />
-                      <Route path="related" element={<RelatedPage />} />
-                      <Route path="statistics" element={<StatsPage />} />
-                      <Route path="about" element={<AboutPage />} />
-                      <Route path="settings" element={<SettingsPage />} />
-                      <Route path="*" element={<NotFoundPage />} />
-                    </Route>
-                  </Routes>
-                  </BrowserRouter>
-                </PhotoUrlsProvider>
-              </FamilyProvider>
-            </AppLockGate>
+            <BrowserRouter basename={import.meta.env.BASE_URL}>
+              <Suspense fallback={<PageSkeleton />}>
+                <Routes>
+                  {/* Public celebration page — no family password */}
+                  <Route path="bday/:personId" element={<BirthdayPublicPage />} />
+                  <Route path="*" element={<LockedApp />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
           </AuthProvider>
         </ConfirmProvider>
       </ToastProvider>

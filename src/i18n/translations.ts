@@ -325,9 +325,9 @@ export const en = {
 
   'telegram.title': 'Telegram birthdays',
   'telegram.intro':
-    'Post Happy Birthday in your family Telegram group at a set local hour — with age and a birthday card. Linked people also get a private message.',
+    'Post a warm birthday wish in your family Telegram group — with a card, a no-password celebration page, and an “I’m celebrating” button that saves Telegram names.',
   'telegram.setupNeeded':
-    'Not active yet: run supabase/migrations/20260810000001_telegram_birthday_bot.sql in the Supabase SQL Editor, then follow docs/TELEGRAM_BOT.md.',
+    'Not active yet: run the Telegram SQL migrations in the Supabase SQL Editor, then follow docs/TELEGRAM_BOT.md.',
   'telegram.enabled': 'Send birthday posts',
   'telegram.enabledDesc': 'When on, the hourly job posts at the hour below in your timezone.',
   'telegram.botUsername': 'Bot username (from BotFather)',
@@ -337,20 +337,24 @@ export const en = {
   'telegram.groupMissing':
     'No group yet — open the bot, add it to your family group, then send /setgroup in that group.',
   'telegram.openBot': 'Open bot',
+  'telegram.testPerson': 'Person for test send',
   'telegram.testSend': 'Test send now',
   'telegram.testOk': 'Sent {n} birthday card(s).',
   'telegram.testSkipped': 'Nothing to send ({reason}).',
   'telegram.testFailed': 'Test send failed — check Edge Function logs and bot token.',
-  'telegram.linkPerson': 'Link a person for DMs',
-  'telegram.linkPersonDesc':
-    'Create a personal invite. They open it in Telegram once — then they get a private birthday wish.',
-  'telegram.createLink': 'Create invite link',
-  'telegram.copyLink': 'Copy link',
-  'telegram.linkCreated': 'Invite link ready — send it to that relative.',
-  'telegram.needBotUsername': 'Save the bot username first.',
-  'telegram.linkedCount': '{n} person(s) linked for DMs.',
   'telegram.saved': 'Telegram settings saved',
   'telegram.saveFailed': 'Could not save Telegram settings',
+
+  'bday.loading': 'Loading celebration…',
+  'bday.kicker': 'Oq-Ariq OILASI',
+  'bday.headline': 'Happy birthday, {name}!',
+  'bday.turning': 'Turning {age} today',
+  'bday.wish':
+    'The whole family is celebrating you today. May your year be full of health, laughter, and love.',
+  'bday.cheersTitle': 'Celebrating with you ({n})',
+  'bday.footer': 'This page is open for family — no password needed.',
+  'bday.notFoundTitle': 'Birthday page not found',
+  'bday.notFoundBody': 'This link may be old, or that person is not in the tree.',
 
   // Invite link
   'invite.title': 'Invite relatives',
@@ -1183,9 +1187,9 @@ export const uz: Record<TKey, string> = {
 
   'telegram.title': 'Telegram tug‘ilgan kunlar',
   'telegram.intro':
-    'Oila Telegram guruhiga belgilangan soatda “Tug‘ilgan kuningiz bilan” yuboradi — yosh va otkritka bilan. Bog‘langan odamga shaxsiy xabar ham ketadi.',
+    'Oila Telegram guruhiga issiq tilak — otkritka, parolsiz bayram sahifasi va “Men nishonlayman” tugmasi (Telegram ismini saqlaydi).',
   'telegram.setupNeeded':
-    'Hali faol emas: Supabase SQL Editor’da 20260810000001_telegram_birthday_bot.sql ni ishga tushiring, keyin docs/TELEGRAM_BOT.md ga qarang.',
+    'Hali faol emas: Supabase SQL Editor’da Telegram migratsiyalarini ishga tushiring, so‘ng docs/TELEGRAM_BOT.md ga qarang.',
   'telegram.enabled': 'Tug‘ilgan kun xabarlarini yuborish',
   'telegram.enabledDesc': 'Yoqilganda soatlik vazifa pastdagi soatda (vaqt mintaqasiga ko‘ra) yuboradi.',
   'telegram.botUsername': 'Bot foydalanuvchi nomi (BotFather)',
@@ -1195,20 +1199,24 @@ export const uz: Record<TKey, string> = {
   'telegram.groupMissing':
     'Guruh yo‘q — botni oching, oila guruhiga qo‘shing, keyin guruhda /setgroup yuboring.',
   'telegram.openBot': 'Botni ochish',
+  'telegram.testPerson': 'Sinov uchun odam',
   'telegram.testSend': 'Hozir sinab yuborish',
   'telegram.testOk': '{n} ta otkritka yuborildi.',
   'telegram.testSkipped': 'Yuboriladigan narsa yo‘q ({reason}).',
   'telegram.testFailed': 'Sinov muvaffaqiyatsiz — Edge Function loglari va bot tokenini tekshiring.',
-  'telegram.linkPerson': 'DM uchun odamni bog‘lash',
-  'telegram.linkPersonDesc':
-    'Shaxsiy taklif yarating. Ular Telegramda bir marta ochadi — keyin shaxsiy tabrik oladi.',
-  'telegram.createLink': 'Taklif havolasi',
-  'telegram.copyLink': 'Havolani nusxa',
-  'telegram.linkCreated': 'Taklif tayyor — o‘sha qarindoshga yuboring.',
-  'telegram.needBotUsername': 'Avval bot nomini saqlang.',
-  'telegram.linkedCount': 'DM uchun {n} kishi bog‘langan.',
   'telegram.saved': 'Telegram sozlamalari saqlandi',
   'telegram.saveFailed': 'Telegram sozlamalarini saqlab bo‘lmadi',
+
+  'bday.loading': 'Bayram yuklanmoqda…',
+  'bday.kicker': 'Oq-Ariq OILASI',
+  'bday.headline': 'Tug‘ilgan kuningiz muborak, {name}!',
+  'bday.turning': 'Bugun {age} yosh',
+  'bday.wish':
+    'Butun oila bugun sizni nishonlaydi. Yoshligingiz sog‘liq, kulgi va muhabbatga to‘la bo‘lsin.',
+  'bday.cheersTitle': 'Siz bilan nishonlayotganlar ({n})',
+  'bday.footer': 'Bu sahifa oila uchun ochiq — parol kerak emas.',
+  'bday.notFoundTitle': 'Bayram sahifasi topilmadi',
+  'bday.notFoundBody': 'Havola eski bo‘lishi mumkin, yoki bu odam daraxtida yo‘q.',
 
   'invite.title': 'Qarindoshlarni taklif qilish',
   'invite.intro':

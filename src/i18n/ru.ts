@@ -475,9 +475,9 @@ export const ruOverrides: Record<string, string> = {
 
   'telegram.title': 'Дни рождения в Telegram',
   'telegram.intro':
-    'В семейный чат Telegram около выбранного часа — поздравление, возраст и открытка. Связанным людям — ещё и личное сообщение.',
+    'Тёплое поздравление в семейный чат — открытка, страница без пароля и кнопка «Я праздную» (сохраняет имя из Telegram).',
   'telegram.setupNeeded':
-    'Ещё не активно: выполните supabase/migrations/20260810000001_telegram_birthday_bot.sql в SQL Editor, затем docs/TELEGRAM_BOT.md.',
+    'Ещё не активно: выполните SQL-миграции Telegram в SQL Editor, затем docs/TELEGRAM_BOT.md.',
   'telegram.enabled': 'Отправлять поздравления',
   'telegram.enabledDesc': 'Если включено, раз в час проверка и отправка в выбранный час по часовому поясу.',
   'telegram.botUsername': 'Имя бота (из BotFather)',
@@ -487,20 +487,24 @@ export const ruOverrides: Record<string, string> = {
   'telegram.groupMissing':
     'Группы нет — откройте бота, добавьте в семейный чат, затем отправьте /setgroup в группе.',
   'telegram.openBot': 'Открыть бота',
+  'telegram.testPerson': 'Человек для теста',
   'telegram.testSend': 'Тест сейчас',
   'telegram.testOk': 'Отправлено открыток: {n}.',
   'telegram.testSkipped': 'Нечего отправлять ({reason}).',
   'telegram.testFailed': 'Тест не удался — проверьте логи Edge Function и токен бота.',
-  'telegram.linkPerson': 'Связать человека для ЛС',
-  'telegram.linkPersonDesc':
-    'Создайте личное приглашение. Один раз открыть в Telegram — дальше личное поздравление.',
-  'telegram.createLink': 'Создать ссылку',
-  'telegram.copyLink': 'Копировать',
-  'telegram.linkCreated': 'Ссылка готова — отправьте родственнику.',
-  'telegram.needBotUsername': 'Сначала сохраните имя бота.',
-  'telegram.linkedCount': 'Для ЛС связано: {n}.',
   'telegram.saved': 'Настройки Telegram сохранены',
   'telegram.saveFailed': 'Не удалось сохранить настройки Telegram',
+
+  'bday.loading': 'Загружаем праздник…',
+  'bday.kicker': 'Oq-Ariq OILASI',
+  'bday.headline': 'С днём рождения, {name}!',
+  'bday.turning': 'Сегодня исполняется {age}',
+  'bday.wish':
+    'Вся семья празднует вас сегодня. Пусть год будет полон здоровья, смеха и любви.',
+  'bday.cheersTitle': 'С вами празднуют ({n})',
+  'bday.footer': 'Эта страница открыта для семьи — пароль не нужен.',
+  'bday.notFoundTitle': 'Страница не найдена',
+  'bday.notFoundBody': 'Ссылка устарела или этого человека нет в дереве.',
 
   'invite.title': 'Пригласить родственников',
   'invite.intro':
