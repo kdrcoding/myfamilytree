@@ -128,8 +128,43 @@ exit /b 0
 :dovercel
 echo Deploying to Vercel...
 echo ^(First time: log in and accept the project defaults.^)
-call npx vercel --prod
-if errorlevel 1 exit /b 1
+
+rem Fix a known Vercel bug: Root Directory set to "." breaks CLI deploy.
+if not exist .vercel mkdir .vercel
+> "%TEMP%\oqariq-vercel-root.json" echo {"rootDirectory":null}
+call npx vercel api "/v9/projects/prj_EKfDhTJUicNZASpvAY5ChkCYcRQl" -X PATCH --input "%TEMP%\oqariq-vercel-root.json" >nul 2>nul
+
+rem Prefer classic project link ^(empty root^) over repo.json "directory": "."
+> ".vercel\project.json" (
+  echo {
+  echo   "projectId": "prj_EKfDhTJUicNZASpvAY5ChkCYcRQl",
+  echo   "orgId": "team_O7PPD81Q7glFI6cXlcHi7KdU",
+  echo   "projectName": "myfamilytree"
+  echo }
+)
+if exist .vercel\repo.json (
+  > ".vercel\repo.json" (
+    echo {
+    echo   "remoteName": "origin",
+    echo   "projects": [
+    echo     {
+    echo       "id": "prj_EKfDhTJUicNZASpvAY5ChkCYcRQl",
+    echo       "name": "myfamilytree",
+    echo       "directory": "",
+    echo       "orgId": "team_O7PPD81Q7glFI6cXlcHi7KdU"
+    echo     }
+    echo   ]
+    echo }
+  )
+)
+
+call npx vercel --prod --yes
+if errorlevel 1 (
+  echo.
+  echo [HINT] CLI deploy failed. GitHub push still publishes the site automatically.
+  echo Your live URL stays: https://myfamilytree-kdr6.vercel.app
+  exit /b 1
+)
 echo.
 echo [DONE] Vercel: https://myfamilytree-kdr6.vercel.app
 echo.
