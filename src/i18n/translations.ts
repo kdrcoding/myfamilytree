@@ -352,6 +352,9 @@ export const en = {
   'bday.wish':
     'The whole family is celebrating you today. May your year be full of health, laughter, and love.',
   'bday.cheersTitle': 'Celebrating with you ({n})',
+  'bday.cheersEmptyTitle': 'Family cheers',
+  'bday.cheersEmpty':
+    'No names yet — tap “I’m celebrating” on the Telegram birthday post to leave yours here.',
   'bday.footer': 'This page is open for family — no password needed.',
   'bday.notFoundTitle': 'Birthday page not found',
   'bday.notFoundBody': 'This link may be old, or that person is not in the tree.',
@@ -1214,6 +1217,9 @@ export const uz: Record<TKey, string> = {
   'bday.wish':
     'Butun oila bugun sizni nishonlaydi. Yoshligingiz sog‘liq, kulgi va muhabbatga to‘la bo‘lsin.',
   'bday.cheersTitle': 'Siz bilan nishonlayotganlar ({n})',
+  'bday.cheersEmptyTitle': 'Oila tabriklari',
+  'bday.cheersEmpty':
+    'Hali ism yo‘q — Telegramdagi tug‘ilgan kun xabarida “Men nishonlayman” ni bosing.',
   'bday.footer': 'Bu sahifa oila uchun ochiq — parol kerak emas.',
   'bday.notFoundTitle': 'Bayram sahifasi topilmadi',
   'bday.notFoundBody': 'Havola eski bo‘lishi mumkin, yoki bu odam daraxtida yo‘q.',

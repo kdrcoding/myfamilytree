@@ -71,8 +71,9 @@ Deno.serve(async (req) => {
     if (!settings.enabled && !force) {
       return jsonResponse({ ok: true, skipped: 'disabled' });
     }
-    if (!settings.group_chat_id && !force) {
-      return jsonResponse({ ok: true, skipped: 'no_group_chat_id' });
+    if (!settings.group_chat_id) {
+      // Even Test send needs a group — otherwise nothing visible happens.
+      return jsonResponse({ ok: true, skipped: 'no_group_chat_id', count: 0 });
     }
 
     const tz = settings.timezone || 'America/Los_Angeles';
@@ -117,7 +118,7 @@ Deno.serve(async (req) => {
       const png = await buildBirthdayCardPng({ name, age, photoUrl });
       const pageUrl = birthdayPageUrl(person.id);
       const wish = birthdayWishCaption(name, age);
-      const caption = `${wish}\n\n🔗 ${pageUrl}`;
+      const caption = `${wish}\n\n🔗 Open the birthday page (no password):\n${pageUrl}`;
 
       const keyboard: { text: string; url: string }[][] = [
         [{ text: '🎉 Open birthday page', url: pageUrl }],
@@ -132,6 +133,8 @@ Deno.serve(async (req) => {
             },
           ]);
         }
+      } else {
+        console.warn('bot_username missing — celebrate button skipped');
       }
 
       let groupOk = false;

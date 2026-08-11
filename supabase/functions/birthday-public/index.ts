@@ -11,6 +11,7 @@ import {
   localParts,
   monthDay,
 } from '../_shared/telegram.ts';
+import { birthdayPageWish } from '../_shared/wishes.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -59,33 +60,44 @@ Deno.serve(async (req) => {
     const local = localParts(tz);
     const md = monthDay(person.birth_date);
     const age = md ? ageTurning(md, local.year) : null;
+    const name = displayName(person);
     const photoUrl = person.photo ? await db.signPhoto(person.photo) : null;
 
-    const cheers = await db.rest<
-      { display_name: string; username: string | null; created_at: string }[]
-    >('telegram_birthday_cheers', {
-      query: {
-        select: 'display_name,username,created_at',
-        person_id: `eq.${personId}`,
-        year: `eq.${local.year}`,
-        order: 'created_at.asc',
-      },
-    });
+    let cheers: { name: string; username: string | null }[] = [];
+    try {
+      const rows = await db.rest<
+        { display_name: string; username: string | null; created_at: string }[]
+      >('telegram_birthday_cheers', {
+        query: {
+          select: 'display_name,username,created_at',
+          person_id: `eq.${personId}`,
+          year: `eq.${local.year}`,
+          order: 'created_at.asc',
+        },
+      });
+      cheers = rows.map((c) => ({
+        name: c.display_name,
+        username: c.username,
+      }));
+    } catch (err) {
+      // Table missing until migration — page still works.
+      console.warn('cheers unavailable', err);
+    }
 
     return jsonResponse({
       ok: true,
       person: {
         id: person.id,
-        name: displayName(person),
+        name,
         age,
         photoUrl,
-        birthMonthDay: md ? `${String(md.month).padStart(2, '0')}-${String(md.day).padStart(2, '0')}` : null,
+        birthMonthDay: md
+          ? `${String(md.month).padStart(2, '0')}-${String(md.day).padStart(2, '0')}`
+          : null,
+        wish: birthdayPageWish(name, age),
       },
       year: local.year,
-      cheers: cheers.map((c) => ({
-        name: c.display_name,
-        username: c.username,
-      })),
+      cheers,
     });
   } catch (error) {
     console.error(error);

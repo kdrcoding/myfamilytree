@@ -110,23 +110,32 @@ Deno.serve(async (req) => {
         }
 
         const display = tgDisplayName(msg.from);
-        await db.rest('telegram_birthday_cheers', {
-          method: 'POST',
-          query: { on_conflict: 'person_id,year,telegram_user_id' },
-          headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-          body: JSON.stringify({
-            person_id: person.id,
-            year,
-            telegram_user_id: userId,
-            display_name: display,
-            username: msg.from.username || null,
-          }),
-        });
+        try {
+          await db.rest('telegram_birthday_cheers', {
+            method: 'POST',
+            query: { on_conflict: 'person_id,year,telegram_user_id' },
+            headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify({
+              person_id: person.id,
+              year,
+              telegram_user_id: userId,
+              display_name: display,
+              username: msg.from.username || null,
+            }),
+          });
+        } catch (err) {
+          console.error('cheer save failed', err);
+          await sendText(
+            chatId,
+            'Almost! Ask the owner to run the birthday cheers SQL migration, then tap again.',
+          );
+          return jsonResponse({ ok: false, error: 'cheers_table' });
+        }
 
         const page = birthdayPageUrl(person.id);
         await sendText(
           chatId,
-          `Thanks, <b>${escapeHtml(display)}</b>! Your name is on ${escapeHtml(displayName(person))}'s birthday page.\n\nOpen it (no password): ${page}`,
+          `Thanks, <b>${escapeHtml(display)}</b>! 💛 Your name is on ${escapeHtml(displayName(person))}'s birthday page.\n\nOpen it (no password): ${page}`,
         );
         return jsonResponse({ ok: true, cheer: person.id });
       }

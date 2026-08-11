@@ -502,6 +502,9 @@ export const ruOverrides: Record<string, string> = {
   'bday.wish':
     'Вся семья празднует вас сегодня. Пусть год будет полон здоровья, смеха и любви.',
   'bday.cheersTitle': 'С вами празднуют ({n})',
+  'bday.cheersEmptyTitle': 'Поздравления семьи',
+  'bday.cheersEmpty':
+    'Пока никого нет — нажмите «Я праздную» в поздравлении в Telegram, чтобы оставить своё имя.',
   'bday.footer': 'Эта страница открыта для семьи — пароль не нужен.',
   'bday.notFoundTitle': 'Страница не найдена',
   'bday.notFoundBody': 'Ссылка устарела или этого человека нет в дереве.',
