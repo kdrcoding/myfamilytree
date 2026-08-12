@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowRight, CalendarPlus, UserRoundPlus } from 'lucide-react';
+import { ArrowRight, CalendarPlus, Cake, UserRoundPlus } from 'lucide-react';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
+import { BirthdayTodayModal } from '../components/BirthdayTodayModal';
 import { PersonSearch } from '../components/PersonSearch';
 import { BrandMark } from '../components/BrandLogo';
 import { useFamily } from '../context/FamilyContext';
@@ -29,6 +30,7 @@ export function HomePage() {
   const t = useT();
   const language = useLanguage();
   const [joinOpen, setJoinOpen] = useState(false);
+  const [bdayPopupOpen, setBdayPopupOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const { role } = useAuth();
   const easy = role !== 'owner' && Boolean(settings.easyMode);
@@ -44,10 +46,17 @@ export function HomePage() {
     () => windowCelebrations(upcomingCelebrations, CELEBRATION_WINDOW_DAYS),
     [upcomingCelebrations],
   );
+  const todaysBirthdays = useMemo(
+    () =>
+      upcomingCelebrations
+        .filter((c) => c.isToday && c.kind === 'birthday')
+        .map((c) => (c.kind === 'birthday' ? c.birthday : null))
+        .filter((b): b is NonNullable<typeof b> => Boolean(b)),
+    [upcomingCelebrations],
+  );
 
   useEffect(() => {
-    const todays = upcomingCelebrations.filter((c) => c.isToday);
-    if (todays.length === 0) return;
+    if (todaysBirthdays.length === 0) return;
     const now = new Date();
     const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const last = loadJson<string>(
@@ -56,29 +65,8 @@ export function HomePage() {
     );
     if (last === todayKey) return;
     saveJson(STORAGE_KEYS.birthdayNotified, todayKey);
-
-    const bdays = todays.filter((c) => c.kind === 'birthday');
-    const annivs = todays.filter((c) => c.kind === 'anniversary');
-    const parts: string[] = [];
-    if (bdays.length === 1 && bdays[0].kind === 'birthday') {
-      parts.push(t('home.bdayToastOne', { name: fullName(bdays[0].birthday.person) }));
-    } else if (bdays.length > 1) {
-      parts.push(
-        t('home.bdayToastMany', {
-          names: bdays
-            .map((c) => (c.kind === 'birthday' ? fullName(c.birthday.person) : ''))
-            .join(', '),
-        }),
-      );
-    }
-    if (annivs.length === 1 && annivs[0].kind === 'anniversary') {
-      const a = annivs[0].anniversary;
-      parts.push(t('home.annivToastOne', { names: `${fullName(a.a)} & ${fullName(a.b)}` }));
-    } else if (annivs.length > 1) {
-      parts.push(t('home.annivToastMany', { n: annivs.length }));
-    }
-    if (parts.length > 0) toast(parts.join(' · '), 'info');
-  }, [upcomingCelebrations, toast, t]);
+    setBdayPopupOpen(true);
+  }, [todaysBirthdays]);
 
   useEffect(() => {
     if (searchParams.get('invite') === '1' || searchParams.get('join') === '1') {
@@ -100,8 +88,10 @@ export function HomePage() {
 
   return (
     <div className="home-page">
-      {/* Full-bleed heritage hero — brand first, one composition */}
-      <section className="home-hero overflow-hidden text-stone-50" aria-labelledby="home-brand">
+      <section
+        className={`home-hero overflow-hidden text-stone-50 ${todaysBirthdays.length > 0 ? 'home-hero--celebrate' : ''}`}
+        aria-labelledby="home-brand"
+      >
         <div className="home-hero__atmosphere" aria-hidden>
           <svg className="home-hero__pedigree" viewBox="0 0 420 420" fill="none">
             <path
@@ -126,7 +116,7 @@ export function HomePage() {
           </div>
 
           <p className="home-hero__kicker mt-6 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-emerald-200/80 sm:text-xs">
-            {t('home.kicker')}
+            {todaysBirthdays.length > 0 ? t('home.bdayPopupKicker') : t('home.kicker')}
           </p>
 
           <h1
@@ -137,7 +127,13 @@ export function HomePage() {
           </h1>
 
           <p className="home-hero__intro mt-4 max-w-xl text-base leading-relaxed text-stone-200/90 sm:text-lg">
-            {easy ? t('home.introEasy') : t('home.intro')}
+            {todaysBirthdays.length === 1
+              ? t('home.bdayPopupTitleOne', { name: fullName(todaysBirthdays[0]!.person) })
+              : todaysBirthdays.length > 1
+                ? t('home.bdayPopupTitleMany', { n: todaysBirthdays.length })
+                : easy
+                  ? t('home.introEasy')
+                  : t('home.intro')}
           </p>
 
           <div className="home-hero__search relative z-20 mt-8 max-w-lg">
@@ -166,7 +162,57 @@ export function HomePage() {
       </section>
 
       <div className="mx-auto w-full max-w-3xl px-5 sm:px-8 -mt-6 relative z-10">
-        {/* Upcoming birthdays + wedding anniversaries */}
+        {todaysBirthdays.length > 0 && (
+          <section className="home-section mt-8 sm:mt-10" aria-labelledby="home-today-bday">
+            <div className="home-today-card overflow-hidden">
+              <div className="flex items-start gap-3 px-5 py-4 sm:items-center">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-emerald-50 shadow-md shadow-emerald-900/20">
+                  <Cake className="h-5 w-5" aria-hidden />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <h2
+                    id="home-today-bday"
+                    className="font-display text-lg font-semibold tracking-tight text-emerald-950 dark:text-emerald-50 sm:text-xl"
+                  >
+                    {t('home.todaySpotlightTitle')}
+                  </h2>
+                  <p className="mt-0.5 text-sm text-emerald-900/75 dark:text-emerald-200/80">
+                    {t('home.todaySpotlightWish')}
+                  </p>
+                </div>
+              </div>
+              <ul className="divide-y divide-emerald-900/10 border-t border-emerald-900/10 px-2 py-2 sm:px-3 dark:divide-emerald-800/40 dark:border-emerald-800/40">
+                {todaysBirthdays.map((b) => {
+                  const showAge = b.turningAge !== null && privacy.showAge(b.person);
+                  return (
+                    <li key={b.person.id}>
+                      <Link
+                        to={`/tree?person=${encodeURIComponent(b.person.id)}`}
+                        className="home-list-item"
+                      >
+                        <Avatar person={b.person} size="md" />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-semibold text-stone-900 dark:text-stone-100">
+                            {fullName(b.person)}
+                          </p>
+                          <p className="text-sm text-emerald-800 dark:text-emerald-300">
+                            {showAge
+                              ? t('home.bdayTurnsToday', { age: b.turningAge! })
+                              : t('home.celebrationBirthday')}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-emerald-50">
+                          {t('home.bdayToday')}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </section>
+        )}
+
         {celebrations.length > 0 && (
           <section className="home-section mt-8 sm:mt-10" aria-labelledby="home-celebrations">
             <div className="home-section-card overflow-hidden">
@@ -293,7 +339,6 @@ export function HomePage() {
           </section>
         )}
 
-        {/* Quiet stats strip — not four flashy cards */}
         {!easy && (
           <section
             aria-label={t('home.summaryLabel')}
@@ -306,7 +351,9 @@ export function HomePage() {
               { icon: '🌍', label: t('home.statCountries'), value: stats.countries.length },
             ].map((item) => (
               <div key={item.label} className="home-stat-card">
-                <span className="text-lg" aria-hidden>{item.icon}</span>
+                <span className="text-lg" aria-hidden>
+                  {item.icon}
+                </span>
                 <p className="mt-1.5 font-display text-2xl font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
                   {item.value}
                 </p>
@@ -318,7 +365,6 @@ export function HomePage() {
           </section>
         )}
 
-        {/* Founders */}
         {!easy && founders.length > 0 && (
           <section className="home-section mt-8" aria-labelledby="home-founders">
             <div className="home-section-card overflow-hidden">
@@ -354,7 +400,10 @@ export function HomePage() {
                           </p>
                         )}
                       </div>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-stone-300 transition-transform group-hover:translate-x-0.5 dark:text-stone-600" aria-hidden />
+                      <ArrowRight
+                        className="h-4 w-4 shrink-0 text-stone-300 transition-transform group-hover:translate-x-0.5 dark:text-stone-600"
+                        aria-hidden
+                      />
                     </Link>
                   </li>
                 ))}
@@ -381,6 +430,9 @@ export function HomePage() {
       </div>
 
       {joinOpen && <JoinFamilyModal onClose={() => setJoinOpen(false)} />}
+      {bdayPopupOpen && todaysBirthdays.length > 0 && (
+        <BirthdayTodayModal birthdays={todaysBirthdays} onClose={() => setBdayPopupOpen(false)} />
+      )}
     </div>
   );
 }

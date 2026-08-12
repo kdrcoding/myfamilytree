@@ -152,7 +152,9 @@ Deno.serve(async (req) => {
           groupOk = true;
         }
 
-        if (!(force && testPersonId && body.skipDedupe)) {
+        // Only mark sent after Telegram accepts the photo. Empty-body REST
+        // responses must not throw (see createServiceClient.rest).
+        if (groupOk && !(force && testPersonId && body.skipDedupe)) {
           await db.rest('telegram_birthday_sent', {
             method: 'POST',
             query: { on_conflict: 'person_id,year' },

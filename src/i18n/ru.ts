@@ -54,6 +54,18 @@ export const ruOverrides: Record<string, string> = {
   'home.bdayToday': 'Сегодня',
   'home.bdayTomorrow': 'Завтра',
   'home.bdayInDays': 'через {n} дн.',
+  'home.bdayPopupKicker': 'Семейный праздник',
+  'home.bdayPopupTitleOne': 'Сегодня день рождения у {name}!',
+  'home.bdayPopupTitleMany': 'Сегодня {n} дня рождения!',
+  'home.bdayPopupBodyOne':
+    'Не забудьте поздравить — откройте профиль или напишите в семейный чат.',
+  'home.bdayPopupBodyMany':
+    'Сегодня празднуют несколько родных. Нажмите имя, чтобы поздороваться.',
+  'home.bdayPopupOpen': 'Открыть в дереве',
+  'home.bdayPopupSeeAll': 'Смотреть праздники',
+  'home.bdayPopupDismiss': 'Понятно',
+  'home.todaySpotlightTitle': 'Празднуем сегодня',
+  'home.todaySpotlightWish': 'Поздравьте с днём рождения',
   'home.downloadCalendar': 'В мой календарь',
 
   'gate.title': 'Семейный сайт',

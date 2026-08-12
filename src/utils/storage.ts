@@ -9,8 +9,8 @@ export const STORAGE_KEYS = {
   // The person add/edit form autosaves here so an accidental reload (or a
   // phone browser discarding the backgrounded tab) doesn't lose typed work.
   formDraft: 'familytree.formDraft.v1',
-  // Last date (YYYY-MM-DD) we showed the "birthday today" toast, so it fires
-  // at most once per day per browser.
+  // Last date (YYYY-MM-DD) we showed the "birthday today" popup, so it fires
+  // at most once per day per browser after login / home visit.
   birthdayNotified: 'familytree.birthdayNotified.v1',
   // The person's own name, asked at sign-in, attached to change-log entries
   // so the owner can see WHO on the shared family password edited what.

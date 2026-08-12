@@ -165,6 +165,18 @@ export const en = {
   'home.bdayTurnsToday': 'turns {age} today',
   'home.bdayToastOne': 'Today is {name}’s birthday.',
   'home.bdayToastMany': 'Birthdays today: {names}',
+  'home.bdayPopupKicker': 'Family celebration',
+  'home.bdayPopupTitleOne': 'Today is {name}’s birthday!',
+  'home.bdayPopupTitleMany': '{n} birthdays today!',
+  'home.bdayPopupBodyOne':
+    'Don’t forget to wish them well — open their profile or send love in the family chat.',
+  'home.bdayPopupBodyMany':
+    'A few people in our family are celebrating today. Tap a name to say hello.',
+  'home.bdayPopupOpen': 'Open on the tree',
+  'home.bdayPopupSeeAll': 'See celebrations',
+  'home.bdayPopupDismiss': 'Got it',
+  'home.todaySpotlightTitle': 'Celebrating today',
+  'home.todaySpotlightWish': 'Wish them a happy birthday',
   'home.downloadCalendar': 'Add to my calendar',
   'home.calendarDownloaded':
     'Calendar file downloaded — open it on your phone to get yearly birthday and anniversary reminders.',
@@ -1032,6 +1044,18 @@ export const uz: Record<TKey, string> = {
   'home.bdayTurnsToday': 'bugun {age} yoshga to‘ladi',
   'home.bdayToastOne': 'Bugun {name}ning tug‘ilgan kuni.',
   'home.bdayToastMany': 'Bugun tug‘ilgan kunlar: {names}',
+  'home.bdayPopupKicker': 'Oila bayrami',
+  'home.bdayPopupTitleOne': 'Bugun {name}ning tug‘ilgan kuni!',
+  'home.bdayPopupTitleMany': 'Bugun {n} ta tug‘ilgan kun!',
+  'home.bdayPopupBodyOne':
+    'Tabriklashni unutmang — profilini oching yoki oila guruhida yozing.',
+  'home.bdayPopupBodyMany':
+    'Bugun oilamizda bir necha kishi bayram qilmoqda. Salomlashish uchun ismni bosing.',
+  'home.bdayPopupOpen': 'Daraxtida ochish',
+  'home.bdayPopupSeeAll': 'Bayramlarni ko‘rish',
+  'home.bdayPopupDismiss': 'Tushundim',
+  'home.todaySpotlightTitle': 'Bugun nishonlaymiz',
+  'home.todaySpotlightWish': 'Tug‘ilgan kunini tabriklang',
   'home.downloadCalendar': 'Kalendarimga qo‘shish',
   'home.calendarDownloaded':
     'Kalendar fayli yuklab olindi — telefoningizda oching, har yili tug‘ilgan kun va to‘y yilligi eslatmalari keladi.',

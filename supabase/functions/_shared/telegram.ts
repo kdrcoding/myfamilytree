@@ -34,7 +34,13 @@ export async function telegramApi(
           body: JSON.stringify(payload),
         };
   const res = await fetch(url, init);
-  const data = await res.json();
+  const text = await res.text();
+  let data: { ok?: boolean; description?: string; result?: unknown };
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(`Telegram ${method}: non-JSON response (${res.status})`);
+  }
   if (!data.ok) {
     console.error('Telegram API error', method, data);
     throw new Error(data.description || `Telegram ${method} failed`);
@@ -147,8 +153,14 @@ export function createServiceClient() {
         const text = await res.text();
         throw new Error(`Supabase REST ${path}: ${res.status} ${text}`);
       }
-      if (res.status === 204) return undefined as T;
-      return (await res.json()) as T;
+      // return=minimal / 204 often has an empty body — never call res.json() on that.
+      const text = await res.text();
+      if (!text || res.status === 204) return undefined as T;
+      try {
+        return JSON.parse(text) as T;
+      } catch {
+        throw new Error(`Supabase REST ${path}: invalid JSON (${res.status})`);
+      }
     },
     async signPhoto(path: string): Promise<string | null> {
       if (!path || path.startsWith('data:') || /^https?:/i.test(path)) {
