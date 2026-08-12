@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Languages, Loader2, LockKeyhole, Smile } from 'lucide-react';
+import { OWNER_ROOT } from '../config/access';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useT } from '../i18n/useT';
@@ -16,9 +17,8 @@ function readSavedName(): string {
 }
 
 /**
- * Site gate: password only to enter. After every successful unlock, ask for a
- * first name (change log) — soft welcome, not a second login. Returning sessions
- * that already have a saved name skip straight into the app.
+ * Site gate: family members enter the member password + name.
+ * Owner/root (Kadir) auto-enters via AuthProvider — no password or name prompt.
  */
 export function AppLockGate({ children }: { children: ReactNode }) {
   const { role, ready, signIn } = useAuth();
@@ -30,16 +30,23 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   const [savedName, setSavedName] = useState(readSavedName);
   const [nameDraft, setNameDraft] = useState(savedName);
   const [nameError, setNameError] = useState('');
-  // True right after a password unlock this visit — forces the name step even
-  // if a previous visitor left a name in localStorage on this device.
+  // True right after a family-password unlock this visit — forces the name step.
   const [awaitingName, setAwaitingName] = useState(false);
 
   const unlocked = ready && role !== 'viewer';
-  const needsName = unlocked && (awaitingName || savedName.length < 2);
+  // Owner always uses Kadir — never block on the name form.
+  const needsName =
+    unlocked && role !== 'owner' && (awaitingName || savedName.length < 2);
 
-  // If auth restores a session without a saved name, keep blocking on the name step.
   useEffect(() => {
-    if (!ready || role === 'viewer') return;
+    if (!ready) return;
+    if (role === 'owner') {
+      saveJson(STORAGE_KEYS.displayName, OWNER_ROOT.name);
+      setSavedName(OWNER_ROOT.name);
+      setAwaitingName(false);
+      return;
+    }
+    if (role === 'viewer') return;
     if (readSavedName().length < 2) {
       setAwaitingName(true);
       setSavedName('');
@@ -61,6 +68,8 @@ export function AppLockGate({ children }: { children: ReactNode }) {
       const found = await signIn(password);
       if (!found) {
         setError(t('gate.wrong'));
+      } else if (found === 'owner') {
+        setAwaitingName(false);
       } else {
         const existing = readSavedName();
         setNameDraft(existing);

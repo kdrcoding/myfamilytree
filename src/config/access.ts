@@ -30,6 +30,20 @@ export const ACCESS = {
 } as const;
 
 /**
+ * Root / owner convenience login (Kadir).
+ * Opens the site as owner without typing the password or name — unless the
+ * user has signed out on this browser (then the password gate is shown so
+ * family can use the member password).
+ *
+ * Ships in the client bundle (same honesty note as the hash lock above).
+ * Keep in sync with password/passwords.txt OWNER password.
+ */
+export const OWNER_ROOT = {
+  name: 'Kadir',
+  password: 'RootsKeeper!2026',
+} as const;
+
+/**
  * Supabase Auth accounts backing the two passwords. These users must exist
  * in the Supabase dashboard (Authentication → Users, auto-confirmed) with
  * the same passwords as password/passwords.txt, and public sign-ups must be
