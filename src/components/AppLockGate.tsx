@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Languages, Loader2, LockKeyhole, Smile } from 'lucide-react';
-import { OWNER_ROOT } from '../config/access';
+import { OWNER_DEFAULT_NAME } from '../config/access';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useT } from '../i18n/useT';
@@ -17,8 +17,9 @@ function readSavedName(): string {
 }
 
 /**
- * Site gate: family members enter the member password + name.
- * Owner/root (Kadir) auto-enters via AuthProvider — no password or name prompt.
+ * Site gate: password to enter. Owner (Kadir) skips the name step.
+ * Returning owner sessions restore automatically via Supabase (no re-prompt
+ * until Sign out) — the owner password is never stored in the app bundle.
  */
 export function AppLockGate({ children }: { children: ReactNode }) {
   const { role, ready, signIn } = useAuth();
@@ -30,19 +31,17 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   const [savedName, setSavedName] = useState(readSavedName);
   const [nameDraft, setNameDraft] = useState(savedName);
   const [nameError, setNameError] = useState('');
-  // True right after a family-password unlock this visit — forces the name step.
   const [awaitingName, setAwaitingName] = useState(false);
 
   const unlocked = ready && role !== 'viewer';
-  // Owner always uses Kadir — never block on the name form.
   const needsName =
     unlocked && role !== 'owner' && (awaitingName || savedName.length < 2);
 
   useEffect(() => {
     if (!ready) return;
     if (role === 'owner') {
-      saveJson(STORAGE_KEYS.displayName, OWNER_ROOT.name);
-      setSavedName(OWNER_ROOT.name);
+      saveJson(STORAGE_KEYS.displayName, OWNER_DEFAULT_NAME);
+      setSavedName(OWNER_DEFAULT_NAME);
       setAwaitingName(false);
       return;
     }

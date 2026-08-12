@@ -496,6 +496,7 @@ export const ruOverrides: Record<string, string> = {
   'telegram.timezone': 'Часовой пояс семьи',
   'telegram.sendHour': 'Час отправки (местное время)',
   'telegram.groupLinked': 'Группа подключена (id {id}).',
+  'telegram.groupClear': 'Отвязать группу',
   'telegram.groupMissing':
     'Группы нет — откройте бота, добавьте в семейный чат, затем отправьте /setgroup в группе.',
   'telegram.openBot': 'Открыть бота',

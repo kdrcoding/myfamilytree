@@ -24,20 +24,20 @@ type SettingsRow = {
 
 async function assertAuthorized(req: Request): Promise<void> {
   const cronSecret = Deno.env.get('TELEGRAM_CRON_SECRET');
-  if (cronSecret && req.headers.get('x-cron-secret') === cronSecret) return;
+  if (!cronSecret) throw new Error('TELEGRAM_CRON_SECRET missing');
+  if (req.headers.get('x-cron-secret') === cronSecret) return;
 
   const auth = req.headers.get('Authorization') || '';
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-  if (serviceKey && auth === `Bearer ${serviceKey}`) return;
-
   if (!auth.startsWith('Bearer ')) {
     throw new Error('Unauthorized');
   }
+  // Owner JWT from the app (Test send). Never accept the service-role key here.
   const url = requireEnv('SUPABASE_URL');
   const anon =
     Deno.env.get('SUPABASE_ANON_KEY') ||
     Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ||
-    serviceKey;
+    '';
+  if (!anon) throw new Error('Unauthorized');
   const userRes = await fetch(`${url}/auth/v1/user`, {
     headers: { Authorization: auth, apikey: anon },
   });

@@ -4,9 +4,10 @@
 --
 -- BEFORE running, also do these two things in the dashboard:
 --   1. Authentication → Users → Add user → Create new user:
---        email: owner@oqariq.family    password: RootsKeeper!2026
---        email: family@oqariq.family   password: oqariq633
+--        email: owner@oqariq.family    password: <set a strong password in the dashboard>
+--        email: family@oqariq.family   password: <set a strong password in the dashboard>
 --      (tick "Auto Confirm User" for both)
+--      Store the real passwords only in password/passwords.txt on your PC (git-ignored).
 --   2. Authentication → Sign In / Up → disable "Allow new users to sign up".
 --
 -- After this file runs, the database only answers to those two accounts —

@@ -176,7 +176,14 @@ export function createServiceClient() {
         body: JSON.stringify({ expiresIn: 60 * 60 }),
       });
       if (!res.ok) return null;
-      const data = await res.json();
+      const text = await res.text();
+      if (!text) return null;
+      let data: { signedURL?: string; signedUrl?: string };
+      try {
+        data = JSON.parse(text);
+      } catch {
+        return null;
+      }
       const signed = data.signedURL || data.signedUrl;
       if (!signed) return null;
       return signed.startsWith('http') ? signed : `${url}/storage/v1${signed}`;

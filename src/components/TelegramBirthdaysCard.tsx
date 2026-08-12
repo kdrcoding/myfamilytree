@@ -163,6 +163,16 @@ export function TelegramBirthdaysCard() {
             ? t('telegram.groupLinked', { id: settings.group_chat_id })
             : t('telegram.groupMissing')}
         </p>
+        {settings.group_chat_id && (
+          <button
+            type="button"
+            className="btn-secondary !min-h-9 text-xs"
+            disabled={busy}
+            onClick={() => void patch({ group_chat_id: null })}
+          >
+            {t('telegram.groupClear')}
+          </button>
+        )}
 
         <label className="block">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-500">

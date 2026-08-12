@@ -25,7 +25,10 @@ type TgUpdate = {
 
 function verifySecret(req: Request): boolean {
   const expected = Deno.env.get('TELEGRAM_WEBHOOK_SECRET');
-  if (!expected) return true;
+  if (!expected) {
+    console.error('TELEGRAM_WEBHOOK_SECRET is not set — rejecting webhook');
+    return false;
+  }
   const got = req.headers.get('X-Telegram-Bot-Api-Secret-Token');
   return got === expected;
 }
@@ -62,19 +65,33 @@ Deno.serve(async (req) => {
     if (member?.chat && (member.chat.type === 'group' || member.chat.type === 'supergroup')) {
       const status = member.new_chat_member.status;
       if (status === 'member' || status === 'administrator') {
-        await db.rest('telegram_settings', {
-          method: 'PATCH',
-          query: { id: 'eq.1' },
-          headers: { Prefer: 'return=minimal' },
-          body: JSON.stringify({
-            group_chat_id: String(member.chat.id),
-            enabled: true,
-          }),
+        // Only bind when no group is set yet, or the bot rejoined the same
+        // saved group — prevents hijacking birthday posts to another chat.
+        const settingsRows = await db.rest<{ group_chat_id: string | null }[]>('telegram_settings', {
+          query: { select: 'group_chat_id', id: 'eq.1' },
         });
-        await sendText(
-          member.chat.id,
-          'Oq-Ariq birthday bot is ready for this group. Birthdays will be posted at the hour set in Settings.',
-        );
+        const current = settingsRows[0]?.group_chat_id ?? null;
+        const incoming = String(member.chat.id);
+        if (!current || current === incoming) {
+          await db.rest('telegram_settings', {
+            method: 'PATCH',
+            query: { id: 'eq.1' },
+            headers: { Prefer: 'return=minimal' },
+            body: JSON.stringify({
+              group_chat_id: incoming,
+              enabled: true,
+            }),
+          });
+          await sendText(
+            member.chat.id,
+            'Oq-Ariq birthday bot is ready for this group. Birthdays will be posted at the hour set in Settings.',
+          );
+        } else {
+          await sendText(
+            member.chat.id,
+            'This bot is already linked to another family group. Clear the group in Settings, then add me again — or run /setgroup only after clearing.',
+          );
+        }
       }
       return jsonResponse({ ok: true });
     }
@@ -162,13 +179,25 @@ Deno.serve(async (req) => {
 
     if (msg.chat.type === 'group' || msg.chat.type === 'supergroup') {
       if (/^\/setgroup/i.test(text)) {
-        await db.rest('telegram_settings', {
-          method: 'PATCH',
-          query: { id: 'eq.1' },
-          headers: { Prefer: 'return=minimal' },
-          body: JSON.stringify({ group_chat_id: String(chatId), enabled: true }),
+        const settingsRows = await db.rest<{ group_chat_id: string | null }[]>('telegram_settings', {
+          query: { select: 'group_chat_id', id: 'eq.1' },
         });
-        await sendText(chatId, 'Saved this group for birthday posts.');
+        const current = settingsRows[0]?.group_chat_id ?? null;
+        const incoming = String(chatId);
+        if (current && current !== incoming) {
+          await sendText(
+            chatId,
+            'Already linked to another group. In the website Settings → Telegram birthdays, clear the group first, then run /setgroup here.',
+          );
+        } else {
+          await db.rest('telegram_settings', {
+            method: 'PATCH',
+            query: { id: 'eq.1' },
+            headers: { Prefer: 'return=minimal' },
+            body: JSON.stringify({ group_chat_id: incoming, enabled: true }),
+          });
+          await sendText(chatId, 'Saved this group for birthday posts.');
+        }
       }
     }
 

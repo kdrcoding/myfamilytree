@@ -1,17 +1,38 @@
 /**
  * Public birthday celebration payload — no password / JWT.
- * Only returns a safe subset for the /bday/:personId page.
+ * Only returns a safe subset for the /bday/:personId page, and only around
+ * that person's birthday (family timezone), so profiles aren't scrapeable year-round.
  */
 import {
   ageTurning,
   corsHeaders,
   createServiceClient,
   displayName,
+  isBirthdayToday,
   jsonResponse,
   localParts,
   monthDay,
 } from '../_shared/telegram.ts';
 import { birthdayPageWish } from '../_shared/wishes.ts';
+
+/** Allow the page the day before / on / day after the birthday (timezone). */
+function nearBirthday(
+  birth: { month: number; day: number },
+  local: { year: number; month: number; day: number },
+): boolean {
+  if (isBirthdayToday(birth, local)) return true;
+  const today = Date.UTC(local.year, local.month - 1, local.day);
+  for (const delta of [-1, 1]) {
+    const d = new Date(today + delta * 86400000);
+    const probe = {
+      year: d.getUTCFullYear(),
+      month: d.getUTCMonth() + 1,
+      day: d.getUTCDate(),
+    };
+    if (isBirthdayToday(birth, probe)) return true;
+  }
+  return false;
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -59,7 +80,11 @@ Deno.serve(async (req) => {
     const tz = settings[0]?.timezone || 'America/Los_Angeles';
     const local = localParts(tz);
     const md = monthDay(person.birth_date);
-    const age = md ? ageTurning(md, local.year) : null;
+    if (!md || !nearBirthday(md, local)) {
+      return jsonResponse({ ok: false, error: 'not_found' }, 404);
+    }
+
+    const age = ageTurning(md, local.year);
     const name = displayName(person);
     const photoUrl = person.photo ? await db.signPhoto(person.photo) : null;
 
@@ -80,7 +105,6 @@ Deno.serve(async (req) => {
         username: c.username,
       }));
     } catch (err) {
-      // Table missing until migration — page still works.
       console.warn('cheers unavailable', err);
     }
 
@@ -91,9 +115,7 @@ Deno.serve(async (req) => {
         name,
         age,
         photoUrl,
-        birthMonthDay: md
-          ? `${String(md.month).padStart(2, '0')}-${String(md.day).padStart(2, '0')}`
-          : null,
+        birthMonthDay: `${String(md.month).padStart(2, '0')}-${String(md.day).padStart(2, '0')}`,
         wish: birthdayPageWish(name, age),
       },
       year: local.year,

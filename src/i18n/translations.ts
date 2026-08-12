@@ -98,7 +98,7 @@ export const en = {
   // Site password gate
   'gate.title': 'This is a private family website',
   'gate.intro':
-    'Enter the family password to see the tree. If you do not have it, ask the site owner.',
+    'Enter the family password to see the tree. If you do not have it, ask the site owner. After you unlock once, this device stays signed in until you sign out.',
   'gate.password': 'Password',
   'gate.btn': 'Enter',
   'gate.checking': 'Checking…',
@@ -346,6 +346,7 @@ export const en = {
   'telegram.timezone': 'Family timezone',
   'telegram.sendHour': 'Send at (local hour)',
   'telegram.groupLinked': 'Group connected (id {id}).',
+  'telegram.groupClear': 'Unlink group',
   'telegram.groupMissing':
     'No group yet — open the bot, add it to your family group, then send /setgroup in that group.',
   'telegram.openBot': 'Open bot',
@@ -979,7 +980,7 @@ export const uz: Record<TKey, string> = {
 
   'gate.title': 'Bu shaxsiy oilaviy sayt',
   'gate.intro':
-    "Shajarani ko'rish uchun oila parolini kiriting. Parol sizda bo'lmasa, sayt egasidan so'rang.",
+    "Shajarani ko'rish uchun oila parolini kiriting. Parol sizda bo'lmasa, sayt egasidan so'rang. Bir marta ochgach, chiqmaguningizcha shu qurilmada ochiq qoladi.",
   'gate.password': 'Parol',
   'gate.btn': 'Kirish',
   'gate.checking': 'Tekshirilmoqda…',
@@ -1223,6 +1224,7 @@ export const uz: Record<TKey, string> = {
   'telegram.timezone': 'Oila vaqt mintaqasi',
   'telegram.sendHour': 'Yuborish soati (mahalliy)',
   'telegram.groupLinked': 'Guruh ulangan (id {id}).',
+  'telegram.groupClear': 'Guruhni uzish',
   'telegram.groupMissing':
     'Guruh yo‘q — botni oching, oila guruhiga qo‘shing, keyin guruhda /setgroup yuboring.',
   'telegram.openBot': 'Botni ochish',

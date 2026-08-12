@@ -16,11 +16,8 @@
  * then redeploy.
  *
  * IMPORTANT HONESTY NOTE: this is a static website with no server, so this is
- * a convenience lock, not real security. It reliably prevents accidental or
- * casual changes, but a technically skilled visitor could bypass it. Every
- * visitor also edits only their OWN browser copy of the data — see the README
- * ("Collaborating with family") for how to merge a family member's additions
- * back into the deployed site via JSON export/import.
+ * a convenience lock, not bank-grade security. Real protection comes from
+ * Supabase Auth + RLS. Never put plaintext passwords in this file.
  */
 export const ACCESS = {
   /** SHA-256 hash of the owner password. */
@@ -29,19 +26,8 @@ export const ACCESS = {
   editorHash: '7fcc57f15a0a35995b1ef5fe78808863346e806aa2b86128c48c0133749c7586',
 } as const;
 
-/**
- * Root / owner convenience login (Kadir).
- * Opens the site as owner without typing the password or name — unless the
- * user has signed out on this browser (then the password gate is shown so
- * family can use the member password).
- *
- * Ships in the client bundle (same honesty note as the hash lock above).
- * Keep in sync with password/passwords.txt OWNER password.
- */
-export const OWNER_ROOT = {
-  name: 'Kadir',
-  password: 'RootsKeeper!2026',
-} as const;
+/** Display name used for the owner account (no name prompt after unlock). */
+export const OWNER_DEFAULT_NAME = 'Kadir';
 
 /**
  * Supabase Auth accounts backing the two passwords. These users must exist

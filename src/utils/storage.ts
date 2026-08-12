@@ -12,11 +12,9 @@ export const STORAGE_KEYS = {
   // Last date (YYYY-MM-DD) we showed the "birthday today" popup, so it fires
   // at most once per day per browser after login / home visit.
   birthdayNotified: 'familytree.birthdayNotified.v1',
-  // The person's own name, asked at sign-in (family editors). Owner/root
-  // always uses "Kadir" and skips the name prompt.
+  // The person's own name at sign-in (family editors). Owner always uses "Kadir".
   displayName: 'familytree.displayName.v1',
-  // After Sign out, skip owner auto-login so a family member can use the
-  // member password on this browser. Cleared when owner password is entered.
+  // Legacy flag from an older auto-login experiment (safe to ignore / clear).
   skipOwnerAuto: 'familytree.skipOwnerAuto.v1',
   // Signed URLs for Storage-hosted photos, reused until near expiry so the
   // browser cache keeps working across visits.

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ACCESS, AUTH_EMAILS, OWNER_ROOT, hashPassword } from '../config/access';
+import { ACCESS, AUTH_EMAILS, OWNER_DEFAULT_NAME, hashPassword } from '../config/access';
 import type { Role } from '../config/access';
 import { supabase } from '../lib/supabase';
 import { loadJson, saveJson, removeKey, STORAGE_KEYS } from '../utils/storage';
@@ -32,65 +32,19 @@ function roleForEmail(email: string | undefined): Role {
 }
 
 function applyOwnerName() {
-  saveJson(STORAGE_KEYS.displayName, OWNER_ROOT.name);
-}
-
-function skipOwnerAuto(): boolean {
-  return loadJson<boolean>(STORAGE_KEYS.skipOwnerAuto, (v): v is boolean => typeof v === 'boolean') === true;
+  saveJson(STORAGE_KEYS.displayName, OWNER_DEFAULT_NAME);
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>('viewer');
   const [ready, setReady] = useState(false);
 
-  const signIn = useCallback(async (password: string): Promise<Role | null> => {
-    if (supabase) {
-      // Real authentication first: one shared password per role, so try the
-      // owner account, then the family account (sign-ups are disabled).
-      for (const email of [AUTH_EMAILS.owner, AUTH_EMAILS.editor]) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (!error && data.session) {
-          const found = roleForEmail(data.session.user.email);
-          if (found !== 'viewer') {
-            if (found === 'owner') {
-              applyOwnerName();
-              removeKey(STORAGE_KEYS.skipOwnerAuto);
-            }
-            setRole(found);
-            return found;
-          }
-        }
-      }
-      // The auth accounts may not exist yet (one-time dashboard setup not
-      // done). Fall back to the built-in hash check so the site keeps
-      // working until then; real auth takes over once the accounts exist.
-    }
-    const hash = await hashPassword(password);
-    const found = roleForHash(hash);
-    if (found === 'viewer') return null;
-    saveJson(AUTH_KEY, hash);
-    if (found === 'owner') {
-      applyOwnerName();
-      removeKey(STORAGE_KEYS.skipOwnerAuto);
-    }
-    setRole(found);
-    return found;
-  }, []);
-
   useEffect(() => {
     let cancelled = false;
 
     const boot = async () => {
-      const stored = loadJson<string>(AUTH_KEY, (v): v is string => typeof v === 'string');
-      if (stored) {
-        const restored = roleForHash(stored);
-        if (restored === 'viewer') removeKey(AUTH_KEY);
-        else {
-          if (restored === 'owner') applyOwnerName();
-          setRole(restored);
-        }
-      }
-
+      // Prefer a live Supabase session (real JWT + RLS). Legacy hash is only
+      // a UI hint when Supabase Auth is unavailable.
       if (supabase) {
         const { data } = await supabase.auth.getSession();
         if (cancelled) return;
@@ -103,15 +57,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // No live session — silent owner login (Kadir), unless this browser
-      // signed out on purpose so family can use the member password.
-      if (!skipOwnerAuto()) {
-        const found = await signIn(OWNER_ROOT.password);
-        if (cancelled) return;
-        if (found === 'owner') {
-          setReady(true);
-          return;
+      const stored = loadJson<string>(AUTH_KEY, (v): v is string => typeof v === 'string');
+      if (stored && !supabase) {
+        const restored = roleForHash(stored);
+        if (restored === 'viewer') removeKey(AUTH_KEY);
+        else {
+          if (restored === 'owner') applyOwnerName();
+          setRole(restored);
         }
+      } else if (stored && supabase) {
+        // Stale hash without a JWT — do not elevate UI privileges.
+        removeKey(AUTH_KEY);
       }
 
       if (!cancelled) setReady(true);
@@ -119,9 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void boot();
 
-    if (!supabase) return () => {
-      cancelled = true;
-    };
+    if (!supabase) {
+      return () => {
+        cancelled = true;
+      };
+    }
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       const fromSession = roleForEmail(session?.user.email);
@@ -129,22 +87,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (fromSession === 'owner') applyOwnerName();
         setRole(fromSession);
       } else if (event === 'SIGNED_OUT') {
-        const hash = loadJson<string>(AUTH_KEY, (v): v is string => typeof v === 'string');
-        setRole(hash ? roleForHash(hash) : 'viewer');
+        setRole('viewer');
       }
     });
     return () => {
       cancelled = true;
       sub.subscription.unsubscribe();
     };
-  }, [signIn]);
+  }, []);
+
+  const signIn = useCallback(async (password: string): Promise<Role | null> => {
+    if (supabase) {
+      for (const email of [AUTH_EMAILS.owner, AUTH_EMAILS.editor]) {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (!error && data.session) {
+          const found = roleForEmail(data.session.user.email);
+          if (found !== 'viewer') {
+            if (found === 'owner') applyOwnerName();
+            removeKey(AUTH_KEY);
+            setRole(found);
+            return found;
+          }
+        }
+      }
+      // Auth accounts missing or wrong password — do not fall back to hash
+      // elevation while Supabase is configured (would show owner UI without JWT).
+      return null;
+    }
+
+    const hash = await hashPassword(password);
+    const found = roleForHash(hash);
+    if (found === 'viewer') return null;
+    saveJson(AUTH_KEY, hash);
+    if (found === 'owner') applyOwnerName();
+    setRole(found);
+    return found;
+  }, []);
 
   const signOut = useCallback(() => {
-    // Stop silent owner re-login so a relative can use the family password.
-    saveJson(STORAGE_KEYS.skipOwnerAuto, true);
     if (supabase) void supabase.auth.signOut();
     removeKey(AUTH_KEY);
     removeKey(STORAGE_KEYS.displayName);
+    removeKey(STORAGE_KEYS.skipOwnerAuto);
     setRole('viewer');
   }, []);
 
