@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  Background,
-  BackgroundVariant,
   Controls,
   MiniMap,
   Panel,
@@ -263,6 +261,135 @@ function TreeCanvas({
     focusTopOfTree(undefined, false);
   }, [nodes, focusTopOfTree]);
 
+  // #region agent log
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    if (nodes.length === 0) return;
+    const peopleNodes = nodes.filter((n) => n.type === 'person');
+    const boxes = peopleNodes.map((n) => ({
+      x: n.position.x,
+      y: n.position.y,
+      w: n.width ?? CARD_W,
+      h: n.height ?? CARD_H,
+    }));
+    let overlapCount = 0;
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i];
+        const b = boxes[j];
+        if (a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y) {
+          overlapCount += 1;
+        }
+      }
+    }
+    const hHits = (x1: number, x2: number, y: number, box: (typeof boxes)[0], pad = 4) => {
+      const minX = Math.min(x1, x2);
+      const maxX = Math.max(x1, x2);
+      return y >= box.y + pad && y <= box.y + box.h - pad && maxX >= box.x + pad && minX <= box.x + box.w - pad;
+    };
+    const vHits = (x: number, y1: number, y2: number, box: (typeof boxes)[0], pad = 4) => {
+      const minY = Math.min(y1, y2);
+      const maxY = Math.max(y1, y2);
+      return x >= box.x + pad && x <= box.x + box.w - pad && maxY >= box.y + pad && minY <= box.y + box.h - pad;
+    };
+    const posById = new Map(nodes.map((n) => [n.id, n.position]));
+    let crossingCount = 0;
+    const childEdges = edges.filter((e) => e.type === 'child');
+    for (const edge of childEdges) {
+      const src = posById.get(edge.source);
+      const tgt = posById.get(edge.target);
+      if (!src || !tgt) continue;
+      const sourceX = src.x + (edge.source.startsWith('junction-') ? 5 : CARD_W / 2);
+      const sourceY = src.y + (edge.source.startsWith('junction-') ? 10 : CARD_H);
+      const targetX = tgt.x + CARD_W / 2;
+      const targetY = tgt.y;
+      const busOffset = typeof edge.data?.busOffset === 'number' ? edge.data.busOffset : 48;
+      const busY = targetY - busOffset;
+      for (const box of boxes) {
+        if (box.x === tgt.x && box.y === tgt.y) continue;
+        if (
+          vHits(sourceX, sourceY, busY, box) ||
+          hHits(sourceX, targetX, busY, box) ||
+          vHits(targetX, busY, targetY, box)
+        ) {
+          crossingCount += 1;
+          break;
+        }
+      }
+    }
+    fetch('http://127.0.0.1:7719/ingest/42bd11c8-8838-4c20-a699-ddd5f7402325', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ea4258' },
+      body: JSON.stringify({
+        sessionId: 'ea4258',
+        runId: 'post-fix',
+        hypothesisId: 'A',
+        location: 'TreePage.tsx:TreeCanvas',
+        message: 'tree layout coverage',
+        data: {
+          personNodes: peopleNodes.length,
+          genLabels: nodes.filter((n) => n.type === 'genLabel').length,
+          junctions: nodes.filter((n) => n.type === 'junction').length,
+          childEdges: childEdges.length,
+          spouseEdges: edges.filter((e) => e.type === 'spouse').length,
+          overlapCount,
+          crossingCount,
+          easyMode,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    const timer = window.setTimeout(() => {
+      const canvas = document.querySelector('.family-tree-canvas');
+      if (!canvas) return;
+      const dna = canvas.querySelectorAll('.edge-child-flow').length;
+      const halos = canvas.querySelectorAll('path[stroke="var(--child-edge-halo, #ffffff)"]').length;
+      const markers = document.querySelectorAll('svg marker').length;
+      const bgPattern = canvas.querySelector('.react-flow__background pattern, pattern');
+      const bgCircles = canvas.querySelectorAll('.react-flow__background circle').length;
+      const panels = [...canvas.querySelectorAll('.react-flow__panel')].map((el) => {
+        const r = (el as HTMLElement).getBoundingClientRect();
+        return { w: Math.round(r.width), h: Math.round(r.height), t: Math.round(r.top), l: Math.round(r.left) };
+      });
+      const canvasRect = canvas.getBoundingClientRect();
+      const coveringPanels = panels.filter((p) => p.w > 80 && p.h > 40);
+      const edgeLayer = canvas.querySelector('.react-flow__edges, .react-flow__edge-layer');
+      const nodeLayer = canvas.querySelector('.react-flow__nodes, .react-flow__node-layer');
+      const edgeZ = edgeLayer ? window.getComputedStyle(edgeLayer).zIndex : 'none';
+      const nodeZ = nodeLayer ? window.getComputedStyle(nodeLayer).zIndex : 'none';
+      fetch('http://127.0.0.1:7719/ingest/42bd11c8-8838-4c20-a699-ddd5f7402325', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ea4258' },
+        body: JSON.stringify({
+          sessionId: 'ea4258',
+          runId: 'post-fix',
+          hypothesisId: 'B',
+          location: 'TreePage.tsx:TreeCanvas:dom',
+          message: 'tree visual layers',
+          data: {
+            dnaPaths: dna,
+            haloPaths: halos,
+            svgMarkers: markers,
+            bgCircles,
+            hasBgPattern: Boolean(bgPattern),
+            coveringPanelCount: coveringPanels.length,
+            coveringPanels,
+            edgeZ,
+            nodeZ,
+            canvasW: Math.round(canvasRect.width),
+            canvasH: Math.round(canvasRect.height),
+            tipVisible,
+            ringsTipVisible,
+            minimapOpen,
+          },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [nodes, edges, easyMode, tipVisible, ringsTipVisible, minimapOpen]);
+  // #endregion
+
   const dismissTip = () => {
     setTipVisible(false);
     saveJson(STORAGE_KEYS.treeTipSeen, true);
@@ -290,13 +417,6 @@ function TreeCanvas({
       panOnDrag
       proOptions={{ hideAttribution: true }}
     >
-      <Background
-        id="tree-grid"
-        variant={BackgroundVariant.Dots}
-        gap={28}
-        size={1.25}
-        color={dark ? 'rgba(168, 162, 158, 0.14)' : 'rgba(6, 78, 59, 0.16)'}
-      />
       {!easyMode && (
         <Panel
           position="top-left"

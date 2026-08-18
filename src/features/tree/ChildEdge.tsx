@@ -3,10 +3,8 @@ import { BaseEdge } from '@xyflow/react';
 import type { EdgeProps } from '@xyflow/react';
 
 /**
- * Orthogonal parent -> child connector with per-couple DNA colours.
- *
- * Brothers/sisters (same parents) share one palette. Cousins sit in a similar
- * hue band but shift because their parents differ. Unrelated branches diverge.
+ * Orthogonal parent -> child connector. Colour comes from the couple's DNA
+ * palette so siblings match. One quiet stroke — no animated dashed strands.
  */
 function ChildEdgeComponent({
   sourceX,
@@ -19,8 +17,6 @@ function ChildEdgeComponent({
 }: EdgeProps) {
   const busOffset = typeof data?.busOffset === 'number' ? data.busOffset : 48;
   const horizontal = data?.orientation === 'horizontal';
-  const dnaA = typeof data?.dnaA === 'string' ? data.dnaA : '#10b981';
-  const dnaB = typeof data?.dnaB === 'string' ? data.dnaB : '#047857';
   const dnaTrunk = typeof data?.dnaTrunk === 'string' ? data.dnaTrunk : style?.stroke ?? '#059669';
 
   let path: string;
@@ -63,31 +59,17 @@ function ChildEdgeComponent({
       <path
         d={path}
         fill="none"
-        stroke="var(--child-edge-halo, #ffffff)"
-        strokeWidth={7}
+        stroke="var(--child-edge-halo)"
+        strokeWidth={5}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="pointer-events-none dark:[stroke:var(--color-stone-950)]"
+        className="pointer-events-none"
         aria-hidden
       />
       <BaseEdge
         path={path}
         markerEnd={markerEnd}
-        style={{ stroke: dnaTrunk, strokeWidth: 2, opacity: 0.45 }}
-      />
-      <path
-        d={path}
-        fill="none"
-        stroke={dnaA}
-        className="edge-child-flow edge-child-flow--a"
-        aria-hidden
-      />
-      <path
-        d={path}
-        fill="none"
-        stroke={dnaB}
-        className="edge-child-flow edge-child-flow--b"
-        aria-hidden
+        style={{ stroke: dnaTrunk, strokeWidth: 2.25, opacity: 0.88 }}
       />
     </>
   );
