@@ -292,7 +292,7 @@ function TreeCanvas({
       const maxY = Math.max(y1, y2);
       return x >= box.x + pad && x <= box.x + box.w - pad && maxY >= box.y + pad && minY <= box.y + box.h - pad;
     };
-    const posById = new Map(nodes.map((n) => [n.id, n.position]));
+    const posById = new globalThis.Map(nodes.map((n) => [n.id, n.position]));
     let crossingCount = 0;
     const childEdges = edges.filter((e) => e.type === 'child');
     for (const edge of childEdges) {
