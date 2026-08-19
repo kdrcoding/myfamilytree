@@ -21,7 +21,7 @@ const GENDER_ACCENT = {
 
 const HANDLE = '!h-1.5 !w-1.5 !min-h-0 !min-w-0 !border-0 !bg-transparent';
 
-function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
+function PersonNodeComponent({ data, width, height }: NodeProps<PersonFlowNode>) {
   const { getPerson, getLabel } = useFamily();
   const privacy = usePrivacy();
   const t = useT();
@@ -43,7 +43,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
       : '';
 
   return (
-    <div style={{ width: CARD_W, height: CARD_H }} className="relative">
+    <div style={{ width: width ?? CARD_W, height: height ?? CARD_H }} className="relative">
       <Handle type="target" position={Position.Top} id="top" className={HANDLE} />
       <Handle type="target" position={Position.Left} id="left" className={HANDLE} />
       <Handle type="source" position={Position.Right} id="right" className={HANDLE} />
@@ -54,7 +54,7 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
         onClick={() => onOpen(person.id)}
         aria-label={t('tree.openDetails', { name })}
         title={name}
-        className={`tree-person-card flex h-full w-full items-center gap-2.5 rounded-xl border border-l-4 px-3 text-left ring-1 ring-emerald-900/10 transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-500 active:translate-y-0 dark:ring-white/5 dark:hover:shadow-lg dark:hover:shadow-black/40 ${
+        className={`tree-person-card flex h-full w-full items-center gap-2.5 rounded-xl border border-l-4 px-3 text-left ring-1 ring-emerald-900/10 transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-500 dark:ring-white/5 dark:hover:shadow-lg dark:hover:shadow-black/40 ${
           GENDER_ACCENT[person.gender]
         } ${
           person.isDeceased
@@ -76,12 +76,12 @@ function PersonNodeComponent({ data }: NodeProps<PersonFlowNode>) {
             {name}
           </span>
           {person.nickname && (
-            <span className="tree-person-meta block truncate text-[13px] text-stone-400">“{person.nickname}”</span>
+            <span className="tree-person-nick tree-person-meta block truncate text-[13px] text-stone-400">“{person.nickname}”</span>
           )}
           <span className="tree-person-meta block truncate text-[13px] text-stone-500 dark:text-stone-400">
             {years || getLabel(person)}
           </span>
-          <span className="mt-1 flex gap-1">
+          <span className="tree-person-badges mt-1 flex gap-1">
             <GenderBadge gender={person.gender} compact />
             <DeceasedBadge person={person} compact />
           </span>

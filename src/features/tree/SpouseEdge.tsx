@@ -24,11 +24,11 @@ function SpouseEdgeComponent({ sourceX, sourceY, targetX, targetY, source, targe
     return () => mq.removeEventListener('change', sync);
   }, []);
 
-  const r = touchy ? 5.25 : 4.75;
-  const dx = touchy ? 3.1 : 2.85;
-  const ringStroke = touchy ? 1.85 : 1.7;
-  const padRx = touchy ? 12.5 : 11;
-  const padRy = touchy ? 9 : 8;
+  const r = 4.75;
+  const dx = 2.85;
+  const ringStroke = 1.7;
+  const padRx = 11;
+  const padRy = 8;
   const hitR = touchy ? 20 : 16;
 
   const open = (event: { stopPropagation: () => void; preventDefault?: () => void }) => {
@@ -42,7 +42,7 @@ function SpouseEdgeComponent({ sourceX, sourceY, targetX, targetY, source, targe
       <path
         d={path}
         fill="none"
-        strokeWidth={touchy ? 8 : 7}
+        strokeWidth={touchy ? 6 : 7}
         strokeLinecap="round"
         className="spouse-edge__halo pointer-events-none"
         aria-hidden
@@ -50,7 +50,7 @@ function SpouseEdgeComponent({ sourceX, sourceY, targetX, targetY, source, targe
       <path
         d={path}
         fill="none"
-        strokeWidth={divorced ? 2 : touchy ? 2.35 : 2.1}
+        strokeWidth={divorced ? 2 : 2.1}
         strokeLinecap="round"
         strokeDasharray={divorced ? '3 5' : undefined}
         className="spouse-edge__line pointer-events-none"

@@ -313,19 +313,18 @@ html:not(.dark) .text-stone-400 {
 }
 /* Parent -> child lines: colour comes from per-couple DNA data (inline). */
 .edge-child .react-flow__edge-path {
-  stroke-width: 2.25;
+  stroke-width: 2;
 }
 
-/* Touch screens: thicker relationship lines and finger-sized zoom controls
-   so the tree stays readable and usable on phones. */
+/* Touch screens: keep lines readable without covering the cards. */
 @media (pointer: coarse) {
   .react-flow__edge-path {
-    stroke-width: 2.5;
+    stroke-width: 2;
   }
   .edge-spouse .react-flow__edge-path,
   .edge-divorced .react-flow__edge-path,
   .edge-child .react-flow__edge-path {
-    stroke-width: 3;
+    stroke-width: 2.25;
   }
   .react-flow__controls-button {
     height: 40px;
@@ -339,7 +338,7 @@ html:not(.dark) .text-stone-400 {
 
 /* —— Tree page toolbar —— */
 .tree-page-toolbar {
-  @apply border-b border-stone-200/80 bg-white/90 px-3 py-2.5 shadow-[0_1px_3px_0_rgb(0_0_0_0.04)] backdrop-blur-sm sm:px-4 sm:py-3 dark:border-stone-800 dark:bg-stone-900/90 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.24)];
+  @apply border-b border-stone-200/80 bg-white/90 px-3 py-2 shadow-[0_1px_3px_0_rgb(0_0_0_0.04)] backdrop-blur-sm sm:px-4 sm:py-3 dark:border-stone-800 dark:bg-stone-900/90 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.24)];
 }
 
 /* —— Tree search refinement —— */
@@ -348,7 +347,7 @@ html:not(.dark) .text-stone-400 {
 }
 
 .tree-search-dropdown {
-  @apply absolute z-30 mt-1.5 max-h-80 w-full overflow-y-auto rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg shadow-stone-900/6 dark:border-stone-700 dark:bg-stone-900 dark:shadow-black/30;
+  @apply absolute z-30 mt-1.5 max-h-[min(16rem,45vh)] w-full overflow-y-auto rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg shadow-stone-900/6 sm:max-h-80 dark:border-stone-700 dark:bg-stone-900 dark:shadow-black/30;
 }
 
 .tree-search-result {
@@ -478,34 +477,34 @@ html.dark .tree-person-card {
   --child-edge-halo: #0c0a09;
 }
 
-/* Easy / older-adult tree controls: finger-sized zoom buttons */
-html.easy .tree-controls-easy .react-flow__controls-button,
+/* Easy / phone tree: quieter cards, finger-sized zoom, no extra chrome. */
+.tree-easy .tree-person-nick,
+.tree-easy .tree-person-badges {
+  display: none;
+}
 .tree-controls-easy .react-flow__controls-button {
   width: 44px;
   height: 44px;
 }
-html.easy .tree-easy .react-flow__node-person {
-  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.1));
+.tree-easy .tree-person-card {
+  border-width: 1.5px;
+  border-left-width: 4px;
 }
-html.easy .tree-easy .tree-person-card {
-  border-width: 2px;
-  border-left-width: 6px;
-}
-html.easy .tree-easy .tree-person-name {
-  font-size: 17px;
+.tree-easy .tree-person-name {
+  font-size: 16px;
   line-height: 1.2;
 }
-html.easy .tree-easy .tree-person-meta {
-  font-size: 14px;
+.tree-easy .tree-person-meta {
+  font-size: 13px;
 }
-html.easy .tree-easy .tree-branch-toggle {
+.tree-easy .tree-branch-toggle {
   min-width: 34px;
   min-height: 28px;
   font-size: 12px;
 }
-html.easy .tree-easy .react-flow__edge-path {
-  stroke-width: 3.5;
-  opacity: 0.9;
+.tree-easy .react-flow__edge-path {
+  stroke-width: 2.25;
+  opacity: 0.85;
 }
 
 /* React Flow chrome in dark mode */

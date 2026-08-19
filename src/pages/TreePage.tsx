@@ -19,7 +19,7 @@ import { useToast } from '../context/ToastContext';
 import { usePersistentState } from '../hooks/usePersistentState';
 import { useT } from '../i18n/useT';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
-import { getAncestorIds, fullName } from '../utils/family';
+import { getAncestorIds, fullName, defaultCollapsedIds } from '../utils/family';
 import { matchesSearch } from '../utils/filters';
 import { MadeByKadir } from '../components/MadeByKadir';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
@@ -30,7 +30,7 @@ import { OverflowMenu } from '../components/OverflowMenu';
 import type { OverflowMenuItem } from '../components/OverflowMenu';
 import { BrandMark } from '../components/BrandLogo';
 import { Avatar } from '../components/Avatar';
-import { computeTreeLayout, CARD_H, CARD_W } from '../features/tree/layout';
+import { computeTreeLayout, CARD_H, CARD_H_COMPACT, CARD_W } from '../features/tree/layout';
 import { exportTreeAsPng, printTreePoster, shareTreePoster } from '../features/tree/exportPng';
 import { JunctionNode } from '../features/tree/JunctionNode';
 import { GenLabelNode } from '../features/tree/GenLabelNode';
@@ -46,8 +46,10 @@ const edgeTypes: EdgeTypes = { child: ChildEdge, spouse: SpouseEdge };
 
 const START_ZOOM = 1.1;
 const START_ZOOM_EASY = 1.25;
+const START_ZOOM_PHONE = 1;
 const FOCUS_ZOOM = 1.2;
 const FOCUS_ZOOM_EASY = 1.35;
+const FOCUS_ZOOM_PHONE = 1.15;
 
 function TreeSearch({
   onSelect,
@@ -177,18 +179,22 @@ function TreeCanvas({
   focusId,
   onFocused,
   easyMode,
+  phone,
+  cardH,
 }: {
   nodes: Node[];
   edges: Edge[];
   focusId: string | null;
   onFocused: () => void;
   easyMode: boolean;
+  phone: boolean;
+  cardH: number;
 }) {
   const { setCenter, getZoom, fitView } = useReactFlow();
   const t = useT();
   const { settings } = useSettings();
   const dark = settings.theme === 'dark';
-  const [minimapOpen, setMinimapOpen] = useState(!easyMode);
+  const [minimapOpen, setMinimapOpen] = useState(false);
 
   useEffect(() => {
     if (easyMode) setMinimapOpen(false);
@@ -198,6 +204,7 @@ function TreeCanvas({
     return loadJson<boolean>(STORAGE_KEYS.treeTipSeen, (v): v is boolean => typeof v === 'boolean') !== true;
   });
   const [ringsTipVisible, setRingsTipVisible] = useState(() => {
+    if (easyMode) return false;
     return (
       loadJson<boolean>(STORAGE_KEYS.treeRingsTipSeen, (v): v is boolean => typeof v === 'boolean') !==
       true
@@ -208,8 +215,8 @@ function TreeCanvas({
     saveJson(STORAGE_KEYS.treeRingsTipSeen, true);
   };
   const didInitialFocus = useRef(false);
-  const startZoom = easyMode ? START_ZOOM_EASY : START_ZOOM;
-  const focusZoom = easyMode ? FOCUS_ZOOM_EASY : FOCUS_ZOOM;
+  const startZoom = phone ? START_ZOOM_PHONE : easyMode ? START_ZOOM_EASY : START_ZOOM;
+  const focusZoom = phone ? FOCUS_ZOOM_PHONE : easyMode ? FOCUS_ZOOM_EASY : FOCUS_ZOOM;
 
   const focusTopOfTree = useCallback(
     (instance?: ReactFlowInstance, animate = true) => {
@@ -225,12 +232,12 @@ function TreeCanvas({
           })();
       const centersX = topRow.map((n) => n.position.x + CARD_W / 2);
       const cx = (Math.min(...centersX) + Math.max(...centersX)) / 2;
-      const cy = topRow[0].position.y + CARD_H / 2;
+      const cy = topRow[0].position.y + cardH / 2;
       const opts = { zoom: startZoom, duration: animate ? 500 : 0 };
       if (instance) instance.setCenter(cx, cy, opts);
       else setCenter(cx, cy, opts);
     },
-    [nodes, setCenter, startZoom],
+    [nodes, setCenter, startZoom, cardH],
   );
 
   useEffect(() => {
@@ -238,12 +245,12 @@ function TreeCanvas({
     const node = nodes.find((n) => n.id === focusId);
     // Collapsed branches / stale deep-links: keep focusId until the node exists.
     if (!node) return;
-    setCenter(node.position.x + CARD_W / 2, node.position.y + CARD_H / 2, {
+    setCenter(node.position.x + CARD_W / 2, node.position.y + cardH / 2, {
       zoom: Math.max(getZoom(), focusZoom),
       duration: 600,
     });
     onFocused();
-  }, [focusId, nodes, setCenter, getZoom, focusZoom, onFocused]);
+  }, [focusId, nodes, setCenter, getZoom, focusZoom, onFocused, cardH]);
 
   // Centre on the founding row at a readable zoom — not fitView of the whole tree.
   const handleInit = useCallback(
@@ -275,6 +282,7 @@ function TreeCanvas({
       onInit={handleInit}
       minZoom={0.08}
       maxZoom={2.25}
+      onlyRenderVisibleElements
       className={`family-tree-canvas ${easyMode ? 'tree-easy' : ''} ${dark ? 'family-tree-canvas--dark' : 'family-tree-canvas--light'}`}
       nodesDraggable={false}
       nodesConnectable={false}
@@ -336,7 +344,7 @@ function TreeCanvas({
           </div>
         </Panel>
       )}
-      {tipVisible && (
+      {tipVisible && !easyMode && (
         <Panel position="top-center" className="!m-2 sm:!m-3">
           <div className="tree-tip">
             <div className="flex items-start gap-2">
@@ -353,7 +361,7 @@ function TreeCanvas({
           </div>
         </Panel>
       )}
-      {!tipVisible && ringsTipVisible && (
+      {!easyMode && !tipVisible && ringsTipVisible && (
         <Panel position="top-center" className="!m-2 sm:!m-3">
           <div className="tree-tip tree-tip--rings">
             <div className="flex items-start gap-2">
@@ -441,22 +449,6 @@ export function TreePage() {
   const t = useT();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [collapsedList, setCollapsedList] = usePersistentState<string[]>(
-    STORAGE_KEYS.collapsed,
-    [],
-    (v): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string'),
-  );
-  const collapsed = useMemo(() => new Set(collapsedList), [collapsedList]);
-
-  const [editMode, setEditMode] = useState(false);
-  const [unlockOpen, setUnlockOpen] = useState(false);
-  const [joinOpen, setJoinOpen] = useState(false);
-  const [detailsId, setDetailsId] = useState<string | null>(null);
-  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<{ person?: FamilyPerson; link?: RelationLink } | null>(null);
-  const [focusId, setFocusId] = useState<string | null>(null);
-  const [exportBusy, setExportBusy] = useState(false);
-  const [coupleIds, setCoupleIds] = useState<[string, string] | null>(null);
   const [isPhone, setIsPhone] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches,
   );
@@ -467,6 +459,34 @@ export function TreePage() {
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
+
+  const [collapsedList, setCollapsedList] = usePersistentState<string[]>(
+    STORAGE_KEYS.collapsed,
+    [],
+    (v): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string'),
+  );
+  const collapseCustomized = useRef(
+    loadJson<string[]>(
+      STORAGE_KEYS.collapsed,
+      (v): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string'),
+    ) !== null,
+  );
+  const autoCollapsed = useMemo(
+    () => defaultCollapsedIds(people, isPhone ? 1 : 3),
+    [people, isPhone],
+  );
+  const collapsedIds = collapseCustomized.current ? collapsedList : autoCollapsed;
+  const collapsed = useMemo(() => new Set(collapsedIds), [collapsedIds]);
+
+  const [editMode, setEditMode] = useState(false);
+  const [unlockOpen, setUnlockOpen] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [detailsId, setDetailsId] = useState<string | null>(null);
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  const [form, setForm] = useState<{ person?: FamilyPerson; link?: RelationLink } | null>(null);
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const [exportBusy, setExportBusy] = useState(false);
+  const [coupleIds, setCoupleIds] = useState<[string, string] | null>(null);
 
   useEffect(() => {
     if (!canEdit && editMode) setEditMode(false);
@@ -490,6 +510,7 @@ export function TreePage() {
     () =>
       computeTreeLayout(people, collapsed, {
         spacing: isPhone ? 'compact' : 'comfortable',
+        showGenLabels: !isPhone,
       }),
     [people, collapsed, isPhone],
   );
@@ -528,11 +549,13 @@ export function TreePage() {
 
   const toggleCollapse = useCallback(
     (anchorId: string) => {
-      setCollapsedList((list) =>
-        list.includes(anchorId) ? list.filter((id) => id !== anchorId) : [...list, anchorId],
+      const base = collapseCustomized.current ? collapsedList : autoCollapsed;
+      collapseCustomized.current = true;
+      setCollapsedList(
+        base.includes(anchorId) ? base.filter((id) => id !== anchorId) : [...base, anchorId],
       );
     },
-    [setCollapsedList],
+    [autoCollapsed, collapsedList, setCollapsedList],
   );
 
   const interaction = useMemo<TreeInteraction>(
@@ -556,9 +579,13 @@ export function TreePage() {
         ancestors.add(spouseId);
         for (const id of getAncestorIds(spouseId, index)) ancestors.add(id);
       }
-      setCollapsedList((list) => list.filter((id) => !ancestors.has(id) && id !== person.id));
+      setCollapsedList((list) => {
+        const base = collapseCustomized.current ? list : autoCollapsed;
+        collapseCustomized.current = true;
+        return base.filter((id) => !ancestors.has(id) && id !== person.id);
+      });
     },
-    [index, setCollapsedList],
+    [index, setCollapsedList, autoCollapsed],
   );
 
   const focusPerson = useCallback(
@@ -642,7 +669,7 @@ export function TreePage() {
       <div className="tree-page-toolbar">
         <div className="mx-auto flex max-w-[1600px] items-center gap-1.5 sm:gap-3">
           <div className="min-w-0 flex-1">
-            <TreeSearch onSelect={focusPerson} large />
+            <TreeSearch onSelect={focusPerson} large={!isPhone} />
           </div>
 
           <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
@@ -756,6 +783,8 @@ export function TreePage() {
                 focusId={focusId}
                 onFocused={() => setFocusId(null)}
                 easyMode={easy || isPhone}
+                phone={isPhone}
+                cardH={isPhone ? CARD_H_COMPACT : CARD_H}
               />
             </ReactFlowProvider>
           </TreeInteractionContext.Provider>

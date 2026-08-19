@@ -2,9 +2,9 @@
 // password. The family data itself lives in Supabase (src/lib/familyDb.ts).
 export const STORAGE_KEYS = {
   settings: 'familytree.settings.v1',
-  // v2: the tree now defaults to fully expanded (everyone shown). Bumping the
-  // key drops the old auto-collapsed state so existing devices start expanded.
-  collapsed: 'familytree.collapsed.v2',
+  // v3: first visit auto-collapses deep branches so phones stay readable.
+  // A saved fold/expand choice is still respected after the user toggles one.
+  collapsed: 'familytree.collapsed.v3',
   auth: 'familytree.auth.v1',
   // The person add/edit form autosaves here so an accidental reload (or a
   // phone browser discarding the backgrounded tab) doesn't lose typed work.

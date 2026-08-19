@@ -60,7 +60,7 @@ function ChildEdgeComponent({
         d={path}
         fill="none"
         stroke="var(--child-edge-halo)"
-        strokeWidth={5}
+        strokeWidth={3}
         strokeLinecap="round"
         strokeLinejoin="round"
         className="pointer-events-none"
@@ -69,7 +69,7 @@ function ChildEdgeComponent({
       <BaseEdge
         path={path}
         markerEnd={markerEnd}
-        style={{ stroke: dnaTrunk, strokeWidth: 2.25, opacity: 0.88 }}
+        style={{ stroke: dnaTrunk, strokeWidth: 2, opacity: 0.8 }}
       />
     </>
   );

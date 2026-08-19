@@ -10,6 +10,8 @@ import type { DnaPalette } from './dnaColor';
 // tall enough for the name, nickname, dates and the gender/deceased badges.
 export const CARD_W = 276;
 export const CARD_H = 130;
+/** Phone / compact cards skip badges, so they can be shorter. */
+export const CARD_H_COMPACT = 102;
 
 export type TreeOrientation = 'vertical' | 'horizontal';
 export type TreeSpacing = 'comfortable' | 'compact';
@@ -65,6 +67,8 @@ export interface GenLabelData extends Record<string, unknown> {
 export interface TreeLayoutOptions {
   orientation?: TreeOrientation;
   spacing?: TreeSpacing;
+  /** Generation chips beside each row. Off on phones to keep the canvas clear. */
+  showGenLabels?: boolean;
 }
 
 /**
@@ -241,7 +245,10 @@ export function computeTreeLayout(
   options: TreeLayoutOptions = {},
 ): TreeLayout {
   const orientation = options.orientation ?? 'vertical';
-  const gap = SPACING[options.spacing ?? 'comfortable'];
+  const spacing = options.spacing ?? 'comfortable';
+  const gap = SPACING[spacing];
+  const cardH = spacing === 'compact' ? CARD_H_COMPACT : CARD_H;
+  const showGenLabels = options.showGenLabels !== false;
   const index = buildIndex(people);
   const visited = new Set<string>();
   const suppressed = new Set<string>();
@@ -279,7 +286,7 @@ export function computeTreeLayout(
   const depthByNode = new Map<string, number>();
 
   function place(unit: Unit, x: number, depth: number, clusterLeft?: number): void {
-    const y = depth * (CARD_H + gap.level);
+    const y = depth * (cardH + gap.level);
     const clusterW = unit.memberIds.length * CARD_W + (unit.memberIds.length - 1) * gap.spouse;
     // Default: center the couple over their subtree. Roots pass an explicit
     // clusterLeft so several founding lines sit next to each other on top.
@@ -297,7 +304,7 @@ export function computeTreeLayout(
         // Explicit dimensions let getNodesBounds (PNG export) measure the
         // tree before React Flow has rendered the nodes.
         width: CARD_W,
-        height: CARD_H,
+        height: cardH,
         data: {
           personId: memberId,
           collapsible: memberId === unit.anchorId && (unit.children.length > 0 || unit.collapsed),
@@ -346,7 +353,7 @@ export function computeTreeLayout(
           type: 'junction',
           position: {
             x: gapCenter - JUNCTION / 2,
-            y: y + CARD_H / 2 - JUNCTION / 2 + JUNCTION_BELOW_RINGS,
+            y: y + cardH / 2 - JUNCTION / 2 + JUNCTION_BELOW_RINGS,
           },
           width: JUNCTION,
           height: JUNCTION,
@@ -434,7 +441,7 @@ export function computeTreeLayout(
     const left = placed[0];
     const right = placed[placed.length - 1];
     const midX = (left.pos.x + CARD_W + right.pos.x) / 2;
-    const midY = (left.pos.y + right.pos.y) / 2 + CARD_H / 2 + JUNCTION_BELOW_RINGS;
+    const midY = (left.pos.y + right.pos.y) / 2 + cardH / 2 + JUNCTION_BELOW_RINGS;
     const junctionId = `junction-${pairKey}`;
     junctionByPair.set(pairKey, junctionId);
     junctionNodes.push({
@@ -547,8 +554,8 @@ export function computeTreeLayout(
       className: 'edge-child',
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        width: 16,
-        height: 16,
+        width: 10,
+        height: 10,
         color: palette.trunk,
       },
       focusable: false,
@@ -558,23 +565,25 @@ export function computeTreeLayout(
 
   // One label chip per generation row, placed just before the row's first card.
   const genLabelNodes: Node<GenLabelData, 'genLabel'>[] = [];
-  const rowMinX = new Map<number, number>();
-  for (const node of nodes) {
-    const depth = depthByNode.get(node.id) ?? 0;
-    rowMinX.set(depth, Math.min(rowMinX.get(depth) ?? Infinity, node.position.x));
-  }
-  for (const [depth, minX] of rowMinX) {
-    genLabelNodes.push({
-      id: `gen-${depth}`,
-      type: 'genLabel',
-      position: { x: minX - GEN_LABEL_GAP, y: depth * (CARD_H + gap.level) + CARD_H / 2 - 16 },
-      width: GEN_LABEL_GAP - 24,
-      height: 32,
-      data: { generation: depth + 1, orientation },
-      draggable: false,
-      selectable: false,
-      connectable: false,
-    });
+  if (showGenLabels) {
+    const rowMinX = new Map<number, number>();
+    for (const node of nodes) {
+      const depth = depthByNode.get(node.id) ?? 0;
+      rowMinX.set(depth, Math.min(rowMinX.get(depth) ?? Infinity, node.position.x));
+    }
+    for (const [depth, minX] of rowMinX) {
+      genLabelNodes.push({
+        id: `gen-${depth}`,
+        type: 'genLabel',
+        position: { x: minX - GEN_LABEL_GAP, y: depth * (cardH + gap.level) + cardH / 2 - 16 },
+        width: GEN_LABEL_GAP - 24,
+        height: 32,
+        data: { generation: depth + 1, orientation },
+        draggable: false,
+        selectable: false,
+        connectable: false,
+      });
+    }
   }
 
   // Horizontal orientation: reflect every position across the main diagonal
