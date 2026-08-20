@@ -102,6 +102,7 @@ export function PersonSearch({
                 type="button"
                 role="option"
                 className="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-emerald-50 focus-visible:bg-emerald-50 dark:hover:bg-emerald-950/40 dark:focus-visible:bg-emerald-950/40"
+                onPointerDown={(e) => e.preventDefault()}
                 onClick={() => select(person)}
               >
                 <Avatar person={person} size={large ? 'md' : 'sm'} />

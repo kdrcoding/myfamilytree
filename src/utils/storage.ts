@@ -2,8 +2,8 @@
 // password. The family data itself lives in Supabase (src/lib/familyDb.ts).
 export const STORAGE_KEYS = {
   settings: 'familytree.settings.v1',
-  // v3: first visit auto-collapses deep branches so phones stay readable.
-  // A saved fold/expand choice is still respected after the user toggles one.
+  // v3 leftover from a fold/expand experiment. The tree now always shows
+  // every generation; this key is unused.
   collapsed: 'familytree.collapsed.v3',
   auth: 'familytree.auth.v1',
   // The person add/edit form autosaves here so an accidental reload (or a

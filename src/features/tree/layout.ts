@@ -39,13 +39,6 @@ const BUS_LANES = 5;
 // Room reserved before each generation row for its label chip.
 const GEN_LABEL_GAP = 148;
 
-/**
- * How many whole generations open on a family's first view before deeper
- * branches auto-collapse (see defaultCollapsedIds). Two keeps even a large
- * tree narrow on load; the viewer expands from there.
- */
-export const DEFAULT_OPEN_GENERATIONS = 2;
-
 /** Fallback when a palette is missing (should be rare). */
 export const CHILD_EDGE_COLOR = '#059669';
 
@@ -307,9 +300,9 @@ export function computeTreeLayout(
         height: cardH,
         data: {
           personId: memberId,
-          collapsible: memberId === unit.anchorId && (unit.children.length > 0 || unit.collapsed),
-          collapsed: unit.collapsed,
-          hiddenCount: unit.hiddenCount,
+          collapsible: false,
+          collapsed: false,
+          hiddenCount: 0,
           generation: depth + 1,
         },
         draggable: false,

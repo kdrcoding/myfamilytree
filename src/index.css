@@ -397,6 +397,11 @@ html.dark .app-bottom-nav {
 .family-tree-canvas .react-flow__pane:active {
   cursor: grabbing;
 }
+.family-tree-canvas .react-flow__node {
+  cursor: pointer;
+  /* Position updates used to ease, which made pan feel sticky. */
+  transition: none;
+}
 
 /* Light theme: deeper soft sage (comfortable to look at) + cream cards. */
 :root {
@@ -496,11 +501,6 @@ html.dark .tree-person-card {
 }
 .tree-easy .tree-person-meta {
   font-size: 13px;
-}
-.tree-easy .tree-branch-toggle {
-  min-width: 34px;
-  min-height: 28px;
-  font-size: 12px;
 }
 .tree-easy .react-flow__edge-path {
   stroke-width: 2.25;

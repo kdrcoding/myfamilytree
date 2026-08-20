@@ -3,12 +3,11 @@ import type { RelationKind } from '../../types/family';
 
 /**
  * Lets the custom React Flow nodes talk back to the tree page (open details,
- * collapse branches, quick-add relatives) and read edit mode — without
- * stuffing callbacks into every node's data object.
+ * quick-add relatives) and read edit mode — without stuffing callbacks into
+ * every node's data object.
  */
 export interface TreeInteraction {
   onOpen: (personId: string) => void;
-  onToggleCollapse: (anchorId: string) => void;
   /** Open the add-person form pre-linked to this relative. */
   onQuickAdd: (kind: RelationKind, personId: string) => void;
   /** Open the wedding / anniversary card for a couple (tap the rings). */
@@ -18,7 +17,6 @@ export interface TreeInteraction {
 
 export const TreeInteractionContext = createContext<TreeInteraction>({
   onOpen: () => {},
-  onToggleCollapse: () => {},
   onQuickAdd: () => {},
   onOpenCouple: () => {},
   editMode: false,

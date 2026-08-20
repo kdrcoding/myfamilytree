@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
-import { Baby, ChevronDown, ChevronUp, Heart, UserRoundPlus } from 'lucide-react';
+import { Baby, Heart, UserRoundPlus } from 'lucide-react';
 import { useFamily } from '../../context/FamilyContext';
 import { usePrivacy } from '../../hooks/usePrivacy';
 import { useT } from '../../i18n/useT';
@@ -25,7 +25,7 @@ function PersonNodeComponent({ data, width, height }: NodeProps<PersonFlowNode>)
   const { getPerson, getLabel } = useFamily();
   const privacy = usePrivacy();
   const t = useT();
-  const { onOpen, onToggleCollapse, onQuickAdd, editMode } = useTreeInteraction();
+  const { onOpen, onQuickAdd, editMode } = useTreeInteraction();
   const person = getPerson(data.personId);
   if (!person) return null;
 
@@ -131,31 +131,6 @@ function PersonNodeComponent({ data, width, height }: NodeProps<PersonFlowNode>)
             </button>
           )}
         </>
-      )}
-
-      {data.collapsible && (
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onToggleCollapse(person.id);
-          }}
-          aria-label={
-            data.collapsed
-              ? t('tree.expandBranch', { n: data.hiddenCount })
-              : t('tree.collapseBranch')
-          }
-          className="tree-branch-toggle absolute -bottom-3.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border border-emerald-700/25 bg-[var(--tree-card-bg)] px-2 py-0.5 text-[10px] font-semibold text-stone-700 shadow-sm transition-all hover:border-emerald-500 hover:text-emerald-800 hover:shadow focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-300 dark:hover:border-emerald-500"
-        >
-          {data.collapsed ? (
-            <>
-              <ChevronDown className="h-3 w-3" aria-hidden />
-              {data.hiddenCount}
-            </>
-          ) : (
-            <ChevronUp className="h-3 w-3" aria-hidden />
-          )}
-        </button>
       )}
     </div>
   );
