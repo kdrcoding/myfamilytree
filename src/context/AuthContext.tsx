@@ -35,6 +35,18 @@ function applyOwnerName() {
   saveJson(STORAGE_KEYS.displayName, OWNER_DEFAULT_NAME);
 }
 
+/** Restore a family editor's name from Auth metadata when this browser has none yet. */
+function applyEditorNameFromUser(user?: { user_metadata?: Record<string, unknown> } | null) {
+  const existing =
+    loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string')?.trim() ??
+    '';
+  if (existing.length >= 2) return;
+  const meta = user?.user_metadata?.display_name;
+  if (typeof meta === 'string' && meta.trim().length >= 2) {
+    saveJson(STORAGE_KEYS.displayName, meta.trim());
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>('viewer');
   const [ready, setReady] = useState(false);
@@ -51,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const fromSession = roleForEmail(data.session?.user.email);
         if (fromSession !== 'viewer') {
           if (fromSession === 'owner') applyOwnerName();
+          else applyEditorNameFromUser(data.session?.user);
           setRole(fromSession);
           setReady(true);
           return;
@@ -85,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const fromSession = roleForEmail(session?.user.email);
       if (fromSession !== 'viewer') {
         if (fromSession === 'owner') applyOwnerName();
+        else applyEditorNameFromUser(session?.user);
         setRole(fromSession);
       } else if (event === 'SIGNED_OUT') {
         setRole('viewer');
@@ -97,31 +111,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = useCallback(async (password: string): Promise<Role | null> => {
+    const hash = await hashPassword(password);
+    const hinted = roleForHash(hash);
+
     if (supabase) {
-      for (const email of [AUTH_EMAILS.owner, AUTH_EMAILS.editor]) {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (!error && data.session) {
-          const found = roleForEmail(data.session.user.email);
-          if (found !== 'viewer') {
-            if (found === 'owner') applyOwnerName();
-            removeKey(AUTH_KEY);
-            setRole(found);
-            return found;
-          }
-        }
-      }
-      // Auth accounts missing or wrong password — do not fall back to hash
-      // elevation while Supabase is configured (would show owner UI without JWT).
-      return null;
+      // Hash picks owner vs family so we only hit Auth once (wrong password
+      // fails immediately; right password does not try the other account).
+      if (hinted === 'viewer') return null;
+      const email = hinted === 'owner' ? AUTH_EMAILS.owner : AUTH_EMAILS.editor;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error || !data.session) return null;
+      const found = roleForEmail(data.session.user.email);
+      if (found === 'viewer') return null;
+      if (found === 'owner') applyOwnerName();
+      else applyEditorNameFromUser(data.session.user);
+      removeKey(AUTH_KEY);
+      setRole(found);
+      return found;
     }
 
-    const hash = await hashPassword(password);
-    const found = roleForHash(hash);
-    if (found === 'viewer') return null;
+    if (hinted === 'viewer') return null;
     saveJson(AUTH_KEY, hash);
-    if (found === 'owner') applyOwnerName();
-    setRole(found);
-    return found;
+    if (hinted === 'owner') applyOwnerName();
+    setRole(hinted);
+    return hinted;
   }, []);
 
   const signOut = useCallback(() => {

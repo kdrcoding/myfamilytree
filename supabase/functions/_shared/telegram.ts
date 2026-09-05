@@ -181,70 +181,149 @@ export function birthdayPagePhase(
   return 'none';
 }
 
+/** Storage object path from family_members.photo (not data:/http). */
+export function storageObjectPath(photo: string): string | null {
+  const raw = photo.trim();
+  if (!raw || raw.startsWith('data:') || /^https?:/i.test(raw)) return null;
+  let path = raw.replace(/^\/+/, '');
+  if (path.startsWith('family-photos/')) path = path.slice('family-photos/'.length);
+  return path || null;
+}
+
+function encodeObjectPath(path: string): string {
+  return path.split('/').filter(Boolean).map(encodeURIComponent).join('/');
+}
+
+/** Birthday page is live today + yesterday — keep signed URLs valid for that window. */
+const PHOTO_SIGN_TTL_SECONDS = 50 * 60 * 60;
+
+function absoluteSignedUrl(baseUrl: string, signed: string): string {
+  const s = signed.trim();
+  if (/^https?:/i.test(s)) return s;
+  if (s.startsWith('//')) return `https:${s}`;
+  if (s.startsWith('/storage/v1')) return `${baseUrl}${s}`;
+  if (s.startsWith('storage/v1')) return `${baseUrl}/${s}`;
+  if (s.startsWith('/object/')) return `${baseUrl}/storage/v1${s}`;
+  if (s.startsWith('object/')) return `${baseUrl}/storage/v1/${s}`;
+  return `${baseUrl}/storage/v1/${s.replace(/^\//, '')}`;
+}
+
 export function createServiceClient() {
-  const url = requireEnv('SUPABASE_URL');
+  const url = requireEnv('SUPABASE_URL').replace(/\/$/, '');
   const key = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-  // Lazy import-style via global fetch REST — keep zero npm deps in shared.
+  const authHeaders = {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+  };
+
+  async function rest<T>(
+    path: string,
+    init: RequestInit & { query?: Record<string, string> } = {},
+  ): Promise<T> {
+    const q = init.query ? '?' + new URLSearchParams(init.query).toString() : '';
+    const res = await fetch(`${url}/rest/v1/${path}${q}`, {
+      ...init,
+      headers: {
+        ...authHeaders,
+        'Content-Type': 'application/json',
+        Prefer:
+          init.headers && (init.headers as Record<string, string>).Prefer
+            ? (init.headers as Record<string, string>).Prefer
+            : 'return=representation',
+        ...(init.headers || {}),
+      },
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Supabase REST ${path}: ${res.status} ${text}`);
+    }
+    // return=minimal / 204 often has an empty body — never call res.json() on that.
+    const text = await res.text();
+    if (!text || res.status === 204) return undefined as T;
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      throw new Error(`Supabase REST ${path}: invalid JSON (${res.status})`);
+    }
+  }
+
+  async function signPhoto(path: string): Promise<string | null> {
+    const raw = path.trim();
+    if (!raw) return null;
+    if (/^https?:/i.test(raw)) return raw;
+    const objectPath = storageObjectPath(raw);
+    if (!objectPath) return null;
+    const encoded = encodeObjectPath(objectPath);
+    const res = await fetch(`${url}/storage/v1/object/sign/family-photos/${encoded}`, {
+      method: 'POST',
+      headers: {
+        ...authHeaders,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ expiresIn: PHOTO_SIGN_TTL_SECONDS }),
+    });
+    if (!res.ok) {
+      console.error('signPhoto failed', res.status, await res.text(), objectPath);
+      return null;
+    }
+    const text = await res.text();
+    if (!text) return null;
+    let data: { signedURL?: string; signedUrl?: string };
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.error('signPhoto: invalid JSON');
+      return null;
+    }
+    const signed = data.signedURL || data.signedUrl;
+    if (!signed) return null;
+    return absoluteSignedUrl(url, signed);
+  }
+
+  async function downloadPhotoBytes(photo: string): Promise<Uint8Array | null> {
+    const raw = photo.trim();
+    if (!raw || raw.startsWith('data:')) return null;
+
+    const tryFetch = async (href: string, headers?: Record<string, string>) => {
+      try {
+        const res = await fetch(href, headers ? { headers } : undefined);
+        if (!res.ok) {
+          console.warn('downloadPhotoBytes', res.status, href.slice(0, 96));
+          return null;
+        }
+        const buf = new Uint8Array(await res.arrayBuffer());
+        return buf.byteLength > 32 ? buf : null;
+      } catch (err) {
+        console.warn('downloadPhotoBytes failed', href.slice(0, 96), err);
+        return null;
+      }
+    };
+
+    const objectPath = storageObjectPath(raw);
+    if (objectPath) {
+      const encoded = encodeObjectPath(objectPath);
+      const authenticated = await tryFetch(
+        `${url}/storage/v1/object/family-photos/${encoded}`,
+        authHeaders,
+      );
+      if (authenticated) return authenticated;
+    }
+
+    if (/^https?:/i.test(raw)) {
+      const fromUrl = await tryFetch(raw);
+      if (fromUrl) return fromUrl;
+    }
+
+    const signed = objectPath ? await signPhoto(raw) : /^https?:/i.test(raw) ? raw : null;
+    if (signed) return tryFetch(signed);
+    return null;
+  }
+
   return {
     url,
     key,
-    async rest<T>(
-      path: string,
-      init: RequestInit & { query?: Record<string, string> } = {},
-    ): Promise<T> {
-      const q = init.query
-        ? '?' + new URLSearchParams(init.query).toString()
-        : '';
-      const res = await fetch(`${url}/rest/v1/${path}${q}`, {
-        ...init,
-        headers: {
-          apikey: key,
-          Authorization: `Bearer ${key}`,
-          'Content-Type': 'application/json',
-          Prefer: init.headers && (init.headers as Record<string, string>).Prefer
-            ? (init.headers as Record<string, string>).Prefer
-            : 'return=representation',
-          ...(init.headers || {}),
-        },
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Supabase REST ${path}: ${res.status} ${text}`);
-      }
-      // return=minimal / 204 often has an empty body — never call res.json() on that.
-      const text = await res.text();
-      if (!text || res.status === 204) return undefined as T;
-      try {
-        return JSON.parse(text) as T;
-      } catch {
-        throw new Error(`Supabase REST ${path}: invalid JSON (${res.status})`);
-      }
-    },
-    async signPhoto(path: string): Promise<string | null> {
-      if (!path || path.startsWith('data:') || /^https?:/i.test(path)) {
-        return path && /^https?:/i.test(path) ? path : null;
-      }
-      const res = await fetch(`${url}/storage/v1/object/sign/family-photos/${path}`, {
-        method: 'POST',
-        headers: {
-          apikey: key,
-          Authorization: `Bearer ${key}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ expiresIn: 60 * 60 }),
-      });
-      if (!res.ok) return null;
-      const text = await res.text();
-      if (!text) return null;
-      let data: { signedURL?: string; signedUrl?: string };
-      try {
-        data = JSON.parse(text);
-      } catch {
-        return null;
-      }
-      const signed = data.signedURL || data.signedUrl;
-      if (!signed) return null;
-      return signed.startsWith('http') ? signed : `${url}/storage/v1${signed}`;
-    },
+    rest,
+    signPhoto,
+    downloadPhotoBytes,
   };
 }

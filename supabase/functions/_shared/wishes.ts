@@ -184,18 +184,20 @@ function fill(template: string, name: string, age: number | null): string {
   return template.replaceAll('{name}', name).replaceAll('{age}', age == null ? '' : String(age));
 }
 
-/** Telegram group caption — Uzbek by default. */
+/** Telegram group caption — Uzbek by default. Seed keeps retries identical. */
 export function birthdayWishCaption(
   name: string,
   age: number | null,
   lang: TgLang = 'uz',
+  seed = `${name}:${age ?? 'x'}`,
 ): string {
+  const choose = <T>(pool: T[]) => stablePick(pool, seed);
   if (age == null) {
     const pool = lang === 'en' ? EN_NONE : lang === 'ru' ? RU_NONE : UZ_NONE;
-    return fill(pick(pool), name, age);
+    return fill(choose(pool), name, age);
   }
   const band = lang === 'en' ? EN_BAND : lang === 'ru' ? RU_BAND : UZ_BAND;
-  return fill(pick(band[ageBand(age)]), name, age);
+  return fill(choose(band[ageBand(age)]), name, age);
 }
 
 const UZ_PAGE: Record<AgeBand | 'none', string[]> = {
@@ -311,14 +313,45 @@ export function parseCheerCallback(data: string): { personId: string; year: numb
   return { personId: m[1], year: Number(m[2]) };
 }
 
-export function birthdayCaption(name: string, age: number | null, pageUrl: string): string {
-  const wish = birthdayWishCaption(name, age, 'uz');
-  return `${wish}\n\n🔗 Parolsiz sahifa:\n${pageUrl}`;
+/** Kadir’s Telegram — so relatives can reach him from the group post. */
+export const KADIR_TELEGRAM = {
+  handle: '@imkadi',
+  url: 'https://t.me/imkadi',
+} as const;
+
+export function kadirContactLine(): string {
+  return `💬 Savol / tilak: Kadir ${KADIR_TELEGRAM.handle}`;
+}
+
+/** Closing lines so the group sees Kadir, not a nameless bot. */
+export function kadirFromBlock(): string {
+  return `— Kadir · ${KADIR_TELEGRAM.handle}\n${KADIR_TELEGRAM.url}`;
+}
+
+export function birthdayCaption(
+  name: string,
+  age: number | null,
+  pageUrl: string,
+  seed = `${name}:${age ?? 'x'}`,
+): string {
+  const wish = birthdayWishCaption(name, age, 'uz', seed);
+  return [
+    `🎉 Kadir nishonlamoqda`,
+    `Kadir: tug‘ilgan kuningiz muborak, ${name}!`,
+    '',
+    wish,
+    '',
+    `🔗 Bayram sahifasi (parol yo‘q):`,
+    pageUrl,
+    '',
+    kadirFromBlock(),
+  ].join('\n');
 }
 
 export const TG_BUTTONS = {
   openPage: '🎉 Bayram sahifasi',
   celebrate: '💛 Men nishonlayman',
+  kadir: '💬 @imkadi',
 } as const;
 
 export function groupReadyText(): string {
@@ -350,11 +383,11 @@ export function cheerNotFoundText(): string {
 }
 
 export function botWelcomeText(): string {
-  return 'Xush kelibsiz — <b>Oq-Ariq OILASI</b> tug‘ilgan kun tilaklari!\n\nKimningdir kuni bo‘lsa, guruhdagi <b>Men nishonlayman</b> tugmasini bosing. Ismingiz uning sahifasida qoladi.';
+  return 'Xush kelibsiz — <b>Oq-Ariq OILASI</b> tug‘ilgan kun tilaklari!\n\nKimningdir kuni bo‘lsa, guruhdagi <b>Men nishonlayman</b> tugmasini bosing. Ismingiz uning sahifasida qoladi.\n\nSavol / tilak: Kadir @imkadi\nhttps://t.me/imkadi';
 }
 
 export function botHelpText(): string {
-  return 'Oq-Ariq tug‘ilgan kun boti\n• Tilaklar faqat oila guruhida (shaxsiy xabar yo‘q)\n• “Men nishonlayman” — ismingiz sahifada qoladi\n• Bayram sahifasi havolasi — parol kerak emas';
+  return 'Oq-Ariq tug‘ilgan kun boti\n• Tilaklar faqat oila guruhida (shaxsiy xabar yo‘q)\n• “Men nishonlayman” — ismingiz sahifada qoladi\n• Bayram sahifasi havolasi — parol kerak emas\n• Savol / tilak: Kadir @imkadi\nhttps://t.me/imkadi';
 }
 
 export function unknownStartText(): string {

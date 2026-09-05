@@ -4,8 +4,12 @@ Posts a warm **Uzbek** “Tug‘ilgan kuningiz muborak” in your **family Teleg
 group**, with age, a birthday card, a no-password celebration page, and an
 in-group **Men nishonlayman** button. Relatives stay in the chat; their
 Telegram name is saved on the birthday page and announced in the group.
+The caption is written in **Kadir’s voice** (he cannot type in the group):
+it starts with **Kadir / @imkadi**, includes the Uzbek wish, the page link,
+and **https://t.me/imkadi**. An inline **@imkadi** button stays tappable.
 
 Bot: **@forusbirthdaybot**  
+Kadir: **@imkadi** — https://t.me/imkadi  
 Public page: `https://myfamilytree-smoky.vercel.app/bday/<personId>`
 
 ## 1. BotFather
@@ -59,7 +63,7 @@ Settings → **Telegram birthdays**:
 1. Bot username: `forusbirthdaybot`
 2. Enable + timezone + hour
 3. Add bot to group → `/setgroup`
-4. **Test send** — group gets an Uzbek wish, card, page link, and in-group button
+4. **Test send** — group gets an Uzbek wish, card, page link, **@imkadi**, and in-group button
 5. Tap **Men nishonlayman** in the group (no need to open a private chat)
 
 The card also shows how many people have a full birth date (month + day). The

@@ -69,7 +69,13 @@ export const ruOverrides: Record<string, string> = {
   'home.downloadCalendar': 'В мой календарь',
 
   'gate.title': 'Семейный сайт',
-  'gate.intro': 'Введите семейный пароль, чтобы открыть древо. После этого мы спросим имя.',
+  'gate.intro':
+    'Введите семейный пароль, чтобы открыть древо. Если пароля нет — спросите у владельца сайта. После одного входа это устройство остаётся в системе, пока вы не выйдете.',
+  'gate.introFromBday':
+    'Страница дня рождения открыта без пароля. Чтобы открыть древо, введите семейный пароль. Это устройство запомнит вас.',
+  'gate.remember': 'Устройство запомнит вход, пока вы не нажмёте «Выйти».',
+  'gate.showPassword': 'Показать пароль',
+  'gate.hidePassword': 'Скрыть пароль',
   'gate.yourName': 'Ваше имя',
   'gate.password': 'Пароль',
   'gate.btn': 'Войти',
@@ -532,6 +538,12 @@ export const ruOverrides: Record<string, string> = {
     'Пока никого нет — нажмите «Men nishonlayman» в семейном чате Telegram.',
   'bday.cheersYesterday': 'Кто праздновал вместе с семьёй',
   'bday.footer': 'Эта страница открыта для семьи — пароль не нужен.',
+  'bday.contactKadir': 'Savol / tilak: @imkadi',
+  'bday.fromKadir': 'От Кадира',
+  'bday.fromKadirLine': 'Кадир не может писать в группе — это поздравление от него.',
+  'bday.messageKadir': 'Написать @imkadi',
+  'bday.seeTree': 'Смотреть семейное древо',
+  'bday.seeTreeHint': 'Древо закрыто паролем, если вы ещё не входили с этого устройства.',
   'bday.notFoundTitle': 'Страница не найдена',
   'bday.notFoundBody': 'Ссылка устарела или этого человека нет в дереве.',
   'bday.expiredTitle': 'Праздничная страница закрыта',

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { Cake, Heart, Loader2, PartyPopper, Sparkles } from 'lucide-react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Cake, Heart, Loader2, MessageCircle, PartyPopper, Sparkles, Trees } from 'lucide-react';
 import { BrandLogo } from '../components/BrandLogo';
 import { useSettings } from '../context/SettingsContext';
 import { useT } from '../i18n/useT';
@@ -9,7 +9,7 @@ import { isSupabaseConfigured } from '../lib/supabase';
 import {
   CARD_DESIGNS,
   CARD_PALETTES,
-  DESIGN_EMOJI,
+  designEmoji,
   normalizeCardGender,
   type CardDesign,
   type CardGender,
@@ -60,6 +60,16 @@ async function fetchPublicBirthday(personId: string): Promise<PublicBirthday> {
   }
 }
 
+function isVisiblePhotoUrl(url: string | null | undefined): boolean {
+  return Boolean(url && /^(https?:|data:image\/)/i.test(url));
+}
+
+function previewPortraitUrl(gender: CardGender): string {
+  const fill = gender === 'female' ? '#fb7185' : gender === 'male' ? '#3b82f6' : '#34d399';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><rect width="240" height="240" rx="120" fill="${fill}"/><circle cx="120" cy="92" r="44" fill="#fff7ed"/><ellipse cx="120" cy="210" rx="78" ry="70" fill="#fff7ed"/></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 function previewPayload(params: URLSearchParams): PublicBirthday {
   if (params.get('when') === 'expired') return { ok: false, error: 'expired' };
   const gender = normalizeCardGender(params.get('gender'));
@@ -67,7 +77,8 @@ function previewPayload(params: URLSearchParams): PublicBirthday {
   const design: CardDesign = isDesign(designParam) ? designParam : 'balloons';
   const when: When = params.get('when') === 'yesterday' ? 'yesterday' : 'today';
   const name =
-    params.get('name') || (gender === 'female' ? 'Aziza' : gender === 'male' ? 'Inom' : 'Oq-Ariq');
+    params.get('name') ||
+    (gender === 'female' ? 'Aziza' : gender === 'male' ? 'Ином Эсонмирзаев' : 'Oq-Ariq');
   return {
     ok: true,
     when,
@@ -77,8 +88,8 @@ function previewPayload(params: URLSearchParams): PublicBirthday {
       id: '_preview',
       name,
       gender,
-      age: 28,
-      photoUrl: null,
+      age: gender === 'male' ? 35 : 28,
+      photoUrl: params.get('photo') === 'none' ? null : previewPortraitUrl(gender),
       birthMonthDay: '09-06',
       wish:
         when === 'yesterday'
@@ -87,6 +98,34 @@ function previewPayload(params: URLSearchParams): PublicBirthday {
     },
     cheers: when === 'yesterday' ? [{ name: 'Gulhayo', username: null }] : [],
   };
+}
+
+function PageActions({ accent }: { accent: string }) {
+  const t = useT();
+  return (
+    <div className="relative z-10 mt-8 w-full space-y-3">
+      <Link
+        to="/tree?from=bday"
+        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-base font-semibold text-white shadow-md"
+        style={{ background: accent }}
+      >
+        <Trees className="h-5 w-5" aria-hidden />
+        {t('bday.seeTree')}
+      </Link>
+      <a
+        href="https://t.me/imkadi"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 bg-white/90 px-4 py-3 text-base font-semibold shadow-sm"
+        style={{ borderColor: accent, color: accent }}
+      >
+        <MessageCircle className="h-5 w-5" aria-hidden />
+        {t('bday.messageKadir')}
+      </a>
+      <p className="text-center text-xs leading-relaxed text-stone-500">{t('bday.seeTreeHint')}</p>
+      <p className="text-center text-xs leading-relaxed text-stone-500">{t('bday.fromKadirLine')}</p>
+    </div>
+  );
 }
 
 /**
@@ -99,7 +138,16 @@ export function BirthdayPublicPage() {
   const { settings, setLanguage } = useSettings();
   const [data, setData] = useState<PublicBirthday | null>(null);
   const [loading, setLoading] = useState(true);
+  const [photoFailed, setPhotoFailed] = useState(false);
   const isDevPreview = import.meta.env.DEV && personId === '_preview';
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    return () => {
+      root.classList.toggle('dark', settings.theme === 'dark');
+    };
+  }, [settings.theme]);
 
   useEffect(() => {
     if (isDevPreview) {
@@ -149,8 +197,14 @@ export function BirthdayPublicPage() {
   const gender = normalizeCardGender(person?.gender);
   const design: CardDesign = isDesign(data?.design ?? null) ? data!.design! : 'balloons';
   const palette = CARD_PALETTES[gender];
-  const emoji = DESIGN_EMOJI[design];
+  const emoji = designEmoji(design, gender);
   const expired = data?.error === 'expired';
+  const photoSrc =
+    person && isVisiblePhotoUrl(person.photoUrl) && !photoFailed ? person.photoUrl : null;
+
+  useEffect(() => {
+    setPhotoFailed(false);
+  }, [person?.photoUrl]);
 
   const headline = useMemo(() => {
     if (!person) return '';
@@ -209,6 +263,26 @@ export function BirthdayPublicPage() {
       <span className="bday-float-slow pointer-events-none absolute right-[14%] bottom-[16%] text-3xl" aria-hidden>
         {emoji[3]}
       </span>
+      {gender === 'female' && (
+        <>
+          <span className="bday-float pointer-events-none absolute left-[3%] top-[44%] text-3xl" aria-hidden>
+            🌸
+          </span>
+          <span className="bday-float-slow pointer-events-none absolute right-[3%] top-[46%] text-3xl" aria-hidden>
+            🎈
+          </span>
+        </>
+      )}
+      {gender === 'male' && (
+        <>
+          <span className="bday-float pointer-events-none absolute left-[3%] top-[44%] text-3xl" aria-hidden>
+            🚗
+          </span>
+          <span className="bday-float-slow pointer-events-none absolute right-[3%] top-[46%] text-3xl" aria-hidden>
+            💵
+          </span>
+        </>
+      )}
       <span className="bday-orb bday-orb-a pointer-events-none absolute -left-16 top-24 h-44 w-44 rounded-full" />
       <span className="bday-orb bday-orb-b pointer-events-none absolute -right-12 bottom-28 h-52 w-52 rounded-full" />
 
@@ -219,7 +293,7 @@ export function BirthdayPublicPage() {
             className="bday-lang rounded-lg border bg-white/85 px-2 py-1.5 text-xs font-medium shadow-sm backdrop-blur"
             value={settings.language}
             onChange={(e) => setLanguage(e.target.value as typeof settings.language)}
-            aria-label="Language"
+            aria-label={t('nav.language')}
           >
             <option value="uz">UZ</option>
             <option value="en">EN</option>
@@ -243,36 +317,54 @@ export function BirthdayPublicPage() {
             <p className="mt-2 text-sm text-stone-600">
               {expired ? t('bday.expiredBody') : t('bday.notFoundBody')}
             </p>
+            <PageActions accent={palette.accent} />
+            <p className="mt-6 text-xs text-stone-500">
+              <a
+                href="https://t.me/imkadi"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold underline decoration-dotted underline-offset-2"
+                style={{ color: palette.accent }}
+              >
+                {t('bday.contactKadir')}
+              </a>
+            </p>
           </div>
         )}
 
         {person && (
           <main className="mt-6 flex flex-1 flex-col items-center text-center">
+            <article className="bday-stage relative z-10 w-full rounded-[2rem] border bg-white/90 px-5 py-8 shadow-lg backdrop-blur-md sm:px-8">
             <p className="bday-kicker inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.28em]">
               <Sparkles className="h-3.5 w-3.5" aria-hidden />
               {when === 'yesterday' ? t('bday.yesterdayKicker') : t('bday.kicker')}
             </p>
+            <p className="bday-from mt-3 inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em]">
+              {t('bday.fromKadir')}
+            </p>
 
-            <div className="bday-photo relative mt-7">
-              <div className="bday-ring absolute -inset-3 rounded-full" />
-              <span className="absolute -left-4 -top-3 text-2xl drop-shadow-sm" aria-hidden>
+            <div className="bday-photo relative mx-auto mt-6">
+              <div className="bday-ring pointer-events-none absolute -inset-3 z-0 rounded-full" />
+              <span className="pointer-events-none absolute -left-4 -top-3 z-20 text-2xl drop-shadow-sm" aria-hidden>
                 {emoji[0]}
               </span>
-              <span className="absolute -right-3 top-1 text-xl drop-shadow-sm" aria-hidden>
+              <span className="pointer-events-none absolute -right-3 top-1 z-20 text-xl drop-shadow-sm" aria-hidden>
                 {emoji[3]}
               </span>
-              {person.photoUrl ? (
+              {photoSrc ? (
                 <img
-                  src={person.photoUrl}
-                  alt=""
-                  className="relative h-40 w-40 rounded-full object-cover ring-4 ring-white sm:h-48 sm:w-48"
+                  src={photoSrc}
+                  alt={person.name}
+                  referrerPolicy="no-referrer"
+                  onError={() => setPhotoFailed(true)}
+                  className="relative z-10 h-44 w-44 rounded-full object-cover ring-4 ring-white sm:h-56 sm:w-56"
                 />
               ) : (
-                <div className="bday-fallback relative flex h-40 w-40 items-center justify-center rounded-full text-5xl font-bold text-white ring-4 ring-white sm:h-48 sm:w-48">
+                <div className="bday-fallback relative z-10 flex h-44 w-44 items-center justify-center rounded-full text-5xl font-bold text-white ring-4 ring-white sm:h-56 sm:w-56">
                   {person.name.slice(0, 1).toUpperCase()}
                 </div>
               )}
-              <span className="absolute -bottom-2 -right-3 text-3xl drop-shadow-sm" aria-hidden>
+              <span className="pointer-events-none absolute -bottom-2 -right-3 z-20 text-3xl drop-shadow-sm" aria-hidden>
                 {emoji[1]}
               </span>
             </div>
@@ -293,7 +385,7 @@ export function BirthdayPublicPage() {
               </p>
             )}
 
-            <p className="bday-wish mt-5 max-w-sm text-base leading-relaxed">
+            <p className="bday-wish mx-auto mt-5 max-w-sm text-base leading-relaxed">
               {person.wish || (when === 'yesterday' ? t('bday.yesterdayWish') : t('bday.wish'))}
             </p>
 
@@ -301,7 +393,7 @@ export function BirthdayPublicPage() {
               {emoji.join(' ')}
             </p>
 
-            <section className="bday-cheers mt-10 w-full rounded-3xl border bg-white/80 p-5 text-left backdrop-blur">
+            <section className="bday-cheers mt-8 w-full rounded-3xl border p-5 text-left">
               <h2 className="flex items-center gap-2 text-sm font-semibold" style={{ color: palette.ink }}>
                 <Heart className="h-4 w-4 fill-current" aria-hidden />
                 {cheers.length > 0
@@ -324,8 +416,23 @@ export function BirthdayPublicPage() {
                 </p>
               )}
             </section>
+            </article>
 
-            <p className="mt-auto pt-10 text-xs text-stone-500">{t('bday.footer')}</p>
+            <PageActions accent={palette.accent} />
+
+            <p className="mt-auto pt-10 text-xs text-stone-500">
+              {t('bday.footer')}
+              {' · '}
+              <a
+                href="https://t.me/imkadi"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold underline decoration-dotted underline-offset-2"
+                style={{ color: palette.accent }}
+              >
+                {t('bday.contactKadir')}
+              </a>
+            </p>
           </main>
         )}
       </div>
@@ -340,6 +447,8 @@ export function BirthdayPublicPage() {
         }
         .bday-orb-a { background: color-mix(in srgb, var(--bday-c0) 35%, transparent); filter: blur(8px); }
         .bday-orb-b { background: color-mix(in srgb, var(--bday-c1) 30%, transparent); filter: blur(10px); }
+        .bday-stage { border-color: color-mix(in srgb, var(--bday-accent) 22%, #e7e5e4); }
+        .bday-from { background: color-mix(in srgb, var(--bday-accent) 14%, white); color: var(--bday-ink); }
         .bday-kicker { color: var(--bday-muted); }
         .bday-title { color: var(--bday-ink); }
         .bday-gender-note { color: var(--bday-muted); }
@@ -372,8 +481,8 @@ export function BirthdayPublicPage() {
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes bday-pop {
-          from { opacity: 0; transform: scale(0.84); }
-          to { opacity: 1; transform: scale(1); }
+          from { transform: scale(0.84); }
+          to { transform: scale(1); }
         }
         @keyframes bday-glow {
           0%, 100% { opacity: 0.45; transform: scale(1); }

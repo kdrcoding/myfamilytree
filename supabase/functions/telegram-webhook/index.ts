@@ -167,13 +167,17 @@ Deno.serve(async (req) => {
 
       const groupChatId = callback.message?.chat.id;
       if (groupChatId) {
-        await sendText(
-          groupChatId,
-          cheerAnnounceText(escapeHtml(display), escapeHtml(displayName(person))),
-          callback.message?.message_id
-            ? { reply_to_message_id: callback.message.message_id }
-            : {},
-        );
+        try {
+          await sendText(
+            groupChatId,
+            cheerAnnounceText(escapeHtml(display), escapeHtml(displayName(person))),
+            callback.message?.message_id
+              ? { reply_to_message_id: callback.message.message_id }
+              : {},
+          );
+        } catch (err) {
+          console.error('cheer announce failed', err);
+        }
       }
 
       return jsonResponse({ ok: true, cheer: person.id });

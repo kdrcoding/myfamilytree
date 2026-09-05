@@ -15,5 +15,7 @@ export const isSupabaseConfigured = Boolean(url && anonKey);
  * visits. Real secrets (service role key) are never used here.
  */
 export const supabase: SupabaseClient | null = isSupabaseConfigured
-  ? createClient(url!, anonKey!, { auth: { persistSession: true, autoRefreshToken: true } })
+  ? createClient(url!, anonKey!, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    })
   : null;

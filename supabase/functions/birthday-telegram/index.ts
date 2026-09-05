@@ -17,6 +17,7 @@ import {
   birthdayCaption,
   birthdayPageUrl,
   cheerCallbackData,
+  KADIR_TELEGRAM,
   publicAppUrl,
   TG_BUTTONS,
 } from '../_shared/wishes.ts';
@@ -129,15 +130,16 @@ Deno.serve(async (req) => {
         const age = md ? ageTurning(md, local.year) : null;
         const name = displayName(person);
         const photoUrl = person.photo ? await db.signPhoto(person.photo) : null;
-        const png = await buildBirthdayCardPng({
-          name,
-          age,
-          photoUrl,
-          gender: person.gender,
-          designSeed: `${person.id}:${local.year}`,
-        });
+        let photoBytes: Uint8Array | null = null;
+        if (person.photo) {
+          try {
+            photoBytes = await db.downloadPhotoBytes(person.photo);
+          } catch (photoErr) {
+            console.warn('photo download failed', person.id, photoErr);
+          }
+        }
         const pageUrl = birthdayPageUrl(person.id);
-        const caption = birthdayCaption(name, age, pageUrl);
+        const caption = birthdayCaption(name, age, pageUrl, `${person.id}:${local.year}`);
 
         const keyboard: Record<string, string>[][] = [[{ text: TG_BUTTONS.openPage, url: pageUrl }]];
         const payload = cheerCallbackData(person.id, local.year);
@@ -151,20 +153,53 @@ Deno.serve(async (req) => {
             },
           ]);
         }
+        keyboard.push([{ text: TG_BUTTONS.kadir, url: KADIR_TELEGRAM.url }]);
 
         let groupOk = false;
         if (settings.group_chat_id) {
-          const form = new FormData();
-          form.set('chat_id', settings.group_chat_id);
-          form.set('caption', caption.slice(0, 1024));
-          form.set('photo', new Blob([png], { type: 'image/png' }), 'birthday.png');
-          form.set('reply_markup', JSON.stringify({ inline_keyboard: keyboard }));
-          await telegramApi('sendPhoto', form);
-          groupOk = true;
+          const markup = JSON.stringify({ inline_keyboard: keyboard });
+          let png: Uint8Array | null = null;
+          try {
+            png = await buildBirthdayCardPng({
+              name,
+              age,
+              photoUrl,
+              photoBytes,
+              gender: person.gender,
+              designSeed: `${person.id}:${local.year}`,
+            });
+          } catch (cardError) {
+            console.error('birthday card render failed', person.id, cardError);
+          }
+
+          if (png) {
+            try {
+              const form = new FormData();
+              form.set('chat_id', settings.group_chat_id);
+              form.set('caption', caption.slice(0, 1024));
+              const bytes = new Uint8Array(png.byteLength);
+              bytes.set(png);
+              form.set('photo', new Blob([bytes], { type: 'image/png' }), 'birthday.png');
+              form.set('reply_markup', markup);
+              await telegramApi('sendPhoto', form);
+              groupOk = true;
+            } catch (photoError) {
+              console.error('sendPhoto failed, falling back to text', person.id, photoError);
+            }
+          }
+
+          if (!groupOk) {
+            await telegramApi('sendMessage', {
+              chat_id: settings.group_chat_id,
+              text: caption.slice(0, 4096),
+              reply_markup: { inline_keyboard: keyboard },
+            });
+            groupOk = true;
+          }
         }
 
-        // Only mark sent after Telegram accepts the photo. Empty-body REST
-        // responses must not throw (see createServiceClient.rest).
+        // Only mark sent after Telegram accepts the group post (photo, or
+        // text fallback). Empty-body REST must not throw (see createServiceClient.rest).
         if (groupOk && !(force && testPersonId && body.skipDedupe)) {
           await db.rest('telegram_birthday_sent', {
             method: 'POST',

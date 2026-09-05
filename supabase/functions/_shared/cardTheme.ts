@@ -1,4 +1,7 @@
-/** Shared birthday-card palettes and design ids (Telegram PNG + public page). */
+/** Shared birthday-card palettes and design ids (Telegram PNG + public page).
+ * Gender motifs live in birthdayCard.ts / themes.ts: girls = balloons+flowers,
+ * guys = money+cars; unspecified keeps the 5 layout decorations only.
+ */
 
 export type CardGender = 'female' | 'male' | 'unspecified';
 export type CardDesign = 'balloons' | 'cake' | 'stars' | 'garden' | 'ribbons';
