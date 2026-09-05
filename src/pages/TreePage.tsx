@@ -9,7 +9,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import type { Edge, EdgeTypes, Node, NodeTypes, ReactFlowInstance } from '@xyflow/react';
-import { Lock, LockOpen, Map, Maximize2, Search, UserPlus, UserRoundPlus, Users, X, Download, Printer, Share2, ZoomIn } from 'lucide-react';
+import { Lock, LockOpen, Map, Maximize2, Search, UserPlus, UserRoundPlus, Users, X, Download, Printer, Share2, ZoomIn, UnfoldHorizontal } from 'lucide-react';
 import type { FamilyPerson, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -29,7 +29,7 @@ import { OverflowMenu } from '../components/OverflowMenu';
 import type { OverflowMenuItem } from '../components/OverflowMenu';
 import { BrandMark } from '../components/BrandLogo';
 import { Avatar } from '../components/Avatar';
-import { computeTreeLayout, CARD_H, CARD_H_COMPACT, CARD_W } from '../features/tree/layout';
+import { computeTreeLayout, CARD_H, CARD_H_COMPACT, CARD_W, type TreeDensity } from '../features/tree/layout';
 import { exportTreeAsPng, printTreePoster, shareTreePoster } from '../features/tree/exportPng';
 import { JunctionNode } from '../features/tree/JunctionNode';
 import { GenLabelNode } from '../features/tree/GenLabelNode';
@@ -172,6 +172,10 @@ function TreeSearch({
   );
 }
 
+function isTreeDensity(value: unknown): value is TreeDensity {
+  return value === 'tight' || value === 'airy';
+}
+
 function TreeCanvas({
   nodes,
   edges,
@@ -180,6 +184,8 @@ function TreeCanvas({
   easyMode,
   phone,
   cardH,
+  density,
+  onToggleDensity,
 }: {
   nodes: Node[];
   edges: Edge[];
@@ -188,6 +194,8 @@ function TreeCanvas({
   easyMode: boolean;
   phone: boolean;
   cardH: number;
+  density: TreeDensity;
+  onToggleDensity: () => void;
 }) {
   const { setCenter, getZoom, fitView } = useReactFlow();
   const t = useT();
@@ -405,6 +413,18 @@ function TreeCanvas({
         <button
           type="button"
           className="tree-action-btn inline-flex items-center gap-1.5"
+          onClick={onToggleDensity}
+          aria-pressed={density === 'tight'}
+          aria-label={density === 'tight' ? t('tree.spacingComfortable') : t('tree.spacingCompact')}
+        >
+          <UnfoldHorizontal className="h-3.5 w-3.5" aria-hidden />
+          <span className="hidden sm:inline">
+            {density === 'tight' ? t('tree.spacingComfortable') : t('tree.spacingCompact')}
+          </span>
+        </button>
+        <button
+          type="button"
+          className="tree-action-btn inline-flex items-center gap-1.5"
           onClick={() => focusTopOfTree()}
           aria-label={t('tree.zoomReadable')}
         >
@@ -485,6 +505,17 @@ export function TreePage() {
   const [focusId, setFocusId] = useState<string | null>(null);
   const [exportBusy, setExportBusy] = useState(false);
   const [coupleIds, setCoupleIds] = useState<[string, string] | null>(null);
+  const [density, setDensity] = useState<TreeDensity>(
+    () => loadJson<TreeDensity>(STORAGE_KEYS.treeSpacing, isTreeDensity) ?? 'tight',
+  );
+
+  const toggleDensity = useCallback(() => {
+    setDensity((current) => {
+      const next: TreeDensity = current === 'tight' ? 'airy' : 'tight';
+      saveJson(STORAGE_KEYS.treeSpacing, next);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (!canEdit && editMode) setEditMode(false);
@@ -508,9 +539,10 @@ export function TreePage() {
     () =>
       computeTreeLayout(people, new Set(), {
         spacing: isPhone ? 'compact' : 'comfortable',
+        density,
         showGenLabels: !isPhone,
       }),
-    [people, isPhone],
+    [people, isPhone, density],
   );
   const flowNodes = useMemo(
     () => [...layout.genLabelNodes, ...layout.nodes, ...layout.junctionNodes] as Node[],
@@ -749,6 +781,8 @@ export function TreePage() {
                 easyMode={easy || isPhone}
                 phone={isPhone}
                 cardH={isPhone ? CARD_H_COMPACT : CARD_H}
+                density={density}
+                onToggleDensity={toggleDensity}
               />
             </ReactFlowProvider>
           </TreeInteractionContext.Provider>

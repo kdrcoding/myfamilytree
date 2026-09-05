@@ -15,17 +15,26 @@ export const CARD_H_COMPACT = 102;
 
 export type TreeOrientation = 'vertical' | 'horizontal';
 export type TreeSpacing = 'comfortable' | 'compact';
+/** Classic engine only — 'tight' is slightly smaller gaps; 'airy' is the old roomy look. */
+export type TreeDensity = 'tight' | 'airy';
 
-/** Gap sizes per spacing mode (comfortable = airy, compact = dense). */
-const SPACING: Record<
-  TreeSpacing,
-  { spouse: number; sibling: number; level: number; root: number }
-> = {
-  // Tighter spouse/root gaps keep the oldest generation together; a taller
-  // level gap leaves room for separate green bus lanes between rows.
+type GapSet = { spouse: number; sibling: number; level: number; root: number };
+
+/** Original classic gaps. Also saved in password/tree-layout-backup.json. */
+export const AIRY_SPACING: Record<TreeSpacing, GapSet> = {
   comfortable: { spouse: 58, sibling: 40, level: 176, root: 48 },
   compact: { spouse: 52, sibling: 24, level: 140, root: 32 },
 };
+
+/** Default: same classic layout, a bit more compact. */
+export const TIGHT_SPACING: Record<TreeSpacing, GapSet> = {
+  comfortable: { spouse: 50, sibling: 32, level: 160, root: 40 },
+  compact: { spouse: 46, sibling: 20, level: 136, root: 28 },
+};
+
+function gapsFor(spacing: TreeSpacing, density: TreeDensity): GapSet {
+  return (density === 'airy' ? AIRY_SPACING : TIGHT_SPACING)[spacing];
+}
 
 const JUNCTION = 10;
 /** Drop the child-junction just below the wedding rings on the marriage line. */
@@ -60,6 +69,8 @@ export interface GenLabelData extends Record<string, unknown> {
 export interface TreeLayoutOptions {
   orientation?: TreeOrientation;
   spacing?: TreeSpacing;
+  /** tight = default slightly compact gaps; airy = original roomy gaps. */
+  density?: TreeDensity;
   /** Generation chips beside each row. Off on phones to keep the canvas clear. */
   showGenLabels?: boolean;
 }
@@ -239,7 +250,8 @@ export function computeTreeLayout(
 ): TreeLayout {
   const orientation = options.orientation ?? 'vertical';
   const spacing = options.spacing ?? 'comfortable';
-  const gap = SPACING[spacing];
+  const density = options.density ?? 'tight';
+  const gap = gapsFor(spacing, density);
   const cardH = spacing === 'compact' ? CARD_H_COMPACT : CARD_H;
   const showGenLabels = options.showGenLabels !== false;
   const index = buildIndex(people);

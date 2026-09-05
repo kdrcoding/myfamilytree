@@ -1,2 +1,5 @@
 # Never upload the local password notes to Vercel
 password
+tmp-bday-deploy
+supabase/.temp
+scripts/tmp-verify

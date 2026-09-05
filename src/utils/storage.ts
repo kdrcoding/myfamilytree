@@ -21,6 +21,7 @@ export const STORAGE_KEYS = {
   photoUrls: 'familytree.photoUrls.v1',
   // Tree view preferences.
   treeOrientation: 'familytree.treeOrientation.v1',
+  // Classic-tree gap density: 'tight' (default, slightly compact) or 'airy' (original).
   treeSpacing: 'familytree.treeSpacing.v1',
   // Dismissed the one-time "how to use the tree" tip.
   treeTipSeen: 'familytree.treeTipSeen.v1',

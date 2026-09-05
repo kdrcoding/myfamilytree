@@ -12,7 +12,7 @@ import {
   telegramApi,
   type FamilyMemberRow,
 } from '../_shared/telegram.ts';
-import { buildBirthdayCardPng } from '../_shared/birthdayCard.ts';
+import { buildBirthdayCardPng, type BirthdayCardOpts } from '../_shared/birthdayCard.ts';
 import {
   birthdayCaption,
   birthdayPageUrl,
@@ -54,6 +54,55 @@ async function assertAuthorized(req: Request): Promise<void> {
   if (user?.email !== 'owner@oqariq.family') {
     throw new Error('Owner only');
   }
+}
+
+async function sendPhotoForm(
+  chatId: string,
+  png: Uint8Array,
+  caption: string,
+  markup: string,
+  filename: string,
+): Promise<void> {
+  const form = new FormData();
+  form.set('chat_id', chatId);
+  form.set('caption', caption);
+  const bytes = new Uint8Array(png.byteLength);
+  bytes.set(png);
+  form.set('photo', new Blob([bytes], { type: 'image/png' }), filename);
+  form.set('reply_markup', markup);
+  await telegramApi('sendPhoto', form);
+}
+
+/** Always sendPhoto. Retry a simpler card with the same themed pictures — never text-only. */
+async function sendGroupBirthdayPhoto(opts: {
+  chatId: string;
+  caption: string;
+  markup: string;
+  card: BirthdayCardOpts;
+}): Promise<void> {
+  const attempts: Array<{ simple: boolean; file: string }> = [
+    { simple: false, file: 'birthday.png' },
+    { simple: true, file: 'birthday-simple.png' },
+  ];
+  let lastError: unknown;
+  for (const attempt of attempts) {
+    let png: Uint8Array;
+    try {
+      png = await buildBirthdayCardPng({ ...opts.card, simple: attempt.simple });
+    } catch (err) {
+      lastError = err;
+      console.error('birthday card render failed', attempt.file, err);
+      continue;
+    }
+    try {
+      await sendPhotoForm(opts.chatId, png, opts.caption, opts.markup, attempt.file);
+      return;
+    } catch (err) {
+      lastError = err;
+      console.error('sendPhoto failed', attempt.file, err);
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('sendPhoto failed');
 }
 
 Deno.serve(async (req) => {
@@ -158,48 +207,24 @@ Deno.serve(async (req) => {
         let groupOk = false;
         if (settings.group_chat_id) {
           const markup = JSON.stringify({ inline_keyboard: keyboard });
-          let png: Uint8Array | null = null;
-          try {
-            png = await buildBirthdayCardPng({
+          await sendGroupBirthdayPhoto({
+            chatId: settings.group_chat_id,
+            caption: caption.slice(0, 1024),
+            markup,
+            card: {
               name,
               age,
               photoUrl,
               photoBytes,
               gender: person.gender,
               designSeed: `${person.id}:${local.year}`,
-            });
-          } catch (cardError) {
-            console.error('birthday card render failed', person.id, cardError);
-          }
-
-          if (png) {
-            try {
-              const form = new FormData();
-              form.set('chat_id', settings.group_chat_id);
-              form.set('caption', caption.slice(0, 1024));
-              const bytes = new Uint8Array(png.byteLength);
-              bytes.set(png);
-              form.set('photo', new Blob([bytes], { type: 'image/png' }), 'birthday.png');
-              form.set('reply_markup', markup);
-              await telegramApi('sendPhoto', form);
-              groupOk = true;
-            } catch (photoError) {
-              console.error('sendPhoto failed, falling back to text', person.id, photoError);
-            }
-          }
-
-          if (!groupOk) {
-            await telegramApi('sendMessage', {
-              chat_id: settings.group_chat_id,
-              text: caption.slice(0, 4096),
-              reply_markup: { inline_keyboard: keyboard },
-            });
-            groupOk = true;
-          }
+            },
+          });
+          groupOk = true;
         }
 
-        // Only mark sent after Telegram accepts the group post (photo, or
-        // text fallback). Empty-body REST must not throw (see createServiceClient.rest).
+        // Only mark sent after Telegram accepts sendPhoto.
+        // Empty-body REST must not throw (see createServiceClient.rest).
         if (groupOk && !(force && testPersonId && body.skipDedupe)) {
           await db.rest('telegram_birthday_sent', {
             method: 'POST',

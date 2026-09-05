@@ -1,6 +1,6 @@
 /** Shared birthday-card palettes and design ids (Telegram PNG + public page).
- * Gender motifs live in birthdayCard.ts / themes.ts: girls = balloons+flowers,
- * guys = money+cars; unspecified keeps the 5 layout decorations only.
+ * Telegram PNG motifs are raster photos in birthdayCard.ts (girls: balloons+flowers,
+ * boys: coins+supercar). The public page does not need those pictures.
  */
 
 export type CardGender = 'female' | 'male' | 'unspecified';

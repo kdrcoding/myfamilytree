@@ -40,6 +40,11 @@ export default defineConfig({
     }),
   ],
   base: process.env.VITE_BASE_PATH ?? '/',
+  server: {
+    watch: {
+      ignored: ['tmp-bday-deploy/**', 'password/**'],
+    },
+  },
   build: {
     rollupOptions: {
       output: {
