@@ -28,10 +28,6 @@ function ageBand(age: number): AgeBand {
   return 'elder';
 }
 
-function pick<T>(pool: T[]): T {
-  return pool[Math.floor(Math.random() * pool.length)]!;
-}
-
 function stablePick<T>(pool: T[], seed: string): T {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) hash = (hash + seed.charCodeAt(i) * (i + 1)) % 997;
