@@ -3,6 +3,7 @@ import {
   corsHeaders,
   createServiceClient,
   displayName,
+  ensureCallbackWebhook,
   isBirthdayToday,
   jsonResponse,
   localParts,
@@ -12,7 +13,13 @@ import {
   type FamilyMemberRow,
 } from '../_shared/telegram.ts';
 import { buildBirthdayCardPng } from '../_shared/birthdayCard.ts';
-import { birthdayPageUrl, birthdayWishCaption, publicAppUrl } from '../_shared/wishes.ts';
+import {
+  birthdayCaption,
+  birthdayPageUrl,
+  cheerCallbackData,
+  publicAppUrl,
+  TG_BUTTONS,
+} from '../_shared/wishes.ts';
 
 type SettingsRow = {
   group_chat_id: string | null;
@@ -55,6 +62,7 @@ Deno.serve(async (req) => {
 
   try {
     await assertAuthorized(req);
+    await ensureCallbackWebhook();
 
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const force = Boolean(body.force);
@@ -92,7 +100,9 @@ Deno.serve(async (req) => {
     }
 
     const members = await db.rest<FamilyMemberRow[]>('family_members', {
-      query: { select: 'id,first_name,last_name,nickname,birth_date,death_date,is_deceased,photo' },
+      query: {
+        select: 'id,first_name,last_name,nickname,gender,birth_date,death_date,is_deceased,photo',
+      },
     });
 
     const already = await db.rest<{ person_id: string }[]>('telegram_birthday_sent', {
@@ -119,26 +129,27 @@ Deno.serve(async (req) => {
         const age = md ? ageTurning(md, local.year) : null;
         const name = displayName(person);
         const photoUrl = person.photo ? await db.signPhoto(person.photo) : null;
-        const png = await buildBirthdayCardPng({ name, age, photoUrl });
+        const png = await buildBirthdayCardPng({
+          name,
+          age,
+          photoUrl,
+          gender: person.gender,
+          designSeed: `${person.id}:${local.year}`,
+        });
         const pageUrl = birthdayPageUrl(person.id);
-        const wish = birthdayWishCaption(name, age);
-        const caption = `${wish}\n\n🔗 Open the birthday page (no password):\n${pageUrl}`;
+        const caption = birthdayCaption(name, age, pageUrl);
 
-        const keyboard: { text: string; url: string }[][] = [
-          [{ text: '🎉 Open birthday page', url: pageUrl }],
-        ];
-        if (bot) {
-          const payload = `cheer_${person.id}_${local.year}`;
-          if (payload.length <= 64) {
-            keyboard.push([
-              {
-                text: "💛 I'm celebrating",
-                url: `https://t.me/${bot}?start=${payload}`,
-              },
-            ]);
-          }
-        } else {
-          console.warn('bot_username missing — celebrate button skipped');
+        const keyboard: Record<string, string>[][] = [[{ text: TG_BUTTONS.openPage, url: pageUrl }]];
+        const payload = cheerCallbackData(person.id, local.year);
+        if (payload.length <= 64) {
+          keyboard.push([{ text: TG_BUTTONS.celebrate, callback_data: payload }]);
+        } else if (bot) {
+          keyboard.push([
+            {
+              text: TG_BUTTONS.celebrate,
+              url: `https://t.me/${bot}?start=${payload}`,
+            },
+          ]);
         }
 
         let groupOk = false;

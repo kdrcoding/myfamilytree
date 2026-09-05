@@ -337,7 +337,7 @@ export const en = {
 
   'telegram.title': 'Telegram birthdays',
   'telegram.intro':
-    'Post a warm birthday wish in your family Telegram group — with a card, a no-password celebration page, and an “I’m celebrating” button that saves Telegram names.',
+    'Post a warm birthday wish in your family Telegram group (Uzbek) — with a card, a no-password page, and an in-group “Men nishonlayman” button so people can cheer without leaving the chat.',
   'telegram.setupNeeded':
     'Not active yet: run the Telegram SQL migrations in the Supabase SQL Editor, then follow docs/TELEGRAM_BOT.md.',
   'telegram.enabled': 'Send birthday posts',
@@ -357,20 +357,42 @@ export const en = {
   'telegram.testFailed': 'Test send failed — check Edge Function logs and bot token.',
   'telegram.saved': 'Telegram settings saved',
   'telegram.saveFailed': 'Could not save Telegram settings',
+  'telegram.coverageTitle': 'Who the bot can celebrate',
+  'telegram.coverage':
+    '{ready} of {living} living relatives have a full birth date (month and day). The bot can only post for those {ready}.',
+  'telegram.coverageMissing':
+    '{n} people still need a month and day — open Members and edit their cards so they are not skipped.',
+  'telegram.coverageOk': 'Every living relative with a known birthday can be posted.',
+  'telegram.nextTitle': 'Coming up this week',
+  'telegram.nextEmpty': 'No full birth dates in the next 7 days.',
+  'telegram.nextToday': 'Today',
+  'telegram.nextTomorrow': 'Tomorrow',
+  'telegram.openMembers': 'Open Members',
 
   'bday.loading': 'Loading celebration…',
   'bday.kicker': 'Oq-Ariq OILASI',
   'bday.headline': 'Happy birthday, {name}!',
   'bday.turning': 'Turning {age} today',
+  'bday.turningYesterday': 'Turned {age} yesterday',
   'bday.wish':
     'The whole family is celebrating you today. May your year be full of health, laughter, and love.',
   'bday.cheersTitle': 'Celebrating with you ({n})',
   'bday.cheersEmptyTitle': 'Family cheers',
   'bday.cheersEmpty':
-    'No names yet — tap “I’m celebrating” on the Telegram birthday post to leave yours here.',
+    'No names yet — tap “Men nishonlayman” on the Telegram birthday post in the family group.',
+  'bday.cheersYesterday': 'Who celebrated with the family',
   'bday.footer': 'This page is open for family — no password needed.',
   'bday.notFoundTitle': 'Birthday page not found',
   'bday.notFoundBody': 'This link may be old, or that person is not in the tree.',
+  'bday.expiredTitle': 'This birthday page has closed',
+  'bday.expiredBody':
+    'The celebration stays open on the birthday and the next day. After that the link expires.',
+  'bday.yesterdayKicker': 'Yesterday',
+  'bday.yesterdayHeadline': 'Yesterday was {name}’s birthday',
+  'bday.yesterdayHer': 'Yesterday was her birthday',
+  'bday.yesterdayHis': 'Yesterday was his birthday',
+  'bday.yesterdayWish':
+    'The family still holds yesterday’s joy. A late wish is still a wish.',
 
   // Invite link
   'invite.title': 'Invite relatives',
@@ -1215,7 +1237,7 @@ export const uz: Record<TKey, string> = {
 
   'telegram.title': 'Telegram tug‘ilgan kunlar',
   'telegram.intro':
-    'Oila Telegram guruhiga issiq tilak — otkritka, parolsiz bayram sahifasi va “Men nishonlayman” tugmasi (Telegram ismini saqlaydi).',
+    'Oila Telegram guruhiga o‘zbekcha issiq tilak — otkritka, parolsiz bayram sahifasi va guruhdagi “Men nishonlayman” tugmasi (chatdan chiqmasdan).',
   'telegram.setupNeeded':
     'Hali faol emas: Supabase SQL Editor’da Telegram migratsiyalarini ishga tushiring, so‘ng docs/TELEGRAM_BOT.md ga qarang.',
   'telegram.enabled': 'Tug‘ilgan kun xabarlarini yuborish',
@@ -1235,20 +1257,42 @@ export const uz: Record<TKey, string> = {
   'telegram.testFailed': 'Sinov muvaffaqiyatsiz — Edge Function loglari va bot tokenini tekshiring.',
   'telegram.saved': 'Telegram sozlamalari saqlandi',
   'telegram.saveFailed': 'Telegram sozlamalarini saqlab bo‘lmadi',
+  'telegram.coverageTitle': 'Bot kimni nishonlay oladi',
+  'telegram.coverage':
+    '{living} ta tirik a’zodan {ready} tasida to‘liq sana (oy va kun) bor. Bot faqat shu {ready} kishi uchun yozadi.',
+  'telegram.coverageMissing':
+    '{n} kishida hali oy/kun yo‘q — Oila a’zolari sahifasida kartasini to‘ldiring, aks holda o‘tkazib yuboriladi.',
+  'telegram.coverageOk': 'To‘liq sanasi bor barcha tirik a’zolar nishonlanishi mumkin.',
+  'telegram.nextTitle': 'Shu hafta',
+  'telegram.nextEmpty': 'Keyingi 7 kunda to‘liq tug‘ilgan kun yo‘q.',
+  'telegram.nextToday': 'Bugun',
+  'telegram.nextTomorrow': 'Ertaga',
+  'telegram.openMembers': 'A’zolarni ochish',
 
   'bday.loading': 'Bayram yuklanmoqda…',
   'bday.kicker': 'Oq-Ariq OILASI',
   'bday.headline': 'Tug‘ilgan kuningiz muborak, {name}!',
   'bday.turning': 'Bugun {age} yosh',
+  'bday.turningYesterday': 'Kecha {age} yoshga to‘ldi',
   'bday.wish':
     'Butun oila bugun sizni nishonlaydi. Yoshligingiz sog‘liq, kulgi va muhabbatga to‘la bo‘lsin.',
   'bday.cheersTitle': 'Siz bilan nishonlayotganlar ({n})',
   'bday.cheersEmptyTitle': 'Oila tabriklari',
   'bday.cheersEmpty':
     'Hali ism yo‘q — Telegramdagi tug‘ilgan kun xabarida “Men nishonlayman” ni bosing.',
+  'bday.cheersYesterday': 'Oila bilan nishonlaganlar',
   'bday.footer': 'Bu sahifa oila uchun ochiq — parol kerak emas.',
   'bday.notFoundTitle': 'Bayram sahifasi topilmadi',
   'bday.notFoundBody': 'Havola eski bo‘lishi mumkin, yoki bu odam daraxtida yo‘q.',
+  'bday.expiredTitle': 'Bayram sahifasi yopildi',
+  'bday.expiredBody':
+    'Sahifa tug‘ilgan kun va ertasigacha ochiq. Keyin havola yopiladi.',
+  'bday.yesterdayKicker': 'Kecha',
+  'bday.yesterdayHeadline': 'Kecha {name}ning tug‘ilgan kuni edi',
+  'bday.yesterdayHer': 'Kecha qizlarimizning bayrami edi',
+  'bday.yesterdayHis': 'Kecha yigitlarimizning bayrami edi',
+  'bday.yesterdayWish':
+    'Kecha bayram edi — kechikkan tilak ham tilak. Oila hanuz sizni o‘ylaydi.',
 
   'invite.title': 'Qarindoshlarni taklif qilish',
   'invite.intro':

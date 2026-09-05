@@ -48,11 +48,46 @@ export async function telegramApi(
   return data.result;
 }
 
+let webhookEnsured = false;
+
+/**
+ * Docs originally registered only message + my_chat_member, which dropped
+ * in-group “Men nishonlayman” taps. Re-apply the webhook when needed.
+ */
+export async function ensureCallbackWebhook(): Promise<void> {
+  if (webhookEnsured) return;
+  const secret = Deno.env.get('TELEGRAM_WEBHOOK_SECRET');
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  if (!secret || !supabaseUrl) return;
+  const hook = `${supabaseUrl.replace(/\/$/, '')}/functions/v1/telegram-webhook`;
+  try {
+    const info = (await telegramApi('getWebhookInfo', {})) as {
+      url?: string;
+      allowed_updates?: string[];
+    };
+    const allowed = info.allowed_updates ?? [];
+    const missingCallback = allowed.length > 0 && !allowed.includes('callback_query');
+    if (info.url === hook && !missingCallback) {
+      webhookEnsured = true;
+      return;
+    }
+    await telegramApi('setWebhook', {
+      url: hook,
+      secret_token: secret,
+      allowed_updates: ['message', 'my_chat_member', 'callback_query'],
+    });
+    webhookEnsured = true;
+  } catch (error) {
+    console.warn('ensureCallbackWebhook failed', error);
+  }
+}
+
 export type FamilyMemberRow = {
   id: string;
   first_name: string;
   last_name: string;
   nickname: string | null;
+  gender?: 'male' | 'female' | 'unspecified';
   birth_date: string | null;
   death_date: string | null;
   is_deceased: boolean;
@@ -121,6 +156,29 @@ export function isBirthdayToday(
     if (!leap) day = 28;
   }
   return local.month === birth.month && local.day === day;
+}
+
+/** Shift a Y-M-D by whole calendar days (UTC date math, no DST surprises). */
+export function shiftLocalDate(
+  local: { year: number; month: number; day: number },
+  days: number,
+): { year: number; month: number; day: number } {
+  const d = new Date(Date.UTC(local.year, local.month - 1, local.day + days));
+  return {
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth() + 1,
+    day: d.getUTCDate(),
+  };
+}
+
+/** Live on the birthday; one extra day as “yesterday”; otherwise closed. */
+export function birthdayPagePhase(
+  birth: { month: number; day: number },
+  local: { year: number; month: number; day: number },
+): 'today' | 'yesterday' | 'none' {
+  if (isBirthdayToday(birth, local)) return 'today';
+  if (isBirthdayToday(birth, shiftLocalDate(local, -1))) return 'yesterday';
+  return 'none';
 }
 
 export function createServiceClient() {

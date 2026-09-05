@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ExternalLink, Send, MessageCircle } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
-import { useT } from '../i18n/useT';
+import { useLanguage, useT } from '../i18n/useT';
 import { fullName } from '../utils/family';
+import { getUpcomingBirthdays } from '../utils/birthdays';
+import { formatMonthDay } from '../utils/dates';
 import { ToggleSwitch } from './ui/ToggleSwitch';
 import {
   TELEGRAM_TIMEZONES,
@@ -19,6 +22,7 @@ import {
  */
 export function TelegramBirthdaysCard() {
   const t = useT();
+  const language = useLanguage();
   const { toast } = useToast();
   const { people } = useFamily();
   const [settings, setSettings] = useState<TelegramSettings | null>(null);
@@ -66,6 +70,13 @@ export function TelegramBirthdaysCard() {
     .slice()
     .sort((a, b) => fullName(a).localeCompare(fullName(b)));
 
+  const readyCount = living.filter((p) => /^\d{4}-\d{2}-\d{2}$/.test((p.birthDate ?? '').trim())).length;
+  const missingCount = living.length - readyCount;
+  const upcomingWeek = useMemo(
+    () => getUpcomingBirthdays(people).filter((b) => b.daysUntil <= 7),
+    [people],
+  );
+
   if (loading) {
     return (
       <section className="card mt-3 p-4">
@@ -95,6 +106,46 @@ export function TelegramBirthdaysCard() {
         <MessageCircle className="h-4 w-4 text-emerald-600" aria-hidden /> {t('telegram.title')}
       </h2>
       <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{t('telegram.intro')}</p>
+
+      <div className="mt-3 rounded-xl border border-emerald-200/80 bg-emerald-50/70 p-3 text-sm dark:border-emerald-900 dark:bg-emerald-950/40">
+        <p className="font-semibold text-emerald-900 dark:text-emerald-200">{t('telegram.coverageTitle')}</p>
+        <p className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
+          {t('telegram.coverage', { ready: readyCount, living: living.length })}
+        </p>
+        {missingCount > 0 ? (
+          <p className="mt-1.5 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+            {t('telegram.coverageMissing', { n: missingCount })}
+          </p>
+        ) : (
+          <p className="mt-1.5 text-xs text-emerald-800 dark:text-emerald-300">{t('telegram.coverageOk')}</p>
+        )}
+        <Link to="/members" className="mt-2 inline-flex text-xs font-semibold text-emerald-800 underline dark:text-emerald-300">
+          {t('telegram.openMembers')}
+        </Link>
+      </div>
+
+      {upcomingWeek.length > 0 && (
+        <div className="mt-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+            {t('telegram.nextTitle')}
+          </p>
+          <ul className="mt-1.5 space-y-1 text-sm">
+            {upcomingWeek.map((b) => (
+              <li key={b.person.id} className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="font-medium">{fullName(b.person)}</span>
+                <span className="text-xs text-stone-500">
+                  {b.isToday
+                    ? t('telegram.nextToday')
+                    : b.daysUntil === 1
+                      ? t('telegram.nextTomorrow')
+                      : formatMonthDay(b.month, b.day, language)}
+                  {b.turningAge != null ? ` · ${b.turningAge}` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-3 space-y-3">
         <ToggleSwitch

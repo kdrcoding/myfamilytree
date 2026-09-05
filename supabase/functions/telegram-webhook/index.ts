@@ -2,21 +2,42 @@ import {
   corsHeaders,
   createServiceClient,
   displayName,
+  ensureCallbackWebhook,
   jsonResponse,
   telegramApi,
   type FamilyMemberRow,
 } from '../_shared/telegram.ts';
-import { birthdayPageUrl } from '../_shared/wishes.ts';
+import {
+  birthdayPageUrl,
+  botHelpText,
+  botWelcomeText,
+  cheerAnnounceText,
+  cheerNotFoundText,
+  cheerThanksText,
+  groupAlreadyLinkedText,
+  groupClearFirstText,
+  groupReadyText,
+  groupSavedText,
+  parseCheerCallback,
+  unknownStartText,
+} from '../_shared/wishes.ts';
 
 type TgUser = { id: number; first_name?: string; last_name?: string; username?: string };
 type TgChat = { id: number; type: string; title?: string };
 type TgMessage = {
+  message_id?: number;
   text?: string;
   chat: TgChat;
   from?: TgUser;
 };
 type TgUpdate = {
   message?: TgMessage;
+  callback_query?: {
+    id: string;
+    from: TgUser;
+    data?: string;
+    message?: TgMessage;
+  };
   my_chat_member?: {
     chat: TgChat;
     new_chat_member: { status: string; user: { is_bot?: boolean; username?: string } };
@@ -33,17 +54,59 @@ function verifySecret(req: Request): boolean {
   return got === expected;
 }
 
-async function sendText(chatId: number | string, text: string) {
+async function sendText(
+  chatId: number | string,
+  text: string,
+  extra: Record<string, unknown> = {},
+) {
   await telegramApi('sendMessage', {
     chat_id: chatId,
     text,
     parse_mode: 'HTML',
+    ...extra,
   });
 }
 
 function tgDisplayName(user: TgUser): string {
   const parts = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
   return parts || user.username || `User ${user.id}`;
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function saveCheer(
+  db: ReturnType<typeof createServiceClient>,
+  person: FamilyMemberRow,
+  year: number,
+  user: TgUser,
+): Promise<void> {
+  await db.rest('telegram_birthday_cheers', {
+    method: 'POST',
+    query: { on_conflict: 'person_id,year,telegram_user_id' },
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify({
+      person_id: person.id,
+      year,
+      telegram_user_id: user.id,
+      display_name: tgDisplayName(user),
+      username: user.username || null,
+    }),
+  });
+}
+
+async function loadPerson(
+  db: ReturnType<typeof createServiceClient>,
+  personId: string,
+): Promise<FamilyMemberRow | null> {
+  const people = await db.rest<FamilyMemberRow[]>('family_members', {
+    query: {
+      select: 'id,first_name,last_name,nickname,birth_date,death_date,is_deceased,photo',
+      id: `eq.${personId}`,
+    },
+  });
+  return people[0] ?? null;
 }
 
 Deno.serve(async (req) => {
@@ -58,15 +121,68 @@ Deno.serve(async (req) => {
   }
 
   try {
+    await ensureCallbackWebhook();
     const update = (await req.json()) as TgUpdate;
     const db = createServiceClient();
+
+    const callback = update.callback_query;
+    if (callback?.data && callback.from) {
+      const parsed = parseCheerCallback(callback.data);
+      if (!parsed) {
+        await telegramApi('answerCallbackQuery', {
+          callback_query_id: callback.id,
+          text: unknownStartText(),
+          show_alert: true,
+        });
+        return jsonResponse({ ok: true });
+      }
+
+      const person = await loadPerson(db, parsed.personId);
+      if (!person) {
+        await telegramApi('answerCallbackQuery', {
+          callback_query_id: callback.id,
+          text: cheerNotFoundText(),
+          show_alert: true,
+        });
+        return jsonResponse({ ok: true });
+      }
+
+      try {
+        await saveCheer(db, person, parsed.year, callback.from);
+      } catch (err) {
+        console.error('cheer save failed', err);
+        await telegramApi('answerCallbackQuery', {
+          callback_query_id: callback.id,
+          text: 'Avval sozlamalarni tekshiring, keyin qayta bosing.',
+          show_alert: true,
+        });
+        return jsonResponse({ ok: false, error: 'cheers_table' });
+      }
+
+      const display = tgDisplayName(callback.from);
+      await telegramApi('answerCallbackQuery', {
+        callback_query_id: callback.id,
+        text: 'Rahmat! 💛',
+      });
+
+      const groupChatId = callback.message?.chat.id;
+      if (groupChatId) {
+        await sendText(
+          groupChatId,
+          cheerAnnounceText(escapeHtml(display), escapeHtml(displayName(person))),
+          callback.message?.message_id
+            ? { reply_to_message_id: callback.message.message_id }
+            : {},
+        );
+      }
+
+      return jsonResponse({ ok: true, cheer: person.id });
+    }
 
     const member = update.my_chat_member;
     if (member?.chat && (member.chat.type === 'group' || member.chat.type === 'supergroup')) {
       const status = member.new_chat_member.status;
       if (status === 'member' || status === 'administrator') {
-        // Only bind when no group is set yet, or the bot rejoined the same
-        // saved group — prevents hijacking birthday posts to another chat.
         const settingsRows = await db.rest<{ group_chat_id: string | null }[]>('telegram_settings', {
           query: { select: 'group_chat_id', id: 'eq.1' },
         });
@@ -82,15 +198,9 @@ Deno.serve(async (req) => {
               enabled: true,
             }),
           });
-          await sendText(
-            member.chat.id,
-            'Oq-Ariq birthday bot is ready for this group. Birthdays will be posted at the hour set in Settings.',
-          );
+          await sendText(member.chat.id, groupReadyText());
         } else {
-          await sendText(
-            member.chat.id,
-            'This bot is already linked to another family group. Clear the group in Settings, then add me again — or run /setgroup only after clearing.',
-          );
+          await sendText(member.chat.id, groupAlreadyLinkedText());
         }
       }
       return jsonResponse({ ok: true });
@@ -108,43 +218,22 @@ Deno.serve(async (req) => {
     const startMatch = /^\/start(?:@\w+)?(?:\s+(.+))?$/i.exec(text);
     if (startMatch) {
       const payload = (startMatch[1] || '').trim();
-
-      // cheer_<personId>_<year> — save Telegram name, send public page link (no DMs on birthday).
-      const cheerMatch = /^cheer_(.+)_(\d{4})$/.exec(payload);
-      if (cheerMatch) {
-        const personId = cheerMatch[1];
-        const year = Number(cheerMatch[2]);
-        const people = await db.rest<FamilyMemberRow[]>('family_members', {
-          query: {
-            select: 'id,first_name,last_name,nickname,birth_date,death_date,is_deceased,photo',
-            id: `eq.${personId}`,
-          },
-        });
-        const person = people[0];
+      const cheer = parseCheerCallback(payload);
+      if (cheer) {
+        const person = await loadPerson(db, cheer.personId);
         if (!person) {
-          await sendText(chatId, 'That birthday page was not found.');
+          await sendText(chatId, cheerNotFoundText());
           return jsonResponse({ ok: true });
         }
 
         const display = tgDisplayName(msg.from);
         try {
-          await db.rest('telegram_birthday_cheers', {
-            method: 'POST',
-            query: { on_conflict: 'person_id,year,telegram_user_id' },
-            headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-            body: JSON.stringify({
-              person_id: person.id,
-              year,
-              telegram_user_id: userId,
-              display_name: display,
-              username: msg.from.username || null,
-            }),
-          });
+          await saveCheer(db, person, cheer.year, msg.from);
         } catch (err) {
           console.error('cheer save failed', err);
           await sendText(
             chatId,
-            'Almost! Ask the owner to run the birthday cheers SQL migration, then tap again.',
+            'Deyarli! Egadan birthday cheers SQL migratsiyasini so‘rang, keyin qayta bosing.',
           );
           return jsonResponse({ ok: false, error: 'cheers_table' });
         }
@@ -152,28 +241,22 @@ Deno.serve(async (req) => {
         const page = birthdayPageUrl(person.id);
         await sendText(
           chatId,
-          `Thanks, <b>${escapeHtml(display)}</b>! 💛 Your name is on ${escapeHtml(displayName(person))}'s birthday page.\n\nOpen it (no password): ${page}`,
+          cheerThanksText(escapeHtml(display), escapeHtml(displayName(person)), page),
         );
         return jsonResponse({ ok: true, cheer: person.id });
       }
 
       if (!payload) {
-        await sendText(
-          chatId,
-          'Welcome to <b>Oq-Ariq OILASI</b> birthday wishes!\n\nWhen someone has a birthday, tap <b>I\'m celebrating</b> in the family group — we save your Telegram name on their page.',
-        );
+        await sendText(chatId, botWelcomeText());
         return jsonResponse({ ok: true });
       }
 
-      await sendText(chatId, 'Unknown link. Open a birthday post in the family group and tap the buttons there.');
+      await sendText(chatId, unknownStartText());
       return jsonResponse({ ok: true });
     }
 
     if (/^\/help/i.test(text)) {
-      await sendText(
-        chatId,
-        'Oq-Ariq birthday bot\n• Posts wishes in the family group only (no private DMs)\n• Tap “I\'m celebrating” to leave your name\n• Open the birthday page link — no password needed',
-      );
+      await sendText(chatId, botHelpText());
       return jsonResponse({ ok: true });
     }
 
@@ -185,10 +268,7 @@ Deno.serve(async (req) => {
         const current = settingsRows[0]?.group_chat_id ?? null;
         const incoming = String(chatId);
         if (current && current !== incoming) {
-          await sendText(
-            chatId,
-            'Already linked to another group. In the website Settings → Telegram birthdays, clear the group first, then run /setgroup here.',
-          );
+          await sendText(chatId, groupClearFirstText());
         } else {
           await db.rest('telegram_settings', {
             method: 'PATCH',
@@ -196,12 +276,12 @@ Deno.serve(async (req) => {
             headers: { Prefer: 'return=minimal' },
             body: JSON.stringify({ group_chat_id: incoming, enabled: true }),
           });
-          await sendText(chatId, 'Saved this group for birthday posts.');
+          await sendText(chatId, groupSavedText());
         }
       }
     }
 
-    return jsonResponse({ ok: true });
+    return jsonResponse({ ok: true, userId });
   } catch (error) {
     console.error(error);
     return jsonResponse(
@@ -210,7 +290,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}

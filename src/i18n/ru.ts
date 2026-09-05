@@ -487,7 +487,7 @@ export const ruOverrides: Record<string, string> = {
 
   'telegram.title': 'Дни рождения в Telegram',
   'telegram.intro':
-    'Тёплое поздравление в семейный чат — открытка, страница без пароля и кнопка «Я праздную» (сохраняет имя из Telegram).',
+    'Тёплое поздравление на узбекском в семейный чат — открытка, страница без пароля и кнопка «Men nishonlayman» прямо в группе (не нужно уходить в личку).',
   'telegram.setupNeeded':
     'Ещё не активно: выполните SQL-миграции Telegram в SQL Editor, затем docs/TELEGRAM_BOT.md.',
   'telegram.enabled': 'Отправлять поздравления',
@@ -507,20 +507,42 @@ export const ruOverrides: Record<string, string> = {
   'telegram.testFailed': 'Тест не удался — проверьте логи Edge Function и токен бота.',
   'telegram.saved': 'Настройки Telegram сохранены',
   'telegram.saveFailed': 'Не удалось сохранить настройки Telegram',
+  'telegram.coverageTitle': 'Кого бот может поздравить',
+  'telegram.coverage':
+    'У {ready} из {living} живых родственников есть полная дата (месяц и день). Бот пишет только им.',
+  'telegram.coverageMissing':
+    'У {n} человек ещё нет месяца и дня — откройте «Члены семьи» и дополните карточки, иначе их пропустят.',
+  'telegram.coverageOk': 'Все живые родственники с известным днём рождения могут быть поздравлены.',
+  'telegram.nextTitle': 'На этой неделе',
+  'telegram.nextEmpty': 'В ближайшие 7 дней нет полной даты рождения.',
+  'telegram.nextToday': 'Сегодня',
+  'telegram.nextTomorrow': 'Завтра',
+  'telegram.openMembers': 'Открыть членов семьи',
 
   'bday.loading': 'Загружаем праздник…',
   'bday.kicker': 'Oq-Ariq OILASI',
   'bday.headline': 'С днём рождения, {name}!',
   'bday.turning': 'Сегодня исполняется {age}',
+  'bday.turningYesterday': 'Вчера исполнилось {age}',
   'bday.wish':
     'Вся семья празднует вас сегодня. Пусть год будет полон здоровья, смеха и любви.',
   'bday.cheersTitle': 'С вами празднуют ({n})',
   'bday.cheersEmptyTitle': 'Поздравления семьи',
   'bday.cheersEmpty':
-    'Пока никого нет — нажмите «Я праздную» в поздравлении в Telegram, чтобы оставить своё имя.',
+    'Пока никого нет — нажмите «Men nishonlayman» в семейном чате Telegram.',
+  'bday.cheersYesterday': 'Кто праздновал вместе с семьёй',
   'bday.footer': 'Эта страница открыта для семьи — пароль не нужен.',
   'bday.notFoundTitle': 'Страница не найдена',
   'bday.notFoundBody': 'Ссылка устарела или этого человека нет в дереве.',
+  'bday.expiredTitle': 'Праздничная страница закрыта',
+  'bday.expiredBody':
+    'Страница открыта в день рождения и на следующий день. Потом ссылка закрывается.',
+  'bday.yesterdayKicker': 'Вчера',
+  'bday.yesterdayHeadline': 'Вчера был день рождения {name}',
+  'bday.yesterdayHer': 'Вчера был её день рождения',
+  'bday.yesterdayHis': 'Вчера был его день рождения',
+  'bday.yesterdayWish':
+    'Вчера был праздник — позднее пожелание тоже пожелание. Семья всё ещё думает о вас.',
 
   'invite.title': 'Пригласить родственников',
   'invite.intro':

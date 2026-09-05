@@ -1,38 +1,21 @@
 /**
  * Public birthday celebration payload — no password / JWT.
- * Only returns a safe subset for the /bday/:personId page, and only around
- * that person's birthday (family timezone), so profiles aren't scrapeable year-round.
+ * Live on the birthday (family timezone). The next calendar day is a
+ * “yesterday” page. After that the link expires so profiles stay private.
  */
 import {
   ageTurning,
+  birthdayPagePhase,
   corsHeaders,
   createServiceClient,
   displayName,
-  isBirthdayToday,
   jsonResponse,
   localParts,
   monthDay,
+  shiftLocalDate,
 } from '../_shared/telegram.ts';
-import { birthdayPageWish } from '../_shared/wishes.ts';
-
-/** Allow the page the day before / on / day after the birthday (timezone). */
-function nearBirthday(
-  birth: { month: number; day: number },
-  local: { year: number; month: number; day: number },
-): boolean {
-  if (isBirthdayToday(birth, local)) return true;
-  const today = Date.UTC(local.year, local.month - 1, local.day);
-  for (const delta of [-1, 1]) {
-    const d = new Date(today + delta * 86400000);
-    const probe = {
-      year: d.getUTCFullYear(),
-      month: d.getUTCMonth() + 1,
-      day: d.getUTCDate(),
-    };
-    if (isBirthdayToday(birth, probe)) return true;
-  }
-  return false;
-}
+import { cardDesignSeed, normalizeCardGender, pickCardDesign } from '../_shared/cardTheme.ts';
+import { birthdayPageWish, birthdayYesterdayWish } from '../_shared/wishes.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -58,6 +41,7 @@ Deno.serve(async (req) => {
         first_name: string;
         last_name: string;
         nickname: string | null;
+        gender: string | null;
         birth_date: string | null;
         death_date: string | null;
         is_deceased: boolean;
@@ -65,7 +49,7 @@ Deno.serve(async (req) => {
       }[]
     >('family_members', {
       query: {
-        select: 'id,first_name,last_name,nickname,birth_date,death_date,is_deceased,photo',
+        select: 'id,first_name,last_name,nickname,gender,birth_date,death_date,is_deceased,photo',
         id: `eq.${personId}`,
       },
     });
@@ -80,13 +64,23 @@ Deno.serve(async (req) => {
     const tz = settings[0]?.timezone || 'America/Los_Angeles';
     const local = localParts(tz);
     const md = monthDay(person.birth_date);
-    if (!md || !nearBirthday(md, local)) {
-      return jsonResponse({ ok: false, error: 'not_found' }, 404);
+    if (!md) {
+      return jsonResponse({ ok: false, error: 'expired' }, 404);
     }
 
-    const age = ageTurning(md, local.year);
+    const phase = birthdayPagePhase(md, local);
+    if (phase === 'none') {
+      return jsonResponse({ ok: false, error: 'expired' }, 404);
+    }
+
+    const occurrence = phase === 'yesterday' ? shiftLocalDate(local, -1) : local;
+    const age = ageTurning(md, occurrence.year);
     const name = displayName(person);
+    const gender = normalizeCardGender(person.gender);
+    const design = pickCardDesign(cardDesignSeed(person.id, occurrence.year));
     const photoUrl = person.photo ? await db.signPhoto(person.photo) : null;
+    const wish =
+      phase === 'yesterday' ? birthdayYesterdayWish(name, age) : birthdayPageWish(name, age, 'uz');
 
     let cheers: { name: string; username: string | null }[] = [];
     try {
@@ -96,7 +90,7 @@ Deno.serve(async (req) => {
         query: {
           select: 'display_name,username,created_at',
           person_id: `eq.${personId}`,
-          year: `eq.${local.year}`,
+          year: `eq.${occurrence.year}`,
           order: 'created_at.asc',
         },
       });
@@ -110,15 +104,18 @@ Deno.serve(async (req) => {
 
     return jsonResponse({
       ok: true,
+      when: phase,
+      design,
+      year: occurrence.year,
       person: {
         id: person.id,
         name,
+        gender,
         age,
         photoUrl,
         birthMonthDay: `${String(md.month).padStart(2, '0')}-${String(md.day).padStart(2, '0')}`,
-        wish: birthdayPageWish(name, age),
+        wish,
       },
-      year: local.year,
       cheers,
     });
   } catch (error) {
