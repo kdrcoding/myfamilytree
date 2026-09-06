@@ -445,7 +445,7 @@ export function PersonFormModal({
         const date = (marriageDates[spouseId] ?? '').trim();
         if (date) cleanedMarriage[spouseId] = date;
       }
-      updatePerson(
+      const saved = await updatePerson(
         {
           ...person,
           ...trimmed,
@@ -454,6 +454,7 @@ export function PersonFormModal({
         parentIds,
         spouseIds,
       );
+      if (!saved) return false;
       toast(t('form.updatedToast', { name: personLabel }));
       onSaved?.(person.id);
     } else {

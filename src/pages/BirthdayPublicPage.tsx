@@ -171,15 +171,15 @@ export function BirthdayPublicPage() {
       const shown = prettyLabel(person.name);
       document.title =
         when === 'yesterday'
-          ? `${shown} · Oq-Ariq`
-          : `Tug‘ilgan kun, ${shown}! · Oq-Ariq`;
+          ? t('bday.yesterdayHeadline', { name: shown })
+          : t('bday.headline', { name: shown });
     } else {
       document.title = 'Oq-Ariq OILASI';
     }
     return () => {
       document.title = previous || 'Oq-Ariq OILASI';
     };
-  }, [person?.name, when]);
+  }, [person?.name, when, t]);
 
   const langHeader = (
     <div className="flex w-full items-start justify-between gap-3">

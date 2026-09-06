@@ -84,7 +84,7 @@ export function Layout() {
     { to: '/timeline', label: t('nav.timeline'), easy: true },
     { to: '/map', label: t('nav.map'), easy: false },
     { to: '/statistics', label: t('nav.stats'), easy: false },
-    { to: '/about', label: t('nav.about'), easy: true },
+    { to: '/about', label: t('nav.about'), easy: false },
   ].filter((item) => !easy || item.easy);
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>

@@ -557,7 +557,9 @@ export const en = {
   'form.willBeAdded':
     'This person will be added as a {kind} of {names}. You can adjust relationships later by editing the person.',
   'form.relOwnerNote':
-    'Parents and spouses of an existing person can only be changed by the owner. To add a new relative, use the heart / baby / parent buttons on their card in the family tree.',
+    'Parents and spouses of an existing person can only be changed by the owner. Relatives can send a join request with Add yourself.',
+  'form.ownerOnlyLink':
+    'Only the owner can add a spouse, child, or parent to the tree. Use Add yourself to send a join request.',
   'form.parents': 'Parents',
   'form.spouses': 'Spouses',
   'form.searchIn': 'Search {label}…',
@@ -744,7 +746,7 @@ export const en = {
     'Family sites deserve care. The Settings page has a public privacy mode that hides exact dates, cities, occupations, biographies, photos and the ages of minors. We deliberately store no addresses, phone numbers, email addresses or documents. If you are in this tree and want something changed or removed, tell the family administrator and it will be done.',
   'about.contributeTitle': 'Who can change what',
   'about.contributeText1':
-    'Anyone who enters their name can add people and fill in details. Open a person to edit them, or add a spouse/child from their card. Marking someone deceased, deleting people, and changing existing relationships is reserved for the owner.',
+    'Anyone who enters their name can fill in details on a person’s card. Adding a spouse, child, or parent, marking someone deceased, deleting people, and changing relationships is reserved for the owner. Relatives can send a join request with Add yourself.',
   'about.contributeText2':
     'Changes save live for the whole family — no file export needed. Settings → Export is only a backup copy if you want one.',
 
@@ -1491,7 +1493,9 @@ export const uz: Record<TKey, string> = {
   'form.willBeAdded':
     "Bu inson {names}ga {kind} sifatida qo'shiladi. Keyinchalik tahrirlash orqali aloqalarni o'zgartirishingiz mumkin.",
   'form.relOwnerNote':
-    "Mavjud odamning ota-onasi va turmush o'rtoqlarini faqat egasi o'zgartira oladi. Yangi qarindosh qo'shish uchun shajaradagi kartochkadagi tugmalardan foydalaning.",
+    "Mavjud odamning ota-onasi va turmush o'rtoqlarini faqat egasi o'zgartira oladi. Qarindoshlar «O'zingizni qo'shing» orqali so'rov yuborishi mumkin.",
+  'form.ownerOnlyLink':
+    "Turmush o'rtoq, farzand yoki ota-onani faqat egasi qo'sha oladi. O'zingizni qo'shish orqali so'rov yuboring.",
   'form.parents': 'Ota-onasi',
   'form.spouses': "Turmush o'rtoqlari",
   'form.searchIn': '{label} ichida qidirish…',
@@ -1671,7 +1675,7 @@ export const uz: Record<TKey, string> = {
     "Oilaviy saytlarga ehtiyotkorlik kerak. Sozlamalar sahifasida aniq sanalar, shaharlar, kasblar, tarjimai hollar, rasmlar va voyaga yetmaganlar yoshini yashiradigan maxfiylik rejimi bor. Manzillar, telefon raqamlari, elektron pochta va hujjatlarni ataylab saqlamaymiz. Agar siz shu shajarada bo'lsangiz va biror narsani o'zgartirish yoki o'chirishni istasangiz, oila administratoriga ayting — bajariladi.",
   'about.contributeTitle': 'Kim nima o‘zgartira oladi',
   'about.contributeText1':
-    'Ismini yozgan har kim odam qo‘shishi va ma’lumotlarni to‘ldirishi mumkin. Odamni ochib tahrirlang yoki kartadan turmush o‘rtoq/farzand qo‘shing. Vafot etgan deb belgilash, o‘chirish va mavjud qarindoshlikni o‘zgartirish faqat egasiga tegishli.',
+    'Ismini yozgan har kim kartadagi ma’lumotlarni to‘ldira oladi. Turmush o‘rtoq, farzand yoki ota-ona qo‘shish, vafot etgan deb belgilash, o‘chirish va qarindoshlikni o‘zgartirish faqat egasiga tegishli. Qarindoshlar «O‘zingizni qo‘shing» orqali so‘rov yuborishi mumkin.',
   'about.contributeText2':
     'O‘zgarishlar butun oila uchun jonli saqlanadi — fayl eksporti shart emas. Sozlamalar → Eksport faqat zaxira nusxa uchun.',
 

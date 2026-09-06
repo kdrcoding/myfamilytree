@@ -39,7 +39,7 @@ function pad2(n: number): string {
 export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAnniversaryModalProps) {
   const t = useT();
   const language = useLanguage();
-  const { canEdit } = useAuth();
+  const { canDelete: isOwner } = useAuth();
   const { updatePerson, getPerson } = useFamily();
   const { toast } = useToast();
 
@@ -53,7 +53,7 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
   const divorced = isDivorced(liveA, liveB);
   const anniversary = getCoupleAnniversary(liveA, liveB);
 
-  const [editing, setEditing] = useState(() => canEdit && !marriedOn);
+  const [editing, setEditing] = useState(() => isOwner && !marriedOn);
   const [dateDraft, setDateDraft] = useState(marriedOn ?? '');
   const [placeDraft, setPlaceDraft] = useState(place ?? '');
   const [noteDraft, setNoteDraft] = useState(note ?? '');
@@ -105,7 +105,8 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
       let next = withMarriageDate(liveA, liveB.id, trimmedDate);
       next = withMarriagePlace(next, liveB.id, placeDraft);
       next = withMarriageNote(next, liveB.id, noteDraft);
-      await Promise.resolve(updatePerson(next, next.parentIds, next.spouseIds));
+      const saved = await updatePerson(next, next.parentIds, next.spouseIds);
+      if (!saved) return;
       toast(t('couple.saved'));
       setEditing(false);
     } finally {
@@ -181,7 +182,7 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
         </button>
       </div>
 
-      {editing && canEdit ? (
+      {editing && isOwner ? (
         <div className="mt-5 space-y-4 text-left">
           <DateField
             label={t('couple.marriedOn')}
@@ -304,14 +305,14 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
               </dd>
             </div>
           )}
-          {!marriedOn && !canEdit && (
+          {!marriedOn && !isOwner && (
             <p className="text-sm text-stone-500 dark:text-stone-400">{t('couple.addDateHint')}</p>
           )}
         </dl>
       )}
 
       <div className="mt-5 flex flex-col gap-2">
-        {canEdit && !editing && (
+        {isOwner && !editing && (
           <button
             type="button"
             className="btn-primary w-full !min-h-11 inline-flex items-center justify-center gap-2"

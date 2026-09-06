@@ -64,6 +64,17 @@ export function JoinRequestsCard() {
         const newId = generatePersonId(person.firstName, person.lastName, existing);
         person = { ...person, id: newId };
       }
+      const nameKey = `${person.firstName} ${person.lastName}`.trim().toLocaleLowerCase();
+      const alreadyOnTree = people.find((p) => {
+        const candidate = `${p.firstName} ${p.lastName}`.trim().toLocaleLowerCase();
+        return candidate === nameKey && (p.birthDate || '') === (person.birthDate || '');
+      });
+      if (alreadyOnTree) {
+        await markJoinRequestApproved(req.id);
+        toast(t('joinReq.approvedToast', { name: fullName(alreadyOnTree) }));
+        refresh();
+        return;
+      }
       const saved = await addPerson(person, req.link ?? undefined);
       if (!saved) return;
       await markJoinRequestApproved(req.id);

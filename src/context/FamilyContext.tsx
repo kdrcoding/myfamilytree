@@ -42,7 +42,11 @@ interface FamilyContextValue {
   /** Create a person, optionally attached to an existing relative. */
   addPerson: (person: FamilyPerson, link?: RelationLink) => Promise<boolean>;
   /** Update fields and replace the person's parent/spouse relationships. */
-  updatePerson: (person: FamilyPerson, parentIds: string[], spouseIds: string[]) => void;
+  updatePerson: (
+    person: FamilyPerson,
+    parentIds: string[],
+    spouseIds: string[],
+  ) => Promise<boolean>;
   /** Mark or unmark a couple as divorced (they stay linked as ex-spouses). */
   setDivorcedStatus: (aId: string, bId: string, divorced: boolean) => void;
   deletePerson: (id: string) => Promise<boolean>;
@@ -259,6 +263,10 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         return translate(language, 'rel.genN', { n: rel.generation });
       },
       addPerson: (person, link) => {
+        if (link && !isOwner) {
+          toast(translate(language, 'form.ownerOnlyLink'), 'error');
+          return Promise.resolve(false);
+        }
         return mutate((current) => {
           let next = [...current, person];
           if (link) next = applyRelationLink(next, person.id, link);
@@ -266,13 +274,12 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         }, 'add');
       },
       updatePerson: (person, parentIds, spouseIds) => {
-        void mutate((current) => {
+        return mutate((current) => {
           const existing = current.find((p) => p.id === person.id);
           if (!existing) return current;
           if (!isOwner) {
-            // Family editors may change DETAIL fields — including wedding
-            // date/place/notes from the rings modal — but never relationships.
-            // Deceased status stays owner-controlled (matches the form rules).
+            // Family editors may change DETAIL fields, never structure or
+            // wedding rows (those live on relationships, owner JWT only).
             const updated = {
               ...person,
               isDeceased: existing.isDeceased,
@@ -281,11 +288,11 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
               spouseIds: existing.spouseIds,
               childIds: existing.childIds,
               divorcedIds: existing.divorcedIds,
+              marriageDates: existing.marriageDates,
+              marriagePlaces: existing.marriagePlaces,
+              marriageNotes: existing.marriageNotes,
             };
-            return syncMarriageMeta(
-              current.map((p) => (p.id === person.id ? updated : p)),
-              person.id,
-            );
+            return current.map((p) => (p.id === person.id ? updated : p));
           }
           const replaced = current.map((p) => (p.id === person.id ? person : p));
           // Mirror marriage details onto each spouse so both records agree —

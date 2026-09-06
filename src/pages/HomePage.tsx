@@ -134,7 +134,7 @@ export function HomePage() {
     { to: '/map', title: t('nav.map'), hint: t('home.pathMapHint'), kind: 'map' as const, Icon: MapPinned },
     { to: '/timeline', title: t('nav.timeline'), hint: t('home.pathTimelineHint'), kind: 'timeline' as const, Icon: History },
     { to: '/related', title: t('home.related'), hint: t('home.pathRelatedHint'), kind: 'related' as const, Icon: HeartHandshake },
-  ];
+  ].filter((p) => !easy || p.to !== '/map');
 
   return (
     <div className="home-page">

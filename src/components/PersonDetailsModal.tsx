@@ -313,7 +313,7 @@ export function PersonDetailsModal({
         )}
       </div>
 
-      {editMode && onAddRelative && (
+      {editMode && canDelete && onAddRelative && (
         <div className="mt-4 flex gap-2">
           <button
             type="button"

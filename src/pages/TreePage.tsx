@@ -588,9 +588,9 @@ export function TreePage() {
       onOpen: (id) => setDetailsId(id),
       onQuickAdd: (kind, personId) => setForm({ link: { kind, targetId: personId } }),
       onOpenCouple: (aId, bId) => setCoupleIds([aId, bId]),
-      editMode: treeToolsOn,
+      editMode: treeToolsOn && canDelete,
     }),
-    [treeToolsOn],
+    [treeToolsOn, canDelete],
   );
 
   const focusPerson = useCallback((person: FamilyPerson) => {
