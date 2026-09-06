@@ -1,0 +1,21 @@
+---
+description: Always ship myfamilytree changes to GitHub and Vercel
+alwaysApply: true
+---
+
+# Always deploy this family app
+
+This rule is **only** for `kdrcoding/myfamilytree`. Do not apply it to KDR Coding or other repos.
+
+After finishing user-requested work that should go live:
+
+1. Commit the real app changes. Never commit `.tmp-deploy/`, `scripts/tmp-*`, `.env`, preview images, or secrets.
+2. Push to `origin` `main`. Never force-push.
+3. Deploy production to Vercel (`npx vercel --prod --yes` if a GitHub push is not enough).
+4. Reply with the live URLs.
+
+Do this without waiting to be asked again. Skip only if the user says not to deploy, or the change is a local-only experiment.
+
+- Repo: https://github.com/kdrcoding/myfamilytree
+- Vercel project: `myfamilytree` (`prj_EKfDhTJUicNZASpvAY5ChkCYcRQl`)
+- Live: https://myfamilytree-smoky.vercel.app (also https://myfamilytree-kdr6.vercel.app)

@@ -54,9 +54,34 @@ function restoreNamedEditor(): boolean {
   return false;
 }
 
+function hasOwnerSessionHint(): boolean {
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('sb-') && key.includes('-auth-token')) return true;
+    }
+  } catch {
+    /* private mode */
+  }
+  return false;
+}
+
+function initialAuthState(): { role: Role; ready: boolean } {
+  const stored = loadJson<string>(AUTH_KEY, (v): v is string => typeof v === 'string');
+  if (stored && !supabase && roleForHash(stored) === 'owner') {
+    applyOwnerName();
+    return { role: 'owner', ready: true };
+  }
+  if (restoreNamedEditor()) return { role: 'editor', ready: true };
+  // Owner JWT still needs a session read — keep the spinner only in that case.
+  if (hasOwnerSessionHint()) return { role: 'viewer', ready: false };
+  return { role: 'viewer', ready: true };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [role, setRole] = useState<Role>('viewer');
-  const [ready, setReady] = useState(false);
+  const [boot] = useState(initialAuthState);
+  const [role, setRole] = useState<Role>(boot.role);
+  const [ready, setReady] = useState(boot.ready);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Name-only family users first. Do not auto-enter as owner from a leftover JWT.
       if (restoreNamedEditor()) {
         setRole('editor');
+        setReady(true);
         if (supabase) {
           const { data } = await supabase.auth.getSession();
           if (cancelled) return;
@@ -90,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setRole('editor');
           }
         }
+        return;
       }
 
       if (!cancelled) setReady(true);

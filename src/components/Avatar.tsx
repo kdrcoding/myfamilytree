@@ -8,6 +8,8 @@ import { useT } from '../i18n/useT';
 interface AvatarProps {
   person: FamilyPerson;
   size?: 'sm' | 'md' | 'lg';
+  /** Set on above-the-fold faces so the browser fetches them immediately. */
+  eager?: boolean;
 }
 
 const SIZES = {
@@ -32,7 +34,7 @@ const GENDER_ICONS = {
  * Shows the person's photo when available (and allowed by privacy settings),
  * otherwise a gender-tinted initials avatar with a default icon.
  */
-export function Avatar({ person, size = 'md' }: AvatarProps) {
+export function Avatar({ person, size = 'md', eager = false }: AvatarProps) {
   const { showPhoto } = usePrivacy();
   const t = useT();
   const Icon = GENDER_ICONS[person.gender];
@@ -45,6 +47,10 @@ export function Avatar({ person, size = 'md' }: AvatarProps) {
       <img
         src={photoUrl}
         alt={t('avatar.photoOf', { name: fullName(person) })}
+        width={size === 'lg' ? 96 : size === 'md' ? 56 : 40}
+        height={size === 'lg' ? 96 : size === 'md' ? 56 : 40}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
         className={`${SIZES[size]} shrink-0 rounded-full object-cover ring-2 ring-white shadow dark:ring-stone-700 ${
           person.isDeceased ? 'grayscale' : ''
         }`}

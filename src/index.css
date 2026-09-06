@@ -365,6 +365,7 @@ html.dark .app-shell {
 }
 
 .app-header {
+  padding-top: env(safe-area-inset-top, 0px);
   border-color: rgb(6 78 59 / 0.12);
   background: rgb(247 250 247 / 0.78);
   backdrop-filter: blur(18px) saturate(1.15);

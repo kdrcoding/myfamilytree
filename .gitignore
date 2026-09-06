@@ -52,6 +52,9 @@ tools/DY37251/*.fsc
 
 # Local deploy scratch (never commit)
 tmp-bday-deploy/
+.tmp-deploy/
+scripts/tmp-*
+scripts/tmp-verify/
 supabase/.temp/
 
 # Motif studio originals (too large; punched assets are committed)

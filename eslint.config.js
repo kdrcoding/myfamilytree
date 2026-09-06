@@ -12,6 +12,7 @@ export default tseslint.config(
       'supabase/functions/**',
       'scripts/**',
       'tmp-bday-deploy/**',
+      '.tmp-deploy/**',
     ],
   },
   {

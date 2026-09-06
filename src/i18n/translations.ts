@@ -838,6 +838,12 @@ export const en = {
   'error.text':
     'An unexpected error occurred. Your family data is stored safely in the shared database and is not lost. Reloading the page usually fixes this.',
   'error.reload': 'Reload page',
+  'page.loading': 'Loading page content',
+  'status.offline':
+    'You are offline. People already on this phone stay visible; new saves wait for a connection.',
+  'status.update': 'A newer version of the site is ready.',
+  'status.updateBtn': 'Refresh',
+  'members.clearSearch': 'Clear search',
   'storage.saveFailed':
     'Saving to this browser failed — storage may be full or blocked. Recent changes will be lost on reload. Try removing large photos or export your data as a backup.',
 
@@ -1737,6 +1743,12 @@ export const uz: Record<TKey, string> = {
   'error.text':
     "Kutilmagan xato yuz berdi. Oila ma'lumotlaringiz umumiy ma'lumotlar bazasida xavfsiz saqlangan va yo'qolmagan. Sahifani qayta yuklash odatda muammoni hal qiladi.",
   'error.reload': 'Sahifani qayta yuklash',
+  'page.loading': 'Sahifa yuklanmoqda',
+  'status.offline':
+    'Internet yo‘q. Shu telefonidagi oila ko‘rinadi; yangi saqlashlar aloqa qaytgach ketadi.',
+  'status.update': 'Saytning yangi versiyasi tayyor.',
+  'status.updateBtn': 'Yangilash',
+  'members.clearSearch': 'Qidiruvni tozalash',
   'storage.saveFailed':
     "Brauzerga saqlash amalga oshmadi — xotira to'lgan yoki bloklangan bo'lishi mumkin. Sahifa qayta yuklansa, oxirgi o'zgarishlar yo'qoladi. Katta rasmlarni olib tashlang yoki ma'lumotlaringizni eksport qilib zaxira nusxa oling.",
 

@@ -3,8 +3,6 @@ import type { ReactNode } from 'react';
 import { CloudOff, Loader2, RefreshCw } from 'lucide-react';
 import type { FamilyData, FamilyPerson, RelationLink } from '../types/family';
 import { FAMILY_DATA_VERSION } from '../types/family';
-import { samplePeople } from '../data/sampleFamily';
-import defaultFamilyJson from '../data/defaultFamily.json';
 import { translate } from '../i18n/translations';
 import { useAuth } from './AuthContext';
 import { useSettings } from './SettingsContext';
@@ -13,7 +11,8 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 import { logChange, summarizeFamilyChange } from '../lib/auditLog';
 import type { AuditAction } from '../lib/auditLog';
 import { autoBackup, forceBackup } from '../lib/backups';
-import { diffFamily, fetchFamily, isEmptyDiff, markSeeded, pushDiff } from '../lib/familyDb';
+import { loadFamily, readFamilyCache, writeFamilyCache } from '../lib/familyCache';
+import { diffFamily, isEmptyDiff, markSeeded, pushDiff } from '../lib/familyDb';
 import { normalizeCountry } from '../utils/countries';
 import { validateFamilyData } from '../utils/validation';
 import {
@@ -59,14 +58,6 @@ interface FamilyContextValue {
 
 const FamilyContext = createContext<FamilyContextValue | null>(null);
 
-// The bundled dataset. It is ONLY written to the database through the
-// explicit "restore default data" action on the Settings page (owner) —
-// never automatically, so it can't overwrite real family data.
-const DEFAULT_DATA = (() => {
-  const result = validateFamilyData(defaultFamilyJson);
-  return result.ok && result.data ? normalizePeople(result.data.people) : samplePeople;
-})();
-
 export function FamilyProvider({ children }: { children: ReactNode }) {
   // Owner edits are unrestricted; family editors may only ADD information.
   const { canDelete: isOwner } = useAuth();
@@ -74,13 +65,15 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const language = settings.language;
 
-  const [people, setPeopleState] = useState<FamilyPerson[]>([]);
-  const [status, setStatus] = useState<FamilyDbStatus>(
-    isSupabaseConfigured ? 'loading' : 'unconfigured',
-  );
+  const [people, setPeopleState] = useState<FamilyPerson[]>(() => readFamilyCache() ?? []);
+  const [status, setStatus] = useState<FamilyDbStatus>(() => {
+    if (!isSupabaseConfigured) return 'unconfigured';
+    return readFamilyCache() ? 'ready' : 'loading';
+  });
   // Mutations need the exact previous array to compute a database diff, even
   // when several land in the same render cycle.
   const peopleRef = useRef<FamilyPerson[]>(people);
+  const hasCachedPeople = people.length > 0;
   // Pushes run one at a time, in mutation order — concurrent multi-step
   // request chains could otherwise land out of order (e.g. a delete
   // completing before the add it depends on).
@@ -91,7 +84,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   // `children`, unmounting everything — including a half-filled edit form —
   // which looks exactly like the page "refreshing by itself" and loses the
   // user's unsaved work. Mobile users reported precisely this.
-  const hasLoadedRef = useRef(false);
+  const hasLoadedRef = useRef(hasCachedPeople);
   // Keep the latest toast/language reachable from `load` without adding them
   // to its dependency list — that would change `load`'s identity and make the
   // mount effect below refetch on every language toggle.
@@ -108,9 +101,10 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     // Only the very first load blocks the whole UI with the loading screen.
     if (isFirstLoad) setStatus('loading');
     try {
-      const loaded = await fetchFamily();
+      const loaded = await loadFamily();
       peopleRef.current = loaded;
       setPeopleState(loaded);
+      writeFamilyCache(loaded);
       hasLoadedRef.current = true;
       setStatus('ready');
       // Every visit keeps the daily database snapshot fresh (no-op when a
@@ -131,6 +125,10 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (status === 'ready' && people.length > 0) writeFamilyCache(people);
+  }, [people, status]);
 
   // Our own writes that are still in flight. Live-sync reloads wait for these
   // so a stale server snapshot never clobbers an optimistic local change.
@@ -330,9 +328,14 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         ),
       resetToSample: () => {
         if (!isOwner) return Promise.resolve(false);
-        return mutate(() => DEFAULT_DATA, 'reset').then((saved) => {
-          if (saved) void markSeeded('default-dataset');
-          return saved;
+        return import('../data/defaultFamily.json').then((mod) => {
+          const result = validateFamilyData(mod.default);
+          if (!result.ok || !result.data) return false;
+          const data = normalizePeople(result.data.people);
+          return mutate(() => data, 'reset').then((saved) => {
+            if (saved) void markSeeded('default-dataset');
+            return saved;
+          });
         });
       },
       exportData: () => ({

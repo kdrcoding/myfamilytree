@@ -41,12 +41,26 @@ export function PhotoUrlsProvider({ children }: { children: ReactNode }) {
     const paths = people.map((p) => p.photo).filter(isStoragePhoto);
     if (paths.length === 0) return;
     let cancelled = false;
-    void resolvePhotoUrls(paths).then((resolved) => {
+    const run = () => {
       if (cancelled) return;
-      mergeResolved(resolved);
-    });
+      void resolvePhotoUrls(paths).then((resolved) => {
+        if (cancelled) return;
+        mergeResolved(resolved);
+      });
+    };
+    // Visible avatars still sign on demand. This background batch fills the
+    // rest after first paint so a phone isn't waiting on every photo URL.
+    const idleId = window.requestIdleCallback?.(run, { timeout: 1800 });
+    if (idleId === undefined) {
+      const timer = window.setTimeout(run, 250);
+      return () => {
+        cancelled = true;
+        window.clearTimeout(timer);
+      };
+    }
     return () => {
       cancelled = true;
+      window.cancelIdleCallback?.(idleId);
     };
   }, [people]);
 

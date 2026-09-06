@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search, UserPlus, Users } from 'lucide-react';
+import { Search, UserPlus, Users, X } from 'lucide-react';
 import type { FamilyPerson, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
@@ -102,11 +102,21 @@ export function MembersPage() {
           />
           <input
             type="search"
-            className="input !pl-9"
+            className={`input !pl-9 ${query ? '!pr-10' : ''}`}
             placeholder={t('members.searchPlaceholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
+          {query && (
+            <button
+              type="button"
+              className="absolute bottom-1.5 right-1.5 rounded-lg p-1.5 text-stone-500 hover:bg-stone-100 hover:text-stone-800 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+              onClick={() => setQuery('')}
+              aria-label={t('members.clearSearch')}
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </button>
+          )}
         </label>
         <label className="block min-w-36 flex-1 sm:flex-none">
           <span className="mb-1 block text-xs font-medium text-stone-500 dark:text-stone-400">

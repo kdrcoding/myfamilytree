@@ -9,6 +9,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import type { Edge, EdgeTypes, Node, NodeTypes, ReactFlowInstance } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import { Lock, LockOpen, Map, Maximize2, Search, UserPlus, UserRoundPlus, Users, X, Download, Printer, Share2, ZoomIn, UnfoldHorizontal } from 'lucide-react';
 import type { FamilyPerson, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
@@ -30,7 +31,6 @@ import type { OverflowMenuItem } from '../components/OverflowMenu';
 import { BrandMark } from '../components/BrandLogo';
 import { Avatar } from '../components/Avatar';
 import { computeTreeLayout, CARD_H, CARD_H_COMPACT, CARD_W, type TreeDensity } from '../features/tree/layout';
-import { exportTreeAsPng, printTreePoster, shareTreePoster } from '../features/tree/exportPng';
 import { JunctionNode } from '../features/tree/JunctionNode';
 import { GenLabelNode } from '../features/tree/GenLabelNode';
 import { ChildEdge } from '../features/tree/ChildEdge';
@@ -316,6 +316,7 @@ function TreeCanvas({
       panOnScroll={false}
       panOnDrag
       selectionOnDrag={false}
+      onlyRenderVisibleElements
       proOptions={{ hideAttribution: true }}
     >
       {!easyMode && (
@@ -560,6 +561,9 @@ export function TreePage() {
         title: t('site.title'),
         text: t('tree.shareText'),
       };
+      const { exportTreeAsPng, printTreePoster, shareTreePoster } = await import(
+        '../features/tree/exportPng'
+      );
       if (mode === 'png') {
         await exportTreeAsPng(opts);
         toast(t('tree.pngDone'), 'success');

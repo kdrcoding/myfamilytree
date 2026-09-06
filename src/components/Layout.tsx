@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { ChevronDown, LogOut, Moon, Settings, Sun } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -8,9 +8,13 @@ import { useT } from '../i18n/useT';
 import { MadeByKadir } from './MadeByKadir';
 import { BottomNav } from './BottomNav';
 import { PageSkeleton } from './PageSkeleton';
-import { WelcomeTour } from './WelcomeTour';
 import { BrandLogo } from './BrandLogo';
 import { LanguageMenuButton } from './LanguageSelect';
+import { StatusBanners } from './StatusBanners';
+
+const WelcomeTour = lazy(() =>
+  import('./WelcomeTour').then((m) => ({ default: m.WelcomeTour })),
+);
 
 export function Layout() {
   const { settings, toggleTheme } = useSettings();
@@ -28,6 +32,19 @@ export function Layout() {
   useEffect(() => {
     setMoreOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const warm = () => {
+      void import('../pages/TreePage');
+      void import('../pages/MembersPage');
+    };
+    const idleId = window.requestIdleCallback?.(warm, { timeout: 2500 });
+    if (idleId === undefined) {
+      const timer = window.setTimeout(warm, 600);
+      return () => window.clearTimeout(timer);
+    }
+    return () => window.cancelIdleCallback?.(idleId);
+  }, []);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -229,8 +246,11 @@ export function Layout() {
         )}
       </div>
 
+      <StatusBanners />
       <BottomNav />
-      <WelcomeTour />
+      <Suspense fallback={null}>
+        <WelcomeTour />
+      </Suspense>
     </div>
   );
 }

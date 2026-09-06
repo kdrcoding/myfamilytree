@@ -16,6 +16,7 @@ import { findFounders, fullName, prettyLabel } from '../utils/family';
 import { formatDate, formatMonthDay } from '../utils/dates';
 import { getUpcomingCelebrations, windowCelebrations } from '../utils/celebrations';
 import { downloadFamilyCalendarIcs } from '../utils/ics';
+import { setBirthdayModalOpen } from '../lib/firstRunHold';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { FAMILY_TIMEZONE, dateKeyInTimeZone, nowInTimeZone } from '../utils/timezone';
 import { fetchTelegramSettings } from '../lib/telegramBot';
@@ -84,7 +85,9 @@ export function HomePage() {
     );
     if (last === todayKey) return;
     saveJson(STORAGE_KEYS.birthdayNotified, todayKey);
+    setBirthdayModalOpen(true);
     setBdayPopupOpen(true);
+    return () => setBirthdayModalOpen(false);
   }, [todaysBirthdays, familyTz]);
 
   useEffect(() => {
@@ -221,7 +224,7 @@ export function HomePage() {
                           to={`/tree?person=${encodeURIComponent(b.person.id)}`}
                           className="home-list-item"
                         >
-                          <Avatar person={b.person} size="md" />
+                          <Avatar person={b.person} size="md" eager />
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-display font-semibold text-stone-900 dark:text-stone-100">
                               {fullName(b.person)}
@@ -351,7 +354,7 @@ export function HomePage() {
                       to={`/tree?person=${encodeURIComponent(person.id)}`}
                       className="home-list-item group !gap-4"
                     >
-                      <Avatar person={person} size="lg" />
+                      <Avatar person={person} size="lg" eager />
                       <div className="min-w-0 flex-1">
                         <p className="font-display font-semibold text-stone-900 dark:text-stone-100">
                           {fullName(person)}
@@ -401,7 +404,13 @@ export function HomePage() {
 
       {joinOpen && <JoinFamilyModal onClose={() => setJoinOpen(false)} />}
       {bdayPopupOpen && todaysBirthdays.length > 0 && (
-        <BirthdayTodayModal birthdays={todaysBirthdays} onClose={() => setBdayPopupOpen(false)} />
+        <BirthdayTodayModal
+          birthdays={todaysBirthdays}
+          onClose={() => {
+            setBdayPopupOpen(false);
+            setBirthdayModalOpen(false);
+          }}
+        />
       )}
     </div>
   );

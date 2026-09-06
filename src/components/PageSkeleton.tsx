@@ -1,6 +1,9 @@
+import { useT } from '../i18n/useT';
+
 export function PageSkeleton() {
+  const t = useT();
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8" aria-busy="true" aria-label="Loading page content">
+    <div className="flex-1 p-4 sm:p-6 lg:p-8" aria-busy="true" aria-label={t('page.loading')}>
       <div className="mx-auto max-w-7xl animate-pulse space-y-6">
         <div className="h-8 w-48 rounded-lg bg-stone-200 dark:bg-stone-700" />
         <div className="space-y-3">
