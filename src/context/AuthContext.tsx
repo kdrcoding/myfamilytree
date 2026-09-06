@@ -50,10 +50,22 @@ function applyOwnerName() {
 }
 
 function readDisplayName(): string {
-  return (
-    loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string')?.trim() ??
-    ''
+  const fromJson = loadJson<string>(
+    STORAGE_KEYS.displayName,
+    (v): v is string => typeof v === 'string',
   );
+  if (fromJson?.trim()) return fromJson.trim();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.displayName);
+    if (!raw) return '';
+    const trimmed = raw.trim().replace(/^["']|["']$/g, '');
+    if (trimmed.length >= 2 && !trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+      return trimmed;
+    }
+  } catch {
+    /* private mode */
+  }
+  return '';
 }
 
 function isFamilyAuthed(): boolean {
@@ -61,16 +73,35 @@ function isFamilyAuthed(): boolean {
     STORAGE_KEYS.familyAuthed,
     (v): v is string => typeof v === 'string',
   );
-  return stored === ACCESS.editorHash;
+  if (stored === ACCESS.editorHash) return true;
+  const legacy = loadJson<string>(AUTH_KEY, (v): v is string => typeof v === 'string');
+  return legacy === ACCESS.editorHash;
 }
 
-function markFamilyAuthed() {
+function persistFamilyAuth(name: string) {
+  saveJson(STORAGE_KEYS.displayName, name);
+  saveJson(STORAGE_KEYS.namedDevice, true);
   saveJson(STORAGE_KEYS.familyAuthed, ACCESS.editorHash);
+  saveJson(AUTH_KEY, ACCESS.editorHash);
+  if (!isFamilyAuthed()) {
+    removeKey(STORAGE_KEYS.familyCache);
+    removeKey(STORAGE_KEYS.photoUrls);
+    saveJson(STORAGE_KEYS.displayName, name);
+    saveJson(STORAGE_KEYS.familyAuthed, ACCESS.editorHash);
+    saveJson(AUTH_KEY, ACCESS.editorHash);
+  }
 }
 
 function restorePasswordEditor(): boolean {
   const name = readDisplayName();
-  return isFamilyAuthed() && name.length >= 2;
+  if (name.length < 2 || !isFamilyAuthed()) return false;
+  if (
+    loadJson<string>(STORAGE_KEYS.familyAuthed, (v): v is string => typeof v === 'string') !==
+    ACCESS.editorHash
+  ) {
+    saveJson(STORAGE_KEYS.familyAuthed, ACCESS.editorHash);
+  }
+  return true;
 }
 
 function hasOwnerSessionHint(): boolean {
@@ -107,19 +138,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
+    const adoptOwner = () => {
+      applyOwnerName();
+      removeKey(AUTH_KEY);
+      setRole('owner');
+      setReady(true);
+    };
+
+    const dropLeftoverOwnerJwt = () => {
+      if (supabase) void supabase.auth.signOut();
+    };
+
     const bootAuth = async () => {
       const stored = loadJson<string>(AUTH_KEY, (v): v is string => typeof v === 'string');
       if (stored && !supabase) {
         const restored = roleForHash(stored);
         if (restored === 'viewer' || restored === 'editor') {
-          removeKey(AUTH_KEY);
+          if (restored !== 'editor') removeKey(AUTH_KEY);
         } else {
           applyOwnerName();
           setRole('owner');
           setReady(true);
           return;
         }
-      } else if (stored && supabase) {
+      } else if (stored && supabase && roleForHash(stored) === 'owner') {
+        // Owner identity is the Supabase JWT, not this leftover hash.
         removeKey(AUTH_KEY);
       }
 
@@ -130,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { data } = await supabase.auth.getSession();
           if (cancelled) return;
           if (roleForEmail(data.session?.user.email) === 'owner') {
-            await supabase.auth.signOut();
+            dropLeftoverOwnerJwt();
             if (cancelled) return;
             setRole('editor');
           }
@@ -138,14 +181,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
+        if (roleForEmail(data.session?.user.email) === 'owner') {
+          adoptOwner();
+          return;
+        }
+      }
+
       const name = readDisplayName();
       if (readBirthdayPass() && name.length >= 2) {
-        const stillOpen = await birthdayPassStillValid({ keepOnNetworkError: false });
+        const stillOpen = await birthdayPassStillValid({ keepOnNetworkError: true });
         if (cancelled) return;
         if (stillOpen) {
           setRole('editor');
           setReady(true);
-          if (supabase) void supabase.auth.signOut();
+          dropLeftoverOwnerJwt();
           return;
         }
       }
@@ -162,20 +214,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
-        const fromSession = roleForEmail(session?.user.email);
-        if (fromSession === 'owner') {
-          applyOwnerName();
-          setRole('owner');
+      const ownerSession = roleForEmail(session?.user.email) === 'owner';
+
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (!ownerSession) return;
+        // A remembered family login wins over a leftover owner JWT.
+        if (restorePasswordEditor()) {
+          dropLeftoverOwnerJwt();
+          return;
         }
+        adoptOwner();
         return;
       }
+
       if (event === 'SIGNED_OUT') {
         if (restorePasswordEditor()) {
           setRole('editor');
           return;
         }
-        // Do not drop a family/birthday session just because we cleared an
+        if (readBirthdayPass() && readDisplayName().length >= 2) {
+          setRole((current) => (current === 'owner' ? 'editor' : current));
+          return;
+        }
+        // Do not drop a family/birthday session just because we cleared a
         // leftover owner JWT.
         setRole((current) => (current === 'owner' ? 'viewer' : current));
       }
@@ -242,14 +303,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const hash = await hashPassword(password);
       if (hash === ACCESS.ownerHash) {
-        const role = await signIn(password);
-        return role ? { ok: true, role } : { ok: false, reason: 'password' };
+        const nextRole = await signIn(password);
+        return nextRole ? { ok: true, role: nextRole } : { ok: false, reason: 'password' };
       }
       if (hash !== ACCESS.editorHash) return { ok: false, reason: 'password' };
 
-      saveJson(STORAGE_KEYS.displayName, trimmed);
-      saveJson(STORAGE_KEYS.namedDevice, true);
-      markFamilyAuthed();
+      persistFamilyAuth(trimmed);
       clearBirthdayPass();
       if (supabase) void supabase.auth.signOut();
       setRole('editor');
@@ -266,6 +325,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     saveJson(STORAGE_KEYS.displayName, trimmed);
     saveJson(STORAGE_KEYS.namedDevice, true);
     removeKey(STORAGE_KEYS.familyAuthed);
+    removeKey(AUTH_KEY);
     setRole('editor');
     if (supabase) void supabase.auth.signOut();
     return true;
