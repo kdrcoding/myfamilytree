@@ -5,7 +5,7 @@ import { usePrivacy } from '../hooks/usePrivacy';
 import { useLanguage, useT } from '../i18n/useT';
 import { countryLabel } from '../utils/countries';
 import { calculateAge, lifespan } from '../utils/dates';
-import { displayName } from '../utils/family';
+import { displayName, prettyLabel } from '../utils/family';
 import { Avatar } from './Avatar';
 import { DeceasedBadge, GenderBadge, GenerationBadge } from './badges';
 
@@ -35,7 +35,7 @@ export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps
 
   return (
     <article
-      className={`card group relative flex flex-col gap-3 p-4 transition-shadow hover:shadow-md ${
+      className={`card group relative flex h-full flex-col gap-3 p-4 transition-[box-shadow,transform,border-color] duration-200 ease-out hover:-translate-y-0.5 hover:border-emerald-700/20 hover:shadow-md dark:hover:border-emerald-600/30 ${
         person.isDeceased ? 'border-dashed' : ''
       }`}
     >
@@ -48,7 +48,7 @@ export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps
       <div className="flex items-start gap-3">
         <Avatar person={person} />
         <div className="min-w-0 flex-1">
-          <h3 className="truncate font-semibold text-stone-900 dark:text-stone-100">
+          <h3 className="truncate font-display font-semibold text-stone-900 dark:text-stone-100">
             {displayName(person)}
           </h3>
           <p className="text-xs text-stone-500 dark:text-stone-400">
@@ -72,7 +72,7 @@ export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps
         {(privacy.showCity() && person.city) || person.country ? (
           <li className="flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {[privacy.showCity() ? person.city : null, countryLabel(person.country, language)]
+            {[privacy.showCity() && person.city ? prettyLabel(person.city) : null, countryLabel(person.country, language)]
               .filter(Boolean)
               .join(', ')}
           </li>
@@ -80,7 +80,7 @@ export function PersonCard({ person, onOpen, onEdit, onDelete }: PersonCardProps
         {privacy.showOccupation() && person.occupation && (
           <li className="flex items-center gap-1.5">
             <Briefcase className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {person.occupation}
+            {prettyLabel(person.occupation)}
           </li>
         )}
         {person.childIds.length > 0 && (

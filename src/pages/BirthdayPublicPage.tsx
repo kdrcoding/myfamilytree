@@ -5,6 +5,7 @@ import { BirthdayWebCard } from '../components/BirthdayWebCard';
 import { BrandLogo } from '../components/BrandLogo';
 import { useSettings } from '../context/SettingsContext';
 import { useT } from '../i18n/useT';
+import { prettyLabel } from '../utils/family';
 import { isSupabaseConfigured } from '../lib/supabase';
 import {
   CARD_DESIGNS,
@@ -151,14 +152,19 @@ export function BirthdayPublicPage() {
   const expired = data?.error === 'expired';
 
   useEffect(() => {
+    const previous = document.title;
     if (person?.name) {
+      const shown = prettyLabel(person.name);
       document.title =
         when === 'yesterday'
-          ? `${person.name} · Oq-Ariq`
-          : `Tug‘ilgan kun, ${person.name}! · Oq-Ariq`;
+          ? `${shown} · Oq-Ariq`
+          : `Tug‘ilgan kun, ${shown}! · Oq-Ariq`;
     } else {
       document.title = 'Oq-Ariq OILASI';
     }
+    return () => {
+      document.title = previous || 'Oq-Ariq OILASI';
+    };
   }, [person?.name, when]);
 
   const langHeader = (

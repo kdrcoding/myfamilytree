@@ -3,7 +3,15 @@ import type { FamilyPerson } from '../types/family';
 export type WhoLang = 'uz' | 'en' | 'ru';
 
 function shortName(person: FamilyPerson): string {
-  return (person.nickname?.trim() || person.firstName).trim();
+  return prettyPersonName(person.nickname?.trim() || person.firstName);
+}
+
+function prettyPersonName(value: string): string {
+  return value.replace(/[A-Z]{2,}[a-z]*/g, (chunk) => {
+    const upper = chunk.match(/^[A-Z]+/)?.[0] ?? chunk;
+    const rest = chunk.slice(upper.length);
+    return upper[0] + upper.slice(1).toLowerCase() + rest;
+  });
 }
 
 function joinNames(names: string[], lang: WhoLang): string {

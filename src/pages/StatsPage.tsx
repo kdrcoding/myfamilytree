@@ -39,7 +39,7 @@ function StatCard({
         <p className="text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
           {label}
         </p>
-        <p className="mt-0.5 truncate text-xl font-bold text-stone-900 dark:text-stone-100">
+        <p className="mt-0.5 truncate font-display text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">
           {value}
         </p>
         {hint && <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{hint}</p>}
@@ -113,7 +113,7 @@ export function StatsPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
-      <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">{t('stats.title')}</h1>
+      <h1 className="font-display text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">{t('stats.title')}</h1>
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('stats.subtitle')}</p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

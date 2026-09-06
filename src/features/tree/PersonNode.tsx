@@ -6,7 +6,7 @@ import { useFamily } from '../../context/FamilyContext';
 import { usePrivacy } from '../../hooks/usePrivacy';
 import { useT } from '../../i18n/useT';
 import { lifespan } from '../../utils/dates';
-import { fullName } from '../../utils/family';
+import { fullName, prettyLabel } from '../../utils/family';
 import { Avatar } from '../../components/Avatar';
 import { DeceasedBadge, GenderBadge } from '../../components/badges';
 import { CARD_H, CARD_W } from './layout';
@@ -76,7 +76,9 @@ function PersonNodeComponent({ data, width, height }: NodeProps<PersonFlowNode>)
             {name}
           </span>
           {person.nickname && (
-            <span className="tree-person-nick tree-person-meta block truncate text-[13px] text-stone-400">“{person.nickname}”</span>
+            <span className="tree-person-nick tree-person-meta block truncate text-[13px] text-stone-400">
+              “{prettyLabel(person.nickname)}”
+            </span>
           )}
           <span className="tree-person-meta block truncate text-[13px] text-stone-500 dark:text-stone-400">
             {years || getLabel(person)}

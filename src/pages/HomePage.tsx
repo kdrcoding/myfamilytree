@@ -12,7 +12,7 @@ import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
 import { computeStats } from '../utils/stats';
-import { findFounders, fullName } from '../utils/family';
+import { findFounders, fullName, prettyLabel } from '../utils/family';
 import { formatDate, formatMonthDay } from '../utils/dates';
 import { getUpcomingCelebrations, windowCelebrations } from '../utils/celebrations';
 import { downloadFamilyCalendarIcs } from '../utils/ics';
@@ -180,7 +180,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <div className="mx-auto w-full max-w-3xl px-5 sm:px-8 -mt-6 relative z-10">
+      <div className="mx-auto w-full max-w-3xl px-5 sm:px-8 -mt-8 relative z-10">
         {todaysBirthdays.length > 0 && <HomeBirthdayCelebration birthdays={todaysBirthdays} />}
 
         {celebrations.length > 0 && (
@@ -223,7 +223,7 @@ export function HomePage() {
                         >
                           <Avatar person={b.person} size="md" />
                           <div className="min-w-0 flex-1">
-                            <p className="truncate font-semibold text-stone-900 dark:text-stone-100">
+                            <p className="truncate font-display font-semibold text-stone-900 dark:text-stone-100">
                               {fullName(b.person)}
                             </p>
                             <p className="text-sm text-stone-500 dark:text-stone-400">
@@ -276,7 +276,7 @@ export function HomePage() {
                           <Avatar person={a.b} size="md" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-semibold text-stone-900 dark:text-stone-100">
+                          <p className="truncate font-display font-semibold text-stone-900 dark:text-stone-100">
                             {fullName(a.a)} & {fullName(a.b)}
                           </p>
                           <p className="text-sm text-stone-500 dark:text-stone-400">
@@ -353,20 +353,20 @@ export function HomePage() {
                     >
                       <Avatar person={person} size="lg" />
                       <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-stone-900 dark:text-stone-100">
+                        <p className="font-display font-semibold text-stone-900 dark:text-stone-100">
                           {fullName(person)}
                         </p>
                         {privacy.showBirthDate() && person.birthDate && (
                           <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
                             {t('home.born', { date: formatDate(person.birthDate, language) })}
                             {person.country
-                              ? ` · ${privacy.showCity() && person.city ? person.city + ', ' : ''}${person.country}`
+                              ? ` · ${privacy.showCity() && person.city ? prettyLabel(person.city) + ', ' : ''}${person.country}`
                               : ''}
                           </p>
                         )}
                         {privacy.showOccupation() && person.occupation && (
                           <p className="text-sm text-stone-500 dark:text-stone-400">
-                            {person.occupation}
+                            {prettyLabel(person.occupation)}
                           </p>
                         )}
                       </div>

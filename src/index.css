@@ -444,6 +444,9 @@ html.dark .tree-canvas-surface {
     0 1px 2px rgb(28 25 23 / 0.07),
     0 6px 16px rgb(6 78 59 / 0.10) !important;
 }
+.tree-person-name {
+  font-family: var(--font-display), ui-serif, Georgia, serif;
+}
 html.dark .tree-person-card {
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.35) !important;
 }
@@ -598,12 +601,18 @@ html:not(.dark) .home-hero {
   background:
     radial-gradient(ellipse 90% 70% at 12% 18%, rgb(16 185 129 / 0.18), transparent 58%),
     radial-gradient(ellipse 70% 55% at 88% 80%, rgb(120 113 108 / 0.10), transparent 55%),
-    linear-gradient(160deg, #d7e6dc 0%, #cfe0d5 38%, #d9e4d8 68%, #e2ddd4 100%);
+    linear-gradient(160deg, #d7e6dc 0%, #cfe0d5 38%, #d9e4d8 72%, #e7efe9 100%);
   color: #1c1917;
 }
 
 html:not(.dark) .home-hero::after {
-  background: linear-gradient(to top, rgb(28 25 23 / 0.06), transparent);
+  height: 7rem;
+  background: linear-gradient(to top, #e7efe9 12%, transparent);
+}
+
+html.dark .home-hero::after {
+  height: 5.5rem;
+  background: linear-gradient(to top, #0c0a09, transparent);
 }
 
 html:not(.dark) .home-hero__pedigree {

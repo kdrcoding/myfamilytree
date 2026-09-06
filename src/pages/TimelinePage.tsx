@@ -94,7 +94,7 @@ export function TimelinePage() {
         <p className="text-sm font-semibold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
           {t('timeline.kicker')}
         </p>
-        <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-50">
+        <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
           {t('timeline.title')}
         </h1>
         <p className="mt-2 text-stone-600 dark:text-stone-400">{t('timeline.intro')}</p>

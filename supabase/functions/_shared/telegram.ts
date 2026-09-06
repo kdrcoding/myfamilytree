@@ -96,8 +96,16 @@ export type FamilyMemberRow = {
 
 export function displayName(m: FamilyMemberRow): string {
   const nick = m.nickname?.trim();
-  if (nick) return nick;
-  return `${m.first_name} ${m.last_name}`.trim() || 'Family member';
+  if (nick) return prettyPersonName(nick);
+  return prettyPersonName(`${m.first_name} ${m.last_name}`.trim() || 'Family member');
+}
+
+function prettyPersonName(value: string): string {
+  return value.replace(/[A-Z]{2,}[a-z]*/g, (chunk) => {
+    const upper = chunk.match(/^[A-Z]+/)?.[0] ?? chunk;
+    const rest = chunk.slice(upper.length);
+    return upper[0] + upper.slice(1).toLowerCase() + rest;
+  });
 }
 
 /** Parse YYYY-MM-DD only — same rule as the app birthdays helper. */

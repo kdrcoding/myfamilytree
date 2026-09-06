@@ -18,7 +18,7 @@ import { usePrivacy } from '../hooks/usePrivacy';
 import { useLanguage, useT } from '../i18n/useT';
 import { countryLabel } from '../utils/countries';
 import { calculateAge, formatDate } from '../utils/dates';
-import { displayName, fullName, isDivorced, sortByBirth } from '../utils/family';
+import { displayName, fullName, isDivorced, prettyLabel, sortByBirth } from '../utils/family';
 import { Avatar } from './Avatar';
 import { DeceasedBadge, GenderBadge, GenerationBadge } from './badges';
 import { MemoriesSection } from './MemoriesSection';
@@ -184,7 +184,10 @@ export function PersonDetailsModal({
     .filter(Boolean) as FamilyPerson[];
 
   const age = calculateAge(person.birthDate, person.deathDate);
-  const location = [privacy.showCity() ? person.city : null, countryLabel(person.country, language)]
+  const location = [
+    privacy.showCity() && person.city ? prettyLabel(person.city) : null,
+    countryLabel(person.country, language),
+  ]
     .filter(Boolean)
     .join(', ');
 
@@ -195,7 +198,7 @@ export function PersonDetailsModal({
         <div className="min-w-0 flex-1">
           <h2
             id="person-details-title"
-            className="text-xl font-bold text-stone-900 dark:text-stone-100"
+            className="text-xl font-display font-semibold tracking-tight text-stone-900 dark:text-stone-100"
           >
             {displayName(person)}
           </h2>
@@ -249,7 +252,7 @@ export function PersonDetailsModal({
             icon={<Briefcase className="h-4 w-4" aria-hidden />}
             label={t('person.occupation')}
           >
-            {person.occupation}
+            {prettyLabel(person.occupation)}
           </DetailRow>
         )}
         {children.length > 0 && (

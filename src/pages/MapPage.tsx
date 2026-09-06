@@ -156,7 +156,7 @@ export function MapPage() {
     <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-6 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+          <h1 className="flex items-center gap-2 font-display text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
             <MapPin className="h-6 w-6 text-emerald-600" aria-hidden /> {t('map.title')}
           </h1>
           <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('map.intro')}</p>

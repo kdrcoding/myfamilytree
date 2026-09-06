@@ -10,7 +10,7 @@ export function NotFoundPage() {
         <TreePine className="h-12 w-12 text-stone-300 dark:text-stone-600" aria-hidden />
       </div>
       <div>
-        <h1 className="text-3xl font-bold text-stone-900 dark:text-stone-50">{t('notfound.title')}</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">{t('notfound.title')}</h1>
         <p className="mt-2 max-w-md text-sm text-stone-500 dark:text-stone-400">{t('notfound.text')}</p>
       </div>
       <Link to="/" className="btn-primary">

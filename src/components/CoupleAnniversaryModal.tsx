@@ -129,7 +129,7 @@ export function CoupleAnniversaryModal({ a, b, onClose, onOpenPerson }: CoupleAn
             <Heart className="h-6 w-6" aria-hidden />
           )}
         </span>
-        <h2 id="couple-title" className="mt-3 text-lg font-bold text-stone-900 dark:text-stone-50">
+        <h2 id="couple-title" className="mt-3 font-display text-lg font-semibold text-stone-900 dark:text-stone-50">
           {t('couple.title')}
         </h2>
         <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{t('couple.subtitle')}</p>

@@ -106,7 +106,7 @@ export function PersonSearch({
                 onClick={() => select(person)}
               >
                 <Avatar person={person} size={large ? 'md' : 'sm'} />
-                <span className={`font-medium ${large ? 'text-base' : 'text-sm'}`}>
+                <span className={`font-display font-medium ${large ? 'text-base' : 'text-sm'}`}>
                   {fullName(person)}
                 </span>
               </button>

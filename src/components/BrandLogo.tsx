@@ -80,7 +80,7 @@ export function BrandLogo({
     <span className={`inline-flex min-w-0 items-center gap-2.5 ${className}`}>
       <BrandMark size={size} title={title} />
       {wordmark && (
-        <span className="min-w-0 truncate text-base font-bold tracking-tight text-stone-900 sm:text-lg dark:text-stone-50">
+        <span className="min-w-0 truncate font-display text-base font-semibold tracking-tight text-stone-900 sm:text-lg dark:text-stone-50">
           {title}
         </span>
       )}

@@ -16,6 +16,7 @@ import {
   type PublicBirthday,
 } from '../features/birthday/publicApi';
 import { webBirthdayWish } from '../features/birthday/pageWishes';
+import { prettyLabel } from '../utils/family';
 
 const BIRTHDAY_CARD_CSS = `
   .bday-web .bday-wash {
@@ -31,7 +32,11 @@ const BIRTHDAY_CARD_CSS = `
   .bday-web .bday-from { background: color-mix(in srgb, var(--bday-accent) 14%, white); color: var(--bday-ink); }
   .bday-web .bday-kicker { color: var(--bday-muted); }
   .bday-web .bday-title { color: var(--bday-ink); }
-  .bday-web .bday-who { color: var(--bday-muted); }
+  .bday-web .bday-who {
+    color: var(--bday-ink);
+    background: color-mix(in srgb, var(--bday-accent) 10%, white);
+    border-color: color-mix(in srgb, var(--bday-accent) 22%, #e7e5e4);
+  }
   .bday-web .bday-gender-note { color: var(--bday-muted); }
   .bday-web .bday-wish { color: color-mix(in srgb, var(--bday-ink) 78%, #57534e); }
   .bday-web .bday-age { background: var(--bday-accent); box-shadow: 0 10px 24px color-mix(in srgb, var(--bday-accent) 28%, transparent); }
@@ -165,14 +170,16 @@ export function BirthdayWebCard({
     setPhotoFailed(false);
   }, [person.photoUrl]);
 
+  const shownName = prettyLabel(person.name);
+  const whoLine = person.whoLine ? prettyLabel(person.whoLine) : null;
   const headline = useMemo(() => {
     if (when === 'yesterday') {
       if (gender === 'female') return t('bday.yesterdayHer');
       if (gender === 'male') return t('bday.yesterdayHis');
-      return t('bday.yesterdayHeadline', { name: person.name });
+      return t('bday.yesterdayHeadline', { name: shownName });
     }
-    return t('bday.headline', { name: person.name });
-  }, [person.name, when, gender, t]);
+    return t('bday.headline', { name: shownName });
+  }, [shownName, when, gender, t]);
 
   const photoSize = compact
     ? 'h-32 w-32 sm:h-40 sm:w-40'
@@ -188,6 +195,7 @@ export function BirthdayWebCard({
       style={paletteStyle(gender)}
     >
       <div className="bday-wash pointer-events-none absolute inset-0" />
+      {!compact && (
       <div className="bday-confetti pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
         {stickers.map((sticker, i) => (
           <span
@@ -205,6 +213,7 @@ export function BirthdayWebCard({
           </span>
         ))}
       </div>
+      )}
       <span className="bday-float pointer-events-none absolute left-[6%] top-[14%] text-4xl" aria-hidden>
         {stickers[0]}
       </span>
@@ -248,7 +257,7 @@ export function BirthdayWebCard({
           } ${header ? 'mt-6' : ''}`}
         >
           <Bunting colors={palette.confetti} />
-          <p className="bday-kicker inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.28em]">
+          <p className="bday-kicker inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.16em]">
             <Sparkles className="h-3.5 w-3.5" aria-hidden />
             {when === 'yesterday' ? t('bday.yesterdayKicker') : t('bday.kicker')}
           </p>
@@ -270,7 +279,7 @@ export function BirthdayWebCard({
             {photoSrc ? (
               <img
                 src={photoSrc}
-                alt={person.name}
+                alt={shownName}
                 referrerPolicy="no-referrer"
                 onError={() => setPhotoFailed(true)}
                 className={`relative z-10 rounded-full object-cover ring-4 ring-white ${photoSize}`}
@@ -279,7 +288,7 @@ export function BirthdayWebCard({
               <div
                 className={`bday-fallback relative z-10 flex items-center justify-center rounded-full text-5xl font-bold text-white ring-4 ring-white ${photoSize}`}
               >
-                {person.name.slice(0, 1).toUpperCase()}
+                {shownName.slice(0, 1).toUpperCase()}
               </div>
             )}
             <span className="bday-float pointer-events-none absolute -bottom-1 -right-4 z-20 text-3xl drop-shadow-sm" aria-hidden>
@@ -295,10 +304,12 @@ export function BirthdayWebCard({
               compact ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-4xl'
             }`}
           >
-            {when === 'yesterday' ? t('bday.yesterdayHeadline', { name: person.name }) : headline}
+            {when === 'yesterday' ? t('bday.yesterdayHeadline', { name: shownName }) : headline}
           </h1>
-          {person.whoLine && (
-            <p className="bday-who mt-2 text-sm font-semibold tracking-tight">{person.whoLine}</p>
+          {whoLine && (
+            <p className="bday-who mt-3 inline-flex items-center rounded-full border px-3 py-1 text-[13px] font-medium tracking-tight">
+              {whoLine}
+            </p>
           )}
           {when === 'yesterday' && (gender === 'female' || gender === 'male') && (
             <p className="bday-gender-note mt-2 text-sm font-semibold">{headline}</p>
@@ -314,7 +325,7 @@ export function BirthdayWebCard({
           )}
 
           <p className={`bday-wish mx-auto mt-5 max-w-sm leading-relaxed ${compact ? 'text-sm' : 'text-base'}`}>
-            {webBirthdayWish(person.name, person.age ?? null, when) ||
+            {webBirthdayWish(shownName, person.age ?? null, when) ||
               person.wish ||
               (when === 'yesterday' ? t('bday.yesterdayWish') : t('bday.wish'))}
           </p>
@@ -336,7 +347,7 @@ export function BirthdayWebCard({
               <ul className="mt-3 flex flex-wrap gap-2">
                 {cheers.map((c, i) => (
                   <li key={`${c.name}-${i}`} className="bday-chip rounded-full border px-3 py-1 text-sm">
-                    {c.name}
+                    {prettyLabel(c.name)}
                   </li>
                 ))}
               </ul>

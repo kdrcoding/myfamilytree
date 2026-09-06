@@ -108,7 +108,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
                 🎂 {t('bday.kicker')}
               </p>
             )}
-            <h1 className="mt-4 text-xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+            <h1 className="mt-4 font-display text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
               {t('gate.welcomeTitle')}
             </h1>
             <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">

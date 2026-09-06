@@ -134,7 +134,7 @@ export function RelatedPage() {
         <p className="text-sm font-semibold uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
           {t('related.kicker')}
         </p>
-        <h1 className="mt-1 flex items-center gap-2 text-3xl font-extrabold tracking-tight text-stone-900 dark:text-stone-50">
+        <h1 className="mt-1 flex items-center gap-2 font-display text-3xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
           <GitBranch className="h-8 w-8 text-emerald-600" aria-hidden />
           {t('related.title')}
         </h1>
@@ -178,7 +178,7 @@ export function RelatedPage() {
             {personA && <Avatar person={personA} size="lg" />}
             {personB && <Avatar person={personB} size="lg" />}
           </div>
-          <p className="mt-4 text-xl font-bold leading-snug text-stone-900 dark:text-stone-100 sm:text-2xl">
+          <p className="mt-4 font-display text-xl font-semibold leading-snug text-stone-900 dark:text-stone-100 sm:text-2xl">
             {result.sentence}
           </p>
         </section>
@@ -199,7 +199,7 @@ function SelectedPerson({
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 p-3 dark:bg-emerald-950/40">
       <Avatar person={person} size="md" />
-      <p className="min-w-0 flex-1 truncate text-lg font-semibold">{fullName(person)}</p>
+      <p className="min-w-0 flex-1 truncate font-display text-lg font-semibold">{fullName(person)}</p>
       <button type="button" className="btn-secondary !px-3" onClick={onClear}>
         {clearLabel}
       </button>

@@ -131,15 +131,27 @@ export function relationshipDescriptor(
 /** Best available name: "First Last", falling back to the nickname. */
 export function fullName(person: FamilyPerson): string {
   const name = `${person.firstName} ${person.lastName}`.trim();
-  return name || person.nickname?.trim() || 'Unnamed';
+  return prettyLabel(name || person.nickname?.trim() || 'Unnamed');
 }
 
 export function displayName(person: FamilyPerson): string {
   const name = `${person.firstName} ${person.lastName}`.trim();
-  if (!name) return person.nickname?.trim() || 'Unnamed';
+  if (!name) return prettyLabel(person.nickname?.trim() || 'Unnamed');
   return person.nickname
-    ? `${person.firstName} "${person.nickname}" ${person.lastName}`.trim()
-    : name;
+    ? prettyLabel(`${person.firstName} "${person.nickname}" ${person.lastName}`.trim())
+    : prettyLabel(name);
+}
+
+/**
+ * Many relatives were entered in ALL CAPS. Show those Latin words in title
+ * case on screen without changing the saved data.
+ */
+export function prettyLabel(value: string): string {
+  return value.replace(/[A-Z]{2,}[a-z]*/g, (chunk) => {
+    const upper = chunk.match(/^[A-Z]+/)?.[0] ?? chunk;
+    const rest = chunk.slice(upper.length);
+    return upper[0] + upper.slice(1).toLowerCase() + rest;
+  });
 }
 
 export function initials(person: FamilyPerson): string {
