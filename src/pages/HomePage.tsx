@@ -1,9 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowRight, CalendarPlus, UserRoundPlus } from 'lucide-react';
+import {
+  ArrowRight,
+  CalendarPlus,
+  GitBranch,
+  Globe,
+  Heart,
+  HeartHandshake,
+  History,
+  MapPinned,
+  TreePine,
+  UserRoundPlus,
+  Users,
+} from 'lucide-react';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { BirthdayTodayModal } from '../components/BirthdayTodayModal';
 import { HomeBirthdayCelebration } from '../components/HomeBirthdayCelebration';
+import { HomeHeroAtmosphere, HomeSectionRule } from '../components/HomeDecor';
 import { PersonSearch } from '../components/PersonSearch';
 import { BrandMark } from '../components/BrandLogo';
 import { useFamily } from '../context/FamilyContext';
@@ -108,31 +121,30 @@ export function HomePage() {
         ? t('home.bdayTomorrow')
         : t('home.bdayInDays', { n: daysUntil });
 
+  const faces = useMemo(() => {
+    const withPhoto = people.filter((p) => Boolean(p.photo));
+    const rest = people.filter((p) => !p.photo);
+    return [...withPhoto, ...rest].slice(0, 14);
+  }, [people]);
+  const moreFaces = Math.max(0, people.length - faces.length);
+
+  const paths = [
+    { to: '/tree', title: t('nav.tree'), hint: t('home.pathTreeHint'), kind: 'tree' as const, Icon: TreePine },
+    { to: '/members', title: t('nav.members'), hint: t('home.pathMembersHint'), kind: 'members' as const, Icon: Users },
+    { to: '/map', title: t('nav.map'), hint: t('home.pathMapHint'), kind: 'map' as const, Icon: MapPinned },
+    { to: '/timeline', title: t('nav.timeline'), hint: t('home.pathTimelineHint'), kind: 'timeline' as const, Icon: History },
+    { to: '/related', title: t('home.related'), hint: t('home.pathRelatedHint'), kind: 'related' as const, Icon: HeartHandshake },
+  ];
+
   return (
     <div className="home-page">
       <section
         className={`home-hero overflow-hidden text-stone-50 ${todaysBirthdays.length > 0 ? 'home-hero--celebrate' : ''}`}
         aria-labelledby="home-brand"
       >
-        <div className="home-hero__atmosphere" aria-hidden>
-          <svg className="home-hero__pedigree" viewBox="0 0 420 420" fill="none">
-            <path
-              d="M210 48v72M210 120L96 210M210 120l114 90M96 210v78M324 210v78M96 288L48 360M96 288l48 72M324 288l-48 72M324 288l48 72"
-              stroke="currentColor"
-              strokeWidth="1.25"
-              strokeLinecap="round"
-            />
-            <circle cx="210" cy="42" r="14" fill="currentColor" opacity="0.55" />
-            <circle cx="96" cy="210" r="11" fill="currentColor" opacity="0.4" />
-            <circle cx="324" cy="210" r="11" fill="currentColor" opacity="0.4" />
-            <circle cx="48" cy="360" r="9" fill="currentColor" opacity="0.28" />
-            <circle cx="144" cy="360" r="9" fill="currentColor" opacity="0.28" />
-            <circle cx="276" cy="360" r="9" fill="currentColor" opacity="0.28" />
-            <circle cx="372" cy="360" r="9" fill="currentColor" opacity="0.28" />
-          </svg>
-        </div>
+        <HomeHeroAtmosphere />
 
-        <div className="relative mx-auto max-w-3xl px-5 pb-14 pt-10 sm:px-8 sm:pb-16 sm:pt-14">
+        <div className="relative mx-auto max-w-3xl px-5 pb-16 pt-10 sm:px-8 sm:pb-20 sm:pt-14">
           <div className="home-hero__mark">
             <BrandMark size="lg" title={t('site.title')} className="!h-[4.5rem] !w-[4.5rem] !rounded-[1.25rem] shadow-lg ring-1 ring-white/10" />
           </div>
@@ -147,8 +159,9 @@ export function HomePage() {
           >
             {t('site.title')}
           </h1>
+          <HomeSectionRule />
 
-          <p className="home-hero__intro mt-4 max-w-xl text-base leading-relaxed text-stone-200/90 sm:text-lg">
+          <p className="home-hero__intro mt-5 max-w-xl text-base leading-relaxed text-stone-200/90 sm:text-lg">
             {todaysBirthdays.length === 1
               ? t('home.bdayPopupTitleOne', { name: fullName(todaysBirthdays[0]!.person) })
               : todaysBirthdays.length > 1
@@ -158,7 +171,7 @@ export function HomePage() {
                   : t('home.intro')}
           </p>
 
-          <div className="home-hero__search relative z-20 mt-8 max-w-lg">
+          <div className="home-hero__search home-hero__jewel relative z-20 mt-8 max-w-lg">
             <p className="mb-2 text-sm font-medium text-emerald-100/80">{t('home.searchTitle')}</p>
             <PersonSearch large placeholder={t('home.searchPlaceholder')} />
           </div>
@@ -180,11 +193,66 @@ export function HomePage() {
               {t('home.addSelf')}
             </button>
           </div>
+
+          {faces.length > 0 && (
+            <div className="home-hero__faces mt-10">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-100/70">
+                {t('home.facesTitle')}
+              </p>
+              <div className="home-faces">
+                {faces.map((person, i) => (
+                  <Link
+                    key={person.id}
+                    to={`/tree?person=${encodeURIComponent(person.id)}`}
+                    className="home-face"
+                    style={{ zIndex: faces.length - i }}
+                    title={fullName(person)}
+                  >
+                    <Avatar person={person} size="sm" eager={i < 6} />
+                  </Link>
+                ))}
+                {moreFaces > 0 && (
+                  <span className="home-face home-face--more" title={t('home.facesMore', { n: moreFaces })}>
+                    +{moreFaces}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
       <div className="mx-auto w-full max-w-3xl px-5 sm:px-8 -mt-8 relative z-10">
         {todaysBirthdays.length > 0 && <HomeBirthdayCelebration birthdays={todaysBirthdays} />}
+
+        <section className="home-section mt-10 sm:mt-12" aria-labelledby="home-paths">
+          <div className="mb-4 text-center">
+            <h2
+              id="home-paths"
+              className="font-display text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-50 sm:text-2xl"
+            >
+              {t('home.pathsTitle')}
+            </h2>
+            <HomeSectionRule />
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-stone-500 dark:text-stone-400">
+              {t('home.pathsIntro')}
+            </p>
+          </div>
+          <div className="home-paths">
+            {paths.map(({ to, title, hint, kind, Icon }) => (
+              <Link key={to} to={to} className={`home-path home-path--${kind}`}>
+                <span className="home-path__icon">
+                  <Icon className="h-5 w-5" aria-hidden />
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-display text-base font-semibold">{title}</span>
+                  <span className="mt-0.5 block text-xs leading-relaxed opacity-80">{hint}</span>
+                </span>
+                <ArrowRight className="home-path__arrow h-4 w-4 shrink-0" aria-hidden />
+              </Link>
+            ))}
+          </div>
+        </section>
 
         {celebrations.length > 0 && (
           <section className="home-section mt-8 sm:mt-10" aria-labelledby="home-celebrations">
@@ -318,16 +386,14 @@ export function HomePage() {
             className="home-section mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4"
           >
             {[
-              { icon: '👥', label: t('home.statMembers'), value: stats.total },
-              { icon: '🌿', label: t('home.statGenerations'), value: stats.generations },
-              { icon: '❤️', label: t('home.statLiving'), value: stats.living },
-              { icon: '🌍', label: t('home.statCountries'), value: stats.countries.length },
+              { Icon: Users, label: t('home.statMembers'), value: stats.total, tint: 'members' },
+              { Icon: GitBranch, label: t('home.statGenerations'), value: stats.generations, tint: 'gens' },
+              { Icon: Heart, label: t('home.statLiving'), value: stats.living, tint: 'living' },
+              { Icon: Globe, label: t('home.statCountries'), value: stats.countries.length, tint: 'places' },
             ].map((item) => (
-              <div key={item.label} className="home-stat-card">
-                <span className="text-lg" aria-hidden>
-                  {item.icon}
-                </span>
-                <p className="mt-1.5 font-display text-2xl font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
+              <div key={item.label} className={`home-stat-card home-stat-card--${item.tint}`}>
+                <item.Icon className="home-stat-card__icon h-5 w-5" aria-hidden />
+                <p className="mt-2 font-display text-2xl font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
                   {item.value}
                 </p>
                 <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">

@@ -580,6 +580,64 @@ html.dark .tree-person-card {
   overflow: hidden;
 }
 
+.home-hero__glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(40px);
+  opacity: 0.55;
+}
+
+.home-hero__glow--a {
+  width: 18rem;
+  height: 18rem;
+  left: -4rem;
+  top: -3rem;
+  background: rgb(52 211 153 / 0.28);
+}
+
+.home-hero__glow--b {
+  width: 16rem;
+  height: 16rem;
+  right: -3rem;
+  top: 18%;
+  background: rgb(251 191 36 / 0.14);
+}
+
+.home-hero__glow--c {
+  width: 22rem;
+  height: 14rem;
+  left: 20%;
+  bottom: -4rem;
+  background: rgb(16 185 129 / 0.18);
+}
+
+.home-hero__pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.22;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgb(167 243 208 / 0.35) 1px, transparent 0);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 20%, transparent 75%);
+}
+
+.home-hero__filigree {
+  position: absolute;
+  width: 7.5rem;
+  height: 7.5rem;
+  color: rgb(253 230 138 / 0.38);
+}
+
+.home-hero__filigree--tl {
+  top: 0.6rem;
+  left: 0.4rem;
+}
+
+.home-hero__filigree--tr {
+  top: 0.6rem;
+  right: 0.4rem;
+}
+
 .home-hero__pedigree {
   position: absolute;
   right: -10%;
@@ -589,6 +647,194 @@ html.dark .tree-person-card {
   color: rgb(167 243 208 / 0.10);
   transform: translateY(-48%);
 }
+
+.home-hero__motes {
+  position: absolute;
+  inset: 0;
+}
+
+.home-hero__mote {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgb(253 230 138 / 0.55);
+  animation: home-mote 9s ease-in-out infinite;
+}
+
+.home-hero__mote--1 { left: 12%; top: 22%; animation-delay: 0s; }
+.home-hero__mote--2 { left: 28%; top: 68%; animation-delay: 1.2s; width: 3px; height: 3px; }
+.home-hero__mote--3 { left: 62%; top: 18%; animation-delay: 2.1s; }
+.home-hero__mote--4 { left: 78%; top: 54%; animation-delay: 3.4s; width: 4px; height: 4px; }
+
+@keyframes home-mote {
+  0%, 100% { transform: translateY(0); opacity: 0.25; }
+  50% { transform: translateY(-10px); opacity: 0.8; }
+}
+
+.home-hero__jewel {
+  padding: 0.85rem 0.9rem 1rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  background: rgb(255 255 255 / 0.06);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 18px 40px -24px rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(10px);
+}
+
+.home-faces {
+  display: flex;
+  align-items: center;
+  padding-left: 0.25rem;
+}
+
+.home-face {
+  margin-left: -0.55rem;
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px rgb(15 47 37 / 0.85);
+  transition: transform 0.2s ease, z-index 0s;
+}
+
+.home-face:hover,
+.home-face:focus-visible {
+  transform: translateY(-3px) scale(1.06);
+  z-index: 30 !important;
+}
+
+.home-face--more {
+  display: inline-flex;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.55rem;
+  background: rgb(6 78 59 / 0.85);
+  color: #ecfdf5;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.home-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+  color: rgb(253 230 138 / 0.7);
+}
+
+.home-hero .home-rule {
+  max-width: 14rem;
+}
+
+.home-section .home-rule {
+  justify-content: center;
+  color: rgb(5 122 85 / 0.55);
+}
+
+.home-rule__line {
+  display: block;
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+}
+
+.home-rule__gem {
+  width: 1.75rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.home-paths {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .home-paths {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.home-path {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 5.25rem;
+  padding: 1rem 1.05rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgb(28 25 23 / 0.08);
+  text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.home-path:hover,
+.home-path:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px -18px rgb(28 25 23 / 0.35);
+}
+
+.home-path__icon {
+  display: inline-flex;
+  height: 2.6rem;
+  width: 2.6rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.85rem;
+}
+
+.home-path__arrow {
+  margin-left: auto;
+  opacity: 0.45;
+}
+
+.home-path--tree {
+  background: linear-gradient(145deg, #ecfdf5, #d1fae5 55%, #f0fdf4);
+  color: #064e3b;
+}
+.home-path--tree .home-path__icon { background: #047857; color: #ecfdf5; }
+
+.home-path--members {
+  background: linear-gradient(145deg, #fff7ed, #ffedd5 55%, #fffbeb);
+  color: #7c2d12;
+}
+.home-path--members .home-path__icon { background: #c2410c; color: #fff7ed; }
+
+.home-path--map {
+  background: linear-gradient(145deg, #e0f2fe, #bae6fd 55%, #f0f9ff);
+  color: #0c4a6e;
+}
+.home-path--map .home-path__icon { background: #0369a1; color: #e0f2fe; }
+
+.home-path--timeline {
+  background: linear-gradient(145deg, #fef3c7, #fde68a 55%, #fffbeb);
+  color: #78350f;
+}
+.home-path--timeline .home-path__icon { background: #b45309; color: #fffbeb; }
+
+.home-path--related {
+  background: linear-gradient(145deg, #fce7f3, #fbcfe8 55%, #fff1f2);
+  color: #9d174d;
+}
+.home-path--related .home-path__icon { background: #be123c; color: #fff1f2; }
+
+html.dark .home-path--tree { background: linear-gradient(145deg, #064e3b, #022c22); color: #d1fae5; border-color: rgb(167 243 208 / 0.12); }
+html.dark .home-path--members { background: linear-gradient(145deg, #7c2d12, #431407); color: #ffedd5; border-color: rgb(253 186 116 / 0.14); }
+html.dark .home-path--map { background: linear-gradient(145deg, #0c4a6e, #082f49); color: #e0f2fe; border-color: rgb(125 211 252 / 0.14); }
+html.dark .home-path--timeline { background: linear-gradient(145deg, #78350f, #451a03); color: #fde68a; border-color: rgb(252 211 77 / 0.14); }
+html.dark .home-path--related { background: linear-gradient(145deg, #9d174d, #4c0519); color: #fce7f3; border-color: rgb(251 113 133 / 0.16); }
+
+.home-stat-card__icon {
+  color: #047857;
+}
+
+.home-stat-card--members { background-image: radial-gradient(circle at 90% 0%, rgb(16 185 129 / 0.14), transparent 46%); }
+.home-stat-card--gens { background-image: radial-gradient(circle at 90% 0%, rgb(245 158 11 / 0.16), transparent 46%); }
+.home-stat-card--living { background-image: radial-gradient(circle at 90% 0%, rgb(244 63 94 / 0.12), transparent 46%); }
+.home-stat-card--places { background-image: radial-gradient(circle at 90% 0%, rgb(14 165 233 / 0.14), transparent 46%); }
+.home-stat-card--gens .home-stat-card__icon { color: #b45309; }
+.home-stat-card--living .home-stat-card__icon { color: #be123c; }
+.home-stat-card--places .home-stat-card__icon { color: #0369a1; }
 
 @media (min-width: 640px) {
   .home-hero__pedigree {
@@ -618,6 +864,37 @@ html.dark .home-hero::after {
 
 html:not(.dark) .home-hero__pedigree {
   color: rgb(6 78 59 / 0.14);
+}
+
+html:not(.dark) .home-hero__filigree {
+  color: rgb(180 83 9 / 0.38);
+}
+
+html:not(.dark) .home-hero__pattern {
+  opacity: 0.28;
+  background-image: radial-gradient(circle at 1px 1px, rgb(6 78 59 / 0.22) 1px, transparent 0);
+}
+
+html:not(.dark) .home-hero__jewel {
+  border-color: rgb(6 78 59 / 0.14);
+  background: rgb(255 255 255 / 0.55);
+  box-shadow: 0 16px 36px -22px rgb(6 78 59 / 0.28);
+}
+
+html:not(.dark) .home-face {
+  box-shadow: 0 0 0 2px #d7e6dc;
+}
+
+html:not(.dark) .home-face--more {
+  background: #047857;
+}
+
+html:not(.dark) .home-hero__faces p {
+  color: rgb(6 95 70 / 0.72) !important;
+}
+
+html.dark .home-section .home-rule {
+  color: rgb(167 243 208 / 0.45);
 }
 
 html:not(.dark) .home-hero__kicker {
@@ -697,7 +974,8 @@ html:not(.dark) .home-hero__actions button:hover {
 .home-hero__title,
 .home-hero__intro,
 .home-hero__search,
-.home-hero__actions {
+.home-hero__actions,
+.home-hero__faces {
   animation: home-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -719,6 +997,9 @@ html:not(.dark) .home-hero__actions button:hover {
 .home-hero__actions {
   animation-delay: 0.38s;
 }
+.home-hero__faces {
+  animation-delay: 0.46s;
+}
 
 .home-section {
   animation: home-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -732,7 +1013,11 @@ html:not(.dark) .home-hero__actions button:hover {
   .home-hero__intro,
   .home-hero__search,
   .home-hero__actions,
+  .home-hero__faces,
   .home-section {
+    animation: none;
+  }
+  .home-hero__mote {
     animation: none;
   }
   .home-list-item,

@@ -70,6 +70,15 @@ export const ruOverrides: Record<string, string> = {
   'home.todayBirthdayCount': 'Сегодня {n} дня рождения',
   'home.prevBirthday': 'Предыдущий день рождения',
   'home.nextBirthday': 'Следующий день рождения',
+  'home.pathsTitle': 'Пройти по семье',
+  'home.pathsIntro': 'Каждая дверь — другой взгляд на тех же людей.',
+  'home.pathTreeHint': 'Все поколения на одном живом древе.',
+  'home.pathMembersHint': 'Имена, фото и кто к кому относится.',
+  'home.pathMapHint': 'Где семья живёт сегодня.',
+  'home.pathTimelineHint': 'Рождения, свадьбы и воспоминания по порядку.',
+  'home.pathRelatedHint': 'Как двое связаны — простыми словами.',
+  'home.facesTitle': 'Лица семьи',
+  'home.facesMore': 'Ещё {n} в древе',
   'home.downloadCalendar': 'В мой календарь',
 
   'gate.title': 'Семейный сайт',
@@ -876,5 +885,32 @@ export const ruOverrides: Record<string, string> = {
   'tree.quickChild': 'Добавить ребёнка для {name}',
   'tree.quickParent': 'Добавить родителя для {name}',
   'tree.openDetails': 'Открыть подробнее: {name}',
+  'tree.legendDivorced': 'В разводе',
+
+  'credit.madeBy': 'Приложение сделал Кадир',
+  'credit.contactTitle': 'Связаться',
+  'credit.close': 'Закрыть контакты',
+  'toast.dismiss': 'Закрыть уведомление',
+  'avatar.photoOf': 'Фото {name}',
+
+  'map.title': 'Семейная карта',
+  'map.intro': 'Где живёт семья — каждый круг это место с родственниками.',
+  'map.locating': 'Ищем места на карте… {done}/{total}',
+  'map.count': '{n} член(ов) семьи',
+  'map.empty':
+    'Пока нет городов или стран. Добавьте город или страну человеку — и он появится на карте.',
+
+  'banner.updated': 'Семейное древо на сайте обновилось с вашего последнего визита.',
+  'banner.load': 'Загрузить новые данные',
+  'banner.keep': 'Оставить мою версию',
+  'banner.confirmTitle': 'Загрузить последние семейные данные?',
+  'banner.confirmMsg':
+    'Это заменит копию в этом браузере версией с сайта. Если вы меняли данные здесь и хотите их сохранить, нажмите Отмена и сначала сделайте экспорт.',
+  'banner.loaded': 'Последние семейные данные загружены.',
+
+  'notfound.title': 'Страница не найдена',
+  'notfound.text': 'Этой ветки сайта нет. Возможно, её обрезали.',
+  'notfound.back': 'На главную',
+  'db.loading': 'Загружаем семейные данные…',
 };
 
