@@ -68,7 +68,7 @@ export default function App() {
             <BrowserRouter basename={import.meta.env.BASE_URL}>
               <Suspense fallback={<PageSkeleton />}>
                 <Routes>
-                  {/* Public celebration page — no family password */}
+                  {/* Public celebration page — no name or password */}
                   <Route path="bday/:personId" element={<BirthdayPublicPage />} />
                   <Route path="*" element={<LockedApp />} />
                 </Routes>

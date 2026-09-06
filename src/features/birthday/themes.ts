@@ -92,6 +92,17 @@ const MALE_EMOJI: Record<CardDesign, [string, string, string, string]> = {
   ribbons: ['🎁', '💵', '🚗', '💰'],
 };
 
+/** Extra party stickers layered on the web celebration (not the Telegram PNG). */
+export function partyStickers(gender: CardGender): string[] {
+  if (gender === 'female') {
+    return ['🎈', '🌸', '🎂', '🎁', '🥳', '✨', '🌷', '🎉', '💖', '🧁', '🎀', '🌺'];
+  }
+  if (gender === 'male') {
+    return ['🎉', '🎂', '🚗', '🎈', '🥳', '✨', '🎁', '💵', '🎊', '⭐', '🧁', '💙'];
+  }
+  return ['🎉', '🎂', '🎈', '🥳', '✨', '🎁', '🎊', '⭐', '🧁', '💚', '🌼', '💛'];
+}
+
 /** Floating motifs on the public page — matches the Telegram PNG. */
 export function designEmoji(
   design: CardDesign,
@@ -100,4 +111,8 @@ export function designEmoji(
   if (gender === 'female') return FEMALE_EMOJI[design];
   if (gender === 'male') return MALE_EMOJI[design];
   return DESIGN_EMOJI[design];
+}
+
+export function birthdayPalette(gender: CardGender) {
+  return CARD_PALETTES[gender];
 }

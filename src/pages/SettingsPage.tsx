@@ -553,6 +553,77 @@ export function SettingsPage() {
         </button>
       </section>
 
+      {/* Access — always visible so owner login is not buried in Easy Mode. */}
+      <section className="card mt-3 p-4">
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <KeyRound className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.accessTitle')}
+        </h2>
+        <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
+          {t('settings.accessIntro')}
+        </p>
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <span className="badge border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+            <Eye className="h-3 w-3" aria-hidden />
+            {t('settings.currentRole', { role: roleLabel })}
+          </span>
+          {canDelete ? (
+            <button type="button" className="btn-secondary !min-h-10" onClick={() => void handleSignOut()}>
+              <LogOut className="h-4 w-4" aria-hidden /> {t('settings.signOut')}
+            </button>
+          ) : (
+            <>
+              <button type="button" className="btn-secondary !min-h-10" onClick={() => setUnlockOpen(true)}>
+                <KeyRound className="h-4 w-4" aria-hidden /> {t('settings.unlock')}
+              </button>
+              {canEdit && (
+                <button type="button" className="btn-secondary !min-h-10" onClick={() => void handleSignOut()}>
+                  <LogOut className="h-4 w-4" aria-hidden /> {t('settings.signOut')}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+        {canDelete && (
+        <details className="mt-3 rounded-lg bg-stone-50 p-3 text-sm dark:bg-stone-800/60">
+          <summary className="cursor-pointer font-medium text-stone-700 dark:text-stone-300">
+            {t('settings.howChange')}
+          </summary>
+          <div className="mt-2 space-y-2 text-stone-600 dark:text-stone-400">
+            <p>{t('settings.howChangeText')}</p>
+            <div className="flex flex-wrap gap-2">
+              <input
+                type="text"
+                className="input !w-64"
+                placeholder={t('settings.newPassword')}
+                value={hashInput}
+                onChange={(e) => setHashInput(e.target.value)}
+                aria-label={t('settings.newPassword')}
+              />
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={async () => {
+                  try {
+                    setHashResult(hashInput ? await hashPassword(hashInput) : '');
+                  } catch (error) {
+                    console.error('Hashing failed (needs a secure context):', error);
+                  }
+                }}
+              >
+                {t('settings.genHash')}
+              </button>
+            </div>
+            {hashResult && (
+              <code className="block break-all rounded-lg bg-stone-200 p-2 text-xs dark:bg-stone-700">
+                {hashResult}
+              </code>
+            )}
+            <p className="text-xs">{t('settings.hashNote')}</p>
+          </div>
+        </details>
+        )}
+      </section>
+
       {hideAdvanced && (
         <button
           type="button"
@@ -630,70 +701,6 @@ export function SettingsPage() {
         </div>
       </section>
       )}
-
-      {/* Access */}
-      <section className="card mt-3 p-4">
-        <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <KeyRound className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.accessTitle')}
-        </h2>
-        <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
-          {t('settings.accessIntro')}
-        </p>
-        <div className="mt-2.5 flex flex-wrap items-center gap-2">
-          <span className="badge border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-            <Eye className="h-3 w-3" aria-hidden />
-            {t('settings.currentRole', { role: roleLabel })}
-          </span>
-          {canEdit ? (
-            <button type="button" className="btn-secondary !min-h-10" onClick={() => void handleSignOut()}>
-              <LogOut className="h-4 w-4" aria-hidden /> {t('settings.signOut')}
-            </button>
-          ) : (
-            <button type="button" className="btn-secondary !min-h-10" onClick={() => setUnlockOpen(true)}>
-              <KeyRound className="h-4 w-4" aria-hidden /> {t('settings.unlock')}
-            </button>
-          )}
-        </div>
-        {canDelete && (
-        <details className="mt-3 rounded-lg bg-stone-50 p-3 text-sm dark:bg-stone-800/60">
-          <summary className="cursor-pointer font-medium text-stone-700 dark:text-stone-300">
-            {t('settings.howChange')}
-          </summary>
-          <div className="mt-2 space-y-2 text-stone-600 dark:text-stone-400">
-            <p>{t('settings.howChangeText')}</p>
-            <div className="flex flex-wrap gap-2">
-              <input
-                type="text"
-                className="input !w-64"
-                placeholder={t('settings.newPassword')}
-                value={hashInput}
-                onChange={(e) => setHashInput(e.target.value)}
-                aria-label={t('settings.newPassword')}
-              />
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={async () => {
-                  try {
-                    setHashResult(hashInput ? await hashPassword(hashInput) : '');
-                  } catch (error) {
-                    console.error('Hashing failed (needs a secure context):', error);
-                  }
-                }}
-              >
-                {t('settings.genHash')}
-              </button>
-            </div>
-            {hashResult && (
-              <code className="block break-all rounded-lg bg-stone-200 p-2 text-xs dark:bg-stone-700">
-                {hashResult}
-              </code>
-            )}
-            <p className="text-xs">{t('settings.hashNote')}</p>
-          </div>
-        </details>
-        )}
-      </section>
 
       {/* Data management — owner-only: export/import/restore act on the whole dataset. */}
       {canDelete && (

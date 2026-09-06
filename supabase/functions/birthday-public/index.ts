@@ -13,9 +13,11 @@ import {
   localParts,
   monthDay,
   shiftLocalDate,
+  type FamilyMemberRow,
 } from '../_shared/telegram.ts';
 import { cardDesignSeed, normalizeCardGender, pickCardDesign } from '../_shared/cardTheme.ts';
 import { birthdayPageWish, birthdayYesterdayWish } from '../_shared/wishes.ts';
+import { whoIsThisUzbek } from '../_shared/whoIsThis.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -82,6 +84,43 @@ Deno.serve(async (req) => {
     const wish =
       phase === 'yesterday' ? birthdayYesterdayWish(name, age) : birthdayPageWish(name, age, 'uz');
 
+    let whoLine: string | null = null;
+    try {
+      const rels = await db.rest<{ kind: string; person_a: string; person_b: string }[]>(
+        'family_relationships',
+        {
+          query: {
+            select: 'kind,person_a,person_b',
+            or: `(person_a.eq.${personId},person_b.eq.${personId})`,
+          },
+        },
+      );
+      const relatedIds = [...new Set([personId, ...rels.flatMap((r) => [r.person_a, r.person_b])])];
+      const related = await db.rest<FamilyMemberRow[]>('family_members', {
+        query: {
+          select: 'id,first_name,last_name,nickname,gender,birth_date,death_date,is_deceased,photo',
+          id: `in.(${relatedIds.join(',')})`,
+        },
+      });
+      whoLine = whoIsThisUzbek(
+        {
+          id: person.id,
+          first_name: person.first_name,
+          last_name: person.last_name,
+          nickname: person.nickname,
+          gender: (person.gender as FamilyMemberRow['gender']) ?? undefined,
+          birth_date: person.birth_date,
+          death_date: person.death_date,
+          is_deceased: person.is_deceased,
+          photo: person.photo,
+        },
+        related,
+        rels,
+      );
+    } catch (err) {
+      console.warn('whoLine unavailable', err);
+    }
+
     let cheers: { name: string; username: string | null }[] = [];
     try {
       const rows = await db.rest<
@@ -115,6 +154,7 @@ Deno.serve(async (req) => {
         photoUrl,
         birthMonthDay: `${String(md.month).padStart(2, '0')}-${String(md.day).padStart(2, '0')}`,
         wish,
+        whoLine,
       },
       cheers,
     });

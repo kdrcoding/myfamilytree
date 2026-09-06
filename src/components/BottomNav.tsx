@@ -33,14 +33,17 @@ export function BottomNav() {
                 aria-label={tab.iconOnly ? t(tab.labelKey) : undefined}
                 title={tab.iconOnly ? t(tab.labelKey) : undefined}
                 className={({ isActive }) =>
-                  `flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1.5 text-center transition-colors ${
+                  `flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1.5 text-center transition-[background-color,color,transform] duration-200 ease-out ${
                     isActive
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200'
+                      ? 'bg-emerald-100 text-emerald-800 [&_svg]:scale-110 dark:bg-emerald-900/50 dark:text-emerald-200'
                       : 'text-stone-600 hover:bg-stone-100/70 dark:text-stone-300 dark:hover:bg-stone-900'
                   }`
                 }
               >
-                <Icon className={tab.iconOnly ? 'h-7 w-7' : 'h-6 w-6'} aria-hidden />
+                <Icon
+                  className={`${tab.iconOnly ? 'h-7 w-7' : 'h-6 w-6'} transition-transform duration-200 ease-out`}
+                  aria-hidden
+                />
                 {!tab.iconOnly && (
                   <span className="max-w-full truncate text-xs font-bold leading-tight">
                     {t(tab.labelKey)}

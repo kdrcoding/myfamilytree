@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowRight, CalendarPlus, Cake, UserRoundPlus } from 'lucide-react';
+import { ArrowRight, CalendarPlus, UserRoundPlus } from 'lucide-react';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { BirthdayTodayModal } from '../components/BirthdayTodayModal';
+import { HomeBirthdayCelebration } from '../components/HomeBirthdayCelebration';
 import { PersonSearch } from '../components/PersonSearch';
 import { BrandMark } from '../components/BrandLogo';
 import { useFamily } from '../context/FamilyContext';
@@ -16,6 +17,8 @@ import { formatDate, formatMonthDay } from '../utils/dates';
 import { getUpcomingCelebrations, windowCelebrations } from '../utils/celebrations';
 import { downloadFamilyCalendarIcs } from '../utils/ics';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
+import { FAMILY_TIMEZONE, dateKeyInTimeZone, nowInTimeZone } from '../utils/timezone';
+import { fetchTelegramSettings } from '../lib/telegramBot';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { Avatar } from '../components/Avatar';
 
@@ -36,11 +39,28 @@ export function HomePage() {
   const easy = role !== 'owner' && Boolean(settings.easyMode);
   const stats = useMemo(() => computeStats(people), [people]);
   const founders = useMemo(() => findFounders(people).slice(0, 2), [people]);
+  const [familyTz, setFamilyTz] = useState(FAMILY_TIMEZONE);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchTelegramSettings()
+      .then((s) => {
+        if (!cancelled && s?.timezone) setFamilyTz(s.timezone);
+      })
+      .catch(() => {
+        /* anon cannot read telegram_settings — keep Asia/Tashkent */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const familyNow = useMemo(() => nowInTimeZone(familyTz), [familyTz]);
 
   const showBirthDates = privacy.showBirthDate();
   const upcomingCelebrations = useMemo(
-    () => getUpcomingCelebrations(people, { includeBirthdays: showBirthDates }),
-    [people, showBirthDates],
+    () => getUpcomingCelebrations(people, { includeBirthdays: showBirthDates, now: familyNow }),
+    [people, showBirthDates, familyNow],
   );
   const celebrations = useMemo(
     () => windowCelebrations(upcomingCelebrations, CELEBRATION_WINDOW_DAYS),
@@ -57,8 +77,7 @@ export function HomePage() {
 
   useEffect(() => {
     if (todaysBirthdays.length === 0) return;
-    const now = new Date();
-    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const todayKey = dateKeyInTimeZone(familyTz);
     const last = loadJson<string>(
       STORAGE_KEYS.birthdayNotified,
       (v): v is string => typeof v === 'string',
@@ -66,7 +85,7 @@ export function HomePage() {
     if (last === todayKey) return;
     saveJson(STORAGE_KEYS.birthdayNotified, todayKey);
     setBdayPopupOpen(true);
-  }, [todaysBirthdays]);
+  }, [todaysBirthdays, familyTz]);
 
   useEffect(() => {
     if (searchParams.get('invite') === '1' || searchParams.get('join') === '1') {
@@ -162,56 +181,7 @@ export function HomePage() {
       </section>
 
       <div className="mx-auto w-full max-w-3xl px-5 sm:px-8 -mt-6 relative z-10">
-        {todaysBirthdays.length > 0 && (
-          <section className="home-section mt-8 sm:mt-10" aria-labelledby="home-today-bday">
-            <div className="home-today-card overflow-hidden">
-              <div className="flex items-start gap-3 px-5 py-4 sm:items-center">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-emerald-50 shadow-md shadow-emerald-900/20">
-                  <Cake className="h-5 w-5" aria-hidden />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h2
-                    id="home-today-bday"
-                    className="font-display text-lg font-semibold tracking-tight text-emerald-950 dark:text-emerald-50 sm:text-xl"
-                  >
-                    {t('home.todaySpotlightTitle')}
-                  </h2>
-                  <p className="mt-0.5 text-sm text-emerald-900/75 dark:text-emerald-200/80">
-                    {t('home.todaySpotlightWish')}
-                  </p>
-                </div>
-              </div>
-              <ul className="divide-y divide-emerald-900/10 border-t border-emerald-900/10 px-2 py-2 sm:px-3 dark:divide-emerald-800/40 dark:border-emerald-800/40">
-                {todaysBirthdays.map((b) => {
-                  const showAge = b.turningAge !== null && privacy.showAge(b.person);
-                  return (
-                    <li key={b.person.id}>
-                      <Link
-                        to={`/tree?person=${encodeURIComponent(b.person.id)}`}
-                        className="home-list-item"
-                      >
-                        <Avatar person={b.person} size="md" />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-semibold text-stone-900 dark:text-stone-100">
-                            {fullName(b.person)}
-                          </p>
-                          <p className="text-sm text-emerald-800 dark:text-emerald-300">
-                            {showAge
-                              ? t('home.bdayTurnsToday', { age: b.turningAge! })
-                              : t('home.celebrationBirthday')}
-                          </p>
-                        </div>
-                        <span className="shrink-0 rounded-full bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-emerald-50">
-                          {t('home.bdayToday')}
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </section>
-        )}
+        {todaysBirthdays.length > 0 && <HomeBirthdayCelebration birthdays={todaysBirthdays} />}
 
         {celebrations.length > 0 && (
           <section className="home-section mt-8 sm:mt-10" aria-labelledby="home-celebrations">

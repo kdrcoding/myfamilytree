@@ -45,6 +45,10 @@ const UZ_NONE = [
   `✨ {name}ning kuni keldi! Sevinch, salomatlik va omad yoningizda bo‘lsin 🌼`,
   `🎂 {name}, sizni nishonlash — oilamizning baxti. Tug‘ilgan kuningiz muborak! 🎉`,
   `💚 Aziz {name}, bugun sizga atalgan kun. Ko‘p yillar, ko‘p quvonch! 🙌`,
+  `🎊 {name}, dasturxon yozildi, qalblar ochiq — tug‘ilgan kuningiz muborak! 🎂`,
+  `💛 {name}, kulgingiz bizning bayramimiz. Muborak bo‘lsin, aziz inson! 🥳`,
+  `🌈 Bugun {name} uchun nurli kun. Oq-Ariq oilasi siz bilan sevinadi 💚`,
+  `🥂 {name}, yurakdan tabriklaymiz! Sog‘liq, omad va oila muhabbati ✨`,
 ];
 
 const EN_NONE = [
@@ -203,7 +207,13 @@ const UZ_PAGE: Record<AgeBand | 'none', string[]> = {
     `{name}, bugun sizniki. Quvonch uyga to‘lsin.`,
     `Oq-Ariq OILASI {name}ni nishonlaydi — muborak bo‘lsin!`,
     `{name}, sizni yaxshi ko‘ramiz. Tug‘ilgan kuningiz muborak!`,
-    `Bugun bayram: {name} uchun tabassum, tor va mehr.`,
+    `Bugun bayram: {name} uchun tabassum, tort va mehr.`,
+    `{name}, kulgingiz oilani yoritadi. Tug‘ilgan kuningiz muborak bo‘lsin!`,
+    `Bugun {name} uchun bayram dasturxoni yozildi — sevinch, salomatlik, omad!`,
+    `{name}, sizning kuningiz! Oq-Ariq oilasi sizni quchoqlaydi.`,
+    `Yurakdan tabriklaymiz, {name}! Uyingizga nur, qalbingizga tinchlik.`,
+    `{name}, har bir daqiqangiz shirin o‘tsin. Muborak bo‘lsin!`,
+    `Oila siz bilan faxrlanadi, {name}. Tug‘ilgan kuningiz qutlug‘ bo‘lsin!`,
   ],
   child: [
     `{name}, {age} yosh — katta sarguzasht. Butun oila siz bilan kulmoqda.`,
@@ -212,6 +222,12 @@ const UZ_PAGE: Record<AgeBand | 'none', string[]> = {
     `Bugun {name} {age} yoshda — shirinlik va quchoq kuni!`,
     `{name}, sen oilaning kichik yulduzisan. {age} yosh muborak.`,
     `{age} sham, {name} — har biri bir orzu. Kulib o‘s!`,
+    `{name}, tortdan bir bo‘lak, oiladan mingta quchoq! {age} yoshing muborak.`,
+    `Bolajon {name}, {age} yoshda ham porla. O‘yinchoqlar, kulgi, mehr!`,
+    `{name}ning {age} yoshi muborak! Rang-barang kun, shirin tushlar bo‘lsin.`,
+    `Tabriklaymiz, {name}! {age} sham — {age} ta kichik baxt.`,
+    `{name}, sen oilamizning kichik baxtisan. {age} yosh qutlug‘!`,
+    `Bugun {name} uchun bayram: shirinlik, o‘yin va katta oila quchog‘i.`,
   ],
   teen: [
     `{name}, {age} yosh senga yarashadi. O‘zing bo‘lgan ajoyib inson sifatida o‘sishda davom et.`,
@@ -220,6 +236,12 @@ const UZ_PAGE: Record<AgeBand | 'none', string[]> = {
     `Oila {name} bilan faxrlanadi. {age} yosh muborak!`,
     `{name}, oldinga yur. {age} yosh — yangi sahifa.`,
     `Tabriklaymiz, {name}! {age} yoshda ham o‘zing bo‘l.`,
+    `{name}, {age} yosh — orzularing katta, oila yoningda. Muborak!`,
+    `Yorqin yashashda davom et, {name}! {age} yoshing qutlug‘ bo‘lsin.`,
+    `{name}ning {age} yoshi muborak! Do‘stlar, kulgi va yaxshi kunlar tilaymiz.`,
+    `{name}, sen o‘sayapsan — oila har qadamingda. Muborak {age}!`,
+    `Ishonch, g‘ayrat, mehr — {name}, {age} yoshing muborak bo‘lsin!`,
+    `{name}, bu yil senga omad keltirsin. {age} yosh senga yarashgan!`,
   ],
   young: [
     `{name}, {age} yosh senga yarashadi. Bu bob dadil va quvnoq bo‘lsin.`,
@@ -228,6 +250,12 @@ const UZ_PAGE: Record<AgeBand | 'none', string[]> = {
     `Bugun {name} porlayapti. {age} yosh muborak, sevikli inson!`,
     `{name}, oila sening har bir qadamingda. {age} yosh — quvonch!`,
     `{age} yosh, {name} — yangi sarguzashtlar boshlansin.`,
+    `{name}, {age} yoshda hayot shirinroq o‘tsin. Tug‘ilgan kuning muborak!`,
+    `Yangi ishlar, yangi quvonchlar — {name}ning {age} yoshi muborak!`,
+    `{name}, oila sening bilan faxrlanadi. {age} yosh — omad va mehr!`,
+    `Bugun sen porlayapsan, {name}. {age} yoshing muborak bo‘lsin!`,
+    `{name}, yo‘ling ochiq, yuraging yosh. {age} yosh qutlug‘!`,
+    `Sevinch, salomatlik, muhabbat — {name}, {age} yoshing muborak!`,
   ],
   adult: [
     `{name}, {age} yosh senga yarashadi. Butun oila bugun siz bilan tabassum qilmoqda.`,
@@ -236,6 +264,12 @@ const UZ_PAGE: Record<AgeBand | 'none', string[]> = {
     `Rahmat, {name}, mehring uchun. {age} yosh — sog‘liq va tinchlik.`,
     `{name}, oilaning suyanchisi. Tug‘ilgan kuning muborak — {age}!`,
     `{age} yosh, {name} — hali ko‘p yaxshi kunlar oldinda.`,
+    `{name}, kuching va mehribonliging uchun minnatdormiz. {age} yosh qutlug‘!`,
+    `Uyingiz tinch, yuragingiz yosh bo‘lsin, {name}. {age} yosh muborak!`,
+    `{name}, sen oilaning nurisan. Tug‘ilgan kuning muborak — {age}!`,
+    `Mehnating, mehring qadrlanadi, {name}. {age} yoshing muborak bo‘lsin.`,
+    `{name}, bugun butun dasturxon siz uchun. {age} yosh — baxt va osoyishtalik!`,
+    `Tabriklaymiz, {name}! {age} yoshda ham suyanchimizsan. Muborak!`,
   ],
   midlife: [
     `{name}, {age} yoshda ham yosh — nuringiz so‘nmadi. Sizni nishonlash baxt.`,
@@ -244,6 +278,12 @@ const UZ_PAGE: Record<AgeBand | 'none', string[]> = {
     `Tug‘ilgan kuningiz muborak, {name}! {age} yosh — hali bahor.`,
     `{name}, sizdan o‘rganamiz. {age} yoshingiz qutlug‘ bo‘lsin.`,
     `{age} yosh, {name} — mehr, hazil va yosh ko‘zlar.`,
+    `{name}, {age} yosh senga yarashadi. Oila uchun qilgan mehring uchun rahmat.`,
+    `Hali ko‘p bahorlar, ko‘p bayramlar, {name}! {age} yoshing muborak.`,
+    `{name}, nuringiz so‘nmadi. {age} sham — {age} ta minnatdorchilik.`,
+    `Aziz {name}, oila sizning atrofingizda. Muborak {age} yosh!`,
+    `{name}, yurak yosh qolsa, yosh shunchaki raqam. {age} yosh qutlug‘!`,
+    `Tabassumingiz oilani yoritadi, {name}. Tug‘ilgan kuningiz muborak — {age}!`,
   ],
   elder: [
     `{name}, {age} yoshda ham ruhi yosh — siz bu oilaning barakasi.`,
@@ -252,6 +292,12 @@ const UZ_PAGE: Record<AgeBand | 'none', string[]> = {
     `Tug‘ilgan kuningiz muborak, {name}! Uzoq umr, sokin kunlar.`,
     `{name}, naslimizning faxri. {age} sham — {age} ta minnatdorchilik.`,
     `Aziz {name}, sizni ko‘rishning o‘zi bayram. {age} yosh qutlug‘ bo‘lsin.`,
+    `{name}, {age} yoshda ham yuraging yosh — nuring oilamizning xazinasi.`,
+    `Sog‘liq, tinchlik va yumshoq quvonch yoningizda bo‘lsin, {name}. {age} yosh muborak!`,
+    `Aziz {name}, {age} sham va hanuz yosh yurak. Oq-Ariq oilasi sizni e’zozlaydi.`,
+    `{name}, siz — naslimizning barakasi. {age} yoshingiz muborak bo‘lsin.`,
+    `Uzoq umr, sokin kunlar, sevikli nabiralar, {name}! Tug‘ilgan kuningiz muborak.`,
+    `{name}, duoyingiz oilani asraydi. {age} yosh qutlug‘ bo‘lsin, aziz inson.`,
   ],
 };
 
@@ -259,6 +305,9 @@ const UZ_YESTERDAY = [
   `Kecha {name}ning tug‘ilgan kuni edi. Oila hanuz tabassumda — kechikkan tilak ham tilak.`,
   `{name}, kecha bayramingiz edi. Bugun ham sizni o‘ylaymiz va yaxshi ko‘ramiz.`,
   `Kecha {name} nishonlandi. Tilaklar hali ham yoningizda.`,
+  `{name}, kechikkan bo‘lsa-da, tilak chin yurakdan: tug‘ilgan kuningiz muborak!`,
+  `Kecha {name} uchun bayram edi. Bugun ham oila sizni quchoqlaydi.`,
+  `{name}, kechagi sevinch hali yurakda. Sog‘liq va tinchlik tilaymiz.`,
 ];
 
 /** Short line for the public web page (stable per name+age). */
@@ -329,19 +378,16 @@ export function birthdayCaption(
   age: number | null,
   pageUrl: string,
   seed = `${name}:${age ?? 'x'}`,
+  whoLine?: string | null,
 ): string {
   const wish = birthdayWishCaption(name, age, 'uz', seed);
-  return [
+  const lines = [
     `🎉 Kadir nishonlamoqda`,
     `Kadir: tug‘ilgan kuningiz muborak, ${name}!`,
-    '',
-    wish,
-    '',
-    `🔗 Bayram sahifasi (parol yo‘q):`,
-    pageUrl,
-    '',
-    kadirFromBlock(),
-  ].join('\n');
+  ];
+  if (whoLine?.trim()) lines.push(whoLine.trim());
+  lines.push('', wish, '', `🔗 Bayram sahifasi (parol yo‘q):`, pageUrl, '', kadirFromBlock());
+  return lines.join('\n');
 }
 
 export const TG_BUTTONS = {

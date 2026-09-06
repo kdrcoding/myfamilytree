@@ -1,13 +1,19 @@
 /**
  * Birthday card PNG for Telegram sendPhoto.
- * Motifs are real raster pictures composited with ImageScript — not SVG drawings.
- * Girls: balloons + flowers. Boys: gold coins + a supercar (not cartoon cars).
+ * Motifs are PNG pictures (ImageScript-native). WebP portraits use esm.sh,
+ * never npm: specifiers — those break when the function is compiled on Edge.
  */
 import { Image } from 'https://deno.land/x/imagescript@1.3.0/mod.ts';
 import { motifPngBytes, type CardMotifId } from './cardMotifs.ts';
 import { CARD_PALETTES, normalizeCardGender, type CardGender, type CardPalette } from './cardTheme.ts';
 
 type Img = InstanceType<typeof Image>;
+
+const W = 1080;
+const H = 720;
+const PHOTO_SIZE = 220;
+const PHOTO_X = 430;
+const PHOTO_Y = 118;
 
 function escapeXml(s: string): string {
   return s
@@ -22,7 +28,6 @@ function truncate(s: string, max: number): string {
   return t.length > max ? t.slice(0, max - 1) + '…' : t;
 }
 
-/** ImageScript has no Cyrillic glyphs — Latin on the PNG; Telegram caption keeps the original. */
 const CYR_LATIN: Record<string, string> = {
   А: 'A',
   Б: 'B',
@@ -101,7 +106,6 @@ function coverSquare(img: Img, size: number): Img {
   return img.crop(x, y, Math.min(size, img.width), Math.min(size, img.height));
 }
 
-/** Deno Edge has no ImageData; @jsquash/webp constructs one while decoding. */
 function ensureImageDataPolyfill(): void {
   const g = globalThis as unknown as { ImageData?: unknown };
   if (typeof g.ImageData === 'function') return;
@@ -135,33 +139,41 @@ let webpDecodeFn: ((data: ArrayBuffer) => Promise<WebpDecoded>) | null = null;
 async function getWebpDecode(): Promise<(data: ArrayBuffer) => Promise<WebpDecoded>> {
   if (webpDecodeFn) return webpDecodeFn;
   ensureImageDataPolyfill();
-  const mod = (await import('npm:@jsquash/webp@1.4.0/decode')) as {
-    default: (data: ArrayBuffer) => Promise<WebpDecoded>;
-    init: (module?: WebAssembly.Module) => Promise<void>;
-  };
-  const wasmUrls = [
-    'https://unpkg.com/@jsquash/webp@1.4.0/codec/dec/webp_dec.wasm',
-    'https://cdn.jsdelivr.net/npm/@jsquash/webp@1.4.0/codec/dec/webp_dec.wasm',
+  // esm.sh works on Edge. npm: specifiers fail when shared files are remote-imported.
+  const specifiers = [
+    'https://esm.sh/@jsquash/webp@1.4.0/decode?target=denonext',
+    'https://esm.sh/@jsquash/webp@1.4.0/decode',
   ];
-  let wasmBuf: ArrayBuffer | null = null;
-  let lastWasmErr = 'webp wasm missing';
-  for (const wasmUrl of wasmUrls) {
+  let last = 'webp decoder missing';
+  for (const spec of specifiers) {
     try {
-      const wasmRes = await fetch(wasmUrl);
-      if (!wasmRes.ok) {
-        lastWasmErr = `webp wasm HTTP ${wasmRes.status}`;
-        continue;
+      const mod = (await import(spec)) as {
+        default: (data: ArrayBuffer) => Promise<WebpDecoded>;
+        init?: (module?: WebAssembly.Module) => Promise<void>;
+      };
+      const wasmUrls = [
+        'https://esm.sh/@jsquash/webp@1.4.0/codec/dec/webp_dec.wasm',
+        'https://unpkg.com/@jsquash/webp@1.4.0/codec/dec/webp_dec.wasm',
+      ];
+      if (typeof mod.init === 'function') {
+        for (const wasmUrl of wasmUrls) {
+          try {
+            const wasmRes = await fetch(wasmUrl);
+            if (!wasmRes.ok) continue;
+            await mod.init(await WebAssembly.compile(await wasmRes.arrayBuffer()));
+            break;
+          } catch {
+            /* try next wasm host */
+          }
+        }
       }
-      wasmBuf = await wasmRes.arrayBuffer();
-      break;
+      webpDecodeFn = mod.default;
+      return webpDecodeFn;
     } catch (err) {
-      lastWasmErr = err instanceof Error ? err.message : String(err);
+      last = err instanceof Error ? err.message : String(err);
     }
   }
-  if (!wasmBuf) throw new Error(lastWasmErr);
-  await mod.init(await WebAssembly.compile(wasmBuf));
-  webpDecodeFn = mod.default;
-  return webpDecodeFn;
+  throw new Error(last);
 }
 
 async function decodeWebpBytes(buf: Uint8Array): Promise<Img | null> {
@@ -175,6 +187,11 @@ async function decodeWebpBytes(buf: Uint8Array): Promise<Img | null> {
 }
 
 async function decodePhoto(buf: Uint8Array): Promise<Img | null> {
+  try {
+    return await Image.decode(buf);
+  } catch {
+    /* JPEG/PNG failed — try WebP */
+  }
   if (isWebp(buf)) {
     try {
       return await decodeWebpBytes(buf);
@@ -183,17 +200,9 @@ async function decodePhoto(buf: Uint8Array): Promise<Img | null> {
       return null;
     }
   }
-  try {
-    return await Image.decode(buf);
-  } catch (err) {
-    console.warn('photo decode failed', err);
-    return null;
-  }
+  console.warn('photo decode failed');
+  return null;
 }
-
-const PHOTO_SIZE = 140;
-const PHOTO_X = 380;
-const PHOTO_Y = 118;
 
 function punchCircle(img: Img): void {
   const cx = img.width / 2;
@@ -211,10 +220,7 @@ function punchCircle(img: Img): void {
 
 async function decodePortrait(bytes: Uint8Array): Promise<Img | null> {
   const img = await decodePhoto(bytes);
-  if (!img) {
-    console.warn('birthday card photo decode failed');
-    return null;
-  }
+  if (!img) return null;
   try {
     const sized = coverSquare(img, PHOTO_SIZE);
     const cropCircle = (sized as { cropCircle?: (feather?: boolean, padding?: number) => Img }).cropCircle;
@@ -231,14 +237,10 @@ async function fetchPhotoBytes(photoUrl?: string | null): Promise<Uint8Array | n
   if (!photoUrl || !/^https?:/i.test(photoUrl)) return null;
   try {
     const res = await fetch(photoUrl);
-    if (!res.ok) {
-      console.warn('birthday card photo fetch', res.status);
-      return null;
-    }
+    if (!res.ok) return null;
     const buf = new Uint8Array(await res.arrayBuffer());
     return buf.byteLength > 32 ? buf : null;
-  } catch (err) {
-    console.warn('birthday card photo fetch failed', err);
+  } catch {
     return null;
   }
 }
@@ -246,28 +248,28 @@ async function fetchPhotoBytes(photoUrl?: string | null): Promise<Uint8Array | n
 type MotifSpot = { id: CardMotifId; x: number; y: number; w: number };
 
 function motifSpots(gender: CardGender, simple: boolean): MotifSpot[] {
-  const grow = simple ? 28 : 0;
+  const grow = simple ? 36 : 0;
   if (gender === 'female') {
     return [
-      { id: 'balloons', x: 10, y: 36, w: 210 + grow },
-      { id: 'balloons', x: 668 - grow, y: 22, w: 205 + grow },
-      { id: 'flowers', x: 8, y: 348, w: 220 + grow },
-      { id: 'flowers', x: 662 - grow, y: 342, w: 218 + grow },
+      { id: 'balloons', x: 18, y: 28, w: 280 + grow },
+      { id: 'balloons', x: 790 - grow, y: 18, w: 270 + grow },
+      { id: 'flowers', x: 12, y: 430, w: 300 + grow },
+      { id: 'flowers', x: 770 - grow, y: 420, w: 300 + grow },
     ];
   }
   if (gender === 'male') {
     return [
-      { id: 'coins', x: 14, y: 40, w: 205 + grow },
-      { id: 'coins', x: 672 - grow, y: 28, w: 200 + grow },
-      { id: 'cars', x: 6, y: 378, w: 248 + grow },
-      { id: 'cars', x: 646 - grow, y: 378, w: 248 + grow },
+      { id: 'coins', x: 16, y: 32, w: 250 + grow },
+      { id: 'coins', x: 810 - grow, y: 24, w: 250 + grow },
+      { id: 'cars', x: 8, y: 430, w: 360 + grow },
+      { id: 'cars', x: 710 - grow, y: 430, w: 360 + grow },
     ];
   }
   return [
-    { id: 'balloons', x: 12, y: 34, w: 188 + grow },
-    { id: 'coins', x: 686 - grow, y: 30, w: 186 + grow },
-    { id: 'flowers', x: 10, y: 356, w: 200 + grow },
-    { id: 'cars', x: 662 - grow, y: 354, w: 220 + grow },
+    { id: 'balloons', x: 16, y: 28, w: 240 + grow },
+    { id: 'coins', x: 820 - grow, y: 24, w: 230 + grow },
+    { id: 'flowers', x: 12, y: 440, w: 260 + grow },
+    { id: 'cars', x: 780 - grow, y: 430, w: 280 + grow },
   ];
 }
 
@@ -276,7 +278,6 @@ const motifCache = new Map<CardMotifId, Img>();
 async function decodeMotif(id: CardMotifId): Promise<Img> {
   let img = motifCache.get(id);
   if (!img) {
-    // Motifs are PNG or WebP. Image.decode handles PNG; WebP uses jsquash.
     img = await decodePhoto(await motifPngBytes(id));
     if (!img) throw new Error(`motif decode failed: ${id}`);
     motifCache.set(id, img);
@@ -331,14 +332,14 @@ function hexToColor(hex: string): number {
 }
 
 function paintFallbackCanvas(p: CardPalette): Img {
-  const raster = new Image(900, 600);
+  const raster = new Image(W, H);
   raster.fill(hexToColor(p.bgB));
-  const panel = new Image(788, 496);
+  const panel = new Image(980, 620);
   panel.fill(hexToColor(p.cardA));
-  raster.composite(panel, 56, 52);
-  const bar = new Image(788, 18);
+  raster.composite(panel, 50, 50);
+  const bar = new Image(980, 22);
   bar.fill(hexToColor(p.accent));
-  raster.composite(bar, 56, 52);
+  raster.composite(bar, 50, 50);
   return raster;
 }
 
@@ -348,38 +349,40 @@ function cardSvg(opts: {
   ageLine: string;
   portrait: Img | null;
   simple: boolean;
+  whoLine?: string;
 }): string {
-  const { p, name, ageLine, portrait, simple } = opts;
+  const { p, name, ageLine, portrait, simple, whoLine } = opts;
   const photoBlock = portrait
     ? `
-      <circle cx="450" cy="188" r="78" fill="${p.accentSoft}" opacity="0.45"/>
-      <circle cx="450" cy="188" r="74" fill="${p.accent}"/>
-      <circle cx="450" cy="188" r="70" fill="${p.cardA}"/>
+      <circle cx="540" cy="228" r="124" fill="${p.accent}" opacity="0.22"/>
+      <circle cx="540" cy="228" r="116" fill="${p.accentSoft}"/>
+      <circle cx="540" cy="228" r="108" fill="#fbbf24"/>
+      <circle cx="540" cy="228" r="100" fill="${p.cardA}"/>
     `
     : `
-      <circle cx="450" cy="175" r="62" fill="${p.accent}"/>
-      <circle cx="450" cy="175" r="48" fill="${p.accentSoft}" opacity="0.4"/>
-      <rect x="430" y="155" width="40" height="36" rx="8" fill="#fef3c7"/>
-      <rect x="436" y="145" width="8" height="14" rx="2" fill="${p.confetti[1]}"/>
-      <rect x="448" y="142" width="8" height="16" rx="2" fill="${p.confetti[0]}"/>
-      <rect x="460" y="145" width="8" height="14" rx="2" fill="${p.confetti[2]}"/>
+      <circle cx="540" cy="210" r="88" fill="${p.accent}"/>
+      <circle cx="540" cy="210" r="70" fill="${p.accentSoft}" opacity="0.45"/>
+      <rect x="514" y="186" width="52" height="44" rx="10" fill="#fef3c7"/>
+      <rect x="522" y="174" width="10" height="18" rx="2" fill="${p.confetti[1]}"/>
+      <rect x="536" y="170" width="10" height="20" rx="2" fill="${p.confetti[0]}"/>
+      <rect x="550" y="174" width="10" height="18" rx="2" fill="${p.confetti[2]}"/>
     `;
-  const nameY = portrait ? 310 : 290;
-  const ageY = portrait ? 368 : 348;
+  const nameY = portrait ? 390 : 360;
+  const ageY = (portrait ? 448 : 418) + (whoLine ? 28 : 0);
   const extras = simple
     ? ''
     : `
-  <circle cx="90" cy="80" r="8" fill="${p.confetti[2]}" opacity="0.4"/>
-  <circle cx="820" cy="110" r="10" fill="${p.confetti[0]}" opacity="0.35"/>
-  <circle cx="100" cy="520" r="9" fill="${p.confetti[3]}" opacity="0.35"/>
-  <circle cx="800" cy="500" r="11" fill="${p.confetti[2]}" opacity="0.3"/>`;
+  <circle cx="96" cy="88" r="10" fill="${p.confetti[2]}" opacity="0.45"/>
+  <circle cx="984" cy="118" r="14" fill="${p.confetti[0]}" opacity="0.4"/>
+  <circle cx="110" cy="630" r="12" fill="${p.confetti[3]}" opacity="0.35"/>
+  <circle cx="970" cy="610" r="16" fill="${p.confetti[2]}" opacity="0.3"/>`;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600">
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="${p.bgA}"/>
-      <stop offset="55%" stop-color="${p.bgB}"/>
+      <stop offset="50%" stop-color="${p.bgB}"/>
       <stop offset="100%" stop-color="${p.bgC}"/>
     <\/linearGradient>
     <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
@@ -387,16 +390,17 @@ function cardSvg(opts: {
       <stop offset="100%" stop-color="${p.cardB}"/>
     <\/linearGradient>
   <\/defs>
-  <rect width="900" height="600" fill="url(#bg)"/>
+  <rect width="${W}" height="${H}" fill="url(#bg)"/>
   ${extras}
-  <rect x="56" y="52" width="788" height="496" rx="40" fill="url(#card)"/>
-  <rect x="56" y="52" width="788" height="18" rx="6" fill="${p.accent}"/>
+  <rect x="46" y="40" width="988" height="640" rx="48" fill="url(#card)"/>
+  <rect x="46" y="40" width="988" height="22" rx="8" fill="${p.accent}"/>
+  <rect x="46" y="650" width="988" height="30" rx="8" fill="${p.accent}" opacity="0.85"/>
   ${photoBlock}
-  <text x="450" y="${nameY - 42}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="32" fill="${p.muted}">Tug‘ilgan kuningiz muborak</text>
-  <text x="450" y="${nameY}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="700" fill="${p.ink}">${name}</text>
-  <text x="450" y="${ageY}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="26" fill="${p.accent}">${ageLine}</text>
-  <text x="450" y="505" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" fill="${p.muted}">Oq-Ariq OILASI · muhabbat bilan</text>
-  <text x="450" y="532" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" fill="${p.accent}">Kadir · @imkadi</text>
+  <text x="540" y="${nameY - 48}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="${p.muted}">Tug‘ilgan kuningiz muborak</text>
+  <text x="540" y="${nameY}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="700" fill="${p.ink}">${name}</text>
+  ${whoLine ? `<text x="540" y="${nameY + 36}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" fill="${p.muted}">${whoLine}</text>` : ''}
+  <text x="540" y="${ageY}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" fill="${p.accent}">${ageLine}</text>
+  <text x="540" y="620" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" fill="${p.cardA}">Oq-Ariq OILASI · Kadir · @imkadi</text>
 <\/svg>`;
 }
 
@@ -407,8 +411,8 @@ export type BirthdayCardOpts = {
   photoBytes?: Uint8Array | null;
   gender?: string | null;
   designSeed?: string;
-  /** Fewer SVG extras, larger pictures — used when the full card fails. */
   simple?: boolean;
+  whoLine?: string | null;
 };
 
 async function renderCardBase(opts: {
@@ -417,6 +421,7 @@ async function renderCardBase(opts: {
   ageLine: string;
   portrait: Img | null;
   simple: boolean;
+  whoLine?: string;
 }): Promise<Img> {
   const svg = cardSvg(opts);
   try {
@@ -441,11 +446,13 @@ export async function buildBirthdayCardPng(opts: BirthdayCardOpts): Promise<Uint
   const bytes = opts.photoBytes ?? (await fetchPhotoBytes(opts.photoUrl));
   if (bytes) portrait = await decodePortrait(bytes);
 
-  const raster = await renderCardBase({ p, name, ageLine, portrait, simple });
+  const whoLine = opts.whoLine?.trim()
+    ? escapeXml(truncate(opts.whoLine.trim(), 42))
+    : '';
+  const raster = await renderCardBase({ p, name, ageLine, portrait, simple, whoLine });
   try {
     await compositeMotifs(raster, gender, simple);
   } catch (err) {
-    // sendPhoto-only: still post the card if WebP motifs fail to decode.
     console.error('themed pictures failed; sending card without them', err);
   }
   if (portrait) {

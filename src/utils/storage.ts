@@ -14,6 +14,8 @@ export const STORAGE_KEYS = {
   birthdayNotified: 'familytree.birthdayNotified.v1',
   // The person's own name at sign-in (family editors). Owner always uses "Kadir".
   displayName: 'familytree.displayName.v1',
+  // Name-only visitors: this device is remembered as an editor until Sign out.
+  namedDevice: 'familytree.namedDevice.v1',
   // Legacy flag from an older auto-login experiment (safe to ignore / clear).
   skipOwnerAuto: 'familytree.skipOwnerAuto.v1',
   // Signed URLs for Storage-hosted photos, reused until near expiry so the

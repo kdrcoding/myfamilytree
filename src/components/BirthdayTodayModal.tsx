@@ -50,7 +50,7 @@ export function BirthdayTodayModal({ birthdays, onClose }: BirthdayTodayModalPro
             return (
               <li key={b.person.id}>
                 <Link
-                  to={`/tree?person=${encodeURIComponent(b.person.id)}`}
+                  to={`/bday/${encodeURIComponent(b.person.id)}`}
                   onClick={onClose}
                   className="flex items-center gap-3 rounded-xl border border-emerald-900/10 bg-emerald-50/60 px-3 py-2.5 transition-colors hover:bg-emerald-100/70 dark:border-emerald-800/40 dark:bg-emerald-950/30 dark:hover:bg-emerald-950/50"
                 >
@@ -76,8 +76,8 @@ export function BirthdayTodayModal({ birthdays, onClose }: BirthdayTodayModalPro
           <Link
             to={
               multi
-                ? '/#home-celebrations'
-                : `/tree?person=${encodeURIComponent(first.person.id)}`
+                ? '/#home-today-bday'
+                : `/bday/${encodeURIComponent(first.person.id)}`
             }
             onClick={onClose}
             className="btn-primary !min-h-11"

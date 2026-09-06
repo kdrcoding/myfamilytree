@@ -14,6 +14,8 @@ interface AuthContextValue {
   canEdit: boolean;
   canDelete: boolean;
   signIn: (password: string) => Promise<Role | null>;
+  /** Name-only entry: editor on this device, no password, no family JWT. */
+  enterWithName: (name: string) => boolean;
   signOut: () => void;
 }
 
@@ -27,24 +29,29 @@ function roleForHash(hash: string): Role {
 
 function roleForEmail(email: string | undefined): Role {
   if (email === AUTH_EMAILS.owner) return 'owner';
-  if (email === AUTH_EMAILS.editor) return 'editor';
   return 'viewer';
 }
 
 function applyOwnerName() {
   saveJson(STORAGE_KEYS.displayName, OWNER_DEFAULT_NAME);
+  removeKey(STORAGE_KEYS.namedDevice);
 }
 
-/** Restore a family editor's name from Auth metadata when this browser has none yet. */
-function applyEditorNameFromUser(user?: { user_metadata?: Record<string, unknown> } | null) {
-  const existing =
+function readDisplayName(): string {
+  return (
     loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string')?.trim() ??
-    '';
-  if (existing.length >= 2) return;
-  const meta = user?.user_metadata?.display_name;
-  if (typeof meta === 'string' && meta.trim().length >= 2) {
-    saveJson(STORAGE_KEYS.displayName, meta.trim());
-  }
+    ''
+  );
+}
+
+function isNamedDevice(): boolean {
+  return loadJson<boolean>(STORAGE_KEYS.namedDevice, (v): v is boolean => typeof v === 'boolean') === true;
+}
+
+function restoreNamedEditor(): boolean {
+  const name = readDisplayName();
+  if (isNamedDevice() && name.length >= 2) return true;
+  return false;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -55,32 +62,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     const boot = async () => {
-      // Prefer a live Supabase session (real JWT + RLS). Legacy hash is only
-      // a UI hint when Supabase Auth is unavailable.
-      if (supabase) {
-        const { data } = await supabase.auth.getSession();
-        if (cancelled) return;
-        const fromSession = roleForEmail(data.session?.user.email);
-        if (fromSession !== 'viewer') {
-          if (fromSession === 'owner') applyOwnerName();
-          else applyEditorNameFromUser(data.session?.user);
-          setRole(fromSession);
-          setReady(true);
-          return;
-        }
-      }
-
       const stored = loadJson<string>(AUTH_KEY, (v): v is string => typeof v === 'string');
       if (stored && !supabase) {
         const restored = roleForHash(stored);
         if (restored === 'viewer') removeKey(AUTH_KEY);
-        else {
-          if (restored === 'owner') applyOwnerName();
-          setRole(restored);
+        else if (restored === 'editor') {
+          removeKey(AUTH_KEY);
+        } else {
+          applyOwnerName();
+          setRole('owner');
+          setReady(true);
+          return;
         }
       } else if (stored && supabase) {
-        // Stale hash without a JWT — do not elevate UI privileges.
         removeKey(AUTH_KEY);
+      }
+
+      // Name-only family users first. Do not auto-enter as owner from a leftover JWT.
+      if (restoreNamedEditor()) {
+        setRole('editor');
+        if (supabase) {
+          const { data } = await supabase.auth.getSession();
+          if (cancelled) return;
+          if (roleForEmail(data.session?.user.email) === 'owner') {
+            await supabase.auth.signOut();
+            if (cancelled) return;
+            setRole('editor');
+          }
+        }
       }
 
       if (!cancelled) setReady(true);
@@ -95,13 +104,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      const fromSession = roleForEmail(session?.user.email);
-      if (fromSession !== 'viewer') {
-        if (fromSession === 'owner') applyOwnerName();
-        else applyEditorNameFromUser(session?.user);
-        setRole(fromSession);
-      } else if (event === 'SIGNED_OUT') {
-        setRole('viewer');
+      if (event === 'SIGNED_IN') {
+        const fromSession = roleForEmail(session?.user.email);
+        if (fromSession === 'owner') {
+          applyOwnerName();
+          setRole('owner');
+        }
+        return;
+      }
+      if (event === 'SIGNED_OUT') {
+        setRole(restoreNamedEditor() ? 'editor' : 'viewer');
       }
     });
     return () => {
@@ -112,35 +124,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (password: string): Promise<Role | null> => {
     const hash = await hashPassword(password);
-    const hinted = roleForHash(hash);
+    // Family members enter with a name, not the shared family password.
+    if (hash !== ACCESS.ownerHash) return null;
 
     if (supabase) {
-      // Hash picks owner vs family so we only hit Auth once (wrong password
-      // fails immediately; right password does not try the other account).
-      if (hinted === 'viewer') return null;
-      const email = hinted === 'owner' ? AUTH_EMAILS.owner : AUTH_EMAILS.editor;
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: AUTH_EMAILS.owner,
+        password,
+      });
       if (error || !data.session) return null;
       const found = roleForEmail(data.session.user.email);
-      if (found === 'viewer') return null;
-      if (found === 'owner') applyOwnerName();
-      else applyEditorNameFromUser(data.session.user);
+      if (found !== 'owner') return null;
+      applyOwnerName();
       removeKey(AUTH_KEY);
-      setRole(found);
-      return found;
+      setRole('owner');
+      return 'owner';
     }
 
-    if (hinted === 'viewer') return null;
     saveJson(AUTH_KEY, hash);
-    if (hinted === 'owner') applyOwnerName();
-    setRole(hinted);
-    return hinted;
+    applyOwnerName();
+    setRole('owner');
+    return 'owner';
+  }, []);
+
+  const enterWithName = useCallback((name: string): boolean => {
+    const trimmed = name.trim().slice(0, 40);
+    if (trimmed.length < 2) return false;
+    saveJson(STORAGE_KEYS.displayName, trimmed);
+    saveJson(STORAGE_KEYS.namedDevice, true);
+    setRole('editor');
+    if (supabase) void supabase.auth.signOut();
+    return true;
   }, []);
 
   const signOut = useCallback(() => {
     if (supabase) void supabase.auth.signOut();
     removeKey(AUTH_KEY);
     removeKey(STORAGE_KEYS.displayName);
+    removeKey(STORAGE_KEYS.namedDevice);
     removeKey(STORAGE_KEYS.skipOwnerAuto);
     setRole('viewer');
   }, []);
@@ -152,9 +173,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       canEdit: role === 'editor' || role === 'owner',
       canDelete: role === 'owner',
       signIn,
+      enterWithName,
       signOut,
     }),
-    [role, ready, signIn, signOut],
+    [role, ready, signIn, enterWithName, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

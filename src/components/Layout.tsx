@@ -71,7 +71,7 @@ export function Layout() {
   ].filter((item) => !easy || item.easy);
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+    `rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 ease-out ${
       isActive
         ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200'
         : 'text-stone-700 hover:bg-stone-100/80 hover:text-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-stone-100'
@@ -104,7 +104,7 @@ export function Layout() {
             <NavLink
               to="/settings"
               className={({ isActive }) =>
-                `inline-flex items-center justify-center rounded-lg p-2 transition-colors ${
+                `inline-flex items-center justify-center rounded-lg p-2 transition-colors duration-200 ease-out ${
                   isActive
                     ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200'
                     : 'text-stone-700 hover:bg-stone-100/80 dark:text-stone-200 dark:hover:bg-stone-800'
@@ -143,12 +143,12 @@ export function Layout() {
                 title={t('nav.more')}
                 onClick={() => setMoreOpen((v) => !v)}
               >
-                <ChevronDown className={`h-5 w-5 transition-transform ${moreOpen ? 'rotate-180' : ''}`} aria-hidden />
+                <ChevronDown className={`h-5 w-5 transition-transform duration-200 ease-out ${moreOpen ? 'rotate-180' : ''}`} aria-hidden />
               </button>
               {moreOpen && (
                 <ul
                   role="menu"
-                  className="absolute right-0 z-50 mt-1 min-w-[12rem] overflow-hidden rounded-2xl border border-stone-200/90 bg-white py-1 shadow-xl dark:border-stone-700 dark:bg-stone-900"
+                  className="absolute right-0 z-50 mt-1 min-w-[12rem] origin-top-right overflow-hidden rounded-2xl border border-stone-200/90 bg-white py-1 shadow-xl animate-modal-in dark:border-stone-700 dark:bg-stone-900"
                 >
                   {moreNav.map((item) => (
                     <li key={item.to} role="none">
@@ -156,7 +156,7 @@ export function Layout() {
                         role="menuitem"
                         to={item.to}
                         className={({ isActive }) =>
-                          `block px-4 py-2.5 text-sm font-semibold ${
+                          `block px-4 py-2.5 text-sm font-semibold transition-colors duration-150 ${
                             isActive
                               ? 'bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
                               : 'text-stone-800 hover:bg-stone-100 dark:text-stone-100 dark:hover:bg-stone-800'

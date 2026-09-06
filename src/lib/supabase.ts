@@ -9,10 +9,10 @@ export const isSupabaseConfigured = Boolean(url && anonKey);
 
 /**
  * Shared Supabase client (null when unconfigured). The anon key is public by
- * design — row access is controlled by the RLS policies in
- * supabase/migrations, which require a signed-in family/owner account.
- * Sessions persist in localStorage so the family stays signed in across
- * visits. Real secrets (service role key) are never used here.
+ * design — name-only visitors use it without a password. RLS allows anon to
+ * read/write family editor data; owner JWT is still required for deletes
+ * and owner tools. Sessions persist in localStorage for the owner account.
+ * Real secrets (service role key) are never used here.
  */
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(url!, anonKey!, {

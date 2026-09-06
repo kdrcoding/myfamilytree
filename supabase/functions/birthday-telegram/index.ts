@@ -1,3 +1,5 @@
+// Bundle ../_shared locally. Do not import from raw.githubusercontent.com —
+// npm: WebP decoders break when those remote files load on Edge.
 import {
   ageTurning,
   corsHeaders,
@@ -5,6 +7,7 @@ import {
   displayName,
   ensureCallbackWebhook,
   isBirthdayToday,
+  isoWeekPeriod,
   jsonResponse,
   localParts,
   monthDay,
@@ -21,6 +24,7 @@ import {
   publicAppUrl,
   TG_BUTTONS,
 } from '../_shared/wishes.ts';
+import { missingDatesNotice, whoIsThisUzbek } from '../_shared/whoIsThis.ts';
 
 type SettingsRow = {
   group_chat_id: string | null;
@@ -105,6 +109,82 @@ async function sendGroupBirthdayPhoto(opts: {
   throw lastError instanceof Error ? lastError : new Error('sendPhoto failed');
 }
 
+type ServiceDb = ReturnType<typeof createServiceClient>;
+type RelRow = { kind: string; person_a: string; person_b: string };
+
+/** Insert first. Empty representation = another run already claimed this person/year. */
+async function claimBirthdaySent(
+  db: ServiceDb,
+  personId: string,
+  year: number,
+): Promise<boolean> {
+  const rows = await db.rest<{ person_id: string }[]>('telegram_birthday_sent', {
+    method: 'POST',
+    query: { on_conflict: 'person_id,year' },
+    headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+    body: JSON.stringify({ person_id: personId, year }),
+  });
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function releaseBirthdaySent(db: ServiceDb, personId: string, year: number): Promise<void> {
+  await db.rest('telegram_birthday_sent', {
+    method: 'DELETE',
+    query: { person_id: `eq.${personId}`, year: `eq.${year}` },
+  });
+}
+
+async function claimNotice(db: ServiceDb, kind: string, period: string): Promise<boolean> {
+  const rows = await db.rest<{ kind: string }[]>('telegram_notices_sent', {
+    method: 'POST',
+    query: { on_conflict: 'kind,period' },
+    headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+    body: JSON.stringify({ kind, period }),
+  });
+  return Array.isArray(rows) && rows.length > 0;
+}
+
+async function releaseNotice(db: ServiceDb, kind: string, period: string): Promise<void> {
+  await db.rest('telegram_notices_sent', {
+    method: 'DELETE',
+    query: { kind: `eq.${kind}`, period: `eq.${period}` },
+  });
+}
+
+async function maybeSendMissingDates(opts: {
+  db: ServiceDb;
+  chatId: string;
+  members: FamilyMemberRow[];
+  local: { year: number; month: number; day: number; hour: number; weekday: string };
+  force: boolean;
+}): Promise<{ sent: boolean; skipped?: string; count?: number }> {
+  if (opts.force) return { sent: false, skipped: 'force' };
+  if (opts.local.weekday !== 'Mon') return { sent: false, skipped: 'not_monday' };
+  const names = opts.members
+    .filter((m) => !m.is_deceased && !m.death_date && !monthDay(m.birth_date))
+    .map((m) => displayName(m));
+  if (names.length === 0) return { sent: false, skipped: 'none_missing', count: 0 };
+
+  const period = isoWeekPeriod(opts.local.year, opts.local.month, opts.local.day);
+  const claimed = await claimNotice(opts.db, 'missing-dates', period);
+  if (!claimed) return { sent: false, skipped: 'already_claimed', count: names.length };
+
+  try {
+    await telegramApi('sendMessage', {
+      chat_id: opts.chatId,
+      text: missingDatesNotice(names, `${publicAppUrl()}/members`),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+    });
+    return { sent: true, count: names.length };
+  } catch (err) {
+    await releaseNotice(opts.db, 'missing-dates', period).catch((releaseErr) => {
+      console.error('release missing-dates claim failed', releaseErr);
+    });
+    throw err;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -155,6 +235,15 @@ Deno.serve(async (req) => {
       },
     });
 
+    let rels: RelRow[] = [];
+    try {
+      rels = await db.rest<RelRow[]>('family_relationships', {
+        query: { select: 'kind,person_a,person_b' },
+      });
+    } catch (err) {
+      console.warn('relationships unavailable', err);
+    }
+
     const already = await db.rest<{ person_id: string }[]>('telegram_birthday_sent', {
       query: { select: 'person_id', year: `eq.${local.year}` },
     });
@@ -171,13 +260,31 @@ Deno.serve(async (req) => {
     });
 
     const bot = (settings.bot_username || '').replace(/^@/, '');
-    const results: { personId: string; group: boolean; error?: string }[] = [];
+    const results: { personId: string; group: boolean; error?: string; skipped?: string }[] = [];
 
     for (const person of celebrating) {
+      const skipClaim = Boolean(force);
+      let claimed = skipClaim;
+      if (!skipClaim) {
+        try {
+          claimed = await claimBirthdaySent(db, person.id, local.year);
+        } catch (claimErr) {
+          const msg = claimErr instanceof Error ? claimErr.message : String(claimErr);
+          console.error('birthday claim failed', person.id, claimErr);
+          results.push({ personId: person.id, group: false, error: msg });
+          continue;
+        }
+        if (!claimed) {
+          results.push({ personId: person.id, group: false, skipped: 'already_claimed' });
+          continue;
+        }
+      }
+
       try {
         const md = monthDay(person.birth_date);
         const age = md ? ageTurning(md, local.year) : null;
         const name = displayName(person);
+        const whoLine = whoIsThisUzbek(person, members, rels);
         const photoUrl = person.photo ? await db.signPhoto(person.photo) : null;
         let photoBytes: Uint8Array | null = null;
         if (person.photo) {
@@ -188,7 +295,7 @@ Deno.serve(async (req) => {
           }
         }
         const pageUrl = birthdayPageUrl(person.id);
-        const caption = birthdayCaption(name, age, pageUrl, `${person.id}:${local.year}`);
+        const caption = birthdayCaption(name, age, pageUrl, `${person.id}:${local.year}`, whoLine);
 
         const keyboard: Record<string, string>[][] = [[{ text: TG_BUTTONS.openPage, url: pageUrl }]];
         const payload = cheerCallbackData(person.id, local.year);
@@ -218,14 +325,13 @@ Deno.serve(async (req) => {
               photoBytes,
               gender: person.gender,
               designSeed: `${person.id}:${local.year}`,
+              whoLine,
             },
           });
           groupOk = true;
         }
 
-        // Only mark sent after Telegram accepts sendPhoto.
-        // Empty-body REST must not throw (see createServiceClient.rest).
-        if (groupOk && !(force && testPersonId && body.skipDedupe)) {
+        if (groupOk && skipClaim && !(testPersonId && body.skipDedupe)) {
           await db.rest('telegram_birthday_sent', {
             method: 'POST',
             query: { on_conflict: 'person_id,year' },
@@ -236,10 +342,32 @@ Deno.serve(async (req) => {
 
         results.push({ personId: person.id, group: groupOk });
       } catch (personError) {
+        if (!skipClaim && claimed) {
+          await releaseBirthdaySent(db, person.id, local.year).catch((releaseErr) => {
+            console.error('release birthday claim failed', person.id, releaseErr);
+          });
+        }
         const msg = personError instanceof Error ? personError.message : String(personError);
         console.error('birthday send failed', person.id, personError);
         results.push({ personId: person.id, group: false, error: msg });
       }
+    }
+
+    let missingDates: { sent: boolean; skipped?: string; count?: number } | undefined;
+    try {
+      missingDates = await maybeSendMissingDates({
+        db,
+        chatId: settings.group_chat_id as string,
+        members,
+        local,
+        force,
+      });
+    } catch (noticeErr) {
+      console.error('missing-dates notice failed', noticeErr);
+      missingDates = {
+        sent: false,
+        skipped: noticeErr instanceof Error ? noticeErr.message : String(noticeErr),
+      };
     }
 
     return jsonResponse({
@@ -249,6 +377,7 @@ Deno.serve(async (req) => {
       appUrl: publicAppUrl(),
       count: results.filter((r) => r.group).length,
       results,
+      missingDates,
     });
   } catch (error) {
     console.error(error);

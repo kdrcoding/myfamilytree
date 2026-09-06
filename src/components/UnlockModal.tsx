@@ -10,7 +10,7 @@ interface UnlockModalProps {
   onUnlocked?: () => void;
 }
 
-/** Password prompt that unlocks edit mode as either owner or family editor. */
+/** Owner-password prompt. Family members enter with a name, not this dialog. */
 export function UnlockModal({ onClose, onUnlocked }: UnlockModalProps) {
   const { signIn } = useAuth();
   const { toast } = useToast();

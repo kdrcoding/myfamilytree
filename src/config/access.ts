@@ -1,28 +1,22 @@
 /**
- * Access control for edit mode.
+ * Access control for owner tools.
  *
- * Two passwords unlock editing (the actual passwords are written down in the
- * local `password/` folder, which is git-ignored and never deployed — only
- * these one-way hashes ship with the site):
- *  - OWNER: can add, edit AND delete people, change relationships, reset the
- *    data and replace it via import.
- *  - EDITOR (member password): can add people and fill in MISSING info on
- *    existing people. Cannot delete, cannot overwrite existing details,
- *    cannot change relationships, cannot replace or reset the data. Share
- *    this one with family members who help maintain the tree.
+ * Visitors enter only their name (no family password in the client bundle).
+ * They become editors so Kadir can see who changed what. The owner password
+ * still unlocks delete / settings / owner tools.
  *
- * CHANGE THE PASSWORDS before sharing your site. Generate a new hash on the
- * Settings page ("Access" section), paste it here, update password/passwords.txt,
- * then redeploy.
+ * The actual owner password is written down in the local `password/` folder,
+ * which is git-ignored and never deployed — only this one-way hash ships
+ * with the site. Never put plaintext passwords in this file or in VITE_ env.
  *
- * IMPORTANT HONESTY NOTE: this is a static website with no server, so this is
- * a convenience lock, not bank-grade security. Real protection comes from
- * Supabase Auth + RLS. Never put plaintext passwords in this file.
+ * CHANGE THE OWNER PASSWORD before sharing if needed. Generate a new hash on
+ * the Settings page ("Access" section), paste it here, update
+ * password/passwords.txt, then redeploy.
  */
 export const ACCESS = {
   /** SHA-256 hash of the owner password. */
   ownerHash: '39f2df21ef6aecdc8a706868252ef11e46afda2beecdcfc471109870faf1ff8e',
-  /** SHA-256 hash of the family editor password. */
+  /** SHA-256 hash of the legacy family editor password (optional upgrade path). */
   editorHash: '7fcc57f15a0a35995b1ef5fe78808863346e806aa2b86128c48c0133749c7586',
 } as const;
 
@@ -30,12 +24,10 @@ export const ACCESS = {
 export const OWNER_DEFAULT_NAME = 'Kadir';
 
 /**
- * Supabase Auth accounts backing the two passwords. These users must exist
- * in the Supabase dashboard (Authentication → Users, auto-confirmed) with
- * the same passwords as password/passwords.txt, and public sign-ups must be
- * DISABLED. The RLS policies only grant access to these two emails, so
- * without one of the passwords the database itself refuses to answer —
- * not just the UI.
+ * Supabase Auth accounts. Owner JWT is required for deletes, relationship
+ * writes, and telegram settings. Name-only visitors use the anon key;
+ * RLS allows anon the same family read/write editors already had.
+ * Never put the owner password in VITE_ env or the client bundle.
  */
 export const AUTH_EMAILS = {
   owner: 'owner@oqariq.family',

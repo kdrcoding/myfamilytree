@@ -119,6 +119,7 @@ export function localParts(timeZone: string, now = new Date()): {
   month: number;
   day: number;
   hour: number;
+  weekday: string;
 } {
   const fmt = new Intl.DateTimeFormat('en-US', {
     timeZone,
@@ -127,6 +128,7 @@ export function localParts(timeZone: string, now = new Date()): {
     day: '2-digit',
     hour: '2-digit',
     hourCycle: 'h23',
+    weekday: 'short',
   });
   const parts = Object.fromEntries(fmt.formatToParts(now).map((p) => [p.type, p.value]));
   return {
@@ -134,7 +136,22 @@ export function localParts(timeZone: string, now = new Date()): {
     month: Number(parts.month),
     day: Number(parts.day),
     hour: Number(parts.hour),
+    weekday: parts.weekday || '',
   };
+}
+
+/** ISO week key for weekly notices, e.g. 2026-W36. */
+export function isoWeekPeriod(year: number, month: number, day: number): string {
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const utcDay = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - utcDay);
+  const isoYear = date.getUTCFullYear();
+  const jan4 = new Date(Date.UTC(isoYear, 0, 4));
+  const jan4Day = jan4.getUTCDay() || 7;
+  const week1Monday = new Date(jan4);
+  week1Monday.setUTCDate(jan4.getUTCDate() - jan4Day + 1);
+  const week = 1 + Math.round((date.getTime() - week1Monday.getTime()) / 604800000);
+  return `${isoYear}-W${String(week).padStart(2, '0')}`;
 }
 
 export function ageTurning(
