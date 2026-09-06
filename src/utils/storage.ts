@@ -57,12 +57,31 @@ export function loadJson<T>(key: string, validate?: (value: unknown) => value is
   }
 }
 
+/** Fired (debounced) when LocalStorage rejects a write. */
+export const STORAGE_FAIL_EVENT = 'familytree:storage-failed';
+
+let storageFailTimer: number | undefined;
+
+function notifyStorageFailed() {
+  if (typeof window === 'undefined') return;
+  if (storageFailTimer !== undefined) window.clearTimeout(storageFailTimer);
+  storageFailTimer = window.setTimeout(() => {
+    storageFailTimer = undefined;
+    window.dispatchEvent(new Event(STORAGE_FAIL_EVENT));
+  }, 500);
+}
+
 export function saveJson(key: string, value: unknown): boolean {
   try {
     localStorage.setItem(key, JSON.stringify(value));
+    if (typeof window !== 'undefined' && storageFailTimer !== undefined) {
+      window.clearTimeout(storageFailTimer);
+      storageFailTimer = undefined;
+    }
     return true;
   } catch {
     // Storage may be full or blocked; the app keeps working in memory.
+    notifyStorageFailed();
     return false;
   }
 }

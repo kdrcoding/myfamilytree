@@ -46,10 +46,13 @@ export async function fetchPublicBirthday(personId: string): Promise<PublicBirth
     },
   );
   try {
-    return (await res.json()) as PublicBirthday;
+    const parsed = (await res.json()) as PublicBirthday;
+    if (parsed && typeof parsed.ok === 'boolean') return parsed;
   } catch {
-    return { ok: false, error: 'failed' };
+    /* HTML / empty gateway body */
   }
+  if (res.status === 404) return { ok: false, error: 'not_found' };
+  return { ok: false, error: 'failed' };
 }
 
 export function isVisiblePhotoUrl(url: string | null | undefined): boolean {

@@ -151,7 +151,9 @@ export function BirthdayPublicPage() {
       markBirthdayPass(isDevPreview ? '_preview' : personId);
       return;
     }
-    clearBirthdayPass();
+    if (data.error === 'expired' || data.error === 'not_found') {
+      clearBirthdayPass();
+    }
   }, [data, personId, isDevPreview]);
 
   const person = data?.ok ? data.person : null;
@@ -202,7 +204,11 @@ export function BirthdayPublicPage() {
   if (person) {
     return (
       <BirthdayWebCard
-        person={person}
+        person={
+          settings.language === 'uz' || !person.whoLine
+            ? person
+            : { ...person, whoLine: null }
+        }
         when={when}
         design={design}
         cheers={cheers}

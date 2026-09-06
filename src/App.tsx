@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLockGate } from './components/AppLockGate';
 import { Layout } from './components/Layout';
 import { PageSkeleton } from './components/PageSkeleton';
@@ -44,6 +44,7 @@ function LockedApp() {
               <Route index element={<HomePage />} />
               <Route path="tree" element={<TreePage />} />
               <Route path="members" element={<MembersPage />} />
+              <Route path="people" element={<Navigate to="/members" replace />} />
               <Route path="map" element={<MapPage />} />
               <Route path="timeline" element={<TimelinePage />} />
               <Route path="related" element={<RelatedPage />} />

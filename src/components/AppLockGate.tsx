@@ -6,6 +6,7 @@ import { OWNER_DEFAULT_NAME } from '../config/access';
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../i18n/useT';
 import { birthdayPassStillValid, readBirthdayPass } from '../lib/birthdayPass';
+import { SW_UPDATE_EVENT } from '../lib/swUpdate';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { BrandHero } from './BrandLogo';
 import { LanguageMenuButton } from './LanguageSelect';
@@ -45,12 +46,19 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   const unlocked = ready && role !== 'viewer';
 
   useEffect(() => {
+    if (unlocked) return;
+    const onUpdate = () => window.__familytreeApplyUpdate?.();
+    window.addEventListener(SW_UPDATE_EVENT, onUpdate);
+    return () => window.removeEventListener(SW_UPDATE_EVENT, onUpdate);
+  }, [unlocked]);
+
+  useEffect(() => {
     let cancelled = false;
     if (!readBirthdayPass()) {
       setBdayAccess('no');
       return;
     }
-    void birthdayPassStillValid({ keepOnNetworkError: false }).then((ok) => {
+    void birthdayPassStillValid({ keepOnNetworkError: true }).then((ok) => {
       if (!cancelled) setBdayAccess(ok ? 'yes' : 'no');
     });
     return () => {

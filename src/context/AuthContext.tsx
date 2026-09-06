@@ -181,15 +181,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (supabase) {
-        const { data } = await supabase.auth.getSession();
-        if (cancelled) return;
-        if (roleForEmail(data.session?.user.email) === 'owner') {
-          adoptOwner();
-          return;
-        }
-      }
-
       const name = readDisplayName();
       if (readBirthdayPass() && name.length >= 2) {
         const stillOpen = await birthdayPassStillValid({ keepOnNetworkError: true });
@@ -198,6 +189,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRole('editor');
           setReady(true);
           dropLeftoverOwnerJwt();
+          return;
+        }
+      }
+
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
+        if (roleForEmail(data.session?.user.email) === 'owner') {
+          adoptOwner();
           return;
         }
       }

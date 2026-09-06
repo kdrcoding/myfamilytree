@@ -32,7 +32,7 @@ import { downloadFamilyCalendarIcs } from '../utils/ics';
 import { setBirthdayModalOpen } from '../lib/firstRunHold';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { FAMILY_TIMEZONE, dateKeyInTimeZone, nowInTimeZone } from '../utils/timezone';
-import { fetchTelegramSettings } from '../lib/telegramBot';
+import { fetchFamilyTimezone } from '../lib/telegramBot';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { Avatar } from '../components/Avatar';
 
@@ -57,12 +57,12 @@ export function HomePage() {
 
   useEffect(() => {
     let cancelled = false;
-    void fetchTelegramSettings()
-      .then((s) => {
-        if (!cancelled && s?.timezone) setFamilyTz(s.timezone);
+    void fetchFamilyTimezone()
+      .then((tz) => {
+        if (!cancelled && tz) setFamilyTz(tz);
       })
       .catch(() => {
-        /* anon cannot read telegram_settings — keep Asia/Tashkent */
+        /* keep Asia/Tashkent */
       });
     return () => {
       cancelled = true;

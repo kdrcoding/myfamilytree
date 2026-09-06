@@ -69,7 +69,7 @@ export function MapPage() {
           updated[missing[i].key] = await geocodePlace(missing[i].label);
         } catch (error) {
           console.error(`Geocoding "${missing[i].label}" failed:`, error);
-          break; // network trouble — try again on the next visit
+          continue;
         }
         if (cancelled) {
           // Keep what was already found so it isn't re-requested next visit.

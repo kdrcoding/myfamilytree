@@ -30,6 +30,16 @@ export async function fetchTelegramSettings(): Promise<TelegramSettings | null> 
   return data as TelegramSettings | null;
 }
 
+/** Timezone only — safe for the family/anon client (no bot chat ids). */
+export async function fetchFamilyTimezone(): Promise<string | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase.from('family_clock').select('timezone').maybeSingle();
+  if (error || !data || typeof (data as { timezone?: unknown }).timezone !== 'string') {
+    return null;
+  }
+  return (data as { timezone: string }).timezone;
+}
+
 export async function updateTelegramSettings(
   patch: Partial<{
     enabled: boolean;

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Heart, PartyPopper, Sparkles } from 'lucide-react';
-import { useT } from '../i18n/useT';
+import { useLanguage, useT } from '../i18n/useT';
 import {
   CARD_PALETTES,
   designEmoji,
@@ -158,6 +158,7 @@ export function BirthdayWebCard({
   footer,
 }: BirthdayWebCardProps) {
   const t = useT();
+  const language = useLanguage();
   const [photoFailed, setPhotoFailed] = useState(false);
   const gender = normalizeCardGender(person.gender);
   const emoji = designEmoji(design, gender);
@@ -325,9 +326,11 @@ export function BirthdayWebCard({
           )}
 
           <p className={`bday-wish mx-auto mt-5 max-w-sm leading-relaxed ${compact ? 'text-sm' : 'text-base'}`}>
-            {webBirthdayWish(shownName, person.age ?? null, when) ||
-              person.wish ||
-              (when === 'yesterday' ? t('bday.yesterdayWish') : t('bday.wish'))}
+            {language === 'uz'
+              ? webBirthdayWish(shownName, person.age ?? null, when)
+              : when === 'yesterday'
+                ? t('bday.yesterdayWish')
+                : t('bday.wish')}
           </p>
 
           <p className="bday-emoji mt-6 text-2xl tracking-[0.28em]" aria-hidden>

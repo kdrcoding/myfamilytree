@@ -1,7 +1,8 @@
-import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { CheckCircle2, Info, XCircle, X } from 'lucide-react';
 import { useT } from '../i18n/useT';
+import { STORAGE_FAIL_EVENT } from '../utils/storage';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -46,6 +47,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     },
     [dismiss],
   );
+
+  useEffect(() => {
+    const onFail = () => toast(t('storage.saveFailed'), 'error');
+    window.addEventListener(STORAGE_FAIL_EVENT, onFail);
+    return () => window.removeEventListener(STORAGE_FAIL_EVENT, onFail);
+  }, [t, toast]);
 
   return (
     <ToastContext.Provider value={{ toast }}>
