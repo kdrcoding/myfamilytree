@@ -10,7 +10,7 @@ interface UnlockModalProps {
   onUnlocked?: () => void;
 }
 
-/** Owner-password prompt. Family members enter with a name, not this dialog. */
+/** Owner-password prompt for delete / settings tools. */
 export function UnlockModal({ onClose, onUnlocked }: UnlockModalProps) {
   const { signIn } = useAuth();
   const { toast } = useToast();

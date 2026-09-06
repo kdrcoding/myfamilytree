@@ -21,6 +21,7 @@ import {
   type BirthdayWhen,
   type PublicBirthday,
 } from '../features/birthday/publicApi';
+import { clearBirthdayPass, markBirthdayPass } from '../lib/birthdayPass';
 
 function isDesign(value: string | null): value is CardDesign {
   return CARD_DESIGNS.includes(value as CardDesign);
@@ -63,19 +64,21 @@ function previewPayload(params: URLSearchParams): PublicBirthday {
   };
 }
 
-function PageActions({ accent }: { accent: string }) {
+function PageActions({ accent, open }: { accent: string; open: boolean }) {
   const t = useT();
   return (
     <div className="relative z-10 mt-8 w-full space-y-3">
       <Link
-        to="/tree?from=bday"
+        to={open ? '/tree?from=bday' : '/tree'}
         className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-base font-semibold text-white shadow-md"
         style={{ background: accent }}
       >
         <Trees className="h-5 w-5" aria-hidden />
         {t('bday.seeTree')}
       </Link>
-      <p className="text-center text-xs leading-relaxed text-stone-500">{t('bday.seeTreeHint')}</p>
+      <p className="text-center text-xs leading-relaxed text-stone-500">
+        {open ? t('bday.seeTreeHint') : t('bday.seeTreeHintClosed')}
+      </p>
     </div>
   );
 }
@@ -120,7 +123,7 @@ export function BirthdayPublicPage() {
         if (next.ok) {
           hasPerson = true;
           setData(next);
-        } else if (!isRefresh || !hasPerson) {
+        } else if (next.error === 'expired' || !isRefresh || !hasPerson) {
           setData(next);
         }
       } catch (error) {
@@ -141,6 +144,15 @@ export function BirthdayPublicPage() {
       window.clearInterval(timer);
     };
   }, [personId, isDevPreview, searchParams]);
+
+  useEffect(() => {
+    if (!data) return;
+    if (data.ok) {
+      markBirthdayPass(isDevPreview ? '_preview' : personId);
+      return;
+    }
+    clearBirthdayPass();
+  }, [data, personId, isDevPreview]);
 
   const person = data?.ok ? data.person : null;
   const cheers = data?.ok ? data.cheers ?? [] : [];
@@ -198,7 +210,7 @@ export function BirthdayPublicPage() {
         header={langHeader}
         footer={
           <>
-            <PageActions accent={palette.accent} />
+            <PageActions accent={palette.accent} open />
             <p className="mt-auto pt-10 text-xs text-stone-500">{t('bday.footer')}</p>
           </>
         }
@@ -227,7 +239,7 @@ export function BirthdayPublicPage() {
             <p className="mt-2 text-sm text-stone-600">
               {expired ? t('bday.expiredBody') : t('bday.notFoundBody')}
             </p>
-            <PageActions accent={palette.accent} />
+            <PageActions accent={palette.accent} open={false} />
           </div>
         )}
       </div>

@@ -2,10 +2,19 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react';
 import { ACCESS, AUTH_EMAILS, OWNER_DEFAULT_NAME, hashPassword } from '../config/access';
 import type { Role } from '../config/access';
+import {
+  birthdayPassStillValid,
+  clearBirthdayPass,
+  readBirthdayPass,
+} from '../lib/birthdayPass';
 import { supabase } from '../lib/supabase';
 import { loadJson, saveJson, removeKey, STORAGE_KEYS } from '../utils/storage';
 
 const AUTH_KEY = STORAGE_KEYS.auth;
+
+export type FamilyEnterResult =
+  | { ok: true; role: Role }
+  | { ok: false; reason: 'name' | 'password' };
 
 interface AuthContextValue {
   role: Role;
@@ -14,8 +23,10 @@ interface AuthContextValue {
   canEdit: boolean;
   canDelete: boolean;
   signIn: (password: string) => Promise<Role | null>;
-  /** Name-only entry: editor on this device, no password, no family JWT. */
-  enterWithName: (name: string) => boolean;
+  /** Name + family (or owner) password. Used on the main site. */
+  enterAsFamily: (name: string, password: string) => Promise<FamilyEnterResult>;
+  /** Name-only. Allowed only while a live birthday page grant is still valid. */
+  enterWithName: (name: string) => Promise<boolean>;
   signOut: () => void;
 }
 
@@ -35,6 +46,7 @@ function roleForEmail(email: string | undefined): Role {
 function applyOwnerName() {
   saveJson(STORAGE_KEYS.displayName, OWNER_DEFAULT_NAME);
   removeKey(STORAGE_KEYS.namedDevice);
+  removeKey(STORAGE_KEYS.familyAuthed);
 }
 
 function readDisplayName(): string {
@@ -44,14 +56,21 @@ function readDisplayName(): string {
   );
 }
 
-function isNamedDevice(): boolean {
-  return loadJson<boolean>(STORAGE_KEYS.namedDevice, (v): v is boolean => typeof v === 'boolean') === true;
+function isFamilyAuthed(): boolean {
+  const stored = loadJson<string>(
+    STORAGE_KEYS.familyAuthed,
+    (v): v is string => typeof v === 'string',
+  );
+  return stored === ACCESS.editorHash;
 }
 
-function restoreNamedEditor(): boolean {
+function markFamilyAuthed() {
+  saveJson(STORAGE_KEYS.familyAuthed, ACCESS.editorHash);
+}
+
+function restorePasswordEditor(): boolean {
   const name = readDisplayName();
-  if (isNamedDevice() && name.length >= 2) return true;
-  return false;
+  return isFamilyAuthed() && name.length >= 2;
 }
 
 function hasOwnerSessionHint(): boolean {
@@ -72,8 +91,10 @@ function initialAuthState(): { role: Role; ready: boolean } {
     applyOwnerName();
     return { role: 'owner', ready: true };
   }
-  if (restoreNamedEditor()) return { role: 'editor', ready: true };
-  // Owner JWT still needs a session read — keep the spinner only in that case.
+  if (restorePasswordEditor()) return { role: 'editor', ready: true };
+  if (readBirthdayPass() && readDisplayName().length >= 2) {
+    return { role: 'viewer', ready: false };
+  }
   if (hasOwnerSessionHint()) return { role: 'viewer', ready: false };
   return { role: 'viewer', ready: true };
 }
@@ -86,12 +107,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
-    const boot = async () => {
+    const bootAuth = async () => {
       const stored = loadJson<string>(AUTH_KEY, (v): v is string => typeof v === 'string');
       if (stored && !supabase) {
         const restored = roleForHash(stored);
-        if (restored === 'viewer') removeKey(AUTH_KEY);
-        else if (restored === 'editor') {
+        if (restored === 'viewer' || restored === 'editor') {
           removeKey(AUTH_KEY);
         } else {
           applyOwnerName();
@@ -103,8 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         removeKey(AUTH_KEY);
       }
 
-      // Name-only family users first. Do not auto-enter as owner from a leftover JWT.
-      if (restoreNamedEditor()) {
+      if (restorePasswordEditor()) {
         setRole('editor');
         setReady(true);
         if (supabase) {
@@ -119,10 +138,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      const name = readDisplayName();
+      if (readBirthdayPass() && name.length >= 2) {
+        const stillOpen = await birthdayPassStillValid({ keepOnNetworkError: false });
+        if (cancelled) return;
+        if (stillOpen) {
+          setRole('editor');
+          setReady(true);
+          if (supabase) void supabase.auth.signOut();
+          return;
+        }
+      }
+
       if (!cancelled) setReady(true);
     };
 
-    void boot();
+    void bootAuth();
 
     if (!supabase) {
       return () => {
@@ -140,7 +171,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (event === 'SIGNED_OUT') {
-        setRole(restoreNamedEditor() ? 'editor' : 'viewer');
+        if (restorePasswordEditor()) {
+          setRole('editor');
+          return;
+        }
+        // Do not drop a family/birthday session just because we cleared an
+        // leftover owner JWT.
+        setRole((current) => (current === 'owner' ? 'viewer' : current));
       }
     });
     return () => {
@@ -149,9 +186,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (role !== 'editor' || isFamilyAuthed()) return;
+
+    let cancelled = false;
+    const recheck = async () => {
+      const ok = await birthdayPassStillValid({ keepOnNetworkError: true });
+      if (cancelled) return;
+      if (!ok) setRole('viewer');
+    };
+
+    const timer = window.setInterval(() => void recheck(), 60_000);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') void recheck();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [role]);
+
   const signIn = useCallback(async (password: string): Promise<Role | null> => {
     const hash = await hashPassword(password);
-    // Family members enter with a name, not the shared family password.
     if (hash !== ACCESS.ownerHash) return null;
 
     if (supabase) {
@@ -164,21 +222,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (found !== 'owner') return null;
       applyOwnerName();
       removeKey(AUTH_KEY);
+      clearBirthdayPass();
       setRole('owner');
       return 'owner';
     }
 
     saveJson(AUTH_KEY, hash);
     applyOwnerName();
+    clearBirthdayPass();
     setRole('owner');
     return 'owner';
   }, []);
 
-  const enterWithName = useCallback((name: string): boolean => {
+  const enterAsFamily = useCallback(
+    async (name: string, password: string): Promise<FamilyEnterResult> => {
+      const trimmed = name.trim().slice(0, 40);
+      if (trimmed.length < 2) return { ok: false, reason: 'name' };
+      if (!password) return { ok: false, reason: 'password' };
+
+      const hash = await hashPassword(password);
+      if (hash === ACCESS.ownerHash) {
+        const role = await signIn(password);
+        return role ? { ok: true, role } : { ok: false, reason: 'password' };
+      }
+      if (hash !== ACCESS.editorHash) return { ok: false, reason: 'password' };
+
+      saveJson(STORAGE_KEYS.displayName, trimmed);
+      saveJson(STORAGE_KEYS.namedDevice, true);
+      markFamilyAuthed();
+      clearBirthdayPass();
+      if (supabase) void supabase.auth.signOut();
+      setRole('editor');
+      return { ok: true, role: 'editor' };
+    },
+    [signIn],
+  );
+
+  const enterWithName = useCallback(async (name: string): Promise<boolean> => {
     const trimmed = name.trim().slice(0, 40);
     if (trimmed.length < 2) return false;
+    const stillOpen = await birthdayPassStillValid({ keepOnNetworkError: false });
+    if (!stillOpen) return false;
     saveJson(STORAGE_KEYS.displayName, trimmed);
     saveJson(STORAGE_KEYS.namedDevice, true);
+    removeKey(STORAGE_KEYS.familyAuthed);
     setRole('editor');
     if (supabase) void supabase.auth.signOut();
     return true;
@@ -189,7 +276,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     removeKey(AUTH_KEY);
     removeKey(STORAGE_KEYS.displayName);
     removeKey(STORAGE_KEYS.namedDevice);
+    removeKey(STORAGE_KEYS.familyAuthed);
     removeKey(STORAGE_KEYS.skipOwnerAuto);
+    clearBirthdayPass();
     setRole('viewer');
   }, []);
 
@@ -200,10 +289,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       canEdit: role === 'editor' || role === 'owner',
       canDelete: role === 'owner',
       signIn,
+      enterAsFamily,
       enterWithName,
       signOut,
     }),
-    [role, ready, signIn, enterWithName, signOut],
+    [role, ready, signIn, enterAsFamily, enterWithName, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

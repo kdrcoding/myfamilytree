@@ -32,7 +32,7 @@ export const en = {
   'nav.language': 'Language',
   'nav.signOut': 'Sign out',
   'nav.signOutConfirmTitle': 'Sign out of the site?',
-  'nav.signOutConfirmMsg': 'You will need to enter your name again to come back.',
+  'nav.signOutConfirmMsg': 'You will need your name and the family password to come back.',
   'footer.note': 'A private family history project. All sample people are fictional.',
 
   // Author credit
@@ -98,10 +98,15 @@ export const en = {
   // Site name gate
   'gate.title': 'This is a private family website',
   'gate.intro':
-    'Enter your name to open the family site. We keep it so the family can see who added or changed information. This device remembers you until you sign out.',
+    'Enter your name and the family password to open the site. We keep your name so the family can see who added or changed information.',
   'gate.introFromBday':
-    'The birthday page stays open without signing in. Enter your name to open the tree — no password needed. This device will remember you after that.',
-  'gate.remember': 'This device remembers your name until you tap Sign out.',
+    'You opened this from a live birthday page. Enter your name — no password while that birthday is still open.',
+  'gate.introBdayEnded':
+    'This birthday page has closed. Enter your name and the family password to open the tree.',
+  'gate.remember': 'This device remembers you until you tap Sign out.',
+  'gate.rememberBday':
+    'After this birthday closes, the next visit will ask for the family password.',
+  'gate.familyPassword': 'Family password',
   'gate.showPassword': 'Show password',
   'gate.hidePassword': 'Hide password',
   'gate.password': 'Password',
@@ -117,7 +122,8 @@ export const en = {
   'gate.welcomeBtn': 'Enter as family',
   'gate.namePlaceholder': 'e.g. Aziza',
   'gate.ownerToggle': 'Owner / Kadir',
-  'gate.ownerIntro': 'Owner password for delete, settings, and other owner tools. Not needed to view or edit the tree.',
+  'gate.ownerIntro':
+    'Owner password for delete, settings, and other owner tools. Family members use the family password above.',
   'gate.ownerPassword': 'Owner password',
   'gate.ownerBtn': 'Sign in as owner',
   'log.by': 'by',
@@ -396,7 +402,10 @@ export const en = {
   'bday.cheersYesterday': 'Who celebrated with the family',
   'bday.footer': 'This page is open for family — no password needed.',
   'bday.seeTree': 'See the family tree',
-  'bday.seeTreeHint': 'The tree is for family — enter your name so we know who is looking.',
+  'bday.seeTreeHint':
+    'On the next screen enter your name only — no password while this birthday page is open.',
+  'bday.seeTreeHintClosed':
+    'This birthday page has closed. The tree now needs your name and the family password.',
   'bday.notFoundTitle': 'Birthday page not found',
   'bday.notFoundBody': 'This link may be old, or that person is not in the tree.',
   'bday.expiredTitle': 'This birthday page has closed',
@@ -412,7 +421,7 @@ export const en = {
   // Invite link
   'invite.title': 'Invite relatives',
   'invite.intro':
-    'Share this link. After they enter their name, “Add yourself” opens so they can send a join request.',
+    'Share this link. After they enter their name and the family password, “Add yourself” opens so they can send a join request.',
   'invite.copyBtn': 'Copy invite link',
   'invite.copied': 'Invite link copied.',
   'invite.openedToast': 'Welcome — add yourself to the family tree.',
@@ -641,7 +650,7 @@ export const en = {
   // Unlock
   'unlock.title': 'Owner login',
   'unlock.intro':
-    'Enter the owner password for delete, settings, and other owner tools. Family members only need their name to view and fill in the tree.',
+    'Enter the owner password for delete, settings, and other owner tools. Family members use the family password on the welcome screen.',
   'unlock.password': 'Password',
   'unlock.enter': 'Enter a password.',
   'unlock.wrong': 'That password is not correct.',
@@ -765,7 +774,7 @@ export const en = {
   'settings.hidePhotosDesc': 'Initials avatars are shown instead.',
   'settings.accessTitle': 'Editing access',
   'settings.accessIntro':
-    'Family members enter their name to view and edit. The owner password (Kadir) is only for delete, settings, and other owner tools.',
+    'Family members enter their name and the family password. The owner password (Kadir) is only for delete, settings, and other owner tools.',
   'settings.currentRole': 'Current role: {role}',
   'settings.roleOwner': 'Owner',
   'settings.roleEditor': 'Family editor',
@@ -962,7 +971,7 @@ export const uz: Record<TKey, string> = {
   'nav.language': 'Til',
   'nav.signOut': 'Chiqish',
   'nav.signOutConfirmTitle': 'Saytdan chiqilsinmi?',
-  'nav.signOutConfirmMsg': 'Qayta kirish uchun ismingizni yozasiz.',
+  'nav.signOutConfirmMsg': 'Qayta kirish uchun ismingiz va oila paroli kerak.',
   'footer.note': "Shaxsiy oilaviy tarix loyihasi. Namunadagi odamlar to'qib chiqarilgan.",
 
   'credit.madeBy': 'Ilova muallifi — Kadir',
@@ -1023,10 +1032,15 @@ export const uz: Record<TKey, string> = {
 
   'gate.title': 'Bu shaxsiy oilaviy sayt',
   'gate.intro':
-    "Saytni ochish uchun ismingizni yozing. Oila kim ma'lumot qo'shganini yoki o'zgartirganini ko'rishi uchun. Chiqmaguningizcha shu qurilma sizni eslab qoladi.",
+    "Saytni ochish uchun ismingiz va oila parolini yozing. Ismingiz saqlanadi — oila kim ma'lumot qo'shganini yoki o'zgartirganini ko'rishi uchun.",
   'gate.introFromBday':
-    'Bayram sahifasi ochiq. Shajarani ochish uchun ismingizni yozing — parol kerak emas. Keyin shu qurilma sizni eslab qoladi.',
-  'gate.remember': 'Chiqmaguningizcha shu qurilma ismingizni eslab qoladi.',
+    'Siz ochiq tug‘ilgan kun sahifasidan keldingiz. Ismingizni yozing — sahifa ochiq ekan parol kerak emas.',
+  'gate.introBdayEnded':
+    'Bu tug‘ilgan kun sahifasi yopildi. Shajarani ochish uchun ismingiz va oila parolini yozing.',
+  'gate.remember': 'Chiqmaguningizcha shu qurilma sizni eslab qoladi.',
+  'gate.rememberBday':
+    'Bu tug‘ilgan kun yopilgach, keyingi kirishda oila paroli so‘raladi.',
+  'gate.familyPassword': 'Oila paroli',
   'gate.showPassword': 'Parolni ko‘rsatish',
   'gate.hidePassword': 'Parolni yashirish',
   'gate.password': 'Parol',
@@ -1042,7 +1056,8 @@ export const uz: Record<TKey, string> = {
   'gate.welcomeBtn': 'Oila a’zosi sifatida kirish',
   'gate.namePlaceholder': 'masalan, Aziza',
   'gate.ownerToggle': 'Egasi / Kadir',
-  'gate.ownerIntro': "O'chirish, sozlamalar va egasining vositalari uchun parol. Shajarani ko'rish yoki to'ldirish uchun kerak emas.",
+  'gate.ownerIntro':
+    "O'chirish, sozlamalar va egasining vositalari uchun parol. Oila a’zolari yuqoridagi oila parolini yozadi.",
   'gate.ownerPassword': 'Egasi paroli',
   'gate.ownerBtn': 'Egasi sifatida kirish',
   'log.by': '·',
@@ -1317,7 +1332,10 @@ export const uz: Record<TKey, string> = {
   'bday.cheersYesterday': 'Oila bilan nishonlaganlar',
   'bday.footer': 'Bu sahifa oila uchun ochiq — parol kerak emas.',
   'bday.seeTree': 'Oilani ko‘rish',
-  'bday.seeTreeHint': 'Shajara oila uchun — ismingizni yozing, kim kirganini bilishimiz uchun.',
+  'bday.seeTreeHint':
+    'Keyingi ekranda faqat ismingizni yozing — bu tug‘ilgan kun ochiq ekan parol kerak emas.',
+  'bday.seeTreeHintClosed':
+    'Bu tug‘ilgan kun sahifasi yopildi. Shajara uchun ism va oila paroli kerak.',
   'bday.notFoundTitle': 'Bayram sahifasi topilmadi',
   'bday.notFoundBody': 'Havola eski bo‘lishi mumkin, yoki bu odam daraxtida yo‘q.',
   'bday.expiredTitle': 'Bayram sahifasi yopildi',
@@ -1332,7 +1350,7 @@ export const uz: Record<TKey, string> = {
 
   'invite.title': 'Qarindoshlarni taklif qilish',
   'invite.intro':
-    'Bu havolani ulashing. Ismingizni yozgach, “O‘zingizni qo‘shing” ochiladi.',
+    'Bu havolani ulashing. Ism va oila parolini yozgach, “O‘zingizni qo‘shing” ochiladi.',
   'invite.copyBtn': 'Taklif havolasini nusxalash',
   'invite.copied': 'Taklif havolasi nusxalandi.',
   'invite.openedToast': 'Xush kelibsiz — o‘zingizni oila shajarasiga qo‘shing.',
@@ -1553,7 +1571,7 @@ export const uz: Record<TKey, string> = {
 
   'unlock.title': 'Egasi kirishi',
   'unlock.intro':
-    "O'chirish, sozlamalar va egasining vositalari uchun egasi parolini kiriting. Oila a'zolari shajarani ko'rish va to'ldirish uchun faqat ism yozadi.",
+    "O'chirish, sozlamalar va egasining vositalari uchun egasi parolini kiriting. Oila a'zolari kirish ekranida oila parolini yozadi.",
   'unlock.password': 'Parol',
   'unlock.enter': 'Parolni kiriting.',
   'unlock.wrong': "Parol noto'g'ri.",
@@ -1673,7 +1691,7 @@ export const uz: Record<TKey, string> = {
   'settings.hidePhotosDesc': "O'rniga bosh harfli avatarlar ko'rsatiladi.",
   'settings.accessTitle': 'Tahrirlash huquqi',
   'settings.accessIntro':
-    "Oila a'zolari shajarani ko'rish va tahrirlash uchun ism yozadi. Egasi paroli (Kadir) faqat o'chirish, sozlamalar va egasining vositalari uchun.",
+    "Oila a'zolari ism va oila parolini yozadi. Egasi paroli (Kadir) faqat o'chirish, sozlamalar va egasining vositalari uchun.",
   'settings.currentRole': 'Joriy rol: {role}',
   'settings.roleOwner': 'Egasi',
   'settings.roleEditor': 'Oila tahrirchisi',

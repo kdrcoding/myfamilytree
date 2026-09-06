@@ -9,7 +9,7 @@ export const isSupabaseConfigured = Boolean(url && anonKey);
 
 /**
  * Shared Supabase client (null when unconfigured). The anon key is public by
- * design — name-only visitors use it without a password. RLS allows anon to
+ * design — family editors use it after the site gate. RLS allows anon to
  * read/write family editor data; owner JWT is still required for deletes
  * and owner tools. Sessions persist in localStorage for the owner account.
  * Real secrets (service role key) are never used here.
