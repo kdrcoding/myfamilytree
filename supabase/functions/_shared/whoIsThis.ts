@@ -1,17 +1,9 @@
-import type { FamilyMemberRow } from './telegram.ts';
+import { prettyPersonName, type FamilyMemberRow } from './telegram.ts';
 
 type RelRow = { kind: string; person_a: string; person_b: string };
 
 function shortName(m: FamilyMemberRow): string {
   return prettyPersonName(m.nickname?.trim() || m.first_name);
-}
-
-function prettyPersonName(value: string): string {
-  return value.replace(/[A-Z]{2,}[a-z]*/g, (chunk) => {
-    const upper = chunk.match(/^[A-Z]+/)?.[0] ?? chunk;
-    const rest = chunk.slice(upper.length);
-    return upper[0] + upper.slice(1).toLowerCase() + rest;
-  });
 }
 
 function joinUz(names: string[]): string {

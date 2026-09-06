@@ -100,7 +100,7 @@ export function displayName(m: FamilyMemberRow): string {
   return prettyPersonName(`${m.first_name} ${m.last_name}`.trim() || 'Family member');
 }
 
-function prettyPersonName(value: string): string {
+export function prettyPersonName(value: string): string {
   return value.replace(/[A-Z]{2,}[a-z]*/g, (chunk) => {
     const upper = chunk.match(/^[A-Z]+/)?.[0] ?? chunk;
     const rest = chunk.slice(upper.length);
