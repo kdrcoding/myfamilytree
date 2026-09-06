@@ -744,7 +744,6 @@ html:not(.dark) .home-hero__actions button:hover {
     transform: none !important;
   }
 }
-}
 
 /* Print styles: hide nav, buttons, overlays; force light background */
 @media print {
