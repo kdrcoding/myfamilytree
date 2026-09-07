@@ -387,10 +387,10 @@ export const en = {
   'telegram.saveFailed': 'Could not save Telegram settings',
   'telegram.coverageTitle': 'Who the bot can celebrate',
   'telegram.coverage':
-    '{ready} of {living} living relatives have a full birth date (month and day). The bot can only post for those {ready}.',
+    '{ready} of {living} family members have a full birth date (month and day). The bot can only post for those {ready}.',
   'telegram.coverageMissing':
     '{n} people still need a month and day — open Members and edit their cards so they are not skipped.',
-  'telegram.coverageOk': 'Every living relative with a known birthday can be posted.',
+  'telegram.coverageOk': 'Everyone with a known birthday can be posted.',
   'telegram.nextTitle': 'Coming up this week',
   'telegram.nextEmpty': 'No full birth dates in the next 7 days.',
   'telegram.nextToday': 'Today',
@@ -1328,10 +1328,10 @@ export const uz: Record<TKey, string> = {
   'telegram.saveFailed': 'Telegram sozlamalarini saqlab bo‘lmadi',
   'telegram.coverageTitle': 'Bot kimni nishonlay oladi',
   'telegram.coverage':
-    '{living} ta tirik a’zodan {ready} tasida to‘liq sana (oy va kun) bor. Bot faqat shu {ready} kishi uchun yozadi.',
+    '{living} ta oila a’zosidan {ready} tasida to‘liq sana (oy va kun) bor. Bot faqat shu {ready} kishi uchun yozadi.',
   'telegram.coverageMissing':
     '{n} kishida hali oy/kun yo‘q — Oila a’zolari sahifasida kartasini to‘ldiring, aks holda o‘tkazib yuboriladi.',
-  'telegram.coverageOk': 'To‘liq sanasi bor barcha tirik a’zolar nishonlanishi mumkin.',
+  'telegram.coverageOk': 'To‘liq sanasi bor barcha oila a’zolari nishonlanishi mumkin.',
   'telegram.nextTitle': 'Shu hafta',
   'telegram.nextEmpty': 'Keyingi 7 kunda to‘liq tug‘ilgan kun yo‘q.',
   'telegram.nextToday': 'Bugun',

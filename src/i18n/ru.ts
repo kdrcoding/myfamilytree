@@ -544,10 +544,10 @@ export const ruOverrides: Record<string, string> = {
   'telegram.saveFailed': 'Не удалось сохранить настройки Telegram',
   'telegram.coverageTitle': 'Кого бот может поздравить',
   'telegram.coverage':
-    'У {ready} из {living} живых родственников есть полная дата (месяц и день). Бот пишет только им.',
+    'У {ready} из {living} родственников есть полная дата (месяц и день). Бот пишет только им.',
   'telegram.coverageMissing':
     'У {n} человек ещё нет месяца и дня — откройте «Члены семьи» и дополните карточки, иначе их пропустят.',
-  'telegram.coverageOk': 'Все живые родственники с известным днём рождения могут быть поздравлены.',
+  'telegram.coverageOk': 'Все родственники с известным днём рождения могут быть поздравлены.',
   'telegram.nextTitle': 'На этой неделе',
   'telegram.nextEmpty': 'В ближайшие 7 дней нет полной даты рождения.',
   'telegram.nextToday': 'Сегодня',

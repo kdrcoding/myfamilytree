@@ -64,7 +64,7 @@ export function missingDatesNotice(names: string[], pageUrl: string): string {
   return [
     '📋 <b>Oila eslatmasi</b> — har dushanba',
     '',
-    `${names.length} ta tirik a’zoda tug‘ilgan kun (oy va kun) yo‘q. Bot ularni nishonlay olmaydi.`,
+    `${names.length} ta oila a’zosida tug‘ilgan kun (oy va kun) yo‘q. Bot ularni nishonlay olmaydi.`,
     '',
     list + extra,
     '',
