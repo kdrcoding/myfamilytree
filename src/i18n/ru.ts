@@ -354,6 +354,8 @@ export const ruOverrides: Record<string, string> = {
   'join.noMatches': 'Никого не найдено.',
   'join.notSure': 'Не уверен(а), как связан(а) — пусть владелец разместит',
   'join.continue': 'Далее к моим данным',
+  'join.siblingNeedsParents':
+    'У этого родственника в древе нет родителей, поэтому нельзя поставить вас как брата или сестру. Выберите другую связь или пусть владелец разместит.',
 
   'joinReq.title': 'Заявки на добавление',
   'joinReq.intro':
@@ -374,6 +376,10 @@ export const ruOverrides: Record<string, string> = {
   'joinReq.actionFailed': 'Не удалось выполнить. Проверьте интернет и попробуйте снова.',
   'joinReq.linkedAs': 'Связан(а) с {target}',
   'joinReq.unlinked': 'Связь не выбрана — разместите вручную после одобрения',
+  'joinReq.alreadyOnTreeToast': '{name} уже есть в древе.',
+  'joinReq.linkedExistingToast': '{name} уже был(а) в древе — связь добавлена.',
+  'joinReq.siblingNoParents':
+    '{name} уже есть в древе, но у родственника нет родителей, поэтому связь брата/сестры не добавлена.',
 
   'memories.title': 'Фото и воспоминания',
   'memories.add': 'Добавить фото',
@@ -577,6 +583,9 @@ export const ruOverrides: Record<string, string> = {
   'bday.expiredTitle': 'Праздничная страница закрыта',
   'bday.expiredBody':
     'Страница открыта в день рождения и на следующий день. Потом ссылка закрывается.',
+  'bday.failedTitle': 'Не удалось загрузить страницу дня рождения',
+  'bday.failedBody': 'Проверьте интернет и попробуйте снова. Праздник ещё не закрыт.',
+  'bday.retry': 'Повторить',
   'bday.yesterdayKicker': 'Вчера',
   'bday.yesterdayHeadline': 'Вчера был день рождения {name}',
   'bday.yesterdayHer': 'Вчера был её день рождения',

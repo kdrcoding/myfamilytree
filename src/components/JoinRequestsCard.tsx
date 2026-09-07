@@ -19,7 +19,7 @@ import { Avatar } from '../components/Avatar';
 export function JoinRequestsCard() {
   const t = useT();
   const language = useLanguage();
-  const { people, addPerson } = useFamily();
+  const { people, addPerson, applyLink } = useFamily();
   const { toast } = useToast();
   const confirm = useConfirm();
   const [requests, setRequests] = useState<StoredJoinRequest[]>([]);
@@ -70,15 +70,38 @@ export function JoinRequestsCard() {
         return candidate === nameKey && (p.birthDate || '') === (person.birthDate || '');
       });
       if (alreadyOnTree) {
+        if (req.link) {
+          const target = people.find((p) => p.id === req.link!.targetId);
+          if (req.link.kind === 'sibling' && target && target.parentIds.length === 0) {
+            await markJoinRequestApproved(req.id);
+            toast(t('joinReq.siblingNoParents', { name: fullName(alreadyOnTree) }), 'info');
+            refresh();
+            return;
+          }
+          const saved = await applyLink(alreadyOnTree.id, req.link);
+          if (!saved) return;
+          await markJoinRequestApproved(req.id);
+          toast(t('joinReq.linkedExistingToast', { name: fullName(alreadyOnTree) }));
+          refresh();
+          return;
+        }
         await markJoinRequestApproved(req.id);
-        toast(t('joinReq.approvedToast', { name: fullName(alreadyOnTree) }));
+        toast(t('joinReq.alreadyOnTreeToast', { name: fullName(alreadyOnTree) }));
         refresh();
         return;
       }
-      const saved = await addPerson(person, req.link ?? undefined);
+      const siblingOrphan =
+        req.link?.kind === 'sibling' &&
+        Boolean(people.find((p) => p.id === req.link!.targetId && p.parentIds.length === 0));
+      const saved = await addPerson(person, siblingOrphan ? undefined : (req.link ?? undefined));
       if (!saved) return;
       await markJoinRequestApproved(req.id);
-      toast(t('joinReq.approvedToast', { name: fullName(person) }));
+      toast(
+        siblingOrphan
+          ? t('joinReq.siblingNoParents', { name: fullName(person) })
+          : t('joinReq.approvedToast', { name: fullName(person) }),
+        siblingOrphan ? 'info' : undefined,
+      );
       refresh();
     } catch (error) {
       console.error(error);

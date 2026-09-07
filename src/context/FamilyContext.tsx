@@ -41,6 +41,8 @@ interface FamilyContextValue {
   getLabel: (person: FamilyPerson) => string;
   /** Create a person, optionally attached to an existing relative. */
   addPerson: (person: FamilyPerson, link?: RelationLink) => Promise<boolean>;
+  /** Attach someone already on the tree (owner join-approve for duplicates). */
+  applyLink: (personId: string, link: RelationLink) => Promise<boolean>;
   /** Update fields and replace the person's parent/spouse relationships. */
   updatePerson: (
     person: FamilyPerson,
@@ -273,6 +275,16 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           return next;
         }, 'add');
       },
+      applyLink: (personId, link) => {
+        if (!isOwner) {
+          toast(translate(language, 'form.ownerOnlyLink'), 'error');
+          return Promise.resolve(false);
+        }
+        return mutate((current) => {
+          if (!current.some((p) => p.id === personId)) return current;
+          return applyRelationLink(current, personId, link);
+        }, 'edit');
+      },
       updatePerson: (person, parentIds, spouseIds) => {
         return mutate((current) => {
           const existing = current.find((p) => p.id === person.id);
@@ -351,7 +363,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         people,
       }),
     }),
-    [people, index, generations, bloodline, mutate, isOwner, language],
+    [people, index, generations, bloodline, mutate, isOwner, language, toast],
   );
 
   if (status !== 'ready') {

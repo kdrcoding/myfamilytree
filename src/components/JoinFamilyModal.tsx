@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Search, UserRoundPlus } from 'lucide-react';
 import type { FamilyPerson, RelationKind } from '../types/family';
 import { useFamily } from '../context/FamilyContext';
+import { useToast } from '../context/ToastContext';
 import { useT } from '../i18n/useT';
 import { fullName, sortByBirth } from '../utils/family';
 import { Modal } from './ui/Modal';
@@ -25,6 +26,7 @@ interface JoinFamilyModalProps {
 export function JoinFamilyModal({ onClose }: JoinFamilyModalProps) {
   const { people, getLabel } = useFamily();
   const t = useT();
+  const { toast } = useToast();
   const [kind, setKind] = useState<RelationKind>('child');
   const [targetId, setTargetId] = useState<string>('');
   const [noConnection, setNoConnection] = useState(false);
@@ -36,6 +38,10 @@ export function JoinFamilyModal({ onClose }: JoinFamilyModalProps) {
     const q = query.trim().toLowerCase();
     return q ? sorted.filter((p) => fullName(p).toLowerCase().includes(q)) : sorted;
   }, [people, query]);
+
+  const selected = people.find((p) => p.id === targetId);
+  const siblingNeedsParents =
+    kind === 'sibling' && !noConnection && Boolean(selected) && selected!.parentIds.length === 0;
 
   if (step === 2) {
     return (
@@ -124,6 +130,10 @@ export function JoinFamilyModal({ onClose }: JoinFamilyModalProps) {
         {t('join.notSure')}
       </label>
 
+      {siblingNeedsParents && (
+        <p className="mt-3 text-sm text-amber-800 dark:text-amber-200">{t('join.siblingNeedsParents')}</p>
+      )}
+
       <div className="mt-5 flex justify-end gap-2">
         <button type="button" className="btn-secondary" onClick={onClose}>
           {t('common.cancel')}
@@ -131,8 +141,14 @@ export function JoinFamilyModal({ onClose }: JoinFamilyModalProps) {
         <button
           type="button"
           className="btn-primary"
-          disabled={!noConnection && !targetId}
-          onClick={() => setStep(2)}
+          disabled={!noConnection && (!targetId || siblingNeedsParents)}
+          onClick={() => {
+            if (siblingNeedsParents) {
+              toast(t('join.siblingNeedsParents'), 'info');
+              return;
+            }
+            setStep(2);
+          }}
         >
           {t('join.continue')}
         </button>

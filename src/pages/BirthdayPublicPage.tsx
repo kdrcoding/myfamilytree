@@ -93,6 +93,7 @@ export function BirthdayPublicPage() {
   const { settings, setLanguage } = useSettings();
   const [data, setData] = useState<PublicBirthday | null>(null);
   const [loading, setLoading] = useState(true);
+  const [retryKey, setRetryKey] = useState(0);
   const isDevPreview = import.meta.env.DEV && personId === '_preview';
 
   useEffect(() => {
@@ -143,7 +144,7 @@ export function BirthdayPublicPage() {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [personId, isDevPreview, searchParams]);
+  }, [personId, isDevPreview, searchParams, retryKey]);
 
   useEffect(() => {
     if (!data) return;
@@ -164,6 +165,7 @@ export function BirthdayPublicPage() {
   const palette = birthdayPalette(gender);
   const emoji = designEmoji(design, gender);
   const expired = data?.error === 'expired';
+  const failed = data?.error === 'failed' || data?.error === 'not_configured';
 
   useEffect(() => {
     const previous = document.title;
@@ -204,11 +206,7 @@ export function BirthdayPublicPage() {
   if (person) {
     return (
       <BirthdayWebCard
-        person={
-          settings.language === 'uz' || !person.whoLine
-            ? person
-            : { ...person, whoLine: null }
-        }
+        person={person}
         when={when}
         design={design}
         cheers={cheers}
@@ -240,11 +238,31 @@ export function BirthdayPublicPage() {
           <div className="mt-20 rounded-3xl border bg-white/85 p-8 text-center backdrop-blur">
             <Cake className="mx-auto h-10 w-10" style={{ color: palette.accentSoft }} aria-hidden />
             <h1 className="mt-4 font-display text-2xl font-semibold" style={{ color: palette.ink }}>
-              {expired ? t('bday.expiredTitle') : t('bday.notFoundTitle')}
+              {expired
+                ? t('bday.expiredTitle')
+                : failed
+                  ? t('bday.failedTitle')
+                  : t('bday.notFoundTitle')}
             </h1>
             <p className="mt-2 text-sm text-stone-600">
-              {expired ? t('bday.expiredBody') : t('bday.notFoundBody')}
+              {expired
+                ? t('bday.expiredBody')
+                : failed
+                  ? t('bday.failedBody')
+                  : t('bday.notFoundBody')}
             </p>
+            {failed && (
+              <button
+                type="button"
+                className="btn-primary mt-5 inline-flex min-h-11 items-center justify-center"
+                onClick={() => {
+                  setLoading(true);
+                  setRetryKey((n) => n + 1);
+                }}
+              >
+                {t('bday.retry')}
+              </button>
+            )}
             <PageActions accent={palette.accent} open={false} />
           </div>
         )}

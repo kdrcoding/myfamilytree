@@ -54,6 +54,7 @@ export function HomePage() {
   const stats = useMemo(() => computeStats(people), [people]);
   const founders = useMemo(() => findFounders(people).slice(0, 2), [people]);
   const [familyTz, setFamilyTz] = useState(FAMILY_TIMEZONE);
+  const [clockTick, setClockTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,7 +70,20 @@ export function HomePage() {
     };
   }, []);
 
-  const familyNow = useMemo(() => nowInTimeZone(familyTz), [familyTz]);
+  useEffect(() => {
+    const tick = () => setClockTick((n) => n + 1);
+    const timer = window.setInterval(tick, 60_000);
+    const onVis = () => {
+      if (document.visibilityState === 'visible') tick();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, []);
+
+  const familyNow = useMemo(() => nowInTimeZone(familyTz), [familyTz, clockTick]);
 
   const showBirthDates = privacy.showBirthDate();
   const upcomingCelebrations = useMemo(

@@ -37,7 +37,6 @@ export function TelegramBirthdaysCard() {
       const s = await fetchTelegramSettings();
       setSettings(s);
       setUnavailable(!s);
-      if (s && !testPersonId && people[0]) setTestPersonId(people[0].id);
     } catch (error) {
       console.error(error);
       setUnavailable(true);
@@ -65,10 +64,24 @@ export function TelegramBirthdaysCard() {
     }
   };
 
-  const living = people
-    .filter((p) => !p.isDeceased && !p.deathDate)
-    .slice()
-    .sort((a, b) => fullName(a).localeCompare(fullName(b)));
+  const living = useMemo(
+    () =>
+      people
+        .filter((p) => !p.isDeceased && !p.deathDate)
+        .slice()
+        .sort((a, b) => fullName(a).localeCompare(fullName(b))),
+    [people],
+  );
+
+  useEffect(() => {
+    if (living.length === 0) {
+      if (testPersonId) setTestPersonId('');
+      return;
+    }
+    if (!living.some((p) => p.id === testPersonId)) {
+      setTestPersonId(living[0]!.id);
+    }
+  }, [living, testPersonId]);
 
   const readyCount = living.filter((p) => /^\d{4}-\d{2}-\d{2}$/.test((p.birthDate ?? '').trim())).length;
   const missingCount = living.length - readyCount;
@@ -124,11 +137,13 @@ export function TelegramBirthdaysCard() {
         </Link>
       </div>
 
-      {upcomingWeek.length > 0 && (
-        <div className="mt-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
-            {t('telegram.nextTitle')}
-          </p>
+      <div className="mt-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+          {t('telegram.nextTitle')}
+        </p>
+        {upcomingWeek.length === 0 ? (
+          <p className="mt-1.5 text-xs text-stone-500 dark:text-stone-400">{t('telegram.nextEmpty')}</p>
+        ) : (
           <ul className="mt-1.5 space-y-1 text-sm">
             {upcomingWeek.map((b) => (
               <li key={b.person.id} className="flex flex-wrap items-baseline justify-between gap-2">
@@ -144,8 +159,8 @@ export function TelegramBirthdaysCard() {
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="mt-3 space-y-3">
         <ToggleSwitch
@@ -265,8 +280,13 @@ export function TelegramBirthdaysCard() {
                   const result = await runBirthdayTest(testPersonId);
                   if (!result.ok) toast(result.error || t('telegram.testFailed'), 'error');
                   else if (result.skipped) toast(t('telegram.testSkipped', { reason: result.skipped }), 'info');
-                  else if ((result.count ?? 0) === 0) toast(t('telegram.testSkipped', { reason: 'no_match' }), 'info');
-                  else toast(t('telegram.testOk', { n: result.count ?? 0 }), 'success');
+                  else {
+                    const sendError = result.results?.find((row) => row.error)?.error;
+                    if (sendError) toast(sendError, 'error');
+                    else if ((result.count ?? 0) === 0) {
+                      toast(t('telegram.testSkipped', { reason: 'no_match' }), 'info');
+                    } else toast(t('telegram.testOk', { n: result.count ?? 0 }), 'success');
+                  }
                 } catch (error) {
                   console.error(error);
                   toast(t('telegram.testFailed'), 'error');

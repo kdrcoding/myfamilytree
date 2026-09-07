@@ -1,5 +1,8 @@
 /** Shared helpers for Oq-Ariq Telegram birthday Edge Functions. */
 
+/** Fallback when telegram_settings.timezone is missing — matches the live family clock. */
+export const DEFAULT_FAMILY_TIMEZONE = 'Asia/Tashkent';
+
 export const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers':

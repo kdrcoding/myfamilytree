@@ -13,6 +13,7 @@ import {
   monthDay,
   requireEnv,
   telegramApi,
+  DEFAULT_FAMILY_TIMEZONE,
   type FamilyMemberRow,
 } from '../_shared/telegram.ts';
 import { buildBirthdayCardPng, type BirthdayCardOpts } from '../_shared/birthdayCard.ts';
@@ -214,7 +215,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: true, skipped: 'no_group_chat_id', count: 0 });
     }
 
-    const tz = settings.timezone || 'America/Los_Angeles';
+    const tz = settings.timezone || DEFAULT_FAMILY_TIMEZONE;
     const local = localParts(tz);
     // Exact hour match is fragile: GitHub Actions cron is often delayed 10–50+
     // minutes. Once local time reaches send_hour on a birthday day, keep trying
@@ -250,7 +251,11 @@ Deno.serve(async (req) => {
     const sentSet = new Set(already.map((r) => r.person_id));
 
     const celebrating = members.filter((m) => {
-      if (testPersonId) return m.id === testPersonId;
+      if (testPersonId) {
+        if (m.id !== testPersonId) return false;
+        if (m.is_deceased || m.death_date) return false;
+        return true;
+      }
       if (m.is_deceased || m.death_date) return false;
       const md = monthDay(m.birth_date);
       if (!md) return false;

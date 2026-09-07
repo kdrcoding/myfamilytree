@@ -427,10 +427,6 @@ export function PersonFormModal({
       }
     }
 
-    // The change is about to be committed to app state (FamilyContext handles
-    // the database write, retry and rollback); the recovery draft is done.
-    clearDraft();
-
     const personLabel =
       [trimmed.firstName, trimmed.lastName].filter(Boolean).join(' ') ||
       trimmed.nickname ||
@@ -455,6 +451,7 @@ export function PersonFormModal({
         spouseIds,
       );
       if (!saved) return false;
+      clearDraft();
       toast(t('form.updatedToast', { name: personLabel }));
       onSaved?.(person.id);
     } else {
@@ -469,6 +466,7 @@ export function PersonFormModal({
             link: effectiveLink ?? null,
             linkTargetName: linkTarget ? fullName(linkTarget) : undefined,
           });
+          clearDraft();
           toast(t('form.selfJoinToast'), 'info');
         } catch (error) {
           console.error('Join request failed:', error);
@@ -478,6 +476,7 @@ export function PersonFormModal({
       } else {
         const saved = await addPerson(newPerson, effectiveLink);
         if (!saved) return false;
+        clearDraft();
         toast(t('form.addedToast', { name: personLabel }));
       }
       onSaved?.(id);

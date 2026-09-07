@@ -65,13 +65,20 @@ export async function runBirthdayTest(testPersonId?: string): Promise<{
   count?: number;
   error?: string;
   skipped?: string;
+  results?: { personId: string; group: boolean; error?: string; skipped?: string }[];
 }> {
   if (!supabase) throw new Error('Supabase not configured');
   const { data, error } = await supabase.functions.invoke('birthday-telegram', {
     body: { force: true, testPersonId: testPersonId || undefined, skipDedupe: true },
   });
   if (error) throw error;
-  return data as { ok: boolean; count?: number; error?: string; skipped?: string };
+  return data as {
+    ok: boolean;
+    count?: number;
+    error?: string;
+    skipped?: string;
+    results?: { personId: string; group: boolean; error?: string; skipped?: string }[];
+  };
 }
 
 export function botOpenUrl(botUsername: string | null | undefined): string | null {

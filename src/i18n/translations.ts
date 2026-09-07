@@ -420,6 +420,9 @@ export const en = {
   'bday.expiredTitle': 'This birthday page has closed',
   'bday.expiredBody':
     'The celebration stays open on the birthday and the next day. After that the link expires.',
+  'bday.failedTitle': 'Could not load this birthday page',
+  'bday.failedBody': 'Check your connection and try again. The celebration is not closed.',
+  'bday.retry': 'Try again',
   'bday.yesterdayKicker': 'Yesterday',
   'bday.yesterdayHeadline': 'Yesterday was {name}’s birthday',
   'bday.yesterdayHer': 'Yesterday was her birthday',
@@ -597,6 +600,8 @@ export const en = {
   'join.noMatches': 'No matching people.',
   'join.notSure': "I'm not sure how I connect — let the owner place me",
   'join.continue': 'Continue to my details',
+  'join.siblingNeedsParents':
+    'That relative has no parents on the tree yet, so we cannot place you as their sibling. Pick a different connection, or let the owner place you.',
 
   // Owner join-request inbox
   'joinReq.title': 'Join requests',
@@ -618,6 +623,10 @@ export const en = {
   'joinReq.actionFailed': 'That action failed. Check your connection and try again.',
   'joinReq.linkedAs': 'Connected to {target}',
   'joinReq.unlinked': 'No connection chosen — place them manually after approving',
+  'joinReq.alreadyOnTreeToast': '{name} is already on the tree.',
+  'joinReq.linkedExistingToast': '{name} was already on the tree — the connection was added.',
+  'joinReq.siblingNoParents':
+    '{name} is already on the tree, but that relative has no parents recorded, so a sibling link could not be added.',
 
   // Memories
   'memories.title': 'Photos & memories',
@@ -1361,6 +1370,9 @@ export const uz: Record<TKey, string> = {
   'bday.expiredTitle': 'Bayram sahifasi yopildi',
   'bday.expiredBody':
     'Sahifa tug‘ilgan kun va ertasigacha ochiq. Keyin havola yopiladi.',
+  'bday.failedTitle': 'Bayram sahifasini yuklab bo‘lmadi',
+  'bday.failedBody': 'Aloqani tekshirib qayta urinib ko‘ring. Bayram yopilmagan.',
+  'bday.retry': 'Qayta urinish',
   'bday.yesterdayKicker': 'Kecha',
   'bday.yesterdayHeadline': 'Kecha {name}ning tug‘ilgan kuni edi',
   'bday.yesterdayHer': 'Kecha qizlarimizning bayrami edi',
@@ -1532,6 +1544,8 @@ export const uz: Record<TKey, string> = {
   'join.noMatches': 'Mos odam topilmadi.',
   'join.notSure': "Qanday bog'lanishimni bilmayman — egasi joylashtirsin",
   'join.continue': "Ma'lumotlarimni kiritish",
+  'join.siblingNeedsParents':
+    'Bu qarindoshning shajarada ota-onasi yo‘q, shuning uchun aka-uka/opa-singil qilib qo‘yib bo‘lmaydi. Boshqa bog‘lanish tanlang yoki egasi joylashtirsin.',
 
   'joinReq.title': 'Qo‘shilish so‘rovlari',
   'joinReq.intro':
@@ -1552,6 +1566,10 @@ export const uz: Record<TKey, string> = {
   'joinReq.actionFailed': 'Amal bajarilmadi. Aloqani tekshirib qayta urinib ko‘ring.',
   'joinReq.linkedAs': '{target} bilan bog‘langan',
   'joinReq.unlinked': 'Bog‘lanish tanlanmagan — tasdiqlagach joylashtiring',
+  'joinReq.alreadyOnTreeToast': '{name} allaqachon shajarada.',
+  'joinReq.linkedExistingToast': '{name} allaqachon shajarada edi — bog‘lanish qo‘shildi.',
+  'joinReq.siblingNoParents':
+    '{name} allaqachon shajarada, lekin ota-ona yozilmagan, shuning uchun aka-uka/opa-singil bog‘lanishi qo‘shilmadi.',
 
   'memories.title': 'Rasmlar va xotiralar',
   'memories.add': 'Rasm qo‘shish',

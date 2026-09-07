@@ -13,6 +13,7 @@ import {
   localParts,
   monthDay,
   shiftLocalDate,
+  DEFAULT_FAMILY_TIMEZONE,
   type FamilyMemberRow,
 } from '../_shared/telegram.ts';
 import { cardDesignSeed, normalizeCardGender, pickCardDesign } from '../_shared/cardTheme.ts';
@@ -63,7 +64,7 @@ Deno.serve(async (req) => {
     const settings = await db.rest<{ timezone: string }[]>('telegram_settings', {
       query: { select: 'timezone', id: 'eq.1' },
     });
-    const tz = settings[0]?.timezone || 'America/Los_Angeles';
+    const tz = settings[0]?.timezone || DEFAULT_FAMILY_TIMEZONE;
     const local = localParts(tz);
     const md = monthDay(person.birth_date);
     if (!md) {
