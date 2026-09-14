@@ -515,7 +515,7 @@
         "last_name": "",
         "nickname": null,
         "gender": "male",
-        "birth_date": null,
+        "birth_date": "2006-03-24",
         "death_date": null,
         "is_deceased": false,
         "photo": null,
@@ -524,7 +524,7 @@
         "occupation": null,
         "biography": null,
         "created_at": "2026-07-13T20:11:17.530741+00:00",
-        "updated_at": "2026-07-13T20:11:17.530741+00:00"
+        "updated_at": "2026-09-14T04:52:01.246763+00:00"
     },
     {
         "id": "husanboy-2",
@@ -532,7 +532,7 @@
         "last_name": "MADAMINOV",
         "nickname": null,
         "gender": "male",
-        "birth_date": null,
+        "birth_date": "2007-05-28",
         "death_date": null,
         "is_deceased": false,
         "photo": null,
@@ -541,7 +541,7 @@
         "occupation": null,
         "biography": null,
         "created_at": "2026-07-13T20:11:17.530741+00:00",
-        "updated_at": "2026-07-15T00:13:43.366891+00:00"
+        "updated_at": "2026-09-14T04:51:35.65679+00:00"
     },
     {
         "id": "ihriyor",
@@ -600,7 +600,7 @@
         "last_name": "Zokirov",
         "nickname": null,
         "gender": "male",
-        "birth_date": null,
+        "birth_date": "1994-06-25",
         "death_date": null,
         "is_deceased": false,
         "photo": null,
@@ -609,7 +609,7 @@
         "occupation": null,
         "biography": null,
         "created_at": "2026-07-14T01:17:16.041801+00:00",
-        "updated_at": "2026-07-14T01:17:16.041801+00:00"
+        "updated_at": "2026-09-14T04:52:55.958119+00:00"
     },
     {
         "id": "jasurbek",
@@ -719,7 +719,7 @@
         "last_name": "Nazirov",
         "nickname": null,
         "gender": "male",
-        "birth_date": null,
+        "birth_date": "1997-06-06",
         "death_date": null,
         "is_deceased": false,
         "photo": null,
@@ -728,7 +728,7 @@
         "occupation": null,
         "biography": null,
         "created_at": "2026-07-14T01:48:22.633804+00:00",
-        "updated_at": "2026-07-14T01:48:22.633804+00:00"
+        "updated_at": "2026-09-14T04:58:03.0651+00:00"
     },
     {
         "id": "m-aziz",
@@ -889,7 +889,7 @@
         "last_name": "Alisherjonova",
         "nickname": null,
         "gender": "female",
-        "birth_date": null,
+        "birth_date": "2025-09-15",
         "death_date": null,
         "is_deceased": false,
         "photo": null,
@@ -898,7 +898,7 @@
         "occupation": null,
         "biography": null,
         "created_at": "2026-07-14T00:48:52.300385+00:00",
-        "updated_at": "2026-07-14T00:51:47.472555+00:00"
+        "updated_at": "2026-09-14T04:53:45.687279+00:00"
     },
     {
         "id": "meliqozi",
@@ -906,7 +906,7 @@
         "last_name": "Naziraliyev",
         "nickname": "OPOQIM",
         "gender": "male",
-        "birth_date": "1943",
+        "birth_date": "1942",
         "death_date": null,
         "is_deceased": false,
         "photo": "people/meliqozi-mrle7r7cj6y5no.jpg",
@@ -915,7 +915,7 @@
         "occupation": null,
         "biography": null,
         "created_at": "2026-07-13T20:11:17.530741+00:00",
-        "updated_at": "2026-07-15T01:20:14.204346+00:00"
+        "updated_at": "2026-09-14T04:54:07.853964+00:00"
     },
     {
         "id": "mubinaxon",
@@ -1042,7 +1042,7 @@
         "last_name": "Alisherjonov",
         "nickname": null,
         "gender": "male",
-        "birth_date": null,
+        "birth_date": "2023-02-23",
         "death_date": null,
         "is_deceased": false,
         "photo": null,
@@ -1051,7 +1051,7 @@
         "occupation": null,
         "biography": null,
         "created_at": "2026-07-14T00:48:32.111321+00:00",
-        "updated_at": "2026-07-14T00:48:32.111321+00:00"
+        "updated_at": "2026-09-14T04:55:05.087181+00:00"
     },
     {
         "id": "nazir-ali",
@@ -1242,7 +1242,7 @@
     },
     {
         "id": "qumiri",
-        "first_name": "QUMIRIXON",
+        "first_name": "QUMRIXON",
         "last_name": "Xamroqulova",
         "nickname": null,
         "gender": "female",
@@ -1255,11 +1255,11 @@
         "occupation": "Buxgalter",
         "biography": null,
         "created_at": "2026-07-13T20:11:17.530741+00:00",
-        "updated_at": "2026-07-15T01:13:13.960355+00:00"
+        "updated_at": "2026-09-14T04:55:53.144987+00:00"
     },
     {
         "id": "qumirxon",
-        "first_name": "QUMIRXON",
+        "first_name": "QUMRIXON",
         "last_name": "",
         "nickname": "Opoqimi onasi",
         "gender": "female",
@@ -1272,7 +1272,7 @@
         "occupation": null,
         "biography": null,
         "created_at": "2026-07-14T06:41:14.724206+00:00",
-        "updated_at": "2026-07-15T05:41:20.014189+00:00"
+        "updated_at": "2026-09-14T04:56:15.529564+00:00"
     },
     {
         "id": "rayxona",
