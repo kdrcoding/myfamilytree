@@ -8,7 +8,6 @@ import {
   readSoftUnlockKind,
   resolveSoftUnlockKind,
   setSoftUnlockKind,
-  softUnlockStillValid,
   type SoftUnlockKind,
 } from '../lib/birthdayPass';
 import { supabase } from '../lib/supabase';
