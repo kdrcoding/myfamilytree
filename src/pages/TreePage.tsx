@@ -478,7 +478,8 @@ function TreeCanvas({
 
 export function TreePage() {
   const { people, index, deletePerson } = useFamily();
-  const { canEdit, canDelete } = useAuth();
+  const { canEdit, canDelete, editScope } = useAuth();
+  const canEditTree = canEdit && editScope === 'full';
   const { settings } = useSettings();
   const easy = Boolean(settings.easyMode);
   const { toast } = useToast();
@@ -519,8 +520,8 @@ export function TreePage() {
   }, []);
 
   useEffect(() => {
-    if (!canEdit && editMode) setEditMode(false);
-  }, [canEdit, editMode]);
+    if (!canEditTree && editMode) setEditMode(false);
+  }, [canEditTree, editMode]);
 
   // Phones: keep cards clean — edit/add happens in the person sheet.
   const treeToolsOn = isPhone ? false : editMode;
@@ -644,7 +645,7 @@ export function TreePage() {
 
   const requestEdit = (person: FamilyPerson) => {
     setDetailsId(null);
-    if (canEdit) {
+    if (canEditTree) {
       setEditMode(true);
       setForm({ person });
     } else {
@@ -655,7 +656,7 @@ export function TreePage() {
 
   if (people.length === 0) {
     return (
-      <EmptyTreeState onAdd={() => (canEdit ? setForm({}) : setUnlockOpen(true))}>
+      <EmptyTreeState onAdd={() => (canEditTree ? setForm({}) : setUnlockOpen(true))}>
         {unlockOpen && (
           <UnlockModal onClose={() => setUnlockOpen(false)} onUnlocked={() => setForm({})} />
         )}
@@ -691,12 +692,12 @@ export function TreePage() {
               type="button"
               className={`${editMode ? 'btn-primary' : 'btn-secondary'} !min-h-10 !px-2.5 sm:!px-3`}
               onClick={() => {
-                if (!canEdit) setUnlockOpen(true);
+                if (!canEditTree) setUnlockOpen(true);
                 else setEditMode((on) => !on);
               }}
               aria-pressed={editMode}
             >
-              {canEdit ? (
+              {canEditTree ? (
                 <LockOpen className="h-4 w-4" aria-hidden />
               ) : (
                 <Lock className="h-4 w-4" aria-hidden />
@@ -749,7 +750,7 @@ export function TreePage() {
                     icon: <UserRoundPlus className="h-4 w-4" aria-hidden />,
                     onClick: () => setJoinOpen(true),
                   },
-                  ...(canEdit
+                  ...(canEditTree
                     ? [
                         {
                           id: 'add',
@@ -798,7 +799,7 @@ export function TreePage() {
           personId={detailsId}
           onClose={() => setDetailsId(null)}
           onNavigate={(id) => setDetailsId(id)}
-          editMode={canEdit}
+          editMode={canEditTree}
           canDelete={canDelete}
           onEdit={(person) => {
             setDetailsId(null);

@@ -49,7 +49,8 @@ export function MemoriesSection({ person }: MemoriesSectionProps) {
   const t = useT();
   const language = useLanguage();
   const privacy = usePrivacy();
-  const { canEdit, canDelete } = useAuth();
+  const { canEdit, canDelete, editScope } = useAuth();
+  const canEditContent = canEdit && editScope === 'full';
   const { toast } = useToast();
   const confirm = useConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -185,7 +186,7 @@ export function MemoriesSection({ person }: MemoriesSectionProps) {
         <h3 className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
           <ImagePlus className="h-3.5 w-3.5" aria-hidden /> {t('memories.title')}
         </h3>
-        {canEdit && (
+        {canEditContent && (
           <>
             <input
               ref={fileRef}
@@ -208,7 +209,7 @@ export function MemoriesSection({ person }: MemoriesSectionProps) {
             </button>
           </>
         )}
-        {!canEdit && (
+        {!canEditContent && (
           <p className="text-xs text-stone-400">{t('memories.unlockToAdd')}</p>
         )}
       </div>

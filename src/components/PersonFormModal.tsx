@@ -185,7 +185,8 @@ export function PersonFormModal({
   onSaved,
 }: PersonFormModalProps) {
   const { people, index, getPerson, addPerson, updatePerson } = useFamily();
-  const { canDelete: isOwner } = useAuth();
+  const { canDelete: isOwner, editScope } = useAuth();
+  const birthDateOnly = editScope === 'birthDate' && person !== undefined;
   const confirm = useConfirm();
   const { toast } = useToast();
   const t = useT();
@@ -530,11 +531,48 @@ export function PersonFormModal({
 
   const title = selfJoin
     ? t('form.titleSelf')
-    : isEdit
-      ? t('form.titleEdit', { name: fullName(person) })
-      : linkTarget
-        ? t('form.titleAddKind', { kind: t(KIND_KEYS[link!.kind]), name: fullName(linkTarget) })
-        : t('form.titleAdd');
+    : birthDateOnly
+      ? t('form.titleBirthDate', { name: fullName(person!) })
+      : isEdit
+        ? t('form.titleEdit', { name: fullName(person) })
+        : linkTarget
+          ? t('form.titleAddKind', { kind: t(KIND_KEYS[link!.kind]), name: fullName(linkTarget) })
+          : t('form.titleAdd');
+
+  if (birthDateOnly) {
+    return (
+      <Modal onClose={handleClose} labelledBy="person-form-title" size="sm">
+        <form onSubmit={submit} noValidate>
+          <h2
+            id="person-form-title"
+            className="text-lg font-semibold text-stone-900 dark:text-stone-100"
+          >
+            {title}
+          </h2>
+          <p className="mt-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+            {t('form.softUnlockBirthOnly')}
+          </p>
+          <div className="mt-4">
+            <DateField
+              label={t('form.birthDate')}
+              value={values.birthDate}
+              onChange={(v) => set('birthDate', v)}
+              error={err(errors.birthDate)}
+            />
+            <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">{t('form.birthDateFullHint')}</p>
+          </div>
+          <div className="mt-6 flex justify-end gap-2">
+            <button type="button" className="btn-secondary" onClick={handleClose}>
+              {t('common.cancel')}
+            </button>
+            <button type="submit" className="btn-primary">
+              {t('form.save')}
+            </button>
+          </div>
+        </form>
+      </Modal>
+    );
+  }
 
   return (
     <Modal onClose={handleClose} labelledBy="person-form-title" size="lg">

@@ -31,13 +31,19 @@ export function whoIsThisUzbek(
     return `${joinUz(parents)}ning ${role}`;
   }
 
-  const spouseIds = rels
+  const spouses = rels
     .filter((r) => r.kind === 'spouse' && (r.person_a === person.id || r.person_b === person.id))
     .map((r) => (r.person_a === person.id ? r.person_b : r.person_a));
-  const spouses = names(spouseIds);
-  if (spouses.length > 0) {
+  // Defensive: ignore anyone also linked as divorced (legacy or mixed rows).
+  const divorcedWith = new Set(
+    rels
+      .filter((r) => r.kind === 'divorced' && (r.person_a === person.id || r.person_b === person.id))
+      .map((r) => (r.person_a === person.id ? r.person_b : r.person_a)),
+  );
+  const spouseNames = names(spouses.filter((id) => !divorcedWith.has(id)));
+  if (spouseNames.length > 0) {
     const role = person.gender === 'female' ? 'xotini' : person.gender === 'male' ? 'eri' : 'turmush o‘rtog‘i';
-    return `${joinUz(spouses)}ning ${role}`;
+    return `${joinUz(spouseNames)}ning ${role}`;
   }
 
   const childIds = rels

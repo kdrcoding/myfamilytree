@@ -12,6 +12,7 @@ import {
   botHelpText,
   botWelcomeText,
   cheerAnnounceText,
+  cheerAlreadyText,
   cheerNotFoundText,
   cheerThanksText,
   groupAlreadyLinkedText,
@@ -81,11 +82,22 @@ async function saveCheer(
   person: FamilyMemberRow,
   year: number,
   user: TgUser,
-): Promise<void> {
+): Promise<'inserted' | 'existing'> {
+  const existing = await db.rest<{ telegram_user_id: number }[]>('telegram_birthday_cheers', {
+    query: {
+      select: 'telegram_user_id',
+      person_id: `eq.${person.id}`,
+      year: `eq.${year}`,
+      telegram_user_id: `eq.${user.id}`,
+      limit: '1',
+    },
+  });
+  if (Array.isArray(existing) && existing.length > 0) return 'existing';
+
   await db.rest('telegram_birthday_cheers', {
     method: 'POST',
     query: { on_conflict: 'person_id,year,telegram_user_id' },
-    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+    headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
     body: JSON.stringify({
       person_id: person.id,
       year,
@@ -94,6 +106,7 @@ async function saveCheer(
       username: user.username || null,
     }),
   });
+  return 'inserted';
 }
 
 async function loadPerson(
@@ -147,8 +160,9 @@ Deno.serve(async (req) => {
         return jsonResponse({ ok: true });
       }
 
+      let cheerResult: 'inserted' | 'existing' = 'inserted';
       try {
-        await saveCheer(db, person, parsed.year, callback.from);
+        cheerResult = await saveCheer(db, person, parsed.year, callback.from);
       } catch (err) {
         console.error('cheer save failed', err);
         await telegramApi('answerCallbackQuery', {
@@ -160,6 +174,15 @@ Deno.serve(async (req) => {
       }
 
       const display = tgDisplayName(callback.from);
+      if (cheerResult === 'existing') {
+        await telegramApi('answerCallbackQuery', {
+          callback_query_id: callback.id,
+          text: cheerAlreadyText(),
+          show_alert: false,
+        });
+        return jsonResponse({ ok: true, cheer: person.id, already: true });
+      }
+
       await telegramApi('answerCallbackQuery', {
         callback_query_id: callback.id,
         text: 'Rahmat! 💛',
@@ -231,8 +254,9 @@ Deno.serve(async (req) => {
         }
 
         const display = tgDisplayName(msg.from);
+        let cheerResult: 'inserted' | 'existing' = 'inserted';
         try {
-          await saveCheer(db, person, cheer.year, msg.from);
+          cheerResult = await saveCheer(db, person, cheer.year, msg.from);
         } catch (err) {
           console.error('cheer save failed', err);
           await sendText(
@@ -240,6 +264,11 @@ Deno.serve(async (req) => {
             'Deyarli! Egadan birthday cheers SQL migratsiyasini so‘rang, keyin qayta bosing.',
           );
           return jsonResponse({ ok: false, error: 'cheers_table' });
+        }
+
+        if (cheerResult === 'existing') {
+          await sendText(chatId, cheerAlreadyText());
+          return jsonResponse({ ok: true, cheer: person.id, already: true });
         }
 
         const page = birthdayPageUrl(person.id);

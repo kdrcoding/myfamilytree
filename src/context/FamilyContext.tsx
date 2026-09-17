@@ -66,7 +66,8 @@ const FamilyContext = createContext<FamilyContextValue | null>(null);
 
 export function FamilyProvider({ children }: { children: ReactNode }) {
   // Owner edits are unrestricted; family editors may only ADD information.
-  const { canDelete: isOwner } = useAuth();
+  // Soft dates unlock may change birthDate only (editScope === 'birthDate').
+  const { canDelete: isOwner, editScope } = useAuth();
   const { settings } = useSettings();
   const { toast } = useToast();
   const language = settings.language;
@@ -265,6 +266,10 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         return translate(language, 'rel.genN', { n: rel.generation });
       },
       addPerson: (person, link) => {
+        if (editScope === 'birthDate' || editScope === 'none') {
+          toast(translate(language, 'form.softUnlockBirthOnly'), 'error');
+          return Promise.resolve(false);
+        }
         if (link && !isOwner) {
           toast(translate(language, 'form.ownerOnlyLink'), 'error');
           return Promise.resolve(false);
@@ -289,6 +294,11 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         return mutate((current) => {
           const existing = current.find((p) => p.id === person.id);
           if (!existing) return current;
+          if (editScope === 'birthDate') {
+            // Soft dates unlock: only birthDate may change.
+            const updated = { ...existing, birthDate: person.birthDate };
+            return current.map((p) => (p.id === person.id ? updated : p));
+          }
           if (!isOwner) {
             // Family editors may change DETAIL fields, never structure or
             // wedding rows (those live on relationships, owner JWT only).
@@ -363,7 +373,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
         people,
       }),
     }),
-    [people, index, generations, bloodline, mutate, isOwner, language, toast],
+    [people, index, generations, bloodline, mutate, isOwner, editScope, language, toast],
   );
 
   if (status !== 'ready') {

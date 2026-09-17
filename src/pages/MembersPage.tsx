@@ -23,7 +23,8 @@ type SortKey = 'name' | 'age' | 'birthYear' | 'generation' | 'children';
 
 export function MembersPage() {
   const { people, generations, deletePerson } = useFamily();
-  const { canEdit, canDelete } = useAuth();
+  const { canEdit, canDelete, editScope } = useAuth();
+  const canAddPeople = canEdit && editScope === 'full';
   const confirm = useConfirm();
   const { toast } = useToast();
   const t = useT();
@@ -65,7 +66,10 @@ export function MembersPage() {
 
   const visible = useMemo(() => {
     const filtered = people.filter((p) => {
-      if (missingOnly && (p.isDeceased || p.deathDate || hasFullBirthDate(p.birthDate))) return false;
+      if (missingOnly) {
+        if (p.isDeceased || p.deathDate || hasFullBirthDate(p.birthDate)) return false;
+        return matchesSearch(p, query);
+      }
       return matchesSearch(p, query) && matchesFilters(p, filters, generations);
     });
     const sorters: Record<SortKey, (a: FamilyPerson, b: FamilyPerson) => number> = {
@@ -117,7 +121,7 @@ export function MembersPage() {
         <button
           type="button"
           className="btn-primary"
-          onClick={() => (canEdit ? setForm({}) : setUnlockOpen(true))}
+          onClick={() => (canAddPeople ? setForm({}) : setUnlockOpen(true))}
         >
           <UserPlus className="h-4 w-4" aria-hidden /> {t('tree.addPerson')}
         </button>
@@ -232,7 +236,7 @@ export function MembersPage() {
           personId={detailsId}
           onClose={() => setDetailsId(null)}
           onNavigate={setDetailsId}
-          editMode={canEdit}
+          editMode={canAddPeople}
           canDelete={canDelete}
           onEdit={(person) => {
             setDetailsId(null);

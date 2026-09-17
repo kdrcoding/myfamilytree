@@ -2,8 +2,15 @@ import { fetchPublicBirthday, fetchMissingBirthdays } from '../features/birthday
 
 const BDAY_KEY = 'familytree.birthdayPass.v1';
 const DATES_KEY = 'familytree.datesPass.v1';
+const SOFT_KIND_KEY = 'familytree.softUnlockKind.v1';
+
+/** Missing-dates soft unlock lasts at most 2 hours. */
+export const DATES_PASS_TTL_MS = 2 * 60 * 60 * 1000;
+
+export type SoftUnlockKind = 'bday' | 'dates';
 
 type Grant = { personId: string };
+type DatesGrant = { at: number };
 
 function canUseSession(): boolean {
   try {
@@ -79,11 +86,11 @@ export async function birthdayPassStillValid(opts?: {
   }
 }
 
-/** After opening the public missing-dates page from Telegram. */
+/** After opening the public missing-dates page from Telegram (only when work remains). */
 export function markDatesPass(): void {
   if (!canUseSession()) return;
   try {
-    sessionStorage.setItem(DATES_KEY, '1');
+    sessionStorage.setItem(DATES_KEY, JSON.stringify({ at: Date.now() } satisfies DatesGrant));
   } catch {
     /* private mode */
   }
@@ -98,41 +105,101 @@ export function clearDatesPass(): void {
   }
 }
 
-export function readDatesPass(): boolean {
-  if (!canUseSession()) return false;
+function readDatesGrant(): DatesGrant | null {
+  if (!canUseSession()) return null;
   try {
-    return sessionStorage.getItem(DATES_KEY) === '1';
+    const raw = sessionStorage.getItem(DATES_KEY);
+    if (!raw) return null;
+    // Legacy: plain "1"
+    if (raw === '1') return { at: Date.now() };
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      'at' in parsed &&
+      typeof (parsed as DatesGrant).at === 'number'
+    ) {
+      return parsed as DatesGrant;
+    }
   } catch {
-    return false;
+    /* ignore */
   }
+  return null;
 }
 
-/** Name-only unlock while the public /dates list is reachable. */
+export function readDatesPass(): boolean {
+  const grant = readDatesGrant();
+  if (!grant) return false;
+  if (Date.now() - grant.at > DATES_PASS_TTL_MS) {
+    clearDatesPass();
+    return false;
+  }
+  return true;
+}
+
+/** Name-only unlock while missing dates remain and the grant is fresh. */
 export async function datesPassStillValid(opts?: {
   keepOnNetworkError?: boolean;
 }): Promise<boolean> {
   if (!readDatesPass()) return false;
   try {
     const data = await fetchMissingBirthdays();
-    if (data.ok) return true;
-    clearDatesPass();
-    return false;
+    if (!data.ok) {
+      clearDatesPass();
+      return false;
+    }
+    if ((data.count ?? data.people?.length ?? 0) <= 0) {
+      clearDatesPass();
+      return false;
+    }
+    return true;
   } catch {
     return opts?.keepOnNetworkError === true;
   }
+}
+
+export function setSoftUnlockKind(kind: SoftUnlockKind | null): void {
+  if (!canUseSession()) return;
+  try {
+    if (!kind) sessionStorage.removeItem(SOFT_KIND_KEY);
+    else sessionStorage.setItem(SOFT_KIND_KEY, kind);
+  } catch {
+    /* private mode */
+  }
+}
+
+export function readSoftUnlockKind(): SoftUnlockKind | null {
+  if (!canUseSession()) return null;
+  try {
+    const v = sessionStorage.getItem(SOFT_KIND_KEY);
+    if (v === 'bday' || v === 'dates') return v;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+/** Resolve which soft unlock is currently valid (dates preferred when both). */
+export async function resolveSoftUnlockKind(opts?: {
+  keepOnNetworkError?: boolean;
+}): Promise<SoftUnlockKind | null> {
+  if (await datesPassStillValid(opts)) return 'dates';
+  if (await birthdayPassStillValid(opts)) return 'bday';
+  setSoftUnlockKind(null);
+  return null;
 }
 
 /** Birthday page or missing-dates page soft unlock. */
 export async function softUnlockStillValid(opts?: {
   keepOnNetworkError?: boolean;
 }): Promise<boolean> {
-  if (await birthdayPassStillValid(opts)) return true;
-  return datesPassStillValid(opts);
+  return (await resolveSoftUnlockKind(opts)) != null;
 }
 
 export function clearSoftUnlock(): void {
   clearBirthdayPass();
   clearDatesPass();
+  setSoftUnlockKind(null);
 }
 
 export function hasSoftUnlockGrant(): boolean {

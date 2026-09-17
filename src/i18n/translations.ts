@@ -111,7 +111,7 @@ export const en = {
   'gate.rememberBday':
     'After this birthday closes, the next visit will ask for the family password.',
   'gate.rememberDates':
-    'When you leave this fill-in session, the next visit may ask for the family password.',
+    'This fill-in session stays open about 2 hours or until every date is filled. After that the family password is required.',
   'gate.familyPassword': 'Family password',
   'gate.showPassword': 'Show password',
   'gate.hidePassword': 'Hide password',
@@ -537,12 +537,16 @@ export const en = {
   // Person form
   'form.titleAdd': 'Add a family member',
   'form.titleEdit': 'Edit {name}',
+  'form.titleBirthDate': 'Add birth date for {name}',
   'form.titleAddKind': 'Add {kind} for {name}',
   'form.titleSelf': 'Add yourself to the family tree',
   'form.oneNameHint':
     'Only one name is needed — first name, last name or nickname. Everything else is optional.',
   'form.restrictedNote':
     "You're editing as a family member: you can update names, dates, place, photo and biography. Marking someone deceased, relationships (parents and spouses), and deleting a person are reserved for the owner.",
+  'form.softUnlockBirthOnly':
+    'This Telegram link only lets you fill birth dates. Other edits need the family password.',
+  'form.birthDateFullHint': 'Use a full date (year–month–day) so the birthday bot can post.',
   'form.firstName': 'First name',
   'form.lastName': 'Last name',
   'form.gender': 'Gender',
@@ -1096,7 +1100,7 @@ export const uz: Record<TKey, string> = {
   'gate.rememberBday':
     'Bu tug‘ilgan kun yopilgach, keyingi kirishda oila paroli so‘raladi.',
   'gate.rememberDates':
-    'Bu to‘ldirish sessiyasidan chiqqach, keyingi kirishda oila paroli so‘ralishi mumkin.',
+    'Bu to‘ldirish sessiyasi taxminan 2 soat yoki sanalar tugaguncha ochiq. Keyin oila paroli so‘raladi.',
   'gate.familyPassword': 'Oila paroli',
   'gate.showPassword': 'Parolni ko‘rsatish',
   'gate.hidePassword': 'Parolni yashirish',
@@ -1413,8 +1417,8 @@ export const uz: Record<TKey, string> = {
   'bday.retry': 'Qayta urinish',
   'bday.yesterdayKicker': 'Kecha',
   'bday.yesterdayHeadline': 'Kecha {name}ning tug‘ilgan kuni edi',
-  'bday.yesterdayHer': 'Kecha qizlarimizning bayrami edi',
-  'bday.yesterdayHis': 'Kecha yigitlarimizning bayrami edi',
+  'bday.yesterdayHer': 'Kecha uning tug‘ilgan kuni edi',
+  'bday.yesterdayHis': 'Kecha uning tug‘ilgan kuni edi',
   'bday.yesterdayWish':
     'Kecha bayram edi — kechikkan tilak ham tilak. Oila hanuz sizni o‘ylaydi.',
 
@@ -1512,12 +1516,16 @@ export const uz: Record<TKey, string> = {
 
   'form.titleAdd': "Oila a'zosini qo'shish",
   'form.titleEdit': '{name}ni tahrirlash',
+  'form.titleBirthDate': '{name} uchun tug‘ilgan kun sanasi',
   'form.titleAddKind': '{name} uchun {kind} qo‘shish',
   'form.titleSelf': "O'zingizni shajaraga qo'shing",
   'form.oneNameHint':
     'Faqat bitta nom kifoya — ism, familiya yoki laqab. Qolgan hammasi ixtiyoriy.',
   'form.restrictedNote':
     "Siz oila a'zosi sifatida tahrirlayapsiz: ism, sanalar, joy, rasm va tarjimai holni yangilashingiz mumkin. Vafot etgan deb belgilash, qarindoshlik aloqalari (ota-ona va turmush o'rtoqlar) va odamni o'chirish faqat egasiga tegishli.",
+  'form.softUnlockBirthOnly':
+    'Bu Telegram havolasi faqat tug‘ilgan kun sanasini to‘ldirishga ruxsat beradi. Boshqa o‘zgarishlar uchun oila paroli kerak.',
+  'form.birthDateFullHint': 'To‘liq sana yozing (yil–oy–kun) — bot tabriklay olsin.',
   'form.firstName': 'Ismi',
   'form.lastName': 'Familiyasi',
   'form.gender': 'Jinsi',

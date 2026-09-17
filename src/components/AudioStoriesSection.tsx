@@ -103,7 +103,8 @@ function StoryRow({
  */
 export function AudioStoriesSection({ person }: { person: FamilyPerson }) {
   const t = useT();
-  const { canEdit, canDelete } = useAuth();
+  const { canEdit, canDelete, editScope } = useAuth();
+  const canEditContent = canEdit && editScope === 'full';
   const { toast } = useToast();
 
   const [stories, setStories] = useState<AudioStory[]>([]);
@@ -155,7 +156,7 @@ export function AudioStoriesSection({ person }: { person: FamilyPerson }) {
   };
 
   const startRecording = async () => {
-    if (!canEdit || busy) return;
+    if (!canEditContent || busy) return;
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       toast(t('audio.unsupported'), 'error');
       return;
@@ -226,7 +227,7 @@ export function AudioStoriesSection({ person }: { person: FamilyPerson }) {
     <section className="mt-6 border-t border-stone-200 pt-5 dark:border-stone-700">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-bold text-stone-800 dark:text-stone-100">{t('audio.title')}</h3>
-        {canEdit && !recording && (
+        {canEditContent && !recording && (
           <button
             type="button"
             className="btn-secondary !py-1.5 !text-xs"
@@ -246,7 +247,7 @@ export function AudioStoriesSection({ person }: { person: FamilyPerson }) {
       </div>
       <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{t('audio.intro')}</p>
 
-      {canEdit && (
+      {canEditContent && (
         <label className="mt-3 block text-xs font-medium text-stone-600 dark:text-stone-300">
           {t('audio.fieldTitle')}
           <input

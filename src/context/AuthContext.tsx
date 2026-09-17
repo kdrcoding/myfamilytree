@@ -5,7 +5,11 @@ import type { Role } from '../config/access';
 import {
   clearSoftUnlock,
   hasSoftUnlockGrant,
+  readSoftUnlockKind,
+  resolveSoftUnlockKind,
+  setSoftUnlockKind,
   softUnlockStillValid,
+  type SoftUnlockKind,
 } from '../lib/birthdayPass';
 import { supabase } from '../lib/supabase';
 import { loadJson, saveJson, removeKey, STORAGE_KEYS } from '../utils/storage';
@@ -16,11 +20,20 @@ export type FamilyEnterResult =
   | { ok: true; role: Role }
   | { ok: false; reason: 'name' | 'password' };
 
+/** What the current session may change on person records. */
+export type EditScope = 'full' | 'birthDate' | 'none';
+
 interface AuthContextValue {
   role: Role;
   /** True while the stored credential is being re-checked on startup. */
   ready: boolean;
+  /**
+   * Can open edit UI. Soft birthday unlock is view-only; soft dates unlock
+   * may edit birth dates only (see editScope).
+   */
   canEdit: boolean;
+  editScope: EditScope;
+  softUnlock: SoftUnlockKind | null;
   canDelete: boolean;
   signIn: (password: string) => Promise<Role | null>;
   /** Name + family (or owner) password. Used on the main site. */
@@ -116,24 +129,37 @@ function hasOwnerSessionHint(): boolean {
   return false;
 }
 
-function initialAuthState(): { role: Role; ready: boolean } {
+function deriveEditAccess(
+  role: Role,
+  soft: SoftUnlockKind | null,
+): { canEdit: boolean; editScope: EditScope } {
+  if (role === 'owner') return { canEdit: true, editScope: 'full' };
+  if (role !== 'editor') return { canEdit: false, editScope: 'none' };
+  if (isFamilyAuthed()) return { canEdit: true, editScope: 'full' };
+  if (soft === 'dates') return { canEdit: true, editScope: 'birthDate' };
+  // Soft birthday unlock: browse the tree, no writes.
+  return { canEdit: false, editScope: 'none' };
+}
+
+function initialAuthState(): { role: Role; ready: boolean; softUnlock: SoftUnlockKind | null } {
   const stored = loadJson<string>(AUTH_KEY, (v): v is string => typeof v === 'string');
   if (stored && !supabase && roleForHash(stored) === 'owner') {
     applyOwnerName();
-    return { role: 'owner', ready: true };
+    return { role: 'owner', ready: true, softUnlock: null };
   }
-  if (restorePasswordEditor()) return { role: 'editor', ready: true };
+  if (restorePasswordEditor()) return { role: 'editor', ready: true, softUnlock: null };
   if (hasSoftUnlockGrant() && readDisplayName().length >= 2) {
-    return { role: 'viewer', ready: false };
+    return { role: 'viewer', ready: false, softUnlock: readSoftUnlockKind() };
   }
-  if (hasOwnerSessionHint()) return { role: 'viewer', ready: false };
-  return { role: 'viewer', ready: true };
+  if (hasOwnerSessionHint()) return { role: 'viewer', ready: false, softUnlock: null };
+  return { role: 'viewer', ready: true, softUnlock: null };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [boot] = useState(initialAuthState);
   const [role, setRole] = useState<Role>(boot.role);
   const [ready, setReady] = useState(boot.ready);
+  const [softUnlock, setSoftUnlock] = useState<SoftUnlockKind | null>(boot.softUnlock);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +167,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const adoptOwner = () => {
       applyOwnerName();
       removeKey(AUTH_KEY);
+      clearSoftUnlock();
+      setSoftUnlock(null);
       setRole('owner');
       setReady(true);
     };
@@ -157,16 +185,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (restored !== 'editor') removeKey(AUTH_KEY);
         } else {
           applyOwnerName();
+          setSoftUnlock(null);
           setRole('owner');
           setReady(true);
           return;
         }
       } else if (stored && supabase && roleForHash(stored) === 'owner') {
-        // Owner identity is the Supabase JWT, not this leftover hash.
         removeKey(AUTH_KEY);
       }
 
       if (restorePasswordEditor()) {
+        setSoftUnlock(null);
+        setSoftUnlockKind(null);
         setRole('editor');
         setReady(true);
         if (supabase) {
@@ -183,14 +213,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const name = readDisplayName();
       if (hasSoftUnlockGrant() && name.length >= 2) {
-        const stillOpen = await softUnlockStillValid({ keepOnNetworkError: true });
+        const kind = await resolveSoftUnlockKind({ keepOnNetworkError: true });
         if (cancelled) return;
-        if (stillOpen) {
+        if (kind) {
+          setSoftUnlockKind(kind);
+          setSoftUnlock(kind);
           setRole('editor');
           setReady(true);
           dropLeftoverOwnerJwt();
           return;
         }
+        setSoftUnlock(null);
       }
 
       if (supabase) {
@@ -218,7 +251,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (!ownerSession) return;
-        // A remembered family login wins over a leftover owner JWT.
         if (restorePasswordEditor()) {
           dropLeftoverOwnerJwt();
           return;
@@ -229,6 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (event === 'SIGNED_OUT') {
         if (restorePasswordEditor()) {
+          setSoftUnlock(null);
           setRole('editor');
           return;
         }
@@ -236,8 +269,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRole((current) => (current === 'owner' ? 'editor' : current));
           return;
         }
-        // Do not drop a family/birthday session just because we cleared a
-        // leftover owner JWT.
         setRole((current) => (current === 'owner' ? 'viewer' : current));
       }
     });
@@ -252,9 +283,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     const recheck = async () => {
-      const ok = await softUnlockStillValid({ keepOnNetworkError: true });
+      const kind = await resolveSoftUnlockKind({ keepOnNetworkError: true });
       if (cancelled) return;
-      if (!ok) setRole('viewer');
+      if (!kind) {
+        setSoftUnlock(null);
+        setRole('viewer');
+        return;
+      }
+      setSoftUnlockKind(kind);
+      setSoftUnlock(kind);
     };
 
     const timer = window.setInterval(() => void recheck(), 60_000);
@@ -284,6 +321,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       applyOwnerName();
       removeKey(AUTH_KEY);
       clearSoftUnlock();
+      setSoftUnlock(null);
       setRole('owner');
       return 'owner';
     }
@@ -291,6 +329,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     saveJson(AUTH_KEY, hash);
     applyOwnerName();
     clearSoftUnlock();
+    setSoftUnlock(null);
     setRole('owner');
     return 'owner';
   }, []);
@@ -310,6 +349,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       persistFamilyAuth(trimmed);
       clearSoftUnlock();
+      setSoftUnlock(null);
       if (supabase) void supabase.auth.signOut();
       setRole('editor');
       return { ok: true, role: 'editor' };
@@ -320,12 +360,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const enterWithName = useCallback(async (name: string): Promise<boolean> => {
     const trimmed = name.trim().slice(0, 40);
     if (trimmed.length < 2) return false;
-    const stillOpen = await softUnlockStillValid({ keepOnNetworkError: false });
-    if (!stillOpen) return false;
+    const kind = await resolveSoftUnlockKind({ keepOnNetworkError: false });
+    if (!kind) return false;
     saveJson(STORAGE_KEYS.displayName, trimmed);
     saveJson(STORAGE_KEYS.namedDevice, true);
     removeKey(STORAGE_KEYS.familyAuthed);
     removeKey(AUTH_KEY);
+    setSoftUnlockKind(kind);
+    setSoftUnlock(kind);
     setRole('editor');
     if (supabase) void supabase.auth.signOut();
     return true;
@@ -339,21 +381,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     removeKey(STORAGE_KEYS.familyAuthed);
     removeKey(STORAGE_KEYS.skipOwnerAuto);
     clearSoftUnlock();
+    setSoftUnlock(null);
     setRole('viewer');
   }, []);
+
+  const { canEdit, editScope } = deriveEditAccess(role, softUnlock);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       role,
       ready,
-      canEdit: role === 'editor' || role === 'owner',
+      canEdit,
+      editScope,
+      softUnlock,
       canDelete: role === 'owner',
       signIn,
       enterAsFamily,
       enterWithName,
       signOut,
     }),
-    [role, ready, signIn, enterAsFamily, enterWithName, signOut],
+    [role, ready, canEdit, editScope, softUnlock, signIn, enterAsFamily, enterWithName, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

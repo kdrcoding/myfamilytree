@@ -53,7 +53,9 @@ export function MissingDatesPage() {
         }
         setFailed(false);
         setPeople(next.people ?? []);
-        markDatesPass();
+        if ((next.count ?? next.people?.length ?? 0) > 0) {
+          markDatesPass();
+        }
       } catch (error) {
         console.error(error);
         if (!cancelled) {
@@ -170,11 +172,13 @@ export function MissingDatesPage() {
                   isVisiblePhotoUrl(person.photoUrl) && person.photoUrl ? person.photoUrl : null;
                 return (
                   <li key={person.id}>
-                    <Link
-                      to={`/members?missing=1&from=dates&edit=${encodeURIComponent(person.id)}`}
-                      onClick={() => markDatesPass()}
-                      className="flex items-center gap-3 rounded-2xl border border-amber-900/10 bg-white/90 px-3 py-2.5 shadow-sm transition hover:bg-amber-50/80"
-                    >
+            <Link
+              to={`/members?missing=1&from=dates&edit=${encodeURIComponent(person.id)}`}
+              onClick={() => {
+                if (people.length > 0) markDatesPass();
+              }}
+              className="flex items-center gap-3 rounded-2xl border border-amber-900/10 bg-white/90 px-3 py-2.5 shadow-sm transition hover:bg-amber-50/80"
+            >
                       {photo ? (
                         <img
                           src={photo}

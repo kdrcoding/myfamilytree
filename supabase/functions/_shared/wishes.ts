@@ -422,6 +422,10 @@ export function cheerAnnounceText(display: string, honoree: string): string {
   return `💛 <b>${display}</b> — ${honoree}ni tabriklamoqda!`;
 }
 
+export function cheerAlreadyText(): string {
+  return 'Allaqachon tabrikladingiz! 💛';
+}
+
 export function cheerNotFoundText(): string {
   return 'Bu bayram sahifasi topilmadi.';
 }

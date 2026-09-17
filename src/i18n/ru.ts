@@ -96,7 +96,7 @@ export const ruOverrides: Record<string, string> = {
   'gate.rememberBday':
     'Когда день рождения закроется, в следующий раз понадобится семейный пароль.',
   'gate.rememberDates':
-    'После этой сессии заполнения в следующий раз может понадобиться семейный пароль.',
+    'Эта сессия заполнения открыта около 2 часов или пока есть незаполненные даты. Потом понадобится семейный пароль.',
   'gate.familyPassword': 'Семейный пароль',
   'gate.showPassword': 'Показать пароль',
   'gate.hidePassword': 'Скрыть пароль',
@@ -277,10 +277,14 @@ export const ruOverrides: Record<string, string> = {
 
   'form.titleAdd': 'Добавить члена семьи',
   'form.titleEdit': 'Изменить: {name}',
+  'form.titleBirthDate': 'Дата рождения для {name}',
   'form.titleAddKind': 'Добавить ({kind}) для {name}',
   'form.titleSelf': 'Добавить себя в древо',
   'form.oneNameHint':
     'Достаточно одного имени — имя, фамилия или прозвище. Остальное по желанию.',
+  'form.softUnlockBirthOnly':
+    'Эта ссылка из Telegram позволяет только заполнить даты рождения. Для других правок нужен семейный пароль.',
+  'form.birthDateFullHint': 'Укажите полную дату (год–месяц–день), чтобы бот мог поздравить.',
   'form.firstName': 'Имя',
   'form.lastName': 'Фамилия',
   'form.gender': 'Пол',

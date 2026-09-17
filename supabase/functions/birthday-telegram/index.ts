@@ -160,7 +160,10 @@ async function maybeSendMissingDates(opts: {
   force: boolean;
 }): Promise<{ sent: boolean; skipped?: string; count?: number }> {
   if (opts.force) return { sent: false, skipped: 'force' };
-  if (opts.local.weekday !== 'Mon') return { sent: false, skipped: 'not_monday' };
+  // Monday preferred; Tuesday catch-up if GitHub Actions missed Monday.
+  if (opts.local.weekday !== 'Mon' && opts.local.weekday !== 'Tue') {
+    return { sent: false, skipped: 'not_monday_or_tuesday' };
+  }
   const names = opts.members
     .filter((m) => !m.is_deceased && !m.death_date && !monthDay(m.birth_date))
     .map((m) => displayName(m));
