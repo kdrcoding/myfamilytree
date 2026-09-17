@@ -43,7 +43,7 @@ const UZ_NONE = [
   `🎁 Tug‘ilgan kuningiz muborak, {name}! Har bir daqiqa shirin o‘tsin 🍰`,
   `🥳 {name}, bugun butun oila siz uchun yig‘ildi. Muborak bo‘lsin! 💚`,
   `✨ {name}ning kuni keldi! Sevinch, salomatlik va omad yoningizda bo‘lsin 🌼`,
-  `🎂 {name}, sizni nishonlash — oilamizning baxti. Tug‘ilgan kuningiz muborak! 🎉`,
+  `🎂 {name}, sizni tabriklash — oilamizning baxti. Tug‘ilgan kuningiz muborak! 🎉`,
   `💚 Aziz {name}, bugun sizga atalgan kun. Ko‘p yillar, ko‘p quvonch! 🙌`,
   `🎊 {name}, dasturxon yozildi, qalblar ochiq — tug‘ilgan kuningiz muborak! 🎂`,
   `💛 {name}, kulgingiz bizning bayramimiz. Muborak bo‘lsin, aziz inson! 🥳`,
@@ -67,7 +67,7 @@ const UZ_BAND: Record<AgeBand, string[]> = {
   child: [
     `🎂 Tug‘ilgan kuningiz muborak, {name}! Bugun {age} yosh — shirinlik, kulgi va oila quchog‘i bo‘lsin 🎈`,
     `🎉 {name} bugun {age} yoshda! Katta bo‘lib bor, qiziquvchan qol — oilangiz seni yaxshi ko‘radi 💚`,
-    `🌟 {name}, {age} yoshga to‘lding! Oq-Ariq oilasi o‘z yulduzini nishonlayapti ✨`,
+    `🌟 {name}, {age} yoshga to‘lding! Oq-Ariq oilasi o‘z yulduzini tabriklayapti ✨`,
     `🎈 {name}, {age} yosh muborak! Tortdan bir bo‘lak, quchoqdan mingta 🤗`,
     `🧁 Bugun {name} {age} yoshda! O‘ynab-kulib o‘s, bolajon — oila yoningda 💚`,
     `🎁 {name}ning {age} yoshi muborak! Rang-barang kun, shirin tushlar 🌈`,
@@ -205,7 +205,7 @@ const UZ_PAGE: Record<AgeBand | 'none', string[]> = {
     `{name}, bugun oila atrofingizda. Tug‘ilgan kuningiz muborak!`,
     `Tug‘ilgan kuningiz muborak, {name}! Bu kun yumshoq, iliq va maxsus o‘tsin.`,
     `{name}, bugun sizniki. Quvonch uyga to‘lsin.`,
-    `Oq-Ariq OILASI {name}ni nishonlaydi — muborak bo‘lsin!`,
+    `Oq-Ariq OILASI {name}ni tabriklaydi — muborak bo‘lsin!`,
     `{name}, sizni yaxshi ko‘ramiz. Tug‘ilgan kuningiz muborak!`,
     `Bugun bayram: {name} uchun tabassum, tort va mehr.`,
     `{name}, kulgingiz oilani yoritadi. Tug‘ilgan kuningiz muborak bo‘lsin!`,
@@ -272,7 +272,7 @@ const UZ_PAGE: Record<AgeBand | 'none', string[]> = {
     `Tabriklaymiz, {name}! {age} yoshda ham suyanchimizsan. Muborak!`,
   ],
   midlife: [
-    `{name}, {age} yoshda ham yosh — nuringiz so‘nmadi. Sizni nishonlash baxt.`,
+    `{name}, {age} yoshda ham yosh — nuringiz so‘nmadi. Sizni tabriklash baxt.`,
     `Aziz {name} — {age} sham, son-sanoqsiz quchoq va hanuz bahordek yurak.`,
     `{name}, donoligingiz va tabassumingiz oilani isitadi. {age} yosh muborak.`,
     `Tug‘ilgan kuningiz muborak, {name}! {age} yosh — hali bahor.`,
@@ -304,7 +304,7 @@ const UZ_PAGE: Record<AgeBand | 'none', string[]> = {
 const UZ_YESTERDAY = [
   `Kecha {name}ning tug‘ilgan kuni edi. Oila hanuz tabassumda — kechikkan tilak ham tilak.`,
   `{name}, kecha bayramingiz edi. Bugun ham sizni o‘ylaymiz va yaxshi ko‘ramiz.`,
-  `Kecha {name} nishonlandi. Tilaklar hali ham yoningizda.`,
+  `Kecha {name}ni tabrikladik. Tilaklar hali ham yoningizda.`,
   `{name}, kechikkan bo‘lsa-da, tilak chin yurakdan: tug‘ilgan kuningiz muborak!`,
   `Kecha {name} uchun bayram edi. Bugun ham oila sizni quchoqlaydi.`,
   `{name}, kechagi sevinch hali yurakda. Sog‘liq va tinchlik tilaymiz.`,
@@ -312,24 +312,37 @@ const UZ_YESTERDAY = [
 
 /** Short line for the public web page (stable per name+age). */
 export function birthdayPageWish(name: string, age: number | null, lang: TgLang = 'uz'): string {
-  if (lang !== 'uz') {
-    // Page chrome is translated in the app; keep a stable English/Russian line here.
-    if (age == null) {
-      return lang === 'ru'
-        ? stablePick(
-            [`${name}, сегодня семья рядом с тобой.`, `С днём рождения, ${name}!`],
-            name,
-          )
-        : stablePick(
-            [
-              `${name}, today the family gathers around you with love.`,
-              `Happy birthday, ${name}! May this day feel soft, warm, and special.`,
-            ],
-            name,
-          );
-    }
-  }
   const key: AgeBand | 'none' = age == null ? 'none' : ageBand(age);
+  if (lang === 'en') {
+    const EN_SIMPLE: Record<AgeBand | 'none', string[]> = {
+      none: [
+        `{name}, today the family gathers around you with love.`,
+        `Happy birthday, {name}! May this day feel soft, warm, and special.`,
+      ],
+      child: [`{name}, {age} years old — cake, hugs, and family joy!`],
+      teen: [`Happy {age}th, {name}! The family is proud of you.`],
+      young: [`{name}, {age} looks great on you. Shine on!`],
+      adult: [`Happy {age}th birthday, {name}. Thank you for your kindness.`],
+      midlife: [`Dear {name} — still young at {age}. Happy birthday!`],
+      elder: [`{name}, blessing of our family at {age}. Happy birthday!`],
+    };
+    return fill(stablePick(EN_SIMPLE[key], `${name}:${age ?? 'x'}:en`), name, age);
+  }
+  if (lang === 'ru') {
+    const RU_SIMPLE: Record<AgeBand | 'none', string[]> = {
+      none: [
+        `{name}, сегодня семья рядом с тобой.`,
+        `С днём рождения, {name}!`,
+      ],
+      child: [`{name}, {age} лет — торт, объятия и семейная радость!`],
+      teen: [`С {age}-летием, {name}! Семья гордится тобой.`],
+      young: [`{name}, {age} тебе идёт. Сияй дальше!`],
+      adult: [`С {age}-летием, {name}. Спасибо за твоё тепло.`],
+      midlife: [`Дорогой {name} — в {age} всё ещё молод душой. С днём рождения!`],
+      elder: [`{name}, благословение нашей семьи в {age}. С днём рождения!`],
+    };
+    return fill(stablePick(RU_SIMPLE[key], `${name}:${age ?? 'x'}:ru`), name, age);
+  }
   return fill(stablePick(UZ_PAGE[key], `${name}:${age ?? 'x'}`), name, age);
 }
 

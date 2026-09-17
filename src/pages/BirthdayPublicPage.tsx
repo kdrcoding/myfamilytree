@@ -223,7 +223,13 @@ export function BirthdayPublicPage() {
   }
 
   return (
-    <div className="relative min-h-dvh overflow-hidden">
+    <div className="relative min-h-dvh overflow-hidden bg-gradient-to-b from-rose-50 via-amber-50/40 to-emerald-50/50">
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <span className="absolute left-[8%] top-[18%] text-4xl opacity-50">{emoji[0]}</span>
+        <span className="absolute right-[10%] top-[24%] text-3xl opacity-45">{emoji[1]}</span>
+        <span className="absolute left-[14%] bottom-[22%] text-3xl opacity-40">{emoji[2]}</span>
+        <span className="absolute right-[12%] bottom-[18%] text-4xl opacity-45">{emoji[3]}</span>
+      </div>
       <div className="relative z-10 mx-auto flex min-h-dvh max-w-lg flex-col px-5 pb-10 pt-8 sm:pt-12">
         {langHeader}
 
@@ -235,7 +241,7 @@ export function BirthdayPublicPage() {
         )}
 
         {!loading && (
-          <div className="mt-20 rounded-3xl border bg-white/85 p-8 text-center backdrop-blur">
+          <div className="mt-20 rounded-3xl border border-white/70 bg-white/90 p-8 text-center shadow-lg shadow-rose-900/5 backdrop-blur">
             <Cake className="mx-auto h-10 w-10" style={{ color: palette.accentSoft }} aria-hidden />
             <h1 className="mt-4 font-display text-2xl font-semibold" style={{ color: palette.ink }}>
               {expired
@@ -267,9 +273,6 @@ export function BirthdayPublicPage() {
           </div>
         )}
       </div>
-      <span className="pointer-events-none absolute left-[8%] top-[22%] text-3xl opacity-40" aria-hidden>
-        {emoji[0]}
-      </span>
     </div>
   );
 }

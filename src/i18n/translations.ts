@@ -190,7 +190,7 @@ export const en = {
   'home.bdayPopupOpen': 'Open the celebration',
   'home.bdayPopupSeeAll': 'See celebrations',
   'home.bdayPopupDismiss': 'Got it',
-  'home.todaySpotlightTitle': 'Celebrating today',
+  'home.todaySpotlightTitle': 'Congratulating today',
   'home.todaySpotlightWish': 'Wish them a happy birthday',
   'home.openCelebration': 'Open the full celebration',
   'home.todayBirthdayCount': '{n} birthdays today',
@@ -385,12 +385,12 @@ export const en = {
   'telegram.testFailed': 'Test send failed — check Edge Function logs and bot token.',
   'telegram.saved': 'Telegram settings saved',
   'telegram.saveFailed': 'Could not save Telegram settings',
-  'telegram.coverageTitle': 'Who the bot can celebrate',
+  'telegram.coverageTitle': 'Who the bot can congratulate',
   'telegram.coverage':
     '{ready} of {living} family members have a full birth date (month and day). The bot can only post for those {ready}.',
   'telegram.coverageMissing':
     '{n} people still need a month and day — open Members and edit their cards so they are not skipped.',
-  'telegram.coverageOk': 'Everyone with a known birthday can be posted.',
+  'telegram.coverageOk': 'Everyone with a known birthday can be congratulated.',
   'telegram.nextTitle': 'Coming up this week',
   'telegram.nextEmpty': 'No full birth dates in the next 7 days.',
   'telegram.nextToday': 'Today',
@@ -403,7 +403,7 @@ export const en = {
   'bday.turning': 'Turning {age} today',
   'bday.turningYesterday': 'Turned {age} yesterday',
   'bday.wish':
-    'The whole family is celebrating you today. May your year be full of health, laughter, and love.',
+    'The whole family is congratulating you today. May your year be full of health, laughter, and love.',
   'bday.cheersTitle': 'Congratulating you ({n})',
   'bday.cheersEmptyTitle': 'Family congratulations',
   'bday.cheersEmpty':

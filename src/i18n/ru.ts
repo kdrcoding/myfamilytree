@@ -64,7 +64,7 @@ export const ruOverrides: Record<string, string> = {
   'home.bdayPopupOpen': 'Открыть праздник',
   'home.bdayPopupSeeAll': 'Смотреть праздники',
   'home.bdayPopupDismiss': 'Понятно',
-  'home.todaySpotlightTitle': 'Празднуем сегодня',
+  'home.todaySpotlightTitle': 'Поздравляем сегодня',
   'home.todaySpotlightWish': 'Поздравьте с днём рождения',
   'home.openCelebration': 'Открыть полную праздничную страницу',
   'home.todayBirthdayCount': 'Сегодня {n} дня рождения',
@@ -566,12 +566,12 @@ export const ruOverrides: Record<string, string> = {
   'bday.turning': 'Сегодня исполняется {age}',
   'bday.turningYesterday': 'Вчера исполнилось {age}',
   'bday.wish':
-    'Вся семья празднует вас сегодня. Пусть год будет полон здоровья, смеха и любви.',
-  'bday.cheersTitle': 'С вами празднуют ({n})',
+    'Вся семья поздравляет вас сегодня. Пусть год будет полон здоровья, смеха и любви.',
+  'bday.cheersTitle': 'Вас поздравляют ({n})',
   'bday.cheersEmptyTitle': 'Поздравления семьи',
   'bday.cheersEmpty':
     'Пока никого нет — нажмите «Men tabriklayman» в семейном чате Telegram.',
-  'bday.cheersYesterday': 'Кто праздновал вместе с семьёй',
+  'bday.cheersYesterday': 'Кто поздравил вместе с семьёй',
   'bday.footer': 'Эта страница открыта для семьи — пароль не нужен.',
   'bday.seeTree': 'Смотреть семейное древо',
   'bday.seeTreeHint':

@@ -15,50 +15,69 @@ import {
   type BirthdayWhen,
   type PublicBirthday,
 } from '../features/birthday/publicApi';
-import { webBirthdayWish } from '../features/birthday/pageWishes';
+import { webBirthdayWish, type WishLang } from '../features/birthday/pageWishes';
 import { prettyLabel } from '../utils/family';
 
 const BIRTHDAY_CARD_CSS = `
   .bday-web .bday-wash {
     background:
-      radial-gradient(ellipse at top, color-mix(in srgb, var(--bday-c0) 55%, white) 0%, transparent 52%),
-      radial-gradient(ellipse at bottom right, color-mix(in srgb, var(--bday-c2) 45%, white) 0%, transparent 46%),
-      radial-gradient(ellipse at bottom left, color-mix(in srgb, var(--bday-c3) 40%, white) 0%, transparent 42%),
-      linear-gradient(165deg, var(--bday-card-a) 0%, white 48%, var(--bday-card-b) 100%);
+      radial-gradient(ellipse 90% 60% at 50% -10%, color-mix(in srgb, var(--bday-c0) 62%, white) 0%, transparent 55%),
+      radial-gradient(ellipse at 100% 30%, color-mix(in srgb, var(--bday-c2) 48%, white) 0%, transparent 42%),
+      radial-gradient(ellipse at 0% 70%, color-mix(in srgb, var(--bday-c3) 42%, white) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 110%, color-mix(in srgb, var(--bday-c1) 35%, white) 0%, transparent 45%),
+      linear-gradient(168deg, var(--bday-card-a) 0%, white 42%, var(--bday-card-b) 100%);
   }
-  .bday-web .bday-orb-a { background: color-mix(in srgb, var(--bday-c0) 35%, transparent); filter: blur(8px); }
-  .bday-web .bday-orb-b { background: color-mix(in srgb, var(--bday-c1) 30%, transparent); filter: blur(10px); }
-  .bday-web .bday-stage { border-color: color-mix(in srgb, var(--bday-accent) 22%, #e7e5e4); }
+  .bday-web .bday-orb-a { background: color-mix(in srgb, var(--bday-c0) 38%, transparent); filter: blur(10px); }
+  .bday-web .bday-orb-b { background: color-mix(in srgb, var(--bday-c1) 32%, transparent); filter: blur(12px); }
+  .bday-web .bday-stage {
+    border-color: color-mix(in srgb, var(--bday-accent) 28%, #e7e5e4);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, white 92%, var(--bday-card-a)) 0%, color-mix(in srgb, white 96%, var(--bday-card-b)) 100%);
+    box-shadow:
+      0 1px 0 color-mix(in srgb, white 80%, transparent),
+      0 18px 50px color-mix(in srgb, var(--bday-accent) 16%, transparent);
+  }
   .bday-web .bday-from { background: color-mix(in srgb, var(--bday-accent) 14%, white); color: var(--bday-ink); }
   .bday-web .bday-kicker { color: var(--bday-muted); }
   .bday-web .bday-title { color: var(--bday-ink); }
   .bday-web .bday-who {
     color: var(--bday-ink);
-    background: color-mix(in srgb, var(--bday-accent) 10%, white);
-    border-color: color-mix(in srgb, var(--bday-accent) 22%, #e7e5e4);
+    background: color-mix(in srgb, var(--bday-accent) 12%, white);
+    border-color: color-mix(in srgb, var(--bday-accent) 24%, #e7e5e4);
   }
   .bday-web .bday-gender-note { color: var(--bday-muted); }
   .bday-web .bday-wish { color: color-mix(in srgb, var(--bday-ink) 78%, #57534e); }
-  .bday-web .bday-age { background: var(--bday-accent); box-shadow: 0 10px 24px color-mix(in srgb, var(--bday-accent) 28%, transparent); }
+  .bday-web .bday-age { background: var(--bday-accent); box-shadow: 0 12px 28px color-mix(in srgb, var(--bday-accent) 32%, transparent); }
   .bday-web .bday-fallback { background: linear-gradient(145deg, var(--bday-bg-b), var(--bday-bg-a)); }
-  .bday-web .bday-ring { background: linear-gradient(135deg, var(--bday-c0), var(--bday-c2), var(--bday-c3)); opacity: 0.55; filter: blur(1px); }
+  .bday-web .bday-ring {
+    background: conic-gradient(from 120deg, var(--bday-c0), var(--bday-c2), var(--bday-c3), var(--bday-c1), var(--bday-c0));
+    opacity: 0.72;
+    filter: blur(0.5px);
+  }
+  .bday-web .bday-photo-glow {
+    background: radial-gradient(circle, color-mix(in srgb, var(--bday-accent) 35%, transparent) 0%, transparent 70%);
+  }
   .bday-web .bday-cheers { border-color: color-mix(in srgb, var(--bday-accent) 22%, #e7e5e4); }
   .bday-web .bday-chip {
-    border-color: color-mix(in srgb, var(--bday-accent) 20%, white);
+    border-color: color-mix(in srgb, var(--bday-accent) 18%, white);
     background: linear-gradient(135deg, var(--bday-card-a), var(--bday-card-b));
     color: var(--bday-ink);
+  }
+  .bday-web .bday-avatar {
+    background: linear-gradient(145deg, var(--bday-accent-soft), var(--bday-accent));
+    color: white;
   }
   .bday-web.bday-yesterday .bday-wash { filter: saturate(0.82); }
   .bday-web.bday-yesterday .bday-float, .bday-web.bday-yesterday .bday-float-slow { opacity: 0.55; }
   .bday-web .bday-kicker { animation: bday-fade 0.7s ease-out both; }
-  .bday-web .bday-photo { animation: bday-pop 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both; }
+  .bday-web .bday-photo { animation: bday-pop 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both; }
   .bday-web .bday-title { animation: bday-fade 0.8s ease-out 0.18s both; }
   .bday-web .bday-who { animation: bday-fade 0.8s ease-out 0.22s both; }
   .bday-web .bday-age { animation: bday-fade 0.8s ease-out 0.28s both; }
   .bday-web .bday-wish { animation: bday-fade 0.8s ease-out 0.38s both; }
   .bday-web .bday-emoji { animation: bday-fade 0.8s ease-out 0.48s both; }
   .bday-web .bday-cheers { animation: bday-fade 0.8s ease-out 0.55s both; }
-  .bday-web .bday-ring { animation: bday-glow 2.8s ease-in-out infinite; }
+  .bday-web .bday-ring { animation: bday-spin 10s linear infinite; }
   .bday-web .bday-float { animation: bday-bob 4.5s ease-in-out infinite; }
   .bday-web .bday-float-slow { animation: bday-bob 6.2s ease-in-out 0.8s infinite; }
   .bday-web .bday-wiggle { animation: bday-wiggle 3.4s ease-in-out infinite; }
@@ -71,9 +90,10 @@ const BIRTHDAY_CARD_CSS = `
     from { transform: scale(0.84); }
     to { transform: scale(1); }
   }
-  @keyframes bday-glow {
-    0%, 100% { opacity: 0.45; transform: scale(1); }
-    50% { opacity: 0.9; transform: scale(1.04); }
+  @keyframes bday-spin {
+    from { transform: rotate(0deg) scale(1); opacity: 0.55; }
+    50% { transform: rotate(180deg) scale(1.03); opacity: 0.85; }
+    to { transform: rotate(360deg) scale(1); opacity: 0.55; }
   }
   @keyframes bday-bob {
     0%, 100% { transform: translateY(0) rotate(-6deg); }
@@ -114,6 +134,12 @@ function paletteStyle(gender: CardGender): CSSProperties {
     '--bday-c2': palette.confetti[2],
     '--bday-c3': palette.confetti[3],
   } as CSSProperties;
+}
+
+function cheerHue(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash + name.charCodeAt(i) * (i + 3)) % 360;
+  return `hsl(${hash} 52% 42%)`;
 }
 
 type CelebrationPerson = NonNullable<PublicBirthday['person']>;
@@ -158,7 +184,7 @@ export function BirthdayWebCard({
   footer,
 }: BirthdayWebCardProps) {
   const t = useT();
-  const language = useLanguage();
+  const language = useLanguage() as WishLang;
   const [photoFailed, setPhotoFailed] = useState(false);
   const gender = normalizeCardGender(person.gender);
   const emoji = designEmoji(design, gender);
@@ -182,9 +208,14 @@ export function BirthdayWebCard({
     return t('bday.headline', { name: shownName });
   }, [shownName, when, gender, t]);
 
+  const wish = useMemo(
+    () => webBirthdayWish(shownName, person.age ?? null, when, language),
+    [shownName, person.age, when, language],
+  );
+
   const photoSize = compact
-    ? 'h-32 w-32 sm:h-40 sm:w-40'
-    : 'h-44 w-44 sm:h-56 sm:w-56';
+    ? 'h-36 w-36 sm:h-44 sm:w-44'
+    : 'h-48 w-48 sm:h-60 sm:w-60';
 
   return (
     <div
@@ -253,7 +284,7 @@ export function BirthdayWebCard({
       >
         {header}
         <article
-          className={`bday-stage relative z-10 w-full rounded-[2rem] border bg-white/90 shadow-lg backdrop-blur-md ${
+          className={`bday-stage relative z-10 w-full rounded-[2rem] border backdrop-blur-md ${
             compact ? 'px-4 py-6 sm:px-6' : 'px-5 py-8 sm:px-8'
           } ${header ? 'mt-6' : ''}`}
         >
@@ -264,7 +295,8 @@ export function BirthdayWebCard({
           </p>
 
           <div className="bday-photo relative mx-auto mt-6">
-            <div className="bday-ring pointer-events-none absolute -inset-3 z-0 rounded-full" />
+            <div className="bday-photo-glow pointer-events-none absolute -inset-8 z-0 rounded-full" />
+            <div className="bday-ring pointer-events-none absolute -inset-3.5 z-0 rounded-full" />
             <span className="bday-wiggle pointer-events-none absolute -left-5 -top-4 z-20 text-3xl drop-shadow-sm" aria-hidden>
               {emoji[0]}
             </span>
@@ -283,11 +315,11 @@ export function BirthdayWebCard({
                 alt={shownName}
                 referrerPolicy="no-referrer"
                 onError={() => setPhotoFailed(true)}
-                className={`relative z-10 rounded-full object-cover ring-4 ring-white ${photoSize}`}
+                className={`relative z-10 rounded-full object-cover ring-[5px] ring-white shadow-xl ${photoSize}`}
               />
             ) : (
               <div
-                className={`bday-fallback relative z-10 flex items-center justify-center rounded-full text-5xl font-bold text-white ring-4 ring-white ${photoSize}`}
+                className={`bday-fallback relative z-10 flex items-center justify-center rounded-full text-5xl font-bold text-white ring-[5px] ring-white shadow-xl ${photoSize}`}
               >
                 {shownName.slice(0, 1).toUpperCase()}
               </div>
@@ -326,11 +358,7 @@ export function BirthdayWebCard({
           )}
 
           <p className={`bday-wish mx-auto mt-5 max-w-sm leading-relaxed ${compact ? 'text-sm' : 'text-base'}`}>
-            {language === 'uz'
-              ? webBirthdayWish(shownName, person.age ?? null, when)
-              : when === 'yesterday'
-                ? t('bday.yesterdayWish')
-                : t('bday.wish')}
+            {wish}
           </p>
 
           <p className="bday-emoji mt-6 text-2xl tracking-[0.28em]" aria-hidden>
@@ -348,15 +376,29 @@ export function BirthdayWebCard({
             </h2>
             {cheers.length > 0 ? (
               <ul className="mt-3 flex flex-wrap gap-2">
-                {cheers.map((c, i) => (
-                  <li key={`${c.name}-${i}`} className="bday-chip rounded-full border px-3 py-1 text-sm">
-                    {prettyLabel(c.name)}
-                  </li>
-                ))}
+                {cheers.map((c, i) => {
+                  const label = prettyLabel(c.name);
+                  const initial = label.slice(0, 1).toUpperCase() || '•';
+                  return (
+                    <li
+                      key={`${c.name}-${i}`}
+                      className="bday-chip inline-flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-sm"
+                    >
+                      <span
+                        className="bday-avatar flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold shadow-sm"
+                        style={{ background: cheerHue(label) }}
+                        aria-hidden
+                      >
+                        {initial}
+                      </span>
+                      <span className="font-medium">{label}</span>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="mt-2 text-sm leading-relaxed text-stone-600">
-                {when === 'yesterday' ? t('bday.yesterdayWish') : t('bday.cheersEmpty')}
+                {when === 'yesterday' ? wish : t('bday.cheersEmpty')}
               </p>
             )}
           </section>
