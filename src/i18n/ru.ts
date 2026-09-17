@@ -88,9 +88,15 @@ export const ruOverrides: Record<string, string> = {
     'Вы пришли с открытой страницы дня рождения. Введите имя — пока страница открыта, пароль не нужен.',
   'gate.introBdayEnded':
     'Страница дня рождения закрыта. Чтобы открыть древо, введите имя и семейный пароль.',
+  'gate.introFromDates':
+    'Вы пришли со списка без дат рождения. Введите имя — пароль не нужен, пока заполняете даты.',
+  'gate.introDatesEnded':
+    'Ссылка для заполнения больше не действует. Введите имя и семейный пароль, чтобы продолжить.',
   'gate.remember': 'Устройство запомнит вас, пока вы не нажмёте «Выйти».',
   'gate.rememberBday':
     'Когда день рождения закроется, в следующий раз понадобится семейный пароль.',
+  'gate.rememberDates':
+    'После этой сессии заполнения в следующий раз может понадобиться семейный пароль.',
   'gate.familyPassword': 'Семейный пароль',
   'gate.showPassword': 'Показать пароль',
   'gate.hidePassword': 'Скрыть пароль',
@@ -429,6 +435,14 @@ export const ruOverrides: Record<string, string> = {
 
   'members.title': 'Члены семьи',
   'members.shown': 'Показано {shown} из {total}',
+  'members.missingTitle': 'Нет даты рождения',
+  'members.missingShown': 'Показано {shown} из {total} без полной даты',
+  'members.missingBannerTitle': 'Заполните месяц и день — бот сможет поздравить',
+  'members.missingBannerBody':
+    'Откройте карточку и добавьте полную дату (год–месяц–день). Одного года недостаточно.',
+  'members.missingShowAll': 'Показать всех',
+  'members.missingCue': 'У {n} человек ещё нет дня рождения — нажмите, чтобы заполнить',
+  'members.missingEmpty': 'У всех здесь уже есть полная дата. Спасибо!',
   'members.search': 'Поиск',
   'members.searchPlaceholder': 'Имя, город, профессия…',
   'members.sortBy': 'Сортировка',
@@ -559,6 +573,7 @@ export const ruOverrides: Record<string, string> = {
   'telegram.nextToday': 'Сегодня',
   'telegram.nextTomorrow': 'Завтра',
   'telegram.openMembers': 'Открыть членов семьи',
+  'telegram.openMissingDates': 'Заполнить даты рождения',
 
   'bday.loading': 'Загружаем праздник…',
   'bday.kicker': 'Oq-Ariq OILASI',
@@ -592,6 +607,22 @@ export const ruOverrides: Record<string, string> = {
   'bday.yesterdayHis': 'Вчера был его день рождения',
   'bday.yesterdayWish':
     'Вчера был праздник — позднее пожелание тоже пожелание. Семья всё ещё думает о вас.',
+
+  'dates.kicker': 'Oq-Ariq OILASI',
+  'dates.title': 'Нет даты рождения',
+  'dates.intro':
+    'У этих родственников нет полной даты (месяц и день) — бот не сможет их поздравить. Нажмите имя, введите своё и заполните дату — по этой ссылке пароль не нужен.',
+  'dates.loading': 'Загружаем список…',
+  'dates.count': 'Ещё {n} человек без даты',
+  'dates.fillAll': 'Открыть список для заполнения',
+  'dates.fillHint': 'На следующем экране нужно только имя — пока эта ссылка открыта, пароль не нужен.',
+  'dates.openTree': 'Смотреть семейное древо',
+  'dates.emptyTitle': 'У всех есть день рождения',
+  'dates.emptyBody': 'Бот может поздравить всю живущую семью. Спасибо!',
+  'dates.failedTitle': 'Не удалось загрузить список',
+  'dates.failedBody': 'Проверьте интернет и попробуйте снова.',
+  'dates.retry': 'Повторить',
+  'dates.footer': 'Эта страница открыта для семьи — пароль не нужен, чтобы увидеть список.',
 
   'invite.title': 'Пригласить родственников',
   'invite.intro':

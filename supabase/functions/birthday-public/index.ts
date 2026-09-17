@@ -2,6 +2,9 @@
  * Public birthday celebration payload — no password / JWT.
  * Live on the birthday (family timezone). The next calendar day is a
  * “yesterday” page. After that the link expires so profiles stay private.
+ *
+ * Also serves `?mode=missing` — living relatives without a full birth date
+ * so the Telegram group can open a fill-in page without the family password.
  */
 import {
   ageTurning,
@@ -20,6 +23,74 @@ import { cardDesignSeed, normalizeCardGender, pickCardDesign } from '../_shared/
 import { birthdayPageWish, birthdayYesterdayWish } from '../_shared/wishes.ts';
 import { whoIsThisUzbek } from '../_shared/whoIsThis.ts';
 
+type MemberRow = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  nickname: string | null;
+  gender: string | null;
+  birth_date: string | null;
+  death_date: string | null;
+  is_deceased: boolean;
+  photo: string | null;
+};
+
+function toFamilyRow(person: MemberRow): FamilyMemberRow {
+  return {
+    id: person.id,
+    first_name: person.first_name,
+    last_name: person.last_name,
+    nickname: person.nickname,
+    gender: (person.gender as FamilyMemberRow['gender']) ?? undefined,
+    birth_date: person.birth_date,
+    death_date: person.death_date,
+    is_deceased: person.is_deceased,
+    photo: person.photo,
+  };
+}
+
+async function listMissingBirthdays(
+  db: ReturnType<typeof createServiceClient>,
+): Promise<Response> {
+  const members = await db.rest<MemberRow[]>('family_members', {
+    query: {
+      select: 'id,first_name,last_name,nickname,gender,birth_date,death_date,is_deceased,photo',
+      order: 'first_name.asc',
+    },
+  });
+
+  const missing = members.filter((m) => !m.is_deceased && !m.death_date && !monthDay(m.birth_date));
+  if (missing.length === 0) {
+    return jsonResponse({ ok: true, count: 0, people: [] });
+  }
+
+  let rels: { kind: string; person_a: string; person_b: string }[] = [];
+  try {
+    rels = await db.rest('family_relationships', {
+      query: { select: 'kind,person_a,person_b' },
+    });
+  } catch (err) {
+    console.warn('missing whoLine: relationships unavailable', err);
+  }
+
+  const allRows = members.map(toFamilyRow);
+  const people = [];
+  for (const person of missing) {
+    const row = toFamilyRow(person);
+    const whoLine = whoIsThisUzbek(row, allRows, rels);
+    const photoUrl = person.photo ? await db.signPhoto(person.photo) : null;
+    people.push({
+      id: person.id,
+      name: displayName(person),
+      gender: normalizeCardGender(person.gender),
+      whoLine,
+      photoUrl,
+    });
+  }
+
+  return jsonResponse({ ok: true, count: people.length, people });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -27,6 +98,11 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
+    if (url.searchParams.get('mode') === 'missing') {
+      const db = createServiceClient();
+      return await listMissingBirthdays(db);
+    }
+
     let personId = url.searchParams.get('personId') || '';
     if (!personId && req.method === 'POST') {
       const body = await req.json().catch(() => ({}));
@@ -38,19 +114,7 @@ Deno.serve(async (req) => {
     }
 
     const db = createServiceClient();
-    const people = await db.rest<
-      {
-        id: string;
-        first_name: string;
-        last_name: string;
-        nickname: string | null;
-        gender: string | null;
-        birth_date: string | null;
-        death_date: string | null;
-        is_deceased: boolean;
-        photo: string | null;
-      }[]
-    >('family_members', {
+    const people = await db.rest<MemberRow[]>('family_members', {
       query: {
         select: 'id,first_name,last_name,nickname,gender,birth_date,death_date,is_deceased,photo',
         id: `eq.${personId}`,
@@ -103,21 +167,7 @@ Deno.serve(async (req) => {
           id: `in.(${relatedIds.join(',')})`,
         },
       });
-      whoLine = whoIsThisUzbek(
-        {
-          id: person.id,
-          first_name: person.first_name,
-          last_name: person.last_name,
-          nickname: person.nickname,
-          gender: (person.gender as FamilyMemberRow['gender']) ?? undefined,
-          birth_date: person.birth_date,
-          death_date: person.death_date,
-          is_deceased: person.is_deceased,
-          photo: person.photo,
-        },
-        related,
-        rels,
-      );
+      whoLine = whoIsThisUzbek(toFamilyRow(person), related, rels);
     } catch (err) {
       console.warn('whoLine unavailable', err);
     }

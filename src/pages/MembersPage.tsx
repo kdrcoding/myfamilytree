@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react';
-import { Search, UserPlus, Users, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { CalendarDays, Search, UserPlus, Users, X } from 'lucide-react';
 import type { FamilyPerson, RelationLink } from '../types/family';
 import { useAuth } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
 import { useT } from '../i18n/useT';
+import { hasFullBirthDate } from '../features/birthday/publicApi';
 import { calculateAge, birthYear } from '../utils/dates';
 import { distinctCountries } from '../utils/countries';
 import { fullName } from '../utils/family';
@@ -25,13 +27,28 @@ export function MembersPage() {
   const confirm = useConfirm();
   const { toast } = useToast();
   const t = useT();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const missingOnly = searchParams.get('missing') === '1';
+  const editId = searchParams.get('edit');
 
   const [query, setQuery] = useState('');
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<Filters>(() =>
+    missingOnly ? { ...DEFAULT_FILTERS, status: 'living' } : DEFAULT_FILTERS,
+  );
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [detailsId, setDetailsId] = useState<string | null>(null);
   const [form, setForm] = useState<{ person?: FamilyPerson; link?: RelationLink } | null>(null);
   const [unlockOpen, setUnlockOpen] = useState(false);
+
+  useEffect(() => {
+    if (!editId || !canEdit) return;
+    const person = people.find((p) => p.id === editId);
+    if (!person) return;
+    setForm({ person });
+    const next = new URLSearchParams(searchParams);
+    next.delete('edit');
+    setSearchParams(next, { replace: true });
+  }, [editId, canEdit, people, searchParams, setSearchParams]);
 
   const sorts: { key: SortKey; label: string }[] = [
     { key: 'name', label: t('members.sortName') },
@@ -41,10 +58,16 @@ export function MembersPage() {
     { key: 'children', label: t('members.sortChildren') },
   ];
 
+  const missingLiving = useMemo(
+    () => people.filter((p) => !p.isDeceased && !p.deathDate && !hasFullBirthDate(p.birthDate)),
+    [people],
+  );
+
   const visible = useMemo(() => {
-    const filtered = people.filter(
-      (p) => matchesSearch(p, query) && matchesFilters(p, filters, generations),
-    );
+    const filtered = people.filter((p) => {
+      if (missingOnly && (p.isDeceased || p.deathDate || hasFullBirthDate(p.birthDate))) return false;
+      return matchesSearch(p, query) && matchesFilters(p, filters, generations);
+    });
     const sorters: Record<SortKey, (a: FamilyPerson, b: FamilyPerson) => number> = {
       name: (a, b) => fullName(a).localeCompare(fullName(b)),
       age: (a, b) =>
@@ -55,7 +78,7 @@ export function MembersPage() {
       children: (a, b) => b.childIds.length - a.childIds.length,
     };
     return [...filtered].sort(sorters[sortKey]);
-  }, [people, query, filters, sortKey, generations]);
+  }, [people, query, filters, sortKey, generations, missingOnly]);
 
   const handleDelete = async (person: FamilyPerson) => {
     const proceed = await confirm({
@@ -71,15 +94,24 @@ export function MembersPage() {
     toast(t('delete.done', { name: fullName(person) }));
   };
 
+  const clearMissingFilter = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('missing');
+    next.delete('edit');
+    setSearchParams(next, { replace: true });
+  };
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
-            {t('members.title')}
+            {missingOnly ? t('members.missingTitle') : t('members.title')}
           </h1>
           <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-            {t('members.shown', { shown: visible.length, total: people.length })}
+            {missingOnly
+              ? t('members.missingShown', { shown: visible.length, total: missingLiving.length })
+              : t('members.shown', { shown: visible.length, total: people.length })}
           </p>
         </div>
         <button
@@ -90,6 +122,31 @@ export function MembersPage() {
           <UserPlus className="h-4 w-4" aria-hidden /> {t('tree.addPerson')}
         </button>
       </div>
+
+      {missingOnly && (
+        <div className="mt-4 flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-amber-950 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-100">
+          <div className="flex min-w-0 items-start gap-2">
+            <CalendarDays className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+            <div>
+              <p className="text-sm font-semibold">{t('members.missingBannerTitle')}</p>
+              <p className="mt-0.5 text-sm leading-relaxed opacity-90">{t('members.missingBannerBody')}</p>
+            </div>
+          </div>
+          <button type="button" className="btn-secondary !min-h-9 shrink-0 text-sm" onClick={clearMissingFilter}>
+            {t('members.missingShowAll')}
+          </button>
+        </div>
+      )}
+
+      {!missingOnly && missingLiving.length > 0 && (
+        <Link
+          to="/members?missing=1"
+          className="mt-4 flex items-center gap-2 rounded-2xl border border-amber-200/70 bg-amber-50/60 px-4 py-3 text-sm font-medium text-amber-950 transition hover:bg-amber-100/70 dark:border-amber-800/40 dark:bg-amber-950/25 dark:text-amber-100 dark:hover:bg-amber-950/40"
+        >
+          <CalendarDays className="h-4 w-4 shrink-0" aria-hidden />
+          {t('members.missingCue', { n: missingLiving.length })}
+        </Link>
+      )}
 
       <div className="card mt-5 flex flex-wrap items-end gap-3 p-4 shadow-[0_1px_3px_0_rgb(0_0_0_0.04)] sm:p-5 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.2)]">
         <label className="relative block w-full sm:w-64">
@@ -147,7 +204,9 @@ export function MembersPage() {
           <div className="rounded-2xl bg-stone-100 p-5 dark:bg-stone-800">
             <Users className="h-10 w-10 text-stone-300 dark:text-stone-600" aria-hidden />
           </div>
-          <p className="text-sm text-stone-500 dark:text-stone-400">{t('members.noMatch')}</p>
+          <p className="text-sm text-stone-500 dark:text-stone-400">
+            {missingOnly ? t('members.missingEmpty') : t('members.noMatch')}
+          </p>
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

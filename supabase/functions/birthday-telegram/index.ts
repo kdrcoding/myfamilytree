@@ -21,6 +21,7 @@ import {
   birthdayCaption,
   birthdayPageUrl,
   cheerCallbackData,
+  missingDatesPageUrl,
   publicAppUrl,
   TG_BUTTONS,
 } from '../_shared/wishes.ts';
@@ -170,11 +171,15 @@ async function maybeSendMissingDates(opts: {
   if (!claimed) return { sent: false, skipped: 'already_claimed', count: names.length };
 
   try {
+    const datesUrl = missingDatesPageUrl();
     await telegramApi('sendMessage', {
       chat_id: opts.chatId,
-      text: missingDatesNotice(names, `${publicAppUrl()}/members`),
+      text: missingDatesNotice(names, datesUrl),
       parse_mode: 'HTML',
       disable_web_page_preview: true,
+      reply_markup: {
+        inline_keyboard: [[{ text: TG_BUTTONS.fillDates, url: datesUrl }]],
+      },
     });
     return { sent: true, count: names.length };
   } catch (err) {
@@ -265,6 +270,10 @@ Deno.serve(async (req) => {
 
     const bot = (settings.bot_username || '').replace(/^@/, '');
     const results: { personId: string; group: boolean; error?: string; skipped?: string }[] = [];
+    const missingCount = members.filter(
+      (m) => !m.is_deceased && !m.death_date && !monthDay(m.birth_date),
+    ).length;
+    const datesUrl = missingCount > 0 ? missingDatesPageUrl() : null;
 
     for (const person of celebrating) {
       const skipClaim = Boolean(force);
@@ -312,6 +321,9 @@ Deno.serve(async (req) => {
               url: `https://t.me/${bot}?start=${payload}`,
             },
           ]);
+        }
+        if (datesUrl) {
+          keyboard.push([{ text: TG_BUTTONS.fillDates, url: datesUrl }]);
         }
 
         let groupOk = false;

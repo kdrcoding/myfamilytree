@@ -7,7 +7,8 @@ Telegram name is saved on the birthday page and announced as
 **“{ism} — {kimni}ni tabriklamoqda!”**
 
 Bot: **@forusbirthdaybot**  
-Public page: `https://myfamilytree-smoky.vercel.app/bday/<personId>`
+Public birthday page: `https://myfamilytree-smoky.vercel.app/bday/<personId>`  
+Missing dates page: `https://myfamilytree-smoky.vercel.app/dates` (no password to view; name-only to fill)
 
 ## 1. BotFather
 
@@ -64,7 +65,8 @@ Settings → **Telegram birthdays**:
 5. Tap **Men tabriklayman** in the group (no need to open a private chat)
 
 The card also shows how many people have a full birth date (month + day). The
-bot cannot post for year-only or empty dates.
+bot cannot post for year-only or empty dates. Monday’s reminder and birthday
+posts include a **Sanalarni to‘ldirish** button → `/dates`.
 
 ## Notes
 

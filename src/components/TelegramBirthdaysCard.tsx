@@ -132,9 +132,22 @@ export function TelegramBirthdaysCard() {
         ) : (
           <p className="mt-1.5 text-xs text-emerald-800 dark:text-emerald-300">{t('telegram.coverageOk')}</p>
         )}
-        <Link to="/members" className="mt-2 inline-flex text-xs font-semibold text-emerald-800 underline dark:text-emerald-300">
-          {t('telegram.openMembers')}
-        </Link>
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+          {missingCount > 0 && (
+            <Link
+              to="/dates"
+              className="inline-flex text-xs font-semibold text-amber-800 underline dark:text-amber-200"
+            >
+              {t('telegram.openMissingDates')}
+            </Link>
+          )}
+          <Link
+            to={missingCount > 0 ? '/members?missing=1' : '/members'}
+            className="inline-flex text-xs font-semibold text-emerald-800 underline dark:text-emerald-300"
+          >
+            {t('telegram.openMembers')}
+          </Link>
+        </div>
       </div>
 
       <div className="mt-3">

@@ -5,7 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import { OWNER_DEFAULT_NAME } from '../config/access';
 import { useAuth } from '../context/AuthContext';
 import { useT } from '../i18n/useT';
-import { birthdayPassStillValid, readBirthdayPass } from '../lib/birthdayPass';
+import { birthdayPassStillValid, hasSoftUnlockGrant, readDatesPass, softUnlockStillValid } from '../lib/birthdayPass';
 import { SW_UPDATE_EVENT } from '../lib/swUpdate';
 import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { BrandHero } from './BrandLogo';
@@ -21,7 +21,7 @@ function readSavedName(): string {
 
 /**
  * Site gate: name + family password on the main site.
- * Name-only only after a live birthday page in this tab (not `?from=bday`).
+ * Name-only after a live birthday page or the public missing-dates page in this tab.
  */
 export function AppLockGate({ children }: { children: ReactNode }) {
   const { role, ready, signIn, enterAsFamily, enterWithName } = useAuth();
@@ -29,9 +29,11 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   const { settings } = useSettings();
   const [searchParams] = useSearchParams();
   const claimedFromBday = searchParams.get('from') === 'bday';
-  const [bdayAccess, setBdayAccess] = useState<'unknown' | 'yes' | 'no'>(() =>
-    readBirthdayPass() ? 'unknown' : 'no',
+  const claimedFromDates = searchParams.get('from') === 'dates';
+  const [softAccess, setSoftAccess] = useState<'unknown' | 'yes' | 'no'>(() =>
+    hasSoftUnlockGrant() ? 'unknown' : 'no',
   );
+  const [softKind, setSoftKind] = useState<'bday' | 'dates' | null>(null);
   const [familyPassword, setFamilyPassword] = useState('');
   const [ownerPassword, setOwnerPassword] = useState('');
   const [showFamilyPassword, setShowFamilyPassword] = useState(false);
@@ -42,7 +44,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   const [nameError, setNameError] = useState('');
   const [ownerOpen, setOwnerOpen] = useState(false);
 
-  const fromBirthday = bdayAccess === 'yes';
+  const fromSoftUnlock = softAccess === 'yes';
   const unlocked = ready && role !== 'viewer';
 
   useEffect(() => {
@@ -54,17 +56,29 @@ export function AppLockGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    if (!readBirthdayPass()) {
-      setBdayAccess('no');
+    if (!hasSoftUnlockGrant()) {
+      setSoftAccess('no');
+      setSoftKind(null);
       return;
     }
-    void birthdayPassStillValid({ keepOnNetworkError: true }).then((ok) => {
-      if (!cancelled) setBdayAccess(ok ? 'yes' : 'no');
+    void softUnlockStillValid({ keepOnNetworkError: true }).then(async (ok) => {
+      if (cancelled) return;
+      setSoftAccess(ok ? 'yes' : 'no');
+      if (!ok) {
+        setSoftKind(null);
+        return;
+      }
+      if (readDatesPass()) {
+        const bdayOk = await birthdayPassStillValid({ keepOnNetworkError: true });
+        if (!cancelled) setSoftKind(bdayOk && !claimedFromDates ? 'bday' : 'dates');
+      } else {
+        if (!cancelled) setSoftKind('bday');
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [claimedFromDates]);
 
   useEffect(() => {
     if (!ready) return;
@@ -74,17 +88,17 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   }, [ready, role]);
 
   useEffect(() => {
-    if (!fromBirthday) return;
+    if (!fromSoftUnlock) return;
     const root = document.documentElement;
     root.classList.remove('dark');
     return () => {
       root.classList.toggle('dark', settings.theme === 'dark');
     };
-  }, [fromBirthday, settings.theme]);
+  }, [fromSoftUnlock, settings.theme]);
 
   if (unlocked) return <>{children}</>;
 
-  if (!ready || (role === 'viewer' && bdayAccess === 'unknown')) {
+  if (!ready || (role === 'viewer' && softAccess === 'unknown')) {
     return (
       <div className="flex min-h-dvh items-center justify-center app-shell">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-600" aria-hidden />
@@ -100,14 +114,14 @@ export function AppLockGate({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (fromBirthday) {
+    if (fromSoftUnlock) {
       setBusy(true);
       setError('');
       try {
         const ok = await enterWithName(trimmed);
         if (!ok) {
-          setBdayAccess('no');
-          setError(t('gate.introBdayEnded'));
+          setSoftAccess('no');
+          setError(softKind === 'dates' ? t('gate.introDatesEnded') : t('gate.introBdayEnded'));
         }
       } finally {
         setBusy(false);
@@ -157,22 +171,26 @@ export function AppLockGate({ children }: { children: ReactNode }) {
     }
   };
 
-  const intro = fromBirthday
-    ? t('gate.introFromBday')
-    : claimedFromBday
-      ? t('gate.introBdayEnded')
-      : t('gate.intro');
+  const intro = fromSoftUnlock
+    ? softKind === 'dates' || claimedFromDates
+      ? t('gate.introFromDates')
+      : t('gate.introFromBday')
+    : claimedFromDates
+      ? t('gate.introDatesEnded')
+      : claimedFromBday
+        ? t('gate.introBdayEnded')
+        : t('gate.intro');
 
   return (
-    <div className={`flex min-h-dvh flex-col items-center justify-center px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] text-stone-900 dark:bg-stone-950 dark:text-stone-100 ${fromBirthday ? 'bg-gradient-to-b from-emerald-100 via-emerald-50 to-stone-50' : 'app-shell'}`}>
+    <div className={`flex min-h-dvh flex-col items-center justify-center px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] text-stone-900 dark:bg-stone-950 dark:text-stone-100 ${fromSoftUnlock ? 'bg-gradient-to-b from-emerald-100 via-emerald-50 to-stone-50' : 'app-shell'}`}>
       <div className="w-full max-w-sm rounded-3xl border border-emerald-200/70 bg-white/90 p-6 shadow-[0_18px_50px_-28px_rgb(6_78_59_/_0.45)] animate-modal-in sm:p-8 dark:border-stone-700 dark:bg-stone-900/90">
         <div className="flex justify-end">
           <LanguageMenuButton />
         </div>
         <BrandHero>
-          {fromBirthday && (
+          {fromSoftUnlock && (
             <p className="mt-4 inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200">
-              🎂 {t('bday.kicker')}
+              {softKind === 'dates' ? `📅 ${t('dates.kicker')}` : `🎂 ${t('bday.kicker')}`}
             </p>
           )}
           <h1 className="mt-4 font-display text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
@@ -211,7 +229,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
             )}
           </label>
 
-          {!fromBirthday && (
+          {!fromSoftUnlock && (
             <label className="block text-left">
               <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
                 {t('gate.familyPassword')}
@@ -257,7 +275,11 @@ export function AppLockGate({ children }: { children: ReactNode }) {
           )}
 
           <p className="text-xs leading-relaxed text-stone-500 dark:text-stone-400">
-            {fromBirthday ? t('gate.rememberBday') : t('gate.remember')}
+            {fromSoftUnlock
+              ? softKind === 'dates'
+                ? t('gate.rememberDates')
+                : t('gate.rememberBday')
+              : t('gate.remember')}
           </p>
           <button type="submit" className="btn-primary w-full min-h-12 text-base" disabled={busy}>
             {busy ? t('gate.checking') : t('gate.welcomeBtn')}

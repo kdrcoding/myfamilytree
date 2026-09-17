@@ -361,6 +361,10 @@ export function birthdayPageUrl(personId: string): string {
   return `${publicAppUrl()}/bday/${encodeURIComponent(personId)}`;
 }
 
+export function missingDatesPageUrl(): string {
+  return `${publicAppUrl()}/dates`;
+}
+
 export function cheerCallbackData(personId: string, year: number): string {
   return `cheer_${personId}_${year}`;
 }
@@ -391,6 +395,7 @@ export function birthdayCaption(
 export const TG_BUTTONS = {
   openPage: '🎉 Bayram sahifasi',
   celebrate: '💛 Men tabriklayman',
+  fillDates: '📅 Sanalarni to‘ldirish',
 } as const;
 
 export function groupReadyText(): string {

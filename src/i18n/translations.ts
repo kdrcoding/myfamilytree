@@ -103,9 +103,15 @@ export const en = {
     'You opened this from a live birthday page. Enter your name — no password while that birthday is still open.',
   'gate.introBdayEnded':
     'This birthday page has closed. Enter your name and the family password to open the tree.',
+  'gate.introFromDates':
+    'You opened this from the missing-birthdays list. Enter your name — no password while you fill those dates.',
+  'gate.introDatesEnded':
+    'That fill-in link is no longer open. Enter your name and the family password to continue.',
   'gate.remember': 'This device remembers you until you tap Sign out.',
   'gate.rememberBday':
     'After this birthday closes, the next visit will ask for the family password.',
+  'gate.rememberDates':
+    'When you leave this fill-in session, the next visit may ask for the family password.',
   'gate.familyPassword': 'Family password',
   'gate.showPassword': 'Show password',
   'gate.hidePassword': 'Hide password',
@@ -396,6 +402,7 @@ export const en = {
   'telegram.nextToday': 'Today',
   'telegram.nextTomorrow': 'Tomorrow',
   'telegram.openMembers': 'Open Members',
+  'telegram.openMissingDates': 'Fill missing birthdays',
 
   'bday.loading': 'Loading celebration…',
   'bday.kicker': 'Oq-Ariq OILASI',
@@ -429,6 +436,22 @@ export const en = {
   'bday.yesterdayHis': 'Yesterday was his birthday',
   'bday.yesterdayWish':
     'The family still holds yesterday’s joy. A late wish is still a wish.',
+
+  'dates.kicker': 'Oq-Ariq OILASI',
+  'dates.title': 'Missing birth dates',
+  'dates.intro':
+    'These relatives need a full birth date (month and day) so the Telegram bot can congratulate them. Tap a name, enter yours, and fill the date — no password from this link.',
+  'dates.loading': 'Loading the list…',
+  'dates.count': '{n} people still need a date',
+  'dates.fillAll': 'Open the list to fill dates',
+  'dates.fillHint': 'Next screen asks only for your name while this fill-in link is open.',
+  'dates.openTree': 'See the family tree',
+  'dates.emptyTitle': 'Everyone has a birthday date',
+  'dates.emptyBody': 'The bot can congratulate the whole living family. Thank you!',
+  'dates.failedTitle': 'Could not load this list',
+  'dates.failedBody': 'Check your connection and try again.',
+  'dates.retry': 'Try again',
+  'dates.footer': 'This page is open for family — no password needed to see the list.',
 
   // Invite link
   'invite.title': 'Invite relatives',
@@ -683,6 +706,14 @@ export const en = {
   // Members page
   'members.title': 'Family members',
   'members.shown': 'Showing {shown} of {total}',
+  'members.missingTitle': 'Missing birth dates',
+  'members.missingShown': 'Showing {shown} of {total} without a full date',
+  'members.missingBannerTitle': 'Fill month and day so the bot can congratulate them',
+  'members.missingBannerBody':
+    'Open a card and add a full birth date (year–month–day). Year alone is not enough.',
+  'members.missingShowAll': 'Show everyone',
+  'members.missingCue': '{n} people still need a birthday date — tap to fill',
+  'members.missingEmpty': 'Everyone here now has a full birth date. Thank you!',
   'members.search': 'Search',
   'members.searchPlaceholder': 'Name, city, occupation…',
   'members.sortBy': 'Sort by',
@@ -1057,9 +1088,15 @@ export const uz: Record<TKey, string> = {
     'Siz ochiq tug‘ilgan kun sahifasidan keldingiz. Ismingizni yozing — sahifa ochiq ekan parol kerak emas.',
   'gate.introBdayEnded':
     'Bu tug‘ilgan kun sahifasi yopildi. Shajarani ochish uchun ismingiz va oila parolini yozing.',
+  'gate.introFromDates':
+    'Siz tug‘ilgan kun sanasi yo‘qlar ro‘yxatidan keldingiz. Ismingizni yozing — sanalarni to‘ldirayotganda parol kerak emas.',
+  'gate.introDatesEnded':
+    'Bu to‘ldirish havolasi yopildi. Davom etish uchun ismingiz va oila parolini yozing.',
   'gate.remember': 'Chiqmaguningizcha shu qurilma sizni eslab qoladi.',
   'gate.rememberBday':
     'Bu tug‘ilgan kun yopilgach, keyingi kirishda oila paroli so‘raladi.',
+  'gate.rememberDates':
+    'Bu to‘ldirish sessiyasidan chiqqach, keyingi kirishda oila paroli so‘ralishi mumkin.',
   'gate.familyPassword': 'Oila paroli',
   'gate.showPassword': 'Parolni ko‘rsatish',
   'gate.hidePassword': 'Parolni yashirish',
@@ -1346,6 +1383,7 @@ export const uz: Record<TKey, string> = {
   'telegram.nextToday': 'Bugun',
   'telegram.nextTomorrow': 'Ertaga',
   'telegram.openMembers': 'A’zolarni ochish',
+  'telegram.openMissingDates': 'Sanalarni to‘ldirish',
 
   'bday.loading': 'Bayram yuklanmoqda…',
   'bday.kicker': 'Oq-Ariq OILASI',
@@ -1379,6 +1417,22 @@ export const uz: Record<TKey, string> = {
   'bday.yesterdayHis': 'Kecha yigitlarimizning bayrami edi',
   'bday.yesterdayWish':
     'Kecha bayram edi — kechikkan tilak ham tilak. Oila hanuz sizni o‘ylaydi.',
+
+  'dates.kicker': 'Oq-Ariq OILASI',
+  'dates.title': 'Tug‘ilgan kun sanasi yo‘qlar',
+  'dates.intro':
+    'Bu oila a’zolarida to‘liq sana (oy va kun) yo‘q — bot ularni tabriklay olmaydi. Ismni bosing, o‘z ismingizni yozing va sanani to‘ldiring — bu havoladan parol kerak emas.',
+  'dates.loading': 'Ro‘yxat yuklanmoqda…',
+  'dates.count': 'Hali {n} kishida sana yo‘q',
+  'dates.fillAll': 'Sanalarni to‘ldirish uchun ochish',
+  'dates.fillHint': 'Keyingi ekranda faqat ismingiz so‘raladi — bu havola ochiq ekan parol kerak emas.',
+  'dates.openTree': 'Oilani ko‘rish',
+  'dates.emptyTitle': 'Hammada tug‘ilgan kun bor',
+  'dates.emptyBody': 'Bot butun oilani tabriklay oladi. Rahmat!',
+  'dates.failedTitle': 'Ro‘yxatni yuklab bo‘lmadi',
+  'dates.failedBody': 'Aloqani tekshirib qayta urinib ko‘ring.',
+  'dates.retry': 'Qayta urinish',
+  'dates.footer': 'Bu sahifa oila uchun ochiq — ro‘yxatni ko‘rish uchun parol kerak emas.',
 
   'invite.title': 'Qarindoshlarni taklif qilish',
   'invite.intro':
@@ -1623,6 +1677,14 @@ export const uz: Record<TKey, string> = {
 
   'members.title': "Oila a'zolari",
   'members.shown': '{total} kishidan {shown} tasi ko‘rsatilmoqda',
+  'members.missingTitle': 'Tug‘ilgan kun sanasi yo‘qlar',
+  'members.missingShown': 'To‘liq sanasi yo‘q {total} kishidan {shown} tasi',
+  'members.missingBannerTitle': 'Oy va kunni to‘ldiring — bot tabriklay olsin',
+  'members.missingBannerBody':
+    'Kartani ochib to‘liq tug‘ilgan kun yozing (yil–oy–kun). Faqat yil yetarli emas.',
+  'members.missingShowAll': 'Hammasini ko‘rsatish',
+  'members.missingCue': '{n} kishida hali tug‘ilgan kun yo‘q — to‘ldirish uchun bosing',
+  'members.missingEmpty': 'Hammada to‘liq sana bor. Rahmat!',
   'members.search': 'Qidirish',
   'members.searchPlaceholder': 'Ism, shahar, kasb…',
   'members.sortBy': 'Saralash',

@@ -2,8 +2,9 @@
  * Access control for the family site.
  *
  * The main site asks for a name and the family password. A live Telegram
- * birthday page (`/bday/:id`) can skip the password (name only) while that
- * page is still open. After it expires, the family password is required.
+ * birthday page (`/bday/:id`) or the missing-dates page (`/dates`) can skip
+ * the password (name only) while that soft unlock is still open. After it
+ * expires, the family password is required.
  *
  * Never put plaintext passwords in this file or in VITE_ env. Generate a
  * new hash on the Settings page ("Access" section) if a password changes.

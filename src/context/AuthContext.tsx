@@ -3,9 +3,9 @@ import type { ReactNode } from 'react';
 import { ACCESS, AUTH_EMAILS, OWNER_DEFAULT_NAME, hashPassword } from '../config/access';
 import type { Role } from '../config/access';
 import {
-  birthdayPassStillValid,
-  clearBirthdayPass,
-  readBirthdayPass,
+  clearSoftUnlock,
+  hasSoftUnlockGrant,
+  softUnlockStillValid,
 } from '../lib/birthdayPass';
 import { supabase } from '../lib/supabase';
 import { loadJson, saveJson, removeKey, STORAGE_KEYS } from '../utils/storage';
@@ -25,7 +25,7 @@ interface AuthContextValue {
   signIn: (password: string) => Promise<Role | null>;
   /** Name + family (or owner) password. Used on the main site. */
   enterAsFamily: (name: string, password: string) => Promise<FamilyEnterResult>;
-  /** Name-only. Allowed only while a live birthday page grant is still valid. */
+  /** Name-only. Allowed while a live birthday or missing-dates page grant is valid. */
   enterWithName: (name: string) => Promise<boolean>;
   signOut: () => void;
 }
@@ -123,7 +123,7 @@ function initialAuthState(): { role: Role; ready: boolean } {
     return { role: 'owner', ready: true };
   }
   if (restorePasswordEditor()) return { role: 'editor', ready: true };
-  if (readBirthdayPass() && readDisplayName().length >= 2) {
+  if (hasSoftUnlockGrant() && readDisplayName().length >= 2) {
     return { role: 'viewer', ready: false };
   }
   if (hasOwnerSessionHint()) return { role: 'viewer', ready: false };
@@ -182,8 +182,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const name = readDisplayName();
-      if (readBirthdayPass() && name.length >= 2) {
-        const stillOpen = await birthdayPassStillValid({ keepOnNetworkError: true });
+      if (hasSoftUnlockGrant() && name.length >= 2) {
+        const stillOpen = await softUnlockStillValid({ keepOnNetworkError: true });
         if (cancelled) return;
         if (stillOpen) {
           setRole('editor');
@@ -232,7 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRole('editor');
           return;
         }
-        if (readBirthdayPass() && readDisplayName().length >= 2) {
+        if (hasSoftUnlockGrant() && readDisplayName().length >= 2) {
           setRole((current) => (current === 'owner' ? 'editor' : current));
           return;
         }
@@ -252,7 +252,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     const recheck = async () => {
-      const ok = await birthdayPassStillValid({ keepOnNetworkError: true });
+      const ok = await softUnlockStillValid({ keepOnNetworkError: true });
       if (cancelled) return;
       if (!ok) setRole('viewer');
     };
@@ -283,14 +283,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (found !== 'owner') return null;
       applyOwnerName();
       removeKey(AUTH_KEY);
-      clearBirthdayPass();
+      clearSoftUnlock();
       setRole('owner');
       return 'owner';
     }
 
     saveJson(AUTH_KEY, hash);
     applyOwnerName();
-    clearBirthdayPass();
+    clearSoftUnlock();
     setRole('owner');
     return 'owner';
   }, []);
@@ -309,7 +309,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (hash !== ACCESS.editorHash) return { ok: false, reason: 'password' };
 
       persistFamilyAuth(trimmed);
-      clearBirthdayPass();
+      clearSoftUnlock();
       if (supabase) void supabase.auth.signOut();
       setRole('editor');
       return { ok: true, role: 'editor' };
@@ -320,7 +320,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const enterWithName = useCallback(async (name: string): Promise<boolean> => {
     const trimmed = name.trim().slice(0, 40);
     if (trimmed.length < 2) return false;
-    const stillOpen = await birthdayPassStillValid({ keepOnNetworkError: false });
+    const stillOpen = await softUnlockStillValid({ keepOnNetworkError: false });
     if (!stillOpen) return false;
     saveJson(STORAGE_KEYS.displayName, trimmed);
     saveJson(STORAGE_KEYS.namedDevice, true);
@@ -338,7 +338,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     removeKey(STORAGE_KEYS.namedDevice);
     removeKey(STORAGE_KEYS.familyAuthed);
     removeKey(STORAGE_KEYS.skipOwnerAuto);
-    clearBirthdayPass();
+    clearSoftUnlock();
     setRole('viewer');
   }, []);
 

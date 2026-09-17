@@ -33,6 +33,9 @@ const NotFoundPage = lazy(() =>
 const BirthdayPublicPage = lazy(() =>
   import('./pages/BirthdayPublicPage').then((m) => ({ default: m.BirthdayPublicPage })),
 );
+const MissingDatesPage = lazy(() =>
+  import('./pages/MissingDatesPage').then((m) => ({ default: m.MissingDatesPage })),
+);
 
 /** Easy Mode hides Map / Stats / About — keep deep links from reopening them. */
 function EasyHiddenRoute({ children }: { children: ReactNode }) {
@@ -100,8 +103,9 @@ export default function App() {
             <BrowserRouter basename={import.meta.env.BASE_URL}>
               <Suspense fallback={<PageSkeleton />}>
                 <Routes>
-                  {/* Public celebration page — no name or password */}
+                  {/* Public pages — no name or password */}
                   <Route path="bday/:personId" element={<BirthdayPublicPage />} />
+                  <Route path="dates" element={<MissingDatesPage />} />
                   <Route path="*" element={<LockedApp />} />
                 </Routes>
               </Suspense>
