@@ -8,6 +8,21 @@ export type TelegramSettings = {
   send_hour: number;
   enabled: boolean;
   updated_at?: string;
+  last_run_at?: string | null;
+  last_ok_at?: string | null;
+  last_run_ok?: boolean | null;
+  last_run_error?: string | null;
+  last_health_alert_at?: string | null;
+};
+
+export type TelegramBotRun = {
+  id: number;
+  started_at: string;
+  finished_at: string | null;
+  ok: boolean;
+  trigger: string;
+  summary: Record<string, unknown>;
+  error: string | null;
 };
 
 /** Common family timezones for the send-at-local-hour picker. */
@@ -84,4 +99,16 @@ export async function runBirthdayTest(testPersonId?: string): Promise<{
 export function botOpenUrl(botUsername: string | null | undefined): string | null {
   const bot = botUsername?.replace(/^@/, '');
   return bot ? `https://t.me/${bot}` : null;
+}
+
+/** Owner-only via RLS — recent cron / test runs for the Settings health log. */
+export async function fetchTelegramBotRuns(limit = 12): Promise<TelegramBotRun[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('telegram_bot_runs')
+    .select('id,started_at,finished_at,ok,trigger,summary,error')
+    .order('started_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as TelegramBotRun[];
 }

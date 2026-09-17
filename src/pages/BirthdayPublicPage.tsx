@@ -211,6 +211,10 @@ export function BirthdayPublicPage() {
         design={design}
         cheers={cheers}
         fillPage
+        allowCheer
+        onCheersChange={(next) => {
+          setData((prev) => (prev?.ok ? { ...prev, cheers: next } : prev));
+        }}
         header={langHeader}
         footer={
           <>

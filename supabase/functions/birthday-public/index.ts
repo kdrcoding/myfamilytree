@@ -3,8 +3,9 @@
  * Live on the birthday (family timezone). The next calendar day is a
  * “yesterday” page. After that the link expires so profiles stay private.
  *
- * Also serves `?mode=missing` — living relatives without a full birth date
- * so the Telegram group can open a fill-in page without the family password.
+ * Also serves:
+ * - `?mode=missing` — living relatives without a full birth date
+ * - POST `?mode=cheer` — web “Men tabriklayman” with a display name
  */
 import {
   ageTurning,
@@ -16,11 +17,17 @@ import {
   localParts,
   monthDay,
   shiftLocalDate,
+  telegramApi,
   DEFAULT_FAMILY_TIMEZONE,
   type FamilyMemberRow,
 } from '../_shared/telegram.ts';
 import { cardDesignSeed, normalizeCardGender, pickCardDesign } from '../_shared/cardTheme.ts';
-import { birthdayPageWish, birthdayYesterdayWish } from '../_shared/wishes.ts';
+import {
+  birthdayPageWish,
+  birthdayYesterdayWish,
+  cheerAlreadyText,
+  cheerAnnounceWebText,
+} from '../_shared/wishes.ts';
 import { whoIsThisUzbek } from '../_shared/whoIsThis.ts';
 
 type MemberRow = {
@@ -34,6 +41,8 @@ type MemberRow = {
   is_deceased: boolean;
   photo: string | null;
 };
+
+type ServiceDb = ReturnType<typeof createServiceClient>;
 
 function toFamilyRow(person: MemberRow): FamilyMemberRow {
   return {
@@ -49,9 +58,17 @@ function toFamilyRow(person: MemberRow): FamilyMemberRow {
   };
 }
 
-async function listMissingBirthdays(
-  db: ReturnType<typeof createServiceClient>,
-): Promise<Response> {
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function cleanCheerName(raw: string): string | null {
+  const name = raw.replace(/\s+/g, ' ').trim().slice(0, 40);
+  if (name.length < 2) return null;
+  return name;
+}
+
+async function listMissingBirthdays(db: ServiceDb): Promise<Response> {
   const members = await db.rest<MemberRow[]>('family_members', {
     query: {
       select: 'id,first_name,last_name,nickname,gender,birth_date,death_date,is_deceased,photo',
@@ -91,6 +108,130 @@ async function listMissingBirthdays(
   return jsonResponse({ ok: true, count: people.length, people });
 }
 
+async function loadCheers(
+  db: ServiceDb,
+  personId: string,
+  year: number,
+): Promise<{ name: string; username: string | null }[]> {
+  try {
+    const rows = await db.rest<{ display_name: string; username: string | null }[]>(
+      'telegram_birthday_cheers',
+      {
+        query: {
+          select: 'display_name,username,created_at',
+          person_id: `eq.${personId}`,
+          year: `eq.${year}`,
+          order: 'created_at.asc',
+        },
+      },
+    );
+    return rows.map((c) => ({ name: c.display_name, username: c.username }));
+  } catch (err) {
+    console.warn('cheers unavailable', err);
+    return [];
+  }
+}
+
+async function postWebCheer(db: ServiceDb, body: Record<string, unknown>): Promise<Response> {
+  const personId = typeof body.personId === 'string' ? body.personId.trim() : '';
+  const name = typeof body.name === 'string' ? cleanCheerName(body.name) : null;
+  if (!personId || personId.length > 80) {
+    return jsonResponse({ ok: false, error: 'personId required' }, 400);
+  }
+  if (!name) {
+    return jsonResponse({ ok: false, error: 'name_required' }, 400);
+  }
+
+  const people = await db.rest<MemberRow[]>('family_members', {
+    query: {
+      select: 'id,first_name,last_name,nickname,gender,birth_date,death_date,is_deceased,photo',
+      id: `eq.${personId}`,
+    },
+  });
+  const person = people[0];
+  if (!person || person.is_deceased || person.death_date) {
+    return jsonResponse({ ok: false, error: 'not_found' }, 404);
+  }
+
+  const settings = await db.rest<{ timezone: string; group_chat_id: string | null }[]>(
+    'telegram_settings',
+    { query: { select: 'timezone,group_chat_id', id: 'eq.1' } },
+  );
+  const tz = settings[0]?.timezone || DEFAULT_FAMILY_TIMEZONE;
+  const local = localParts(tz);
+  const md = monthDay(person.birth_date);
+  if (!md) return jsonResponse({ ok: false, error: 'expired' }, 404);
+  const phase = birthdayPagePhase(md, local);
+  if (phase === 'none') return jsonResponse({ ok: false, error: 'expired' }, 404);
+
+  const occurrence = phase === 'yesterday' ? shiftLocalDate(local, -1) : local;
+  const year = occurrence.year;
+  const honoree = displayName(person);
+
+  const existing = await db.rest<{ id: number }[]>('telegram_birthday_cheers', {
+    query: {
+      select: 'id',
+      person_id: `eq.${personId}`,
+      year: `eq.${year}`,
+      source: 'eq.web',
+      display_name: `ilike.${name}`,
+      limit: '1',
+    },
+  });
+  if (Array.isArray(existing) && existing.length > 0) {
+    const cheers = await loadCheers(db, personId, year);
+    return jsonResponse({
+      ok: true,
+      already: true,
+      message: cheerAlreadyText(),
+      cheers,
+      year,
+    });
+  }
+
+  try {
+    await db.rest('telegram_birthday_cheers', {
+      method: 'POST',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        person_id: personId,
+        year,
+        telegram_user_id: null,
+        display_name: name,
+        username: null,
+        source: 'web',
+      }),
+    });
+  } catch (err) {
+    // Unique race → treat as already cheered
+    console.warn('web cheer insert', err);
+    const cheers = await loadCheers(db, personId, year);
+    return jsonResponse({
+      ok: true,
+      already: true,
+      message: cheerAlreadyText(),
+      cheers,
+      year,
+    });
+  }
+
+  const groupChatId = settings[0]?.group_chat_id;
+  if (groupChatId) {
+    try {
+      await telegramApi('sendMessage', {
+        chat_id: groupChatId,
+        text: cheerAnnounceWebText(escapeHtml(name), escapeHtml(honoree)),
+        parse_mode: 'HTML',
+      });
+    } catch (err) {
+      console.warn('web cheer announce failed', err);
+    }
+  }
+
+  const cheers = await loadCheers(db, personId, year);
+  return jsonResponse({ ok: true, already: false, cheers, year });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -98,9 +239,15 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
+    const db = createServiceClient();
+
     if (url.searchParams.get('mode') === 'missing') {
-      const db = createServiceClient();
       return await listMissingBirthdays(db);
+    }
+
+    if (url.searchParams.get('mode') === 'cheer' && req.method === 'POST') {
+      const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+      return await postWebCheer(db, body);
     }
 
     let personId = url.searchParams.get('personId') || '';
@@ -113,7 +260,6 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: false, error: 'personId required' }, 400);
     }
 
-    const db = createServiceClient();
     const people = await db.rest<MemberRow[]>('family_members', {
       query: {
         select: 'id,first_name,last_name,nickname,gender,birth_date,death_date,is_deceased,photo',
@@ -172,25 +318,7 @@ Deno.serve(async (req) => {
       console.warn('whoLine unavailable', err);
     }
 
-    let cheers: { name: string; username: string | null }[] = [];
-    try {
-      const rows = await db.rest<
-        { display_name: string; username: string | null; created_at: string }[]
-      >('telegram_birthday_cheers', {
-        query: {
-          select: 'display_name,username,created_at',
-          person_id: `eq.${personId}`,
-          year: `eq.${occurrence.year}`,
-          order: 'created_at.asc',
-        },
-      });
-      cheers = rows.map((c) => ({
-        name: c.display_name,
-        username: c.username,
-      }));
-    } catch (err) {
-      console.warn('cheers unavailable', err);
-    }
+    const cheers = await loadCheers(db, personId, occurrence.year);
 
     return jsonResponse({
       ok: true,

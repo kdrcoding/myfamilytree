@@ -430,6 +430,53 @@ export function cheerNotFoundText(): string {
   return 'Bu bayram sahifasi topilmadi.';
 }
 
+export function cheerAnnounceWebText(display: string, honoree: string): string {
+  return `💛 <b>${display}</b> (saytdan) — ${honoree}ni tabriklamoqda!`;
+}
+
+export function upcomingBirthdaysNotice(
+  rows: { name: string; when: string; age: number | null }[],
+  datesUrl: string,
+): string {
+  if (rows.length === 0) {
+    return [
+      '📅 <b>Shu hafta tug‘ilgan kunlar</b>',
+      '',
+      'Keyingi 7 kunda to‘liq tug‘ilgan kun yo‘q.',
+      '',
+      `Sanalarni to‘ldirish: ${datesUrl}`,
+    ].join('\n');
+  }
+  const list = rows
+    .slice(0, 15)
+    .map((r) => {
+      const age = r.age != null ? ` · ${r.age}` : '';
+      return `• <b>${r.name}</b> — ${r.when}${age}`;
+    })
+    .join('\n');
+  const extra = rows.length > 15 ? `\n…va yana ${rows.length - 15} kishi` : '';
+  return [
+    '📅 <b>Shu hafta tug‘ilgan kunlar</b> — eslatma',
+    '',
+    list + extra,
+    '',
+    'Guruhda “Men tabriklayman” ni bosing yoki bayram sahifasini oching.',
+    `Sanalari yo‘qlar: ${datesUrl}`,
+  ].join('\n');
+}
+
+export function botHealthAlertText(hours: number, lastOk: string | null): string {
+  const last = lastOk ? `Oxirgi muvaffaqiyatli ish: ${lastOk}` : 'Oxirgi muvaffaqiyatli ish topilmadi.';
+  return [
+    '⚠️ <b>Bot sog‘lig‘i</b>',
+    '',
+    `Tug‘ilgan kun boti ${hours}+ soatdan beri muvaffaqiyatli ishlamadi.`,
+    last,
+    '',
+    'Egasi: Sayt → Sozlamalar → Telegram tug‘ilgan kunlar → jurnalni tekshiring.',
+  ].join('\n');
+}
+
 export function botWelcomeText(): string {
   return 'Xush kelibsiz — <b>Oq-Ariq OILASI</b> tug‘ilgan kun tilaklari!\n\nKimningdir kuni bo‘lsa, guruhdagi <b>Men tabriklayman</b> tugmasini bosing. Ismingiz uning sahifasida qoladi.';
 }

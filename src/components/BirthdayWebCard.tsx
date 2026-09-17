@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { Heart, PartyPopper, Sparkles } from 'lucide-react';
+import { Heart, Loader2, PartyPopper, Sparkles } from 'lucide-react';
 import { useLanguage, useT } from '../i18n/useT';
 import {
   CARD_PALETTES,
@@ -12,11 +12,14 @@ import {
 } from '../features/birthday/themes';
 import {
   isVisiblePhotoUrl,
+  submitPublicCheer,
   type BirthdayWhen,
   type PublicBirthday,
 } from '../features/birthday/publicApi';
 import { webBirthdayWish, type WishLang } from '../features/birthday/pageWishes';
 import { prettyLabel } from '../utils/family';
+
+const CHEER_NAME_KEY = 'oqariq-bday-cheer-name';
 
 const BIRTHDAY_CARD_CSS = `
   .bday-web .bday-wash {
@@ -67,6 +70,11 @@ const BIRTHDAY_CARD_CSS = `
     background: linear-gradient(145deg, var(--bday-accent-soft), var(--bday-accent));
     color: white;
   }
+  .bday-web .bday-cheer-form {
+    border-color: color-mix(in srgb, var(--bday-accent) 28%, #e7e5e4);
+    background: color-mix(in srgb, var(--bday-accent) 8%, white);
+  }
+  .bday-web .bday-cheer-btn { background: var(--bday-accent); }
   .bday-web.bday-yesterday .bday-wash { filter: saturate(0.82); }
   .bday-web.bday-yesterday .bday-float, .bday-web.bday-yesterday .bday-float-slow { opacity: 0.55; }
   .bday-web .bday-kicker { animation: bday-fade 0.7s ease-out both; }
@@ -143,15 +151,19 @@ function cheerHue(name: string): string {
 }
 
 type CelebrationPerson = NonNullable<PublicBirthday['person']>;
+type CheerRow = { name: string; username: string | null };
 
 interface BirthdayWebCardProps {
   person: CelebrationPerson;
   when?: BirthdayWhen;
   design: CardDesign;
-  cheers?: { name: string; username: string | null }[];
+  cheers?: CheerRow[];
   compact?: boolean;
   /** Full-viewport celebration (public /bday page). */
   fillPage?: boolean;
+  /** Show web “I congratulate” form (today only on /bday). */
+  allowCheer?: boolean;
+  onCheersChange?: (cheers: CheerRow[]) => void;
   header?: ReactNode;
   footer?: ReactNode;
 }
@@ -180,22 +192,38 @@ export function BirthdayWebCard({
   cheers = [],
   compact = false,
   fillPage = false,
+  allowCheer = false,
+  onCheersChange,
   header,
   footer,
 }: BirthdayWebCardProps) {
   const t = useT();
   const language = useLanguage() as WishLang;
   const [photoFailed, setPhotoFailed] = useState(false);
+  const [cheerName, setCheerName] = useState('');
+  const [cheerBusy, setCheerBusy] = useState(false);
+  const [cheerMsg, setCheerMsg] = useState<string | null>(null);
+  const [cheerErr, setCheerErr] = useState<string | null>(null);
   const gender = normalizeCardGender(person.gender);
   const emoji = designEmoji(design, gender);
   const stickers = partyStickers(gender);
   const palette = CARD_PALETTES[gender];
   const photoSrc =
     isVisiblePhotoUrl(person.photoUrl) && !photoFailed ? person.photoUrl : null;
+  const showCheer = allowCheer && when === 'today' && person.id !== '_preview';
 
   useEffect(() => {
     setPhotoFailed(false);
   }, [person.photoUrl]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(CHEER_NAME_KEY);
+      if (saved) setCheerName(saved);
+    } catch {
+      /* private mode */
+    }
+  }, []);
 
   const shownName = prettyLabel(person.name);
   const whoLine = person.whoLine ? prettyLabel(person.whoLine) : null;
@@ -216,6 +244,35 @@ export function BirthdayWebCard({
   const photoSize = compact
     ? 'h-36 w-36 sm:h-44 sm:w-44'
     : 'h-48 w-48 sm:h-60 sm:w-60';
+
+  const submitCheer = async () => {
+    const trimmed = cheerName.trim();
+    if (!trimmed || cheerBusy) return;
+    setCheerBusy(true);
+    setCheerMsg(null);
+    setCheerErr(null);
+    try {
+      const result = await submitPublicCheer(person.id, trimmed);
+      if (!result.ok) {
+        setCheerErr(
+          result.error === 'name_required' ? t('bday.cheerNameRequired') : t('bday.cheerFailed'),
+        );
+        return;
+      }
+      try {
+        localStorage.setItem(CHEER_NAME_KEY, trimmed);
+      } catch {
+        /* ignore */
+      }
+      if (result.cheers) onCheersChange?.(result.cheers);
+      setCheerMsg(result.already ? t('bday.cheerAlready') : t('bday.cheerOk'));
+    } catch (error) {
+      console.error(error);
+      setCheerErr(t('bday.cheerFailed'));
+    } finally {
+      setCheerBusy(false);
+    }
+  };
 
   return (
     <div
@@ -364,6 +421,43 @@ export function BirthdayWebCard({
           <p className="bday-emoji mt-6 text-2xl tracking-[0.28em]" aria-hidden>
             {stickers.slice(0, 6).join(' ')}
           </p>
+
+          {showCheer && (
+            <form
+              className="bday-cheer-form mt-7 w-full rounded-2xl border p-4 text-left"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submitCheer();
+              }}
+            >
+              <p className="text-sm font-semibold" style={{ color: palette.ink }}>
+                {t('bday.cheerTitle')}
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-stone-600">{t('bday.cheerHint')}</p>
+              <label className="mt-3 block">
+                <span className="sr-only">{t('bday.cheerName')}</span>
+                <input
+                  className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm outline-none ring-0 focus:border-stone-400"
+                  value={cheerName}
+                  onChange={(e) => setCheerName(e.target.value)}
+                  placeholder={t('bday.cheerNamePlaceholder')}
+                  maxLength={40}
+                  autoComplete="nickname"
+                  disabled={cheerBusy}
+                />
+              </label>
+              <button
+                type="submit"
+                className="bday-cheer-btn mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white disabled:opacity-60"
+                disabled={cheerBusy || !cheerName.trim()}
+              >
+                {cheerBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+                {t('bday.cheerSubmit')}
+              </button>
+              {cheerMsg && <p className="mt-2 text-xs font-medium text-emerald-700">{cheerMsg}</p>}
+              {cheerErr && <p className="mt-2 text-xs font-medium text-rose-700">{cheerErr}</p>}
+            </form>
+          )}
 
           <section className="bday-cheers mt-8 w-full rounded-3xl border p-5 text-left">
             <h2 className="flex items-center gap-2 text-sm font-semibold" style={{ color: palette.ink }}>

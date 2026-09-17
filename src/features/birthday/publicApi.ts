@@ -90,6 +90,38 @@ export async function fetchMissingBirthdays(): Promise<MissingBirthdays> {
   return { ok: false, error: 'failed' };
 }
 
+export type WebCheerResult = {
+  ok: boolean;
+  already?: boolean;
+  error?: string;
+  message?: string;
+  cheers?: { name: string; username: string | null }[];
+  year?: number;
+};
+
+/** Public “Men tabriklayman” from /bday — no login. */
+export async function submitPublicCheer(personId: string, name: string): Promise<WebCheerResult> {
+  const base = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+  if (!base || !anon || !isSupabaseConfigured) return { ok: false, error: 'not_configured' };
+
+  const res = await fetch(`${base}/functions/v1/birthday-public?mode=cheer`, {
+    method: 'POST',
+    headers: {
+      ...publicFnHeaders(anon),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ personId, name }),
+  });
+  try {
+    const parsed = (await res.json()) as WebCheerResult;
+    if (parsed && typeof parsed.ok === 'boolean') return parsed;
+  } catch {
+    /* HTML / empty gateway body */
+  }
+  return { ok: false, error: 'failed' };
+}
+
 export function isVisiblePhotoUrl(url: string | null | undefined): boolean {
   return Boolean(url && /^(https?:|data:image\/)/i.test(url));
 }

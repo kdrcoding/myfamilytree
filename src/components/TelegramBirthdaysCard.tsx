@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink, Send, MessageCircle } from 'lucide-react';
+import { Activity, ExternalLink, Send, MessageCircle } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
@@ -11,11 +11,33 @@ import { ToggleSwitch } from './ui/ToggleSwitch';
 import {
   TELEGRAM_TIMEZONES,
   botOpenUrl,
+  fetchTelegramBotRuns,
   fetchTelegramSettings,
   runBirthdayTest,
   updateTelegramSettings,
+  type TelegramBotRun,
   type TelegramSettings,
 } from '../lib/telegramBot';
+
+function hoursSince(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return null;
+  return Math.max(0, (Date.now() - t) / 3_600_000);
+}
+
+function formatRunTime(iso: string, language: string): string {
+  try {
+    return new Date(iso).toLocaleString(language === 'uz' ? 'uz-UZ' : language === 'ru' ? 'ru-RU' : 'en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+}
 
 /**
  * Owner-only: wire the Telegram birthday bot (group posts only).
@@ -26,6 +48,7 @@ export function TelegramBirthdaysCard() {
   const { toast } = useToast();
   const { people } = useFamily();
   const [settings, setSettings] = useState<TelegramSettings | null>(null);
+  const [runs, setRuns] = useState<TelegramBotRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [testPersonId, setTestPersonId] = useState('');
@@ -34,8 +57,12 @@ export function TelegramBirthdaysCard() {
   const refresh = async () => {
     setLoading(true);
     try {
-      const s = await fetchTelegramSettings();
+      const [s, log] = await Promise.all([
+        fetchTelegramSettings(),
+        fetchTelegramBotRuns(12).catch(() => [] as TelegramBotRun[]),
+      ]);
       setSettings(s);
+      setRuns(log);
       setUnavailable(!s);
     } catch (error) {
       console.error(error);
@@ -89,6 +116,8 @@ export function TelegramBirthdaysCard() {
     () => getUpcomingBirthdays(people).filter((b) => b.daysUntil <= 7),
     [people],
   );
+  const staleHours = hoursSince(settings?.last_ok_at);
+  const healthWarn = staleHours != null && staleHours >= 26;
 
   if (loading) {
     return (
@@ -172,6 +201,61 @@ export function TelegramBirthdaysCard() {
               </li>
             ))}
           </ul>
+        )}
+      </div>
+
+      <div
+        className={`mt-3 rounded-xl border p-3 text-sm ${
+          healthWarn
+            ? 'border-rose-300 bg-rose-50/80 dark:border-rose-800 dark:bg-rose-950/40'
+            : 'border-stone-200 bg-stone-50/80 dark:border-stone-700 dark:bg-stone-900/40'
+        }`}
+      >
+        <p className="flex items-center gap-2 font-semibold">
+          <Activity className="h-4 w-4" aria-hidden />
+          {t('telegram.healthTitle')}
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
+          {settings.last_ok_at
+            ? t('telegram.healthLastOk', {
+                when: formatRunTime(settings.last_ok_at, language),
+                hours: staleHours != null ? Math.floor(staleHours) : '—',
+              })
+            : t('telegram.healthNever')}
+        </p>
+        {settings.last_run_ok === false && settings.last_run_error && (
+          <p className="mt-1 text-xs text-rose-700 dark:text-rose-300">
+            {t('telegram.healthLastError', { error: settings.last_run_error })}
+          </p>
+        )}
+        {healthWarn && (
+          <p className="mt-1.5 text-xs font-medium text-rose-800 dark:text-rose-200">
+            {t('telegram.healthStale')}
+          </p>
+        )}
+        {runs.length > 0 ? (
+          <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto text-xs">
+            {runs.map((run) => (
+              <li
+                key={run.id}
+                className="flex flex-wrap items-baseline justify-between gap-2 border-t border-stone-200/80 pt-1 dark:border-stone-700"
+              >
+                <span className={run.ok ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}>
+                  {run.ok ? t('telegram.healthOk') : t('telegram.healthFail')}
+                  {' · '}
+                  {run.trigger}
+                </span>
+                <span className="text-stone-500">{formatRunTime(run.started_at, language)}</span>
+                {run.error && (
+                  <span className="w-full truncate text-rose-600 dark:text-rose-300" title={run.error}>
+                    {run.error}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-xs text-stone-500">{t('telegram.healthEmpty')}</p>
         )}
       </div>
 
@@ -300,6 +384,7 @@ export function TelegramBirthdaysCard() {
                       toast(t('telegram.testSkipped', { reason: 'no_match' }), 'info');
                     } else toast(t('telegram.testOk', { n: result.count ?? 0 }), 'success');
                   }
+                  await refresh();
                 } catch (error) {
                   console.error(error);
                   toast(t('telegram.testFailed'), 'error');

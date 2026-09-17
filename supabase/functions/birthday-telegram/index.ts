@@ -4,6 +4,7 @@ import {
   ageTurning,
   corsHeaders,
   createServiceClient,
+  daysUntilBirthday,
   displayName,
   ensureCallbackWebhook,
   isBirthdayToday,
@@ -20,9 +21,11 @@ import { buildBirthdayCardPng, type BirthdayCardOpts } from '../_shared/birthday
 import {
   birthdayCaption,
   birthdayPageUrl,
+  botHealthAlertText,
   cheerCallbackData,
   missingDatesPageUrl,
   publicAppUrl,
+  upcomingBirthdaysNotice,
   TG_BUTTONS,
 } from '../_shared/wishes.ts';
 import { missingDatesNotice, whoIsThisUzbek } from '../_shared/whoIsThis.ts';
@@ -33,6 +36,8 @@ type SettingsRow = {
   timezone: string;
   send_hour: number;
   enabled: boolean;
+  last_ok_at?: string | null;
+  last_health_alert_at?: string | null;
 };
 
 async function assertAuthorized(req: Request): Promise<void> {
@@ -193,32 +198,216 @@ async function maybeSendMissingDates(opts: {
   }
 }
 
+async function maybeSendUpcoming(opts: {
+  db: ServiceDb;
+  chatId: string;
+  members: FamilyMemberRow[];
+  local: { year: number; month: number; day: number; hour: number; weekday: string };
+  force: boolean;
+}): Promise<{ sent: boolean; skipped?: string; count?: number }> {
+  if (opts.force) return { sent: false, skipped: 'force' };
+  // Weekend or Monday — once per ISO week.
+  if (!['Sat', 'Sun', 'Mon'].includes(opts.local.weekday)) {
+    return { sent: false, skipped: 'not_weekend_or_monday' };
+  }
+
+  const upcoming = opts.members
+    .filter((m) => !m.is_deceased && !m.death_date)
+    .map((m) => {
+      const md = monthDay(m.birth_date);
+      if (!md) return null;
+      const days = daysUntilBirthday(md, opts.local);
+      if (days < 0 || days > 7) return null;
+      const when =
+        days === 0 ? 'bugun' : days === 1 ? 'ertaga' : `${days} kundan keyin`;
+      const nextYear =
+        md.month < opts.local.month ||
+        (md.month === opts.local.month && md.day < opts.local.day)
+          ? opts.local.year + 1
+          : opts.local.year;
+      return {
+        name: displayName(m),
+        when,
+        age: ageTurning(md, nextYear),
+        days,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => Boolean(row))
+    .sort((a, b) => a.days - b.days || a.name.localeCompare(b.name));
+
+  if (upcoming.length === 0) return { sent: false, skipped: 'none_upcoming', count: 0 };
+
+  const period = isoWeekPeriod(opts.local.year, opts.local.month, opts.local.day);
+  const claimed = await claimNotice(opts.db, 'upcoming-week', period);
+  if (!claimed) return { sent: false, skipped: 'already_claimed', count: upcoming.length };
+
+  try {
+    const datesUrl = missingDatesPageUrl();
+    await telegramApi('sendMessage', {
+      chat_id: opts.chatId,
+      text: upcomingBirthdaysNotice(
+        upcoming.map(({ name, when, age }) => ({ name, when, age })),
+        datesUrl,
+      ),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+      reply_markup: {
+        inline_keyboard: [[{ text: TG_BUTTONS.fillDates, url: datesUrl }]],
+      },
+    });
+    return { sent: true, count: upcoming.length };
+  } catch (err) {
+    await releaseNotice(opts.db, 'upcoming-week', period).catch((releaseErr) => {
+      console.error('release upcoming-week claim failed', releaseErr);
+    });
+    throw err;
+  }
+}
+
+const HEALTH_ALERT_HOURS = 26;
+const HEALTH_ALERT_COOLDOWN_HOURS = 12;
+
+async function maybeSendHealthAlert(opts: {
+  db: ServiceDb;
+  chatId: string;
+  settings: SettingsRow;
+  force: boolean;
+}): Promise<{ sent: boolean; skipped?: string; hours?: number }> {
+  if (opts.force) return { sent: false, skipped: 'force' };
+  const lastOk = opts.settings.last_ok_at ? new Date(opts.settings.last_ok_at).getTime() : 0;
+  const hours = lastOk > 0 ? (Date.now() - lastOk) / 3_600_000 : 999;
+  if (hours < HEALTH_ALERT_HOURS) return { sent: false, skipped: 'healthy', hours };
+
+  const lastAlert = opts.settings.last_health_alert_at
+    ? new Date(opts.settings.last_health_alert_at).getTime()
+    : 0;
+  if (lastAlert > 0 && Date.now() - lastAlert < HEALTH_ALERT_COOLDOWN_HOURS * 3_600_000) {
+    return { sent: false, skipped: 'alert_cooldown', hours };
+  }
+
+  const lastOkLabel = opts.settings.last_ok_at
+    ? new Date(opts.settings.last_ok_at).toISOString()
+    : null;
+  await telegramApi('sendMessage', {
+    chat_id: opts.chatId,
+    text: botHealthAlertText(Math.floor(hours), lastOkLabel),
+    parse_mode: 'HTML',
+  });
+  await opts.db.rest('telegram_settings', {
+    method: 'PATCH',
+    query: { id: 'eq.1' },
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ last_health_alert_at: new Date().toISOString() }),
+  });
+  return { sent: true, hours };
+}
+
+async function recordBotRun(
+  db: ServiceDb,
+  opts: {
+    trigger: string;
+    ok: boolean;
+    summary: Record<string, unknown>;
+    error?: string;
+    startedAt: string;
+  },
+): Promise<void> {
+  const finishedAt = new Date().toISOString();
+  try {
+    await db.rest('telegram_bot_runs', {
+      method: 'POST',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        started_at: opts.startedAt,
+        finished_at: finishedAt,
+        ok: opts.ok,
+        trigger: opts.trigger,
+        summary: opts.summary,
+        error: opts.error ?? null,
+      }),
+    });
+  } catch (err) {
+    console.warn('telegram_bot_runs insert failed', err);
+  }
+  try {
+    await db.rest('telegram_settings', {
+      method: 'PATCH',
+      query: { id: 'eq.1' },
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        last_run_at: finishedAt,
+        last_run_ok: opts.ok,
+        last_run_error: opts.error ?? null,
+        ...(opts.ok ? { last_ok_at: finishedAt } : {}),
+      }),
+    });
+  } catch (err) {
+    console.warn('telegram_settings health patch failed', err);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
+
+  const startedAt = new Date().toISOString();
+  let db: ReturnType<typeof createServiceClient> | null = null;
+  let trigger = 'cron';
+  let force = false;
 
   try {
     await assertAuthorized(req);
     await ensureCallbackWebhook();
 
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
-    const force = Boolean(body.force);
+    force = Boolean(body.force);
+    trigger = force ? 'test' : 'cron';
     const testPersonId = typeof body.testPersonId === 'string' ? body.testPersonId : null;
 
-    const db = createServiceClient();
+    db = createServiceClient();
     const settingsRows = await db.rest<SettingsRow[]>('telegram_settings', {
       query: { select: '*', id: 'eq.1' },
     });
     const settings = settingsRows[0];
     if (!settings) {
+      await recordBotRun(db, {
+        trigger,
+        ok: false,
+        summary: {},
+        error: 'telegram_settings missing',
+        startedAt,
+      });
       return jsonResponse({ ok: false, error: 'telegram_settings missing — run migration' }, 500);
     }
+
+    // Stale-run alert before we mark this invocation healthy.
+    let healthAlert: { sent: boolean; skipped?: string; hours?: number } | undefined;
+    if (settings.group_chat_id) {
+      try {
+        healthAlert = await maybeSendHealthAlert({
+          db,
+          chatId: settings.group_chat_id,
+          settings,
+          force,
+        });
+      } catch (healthErr) {
+        console.error('health alert failed', healthErr);
+        healthAlert = {
+          sent: false,
+          skipped: healthErr instanceof Error ? healthErr.message : String(healthErr),
+        };
+      }
+    }
+
     if (!settings.enabled && !force) {
-      return jsonResponse({ ok: true, skipped: 'disabled' });
+      const summary = { skipped: 'disabled', healthAlert };
+      await recordBotRun(db, { trigger, ok: true, summary, startedAt });
+      return jsonResponse({ ok: true, skipped: 'disabled', healthAlert });
     }
     if (!settings.group_chat_id) {
-      // Even Test send needs a group — otherwise nothing visible happens.
+      const summary = { skipped: 'no_group_chat_id', count: 0 };
+      await recordBotRun(db, { trigger, ok: true, summary, startedAt });
       return jsonResponse({ ok: true, skipped: 'no_group_chat_id', count: 0 });
     }
 
@@ -228,12 +417,21 @@ Deno.serve(async (req) => {
     // minutes. Once local time reaches send_hour on a birthday day, keep trying
     // later hours the same day. telegram_birthday_sent prevents double posts.
     if (!force && local.hour < settings.send_hour) {
+      const summary = {
+        skipped: 'before_send_hour',
+        localHour: local.hour,
+        sendHour: settings.send_hour,
+        timezone: tz,
+        healthAlert,
+      };
+      await recordBotRun(db, { trigger, ok: true, summary, startedAt });
       return jsonResponse({
         ok: true,
         skipped: 'before_send_hour',
         localHour: local.hour,
         sendHour: settings.send_hour,
         timezone: tz,
+        healthAlert,
       });
     }
 
@@ -388,7 +586,24 @@ Deno.serve(async (req) => {
       };
     }
 
-    return jsonResponse({
+    let upcoming: { sent: boolean; skipped?: string; count?: number } | undefined;
+    try {
+      upcoming = await maybeSendUpcoming({
+        db,
+        chatId: settings.group_chat_id as string,
+        members,
+        local,
+        force,
+      });
+    } catch (upcomingErr) {
+      console.error('upcoming notice failed', upcomingErr);
+      upcoming = {
+        sent: false,
+        skipped: upcomingErr instanceof Error ? upcomingErr.message : String(upcomingErr),
+      };
+    }
+
+    const payload = {
       ok: true,
       timezone: tz,
       local,
@@ -396,10 +611,34 @@ Deno.serve(async (req) => {
       count: results.filter((r) => r.group).length,
       results,
       missingDates,
+      upcoming,
+      healthAlert,
+    };
+    await recordBotRun(db, {
+      trigger,
+      ok: true,
+      summary: {
+        count: payload.count,
+        celebrating: results.length,
+        missingDates,
+        upcoming,
+        healthAlert,
+      },
+      startedAt,
     });
+    return jsonResponse(payload);
   } catch (error) {
     console.error(error);
     const msg = error instanceof Error ? error.message : String(error);
+    if (db && msg !== 'Unauthorized' && msg !== 'Owner only') {
+      await recordBotRun(db, {
+        trigger,
+        ok: false,
+        summary: {},
+        error: msg,
+        startedAt,
+      }).catch((recordErr) => console.warn('record failed run', recordErr));
+    }
     const status = msg === 'Unauthorized' || msg === 'Owner only' ? 401 : 500;
     return jsonResponse({ ok: false, error: msg }, status);
   }

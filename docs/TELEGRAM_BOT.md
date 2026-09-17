@@ -29,6 +29,25 @@ Run in the Supabase SQL Editor (in order):
 
 1. `supabase/migrations/20260810000001_telegram_birthday_bot.sql`
 2. `supabase/migrations/20260811000001_telegram_birthday_cheers.sql`
+3. `supabase/migrations/20260917120000_web_cheers_bot_health.sql` (web cheers + owner bot run log)
+
+## Cron
+
+GitHub Actions (`.github/workflows/birthday-telegram.yml`) fires **twice per hour**
+(`:05` and `:35` UTC). The Edge Function also alerts the family group if there
+was no successful run for **26+ hours** (cooldown 12h). Owner-only health log:
+**Settings → Telegram birthdays**.
+
+## Web cheer
+
+On `/bday/<personId>` (today only), relatives can enter a name and congratulate
+without Telegram; the name is stored and announced in the group as
+**“{ism} (saytdan) — {kimni}ni tabriklamoqda!”**
+
+## Weekend / Monday reminder
+
+Once per ISO week (Sat–Mon window), the bot posts who has a birthday in the
+next 7 days.
 
 ## 4. Deploy Edge Functions
 

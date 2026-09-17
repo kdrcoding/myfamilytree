@@ -1,10 +1,12 @@
 name: Birthday Telegram cron
 
-# Hourly check — Edge Function posts from send_hour onward (same local day),
-# with telegram_birthday_sent preventing duplicate posts if cron is delayed.
+# Dual hourly checks (~:05 and ~:35 UTC). Edge Function posts from send_hour
+# onward (same local day); telegram_birthday_sent / notices prevent duplicates.
+# If both miss for 26h+, the function alerts the Telegram group on next success.
 on:
   schedule:
     - cron: '5 * * * *'
+    - cron: '35 * * * *'
   workflow_dispatch:
 
 jobs:

@@ -186,6 +186,29 @@ export function isBirthdayToday(
   return local.month === birth.month && local.day === day;
 }
 
+/** Days until next birthday occurrence (0 = today). */
+export function daysUntilBirthday(
+  birth: { month: number; day: number },
+  local: { year: number; month: number; day: number },
+): number {
+  const occurrenceDay = (year: number): number => {
+    let day = birth.day;
+    if (birth.month === 2 && birth.day === 29) {
+      const leap = new Date(Date.UTC(year, 1, 29)).getUTCDate() === 29;
+      if (!leap) day = 28;
+    }
+    return day;
+  };
+  const todayUtc = Date.UTC(local.year, local.month - 1, local.day);
+  let year = local.year;
+  let nextUtc = Date.UTC(year, birth.month - 1, occurrenceDay(year));
+  if (nextUtc < todayUtc) {
+    year += 1;
+    nextUtc = Date.UTC(year, birth.month - 1, occurrenceDay(year));
+  }
+  return Math.round((nextUtc - todayUtc) / 86_400_000);
+}
+
 /** Shift a Y-M-D by whole calendar days (UTC date math, no DST surprises). */
 export function shiftLocalDate(
   local: { year: number; month: number; day: number },
