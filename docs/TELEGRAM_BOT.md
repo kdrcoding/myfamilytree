@@ -2,14 +2,11 @@
 
 Posts a warm **Uzbek** “Tug‘ilgan kuningiz muborak” in your **family Telegram
 group**, with age, a birthday card, a no-password celebration page, and an
-in-group **Men nishonlayman** button. Relatives stay in the chat; their
-Telegram name is saved on the birthday page and announced in the group.
-The caption is written in **Kadir’s voice** (he cannot type in the group):
-it starts with **Kadir / @imkadi**, includes the Uzbek wish, the page link,
-and **https://t.me/imkadi**. An inline **@imkadi** button stays tappable.
+in-group **Men tabriklayman** button. Relatives stay in the chat; their
+Telegram name is saved on the birthday page and announced as
+**“{ism} — {kimni}ni tabriklamoqda!”**
 
 Bot: **@forusbirthdaybot**  
-Kadir: **@imkadi** — https://t.me/imkadi  
 Public page: `https://myfamilytree-smoky.vercel.app/bday/<personId>`
 
 ## 1. BotFather
@@ -41,7 +38,7 @@ npx supabase functions deploy birthday-telegram --no-verify-jwt
 npx supabase functions deploy birthday-public --no-verify-jwt
 ```
 
-Set webhook (once). `callback_query` is required so **Men nishonlayman** works
+Set webhook (once). `callback_query` is required so **Men tabriklayman** works
 in the group. The functions also re-apply this if the old webhook is missing it.
 
 ```powershell
@@ -63,8 +60,8 @@ Settings → **Telegram birthdays**:
 1. Bot username: `forusbirthdaybot`
 2. Enable + timezone + hour
 3. Add bot to group → `/setgroup`
-4. **Test send** — group gets an Uzbek wish, card, page link, **@imkadi**, and in-group button
-5. Tap **Men nishonlayman** in the group (no need to open a private chat)
+4. **Test send** — group gets an Uzbek wish, card, page link, and **Men tabriklayman**
+5. Tap **Men tabriklayman** in the group (no need to open a private chat)
 
 The card also shows how many people have a full birth date (month + day). The
 bot cannot post for year-only or empty dates.

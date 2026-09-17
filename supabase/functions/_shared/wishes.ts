@@ -358,21 +358,6 @@ export function parseCheerCallback(data: string): { personId: string; year: numb
   return { personId: m[1], year: Number(m[2]) };
 }
 
-/** Kadir’s Telegram — so relatives can reach him from the group post. */
-export const KADIR_TELEGRAM = {
-  handle: '@imkadi',
-  url: 'https://t.me/imkadi',
-} as const;
-
-export function kadirContactLine(): string {
-  return `💬 Savol / tilak: Kadir ${KADIR_TELEGRAM.handle}`;
-}
-
-/** Closing lines so the group sees Kadir, not a nameless bot. */
-export function kadirFromBlock(): string {
-  return `— Kadir · ${KADIR_TELEGRAM.handle}\n${KADIR_TELEGRAM.url}`;
-}
-
 export function birthdayCaption(
   name: string,
   age: number | null,
@@ -382,18 +367,17 @@ export function birthdayCaption(
 ): string {
   const wish = birthdayWishCaption(name, age, 'uz', seed);
   const lines = [
-    `🎉 Kadir nishonlamoqda`,
-    `Kadir: tug‘ilgan kuningiz muborak, ${name}!`,
+    `🎉 Oila tabriklamoqda`,
+    `Tug‘ilgan kuningiz muborak, ${name}!`,
   ];
   if (whoLine?.trim()) lines.push(whoLine.trim());
-  lines.push('', wish, '', `🔗 Bayram sahifasi (parol yo‘q):`, pageUrl, '', kadirFromBlock());
+  lines.push('', wish, '', `🔗 Bayram sahifasi (parol yo‘q):`, pageUrl);
   return lines.join('\n');
 }
 
 export const TG_BUTTONS = {
   openPage: '🎉 Bayram sahifasi',
-  celebrate: '💛 Men nishonlayman',
-  kadir: '💬 @imkadi',
+  celebrate: '💛 Men tabriklayman',
 } as const;
 
 export function groupReadyText(): string {
@@ -417,7 +401,7 @@ export function cheerThanksText(display: string, honoree: string, page: string):
 }
 
 export function cheerAnnounceText(display: string, honoree: string): string {
-  return `💛 <b>${display}</b> — ${honoree}ning tug‘ilgan kunini nishonlamoqda!`;
+  return `💛 <b>${display}</b> — ${honoree}ni tabriklamoqda!`;
 }
 
 export function cheerNotFoundText(): string {
@@ -425,11 +409,11 @@ export function cheerNotFoundText(): string {
 }
 
 export function botWelcomeText(): string {
-  return 'Xush kelibsiz — <b>Oq-Ariq OILASI</b> tug‘ilgan kun tilaklari!\n\nKimningdir kuni bo‘lsa, guruhdagi <b>Men nishonlayman</b> tugmasini bosing. Ismingiz uning sahifasida qoladi.\n\nSavol / tilak: Kadir @imkadi\nhttps://t.me/imkadi';
+  return 'Xush kelibsiz — <b>Oq-Ariq OILASI</b> tug‘ilgan kun tilaklari!\n\nKimningdir kuni bo‘lsa, guruhdagi <b>Men tabriklayman</b> tugmasini bosing. Ismingiz uning sahifasida qoladi.';
 }
 
 export function botHelpText(): string {
-  return 'Oq-Ariq tug‘ilgan kun boti\n• Tilaklar faqat oila guruhida (shaxsiy xabar yo‘q)\n• “Men nishonlayman” — ismingiz sahifada qoladi\n• Bayram sahifasi havolasi — parol kerak emas\n• Savol / tilak: Kadir @imkadi\nhttps://t.me/imkadi';
+  return 'Oq-Ariq tug‘ilgan kun boti\n• Tilaklar faqat oila guruhida (shaxsiy xabar yo‘q)\n• “Men tabriklayman” — ismingiz sahifada qoladi\n• Bayram sahifasi havolasi — parol kerak emas';
 }
 
 export function unknownStartText(): string {

@@ -21,7 +21,6 @@ import {
   birthdayCaption,
   birthdayPageUrl,
   cheerCallbackData,
-  KADIR_TELEGRAM,
   publicAppUrl,
   TG_BUTTONS,
 } from '../_shared/wishes.ts';
@@ -314,7 +313,6 @@ Deno.serve(async (req) => {
             },
           ]);
         }
-        keyboard.push([{ text: TG_BUTTONS.kadir, url: KADIR_TELEGRAM.url }]);
 
         let groupOk = false;
         if (settings.group_chat_id) {

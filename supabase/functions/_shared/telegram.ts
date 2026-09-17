@@ -55,7 +55,7 @@ let webhookEnsured = false;
 
 /**
  * Docs originally registered only message + my_chat_member, which dropped
- * in-group “Men nishonlayman” taps. Re-apply the webhook when needed.
+ * in-group “Men tabriklayman” taps. Re-apply the webhook when needed.
  */
 export async function ensureCallbackWebhook(): Promise<void> {
   if (webhookEnsured) return;

@@ -354,28 +354,36 @@ function cardSvg(opts: {
   const { p, name, ageLine, portrait, simple, whoLine } = opts;
   const photoBlock = portrait
     ? `
-      <circle cx="540" cy="228" r="124" fill="${p.accent}" opacity="0.22"/>
-      <circle cx="540" cy="228" r="116" fill="${p.accentSoft}"/>
-      <circle cx="540" cy="228" r="108" fill="#fbbf24"/>
-      <circle cx="540" cy="228" r="100" fill="${p.cardA}"/>
+      <circle cx="540" cy="228" r="128" fill="#fbbf24" opacity="0.55"/>
+      <circle cx="540" cy="228" r="118" fill="${p.accent}" opacity="0.35"/>
+      <circle cx="540" cy="228" r="110" fill="${p.accentSoft}"/>
+      <circle cx="540" cy="228" r="102" fill="#fff7ed"/>
     `
     : `
+      <circle cx="540" cy="210" r="100" fill="#fbbf24" opacity="0.35"/>
       <circle cx="540" cy="210" r="88" fill="${p.accent}"/>
-      <circle cx="540" cy="210" r="70" fill="${p.accentSoft}" opacity="0.45"/>
-      <rect x="514" y="186" width="52" height="44" rx="10" fill="#fef3c7"/>
-      <rect x="522" y="174" width="10" height="18" rx="2" fill="${p.confetti[1]}"/>
-      <rect x="536" y="170" width="10" height="20" rx="2" fill="${p.confetti[0]}"/>
-      <rect x="550" y="174" width="10" height="18" rx="2" fill="${p.confetti[2]}"/>
+      <circle cx="540" cy="210" r="74" fill="${p.accentSoft}" opacity="0.55"/>
+      <ellipse cx="540" cy="198" rx="34" ry="30" fill="#fef3c7"/>
+      <rect x="520" y="222" width="40" height="28" rx="8" fill="#fef3c7"/>
+      <rect x="528" y="214" width="8" height="14" rx="2" fill="${p.confetti[1]}"/>
+      <rect x="540" y="210" width="8" height="16" rx="2" fill="${p.confetti[0]}"/>
+      <rect x="552" y="214" width="8" height="14" rx="2" fill="${p.confetti[2]}"/>
+      <circle cx="470" cy="150" r="18" fill="${p.confetti[0]}" opacity="0.9"/>
+      <circle cx="610" cy="145" r="16" fill="${p.confetti[2]}" opacity="0.9"/>
+      <circle cx="455" cy="250" r="12" fill="${p.confetti[3]}" opacity="0.85"/>
+      <circle cx="625" cy="255" r="14" fill="${p.confetti[1]}" opacity="0.85"/>
     `;
   const nameY = portrait ? 390 : 360;
   const ageY = (portrait ? 448 : 418) + (whoLine ? 28 : 0);
   const extras = simple
     ? ''
     : `
-  <circle cx="96" cy="88" r="10" fill="${p.confetti[2]}" opacity="0.45"/>
-  <circle cx="984" cy="118" r="14" fill="${p.confetti[0]}" opacity="0.4"/>
-  <circle cx="110" cy="630" r="12" fill="${p.confetti[3]}" opacity="0.35"/>
-  <circle cx="970" cy="610" r="16" fill="${p.confetti[2]}" opacity="0.3"/>`;
+  <circle cx="96" cy="88" r="12" fill="${p.confetti[2]}" opacity="0.55"/>
+  <circle cx="984" cy="118" r="16" fill="${p.confetti[0]}" opacity="0.5"/>
+  <circle cx="110" cy="630" r="14" fill="${p.confetti[3]}" opacity="0.45"/>
+  <circle cx="970" cy="610" r="18" fill="${p.confetti[1]}" opacity="0.4"/>
+  <circle cx="180" cy="160" r="8" fill="${p.confetti[1]}" opacity="0.5"/>
+  <circle cx="900" cy="180" r="9" fill="${p.confetti[2]}" opacity="0.45"/>`;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
@@ -400,7 +408,7 @@ function cardSvg(opts: {
   <text x="540" y="${nameY}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="700" fill="${p.ink}">${name}</text>
   ${whoLine ? `<text x="540" y="${nameY + 36}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" fill="${p.muted}">${whoLine}</text>` : ''}
   <text x="540" y="${ageY}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" fill="${p.accent}">${ageLine}</text>
-  <text x="540" y="620" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" fill="${p.cardA}">Oq-Ariq OILASI · Kadir · @imkadi</text>
+  <text x="540" y="620" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" fill="${p.cardA}">Oq-Ariq OILASI · mehr bilan</text>
 <\/svg>`;
 }
 
@@ -438,7 +446,7 @@ export async function buildBirthdayCardPng(opts: BirthdayCardOpts): Promise<Uint
   const printable = cardPrintableName(opts.name);
   const name = escapeXml(truncate(printable, 28));
   const ageLine = escapeXml(
-    opts.age != null ? `Bugun ${opts.age} yosh` : 'Oila sizni nishonlaydi',
+    opts.age != null ? `Bugun ${opts.age} yosh` : 'Oila sizni tabriklaydi',
   );
   const simple = Boolean(opts.simple);
 

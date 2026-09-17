@@ -528,7 +528,7 @@ export const ruOverrides: Record<string, string> = {
 
   'telegram.title': 'Дни рождения в Telegram',
   'telegram.intro':
-    'Тёплое поздравление на узбекском в семейный чат — открытка, страница без пароля и кнопка «Men nishonlayman» прямо в группе (не нужно уходить в личку).',
+    'Тёплое поздравление на узбекском в семейный чат — открытка, страница без пароля и кнопка «Men tabriklayman» прямо в группе (не нужно уходить в личку).',
   'telegram.setupNeeded':
     'Ещё не активно: выполните SQL-миграции Telegram в SQL Editor, затем docs/TELEGRAM_BOT.md.',
   'telegram.enabled': 'Отправлять поздравления',
@@ -570,7 +570,7 @@ export const ruOverrides: Record<string, string> = {
   'bday.cheersTitle': 'С вами празднуют ({n})',
   'bday.cheersEmptyTitle': 'Поздравления семьи',
   'bday.cheersEmpty':
-    'Пока никого нет — нажмите «Men nishonlayman» в семейном чате Telegram.',
+    'Пока никого нет — нажмите «Men tabriklayman» в семейном чате Telegram.',
   'bday.cheersYesterday': 'Кто праздновал вместе с семьёй',
   'bday.footer': 'Эта страница открыта для семьи — пароль не нужен.',
   'bday.seeTree': 'Смотреть семейное древо',
