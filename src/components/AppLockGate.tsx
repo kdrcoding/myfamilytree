@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, KeyRound, Loader2, Users } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { OWNER_DEFAULT_NAME } from '../config/access';
 import { useAuth } from '../context/AuthContext';
@@ -19,9 +19,12 @@ function readSavedName(): string {
   );
 }
 
+type GateMode = 'family' | 'owner';
+
 /**
  * Site gate: name + family password on the main site.
  * Name-only after a live birthday page or the public missing-dates page in this tab.
+ * Owner login is a separate screen — family form never accepts the owner password.
  */
 export function AppLockGate({ children }: { children: ReactNode }) {
   const { role, ready, signIn, enterAsFamily, enterWithName } = useAuth();
@@ -34,6 +37,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
     hasSoftUnlockGrant() ? 'unknown' : 'no',
   );
   const [softKind, setSoftKind] = useState<'bday' | 'dates' | null>(null);
+  const [mode, setMode] = useState<GateMode>('family');
   const [familyPassword, setFamilyPassword] = useState('');
   const [ownerPassword, setOwnerPassword] = useState('');
   const [showFamilyPassword, setShowFamilyPassword] = useState(false);
@@ -42,7 +46,6 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   const [busy, setBusy] = useState(false);
   const [nameDraft, setNameDraft] = useState(readSavedName);
   const [nameError, setNameError] = useState('');
-  const [ownerOpen, setOwnerOpen] = useState(false);
 
   const fromSoftUnlock = softAccess === 'yes';
   const unlocked = ready && role !== 'viewer';
@@ -106,6 +109,16 @@ export function AppLockGate({ children }: { children: ReactNode }) {
     );
   }
 
+  const switchMode = (next: GateMode) => {
+    setMode(next);
+    setError('');
+    setNameError('');
+    setFamilyPassword('');
+    setOwnerPassword('');
+    setShowFamilyPassword(false);
+    setShowOwnerPassword(false);
+  };
+
   const submitFamily = async (event: React.FormEvent) => {
     event.preventDefault();
     const trimmed = nameDraft.trim().slice(0, 40);
@@ -140,6 +153,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
       const result = await enterAsFamily(trimmed, familyPassword);
       if (!result.ok) {
         if (result.reason === 'name') setNameError(t('gate.nameRequired'));
+        else if (result.reason === 'use_owner') setError(t('gate.useOwnerLogin'));
         else setError(t('gate.wrong'));
       }
     } catch (err) {
@@ -161,11 +175,11 @@ export function AppLockGate({ children }: { children: ReactNode }) {
     try {
       const found = await signIn(ownerPassword);
       if (!found) {
-        setError(t('gate.wrong'));
+        setError(t('gate.wrongOwner'));
       }
     } catch (err) {
       console.error('Sign-in failed:', err);
-      setError(t('gate.wrong'));
+      setError(t('gate.wrongOwner'));
     } finally {
       setBusy(false);
     }
@@ -181,155 +195,229 @@ export function AppLockGate({ children }: { children: ReactNode }) {
         ? t('gate.introBdayEnded')
         : t('gate.intro');
 
+  const shellClass =
+    mode === 'owner'
+      ? 'bg-gradient-to-b from-stone-900 via-stone-950 to-emerald-950 text-stone-100'
+      : fromSoftUnlock
+        ? 'bg-gradient-to-b from-emerald-100 via-emerald-50 to-stone-50 text-stone-900'
+        : 'app-shell text-stone-900 dark:bg-stone-950 dark:text-stone-100';
+
   return (
-    <div className={`flex min-h-dvh flex-col items-center justify-center px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] text-stone-900 dark:bg-stone-950 dark:text-stone-100 ${fromSoftUnlock ? 'bg-gradient-to-b from-emerald-100 via-emerald-50 to-stone-50' : 'app-shell'}`}>
-      <div className="w-full max-w-sm rounded-3xl border border-emerald-200/70 bg-white/90 p-6 shadow-[0_18px_50px_-28px_rgb(6_78_59_/_0.45)] animate-modal-in sm:p-8 dark:border-stone-700 dark:bg-stone-900/90">
-        <div className="flex justify-end">
+    <div
+      className={`flex min-h-dvh flex-col items-center justify-center px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] ${shellClass}`}
+    >
+      <div
+        className={`w-full max-w-sm rounded-3xl border p-6 shadow-[0_18px_50px_-28px_rgb(6_78_59_/_0.45)] animate-modal-in sm:p-8 ${
+          mode === 'owner'
+            ? 'border-emerald-800/60 bg-stone-900/95 text-stone-100'
+            : 'border-emerald-200/70 bg-white/90 text-stone-900 dark:border-stone-700 dark:bg-stone-900/90 dark:text-stone-100'
+        }`}
+      >
+        <div className="flex items-center justify-between gap-2">
+          {mode === 'owner' ? (
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-stone-300 hover:bg-stone-800 hover:text-white"
+              onClick={() => switchMode('family')}
+            >
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+              {t('gate.backToFamily')}
+            </button>
+          ) : (
+            <span />
+          )}
           <LanguageMenuButton />
         </div>
-        <BrandHero>
-          {fromSoftUnlock && (
-            <p className="mt-4 inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200">
-              {softKind === 'dates' ? `📅 ${t('dates.kicker')}` : `🎂 ${t('bday.kicker')}`}
-            </p>
-          )}
-          <h1 className="mt-4 font-display text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
-            {t('gate.welcomeTitle')}
-          </h1>
-          <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">{intro}</p>
-        </BrandHero>
 
-        <form onSubmit={(e) => void submitFamily(e)} className="mt-6 space-y-4">
-          <label className="block text-left">
-            <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
-              {t('gate.yourName')}
-            </span>
-            <input
-              type="text"
-              className="input min-h-12 text-base sm:text-base"
-              value={nameDraft}
-              onChange={(e) => {
-                setNameDraft(e.target.value);
-                setNameError('');
-              }}
-              autoComplete="given-name"
-              maxLength={40}
-              autoFocus
-              required
-              minLength={2}
-              placeholder={t('gate.namePlaceholder')}
-            />
-            <span className="mt-1.5 block text-xs leading-relaxed text-stone-400 dark:text-stone-500">
-              {t('gate.nameHint')}
-            </span>
-            {nameError && (
-              <span role="alert" className="mt-2 block rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
-                {nameError}
+        {mode === 'owner' ? (
+          <>
+            <div className="mt-4 flex justify-center">
+              <span className="rounded-full bg-emerald-900/80 p-3 text-emerald-300 ring-1 ring-emerald-700/60">
+                <KeyRound className="h-6 w-6" aria-hidden />
               </span>
-            )}
-          </label>
+            </div>
+            <h1 className="mt-4 text-center font-display text-xl font-semibold tracking-tight text-stone-50">
+              {t('gate.ownerTitle')}
+            </h1>
+            <p className="mt-2 text-center text-sm text-stone-400">{t('gate.ownerIntro')}</p>
 
-          {!fromSoftUnlock && (
-            <label className="block text-left">
-              <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
-                {t('gate.familyPassword')}
-              </span>
-              <span className="relative block">
+            <form onSubmit={(e) => void submitOwner(e)} className="mt-6 space-y-4">
+              <label className="block text-left">
+                <span className="mb-1 block text-sm font-medium text-stone-300">
+                  {t('gate.ownerPassword')}
+                </span>
+                <span className="relative block">
+                  <input
+                    type={showOwnerPassword ? 'text' : 'password'}
+                    name="owner-password"
+                    className={`input min-h-12 border-stone-700 bg-stone-950/80 pr-12 text-base text-stone-100 ${
+                      error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30' : ''
+                    }`}
+                    value={ownerPassword}
+                    onChange={(e) => {
+                      setOwnerPassword(e.target.value);
+                      setError('');
+                    }}
+                    autoComplete="current-password"
+                    autoFocus
+                    required
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? 'gate-owner-error' : undefined}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-stone-400 hover:bg-stone-800 hover:text-stone-100"
+                    onClick={() => setShowOwnerPassword((v) => !v)}
+                    aria-label={showOwnerPassword ? t('gate.hidePassword') : t('gate.showPassword')}
+                    title={showOwnerPassword ? t('gate.hidePassword') : t('gate.showPassword')}
+                  >
+                    {showOwnerPassword ? (
+                      <EyeOff className="h-5 w-5" aria-hidden />
+                    ) : (
+                      <Eye className="h-5 w-5" aria-hidden />
+                    )}
+                  </button>
+                </span>
+              </label>
+
+              {error && (
+                <span
+                  id="gate-owner-error"
+                  role="alert"
+                  className="block rounded-xl border border-red-800 bg-red-950/50 px-3 py-2 text-sm font-medium text-red-300"
+                >
+                  {error}
+                </span>
+              )}
+
+              <button type="submit" className="btn-primary w-full min-h-12 text-base" disabled={busy}>
+                {busy ? t('gate.checking') : t('gate.ownerBtn')}
+              </button>
+            </form>
+          </>
+        ) : (
+          <>
+            <BrandHero>
+              {fromSoftUnlock && (
+                <p className="mt-4 inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200">
+                  {softKind === 'dates' ? `📅 ${t('dates.kicker')}` : `🎂 ${t('bday.kicker')}`}
+                </p>
+              )}
+              <h1 className="mt-4 font-display text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
+                {t('gate.welcomeTitle')}
+              </h1>
+              <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">{intro}</p>
+            </BrandHero>
+
+            <form onSubmit={(e) => void submitFamily(e)} className="mt-6 space-y-4">
+              <label className="block text-left">
+                <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+                  {t('gate.yourName')}
+                </span>
                 <input
-                  type={showFamilyPassword ? 'text' : 'password'}
-                  name="family-password"
-                  className={`input min-h-12 pr-12 text-base ${
-                    error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30' : ''
-                  }`}
-                  value={familyPassword}
+                  type="text"
+                  className="input min-h-12 text-base sm:text-base"
+                  value={nameDraft}
                   onChange={(e) => {
-                    setFamilyPassword(e.target.value);
-                    setError('');
+                    setNameDraft(e.target.value);
+                    setNameError('');
                   }}
-                  autoComplete="current-password"
+                  autoComplete="given-name"
+                  maxLength={40}
+                  autoFocus
                   required
-                  aria-invalid={Boolean(error)}
-                  aria-describedby={error ? 'gate-family-error' : undefined}
+                  minLength={2}
+                  placeholder={t('gate.namePlaceholder')}
                 />
+                <span className="mt-1.5 block text-xs leading-relaxed text-stone-400 dark:text-stone-500">
+                  {t('gate.nameHint')}
+                </span>
+                {nameError && (
+                  <span
+                    role="alert"
+                    className="mt-2 block rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                  >
+                    {nameError}
+                  </span>
+                )}
+              </label>
+
+              {!fromSoftUnlock && (
+                <label className="block text-left">
+                  <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+                    {t('gate.familyPassword')}
+                  </span>
+                  <span className="relative block">
+                    <input
+                      type={showFamilyPassword ? 'text' : 'password'}
+                      name="family-password"
+                      className={`input min-h-12 pr-12 text-base ${
+                        error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30' : ''
+                      }`}
+                      value={familyPassword}
+                      onChange={(e) => {
+                        setFamilyPassword(e.target.value);
+                        setError('');
+                      }}
+                      autoComplete="current-password"
+                      required
+                      aria-invalid={Boolean(error)}
+                      aria-describedby={error ? 'gate-family-error' : undefined}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-800 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+                      onClick={() => setShowFamilyPassword((v) => !v)}
+                      aria-label={showFamilyPassword ? t('gate.hidePassword') : t('gate.showPassword')}
+                      title={showFamilyPassword ? t('gate.hidePassword') : t('gate.showPassword')}
+                    >
+                      {showFamilyPassword ? (
+                        <EyeOff className="h-5 w-5" aria-hidden />
+                      ) : (
+                        <Eye className="h-5 w-5" aria-hidden />
+                      )}
+                    </button>
+                  </span>
+                </label>
+              )}
+
+              {error && (
+                <span
+                  id="gate-family-error"
+                  role="alert"
+                  className="block rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                >
+                  {error}
+                </span>
+              )}
+
+              <p className="text-xs leading-relaxed text-stone-500 dark:text-stone-400">
+                {fromSoftUnlock
+                  ? softKind === 'dates'
+                    ? t('gate.rememberDates')
+                    : t('gate.rememberBday')
+                  : t('gate.remember')}
+              </p>
+              <button type="submit" className="btn-primary w-full min-h-12 text-base" disabled={busy}>
+                <Users className="h-4 w-4" aria-hidden />
+                {busy ? t('gate.checking') : t('gate.welcomeBtn')}
+              </button>
+            </form>
+
+            {!fromSoftUnlock && (
+              <div className="mt-6 border-t border-stone-200 pt-4 dark:border-stone-700">
                 <button
                   type="button"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-800 dark:hover:bg-stone-800 dark:hover:text-stone-100"
-                  onClick={() => setShowFamilyPassword((v) => !v)}
-                  aria-label={showFamilyPassword ? t('gate.hidePassword') : t('gate.showPassword')}
-                  title={showFamilyPassword ? t('gate.hidePassword') : t('gate.showPassword')}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
+                  onClick={() => switchMode('owner')}
                 >
-                  {showFamilyPassword ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
+                  <KeyRound className="h-4 w-4" aria-hidden />
+                  {t('gate.ownerToggle')}
                 </button>
-              </span>
-            </label>
-          )}
-
-          {error && (
-            <span
-              id="gate-family-error"
-              role="alert"
-              className="block rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
-            >
-              {error}
-            </span>
-          )}
-
-          <p className="text-xs leading-relaxed text-stone-500 dark:text-stone-400">
-            {fromSoftUnlock
-              ? softKind === 'dates'
-                ? t('gate.rememberDates')
-                : t('gate.rememberBday')
-              : t('gate.remember')}
-          </p>
-          <button type="submit" className="btn-primary w-full min-h-12 text-base" disabled={busy}>
-            {busy ? t('gate.checking') : t('gate.welcomeBtn')}
-          </button>
-        </form>
-
-        <details
-          className="mt-6 rounded-2xl border border-stone-200/80 bg-stone-50/80 px-3 py-2 dark:border-stone-700 dark:bg-stone-800/50"
-          open={ownerOpen}
-          onToggle={(e) => setOwnerOpen((e.currentTarget as HTMLDetailsElement).open)}
-        >
-          <summary className="cursor-pointer list-none py-1.5 text-sm font-medium text-stone-600 dark:text-stone-300 [&::-webkit-details-marker]:hidden">
-            {t('gate.ownerToggle')}
-          </summary>
-          <p className="mt-1 text-xs leading-relaxed text-stone-500 dark:text-stone-400">
-            {t('gate.ownerIntro')}
-          </p>
-          <form onSubmit={(e) => void submitOwner(e)} className="mt-3 space-y-3">
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
-                {t('gate.ownerPassword')}
-              </span>
-              <span className="relative block">
-                <input
-                  type={showOwnerPassword ? 'text' : 'password'}
-                  name="owner-password"
-                  className="input min-h-11 pr-12 text-base"
-                  value={ownerPassword}
-                  onChange={(e) => {
-                    setOwnerPassword(e.target.value);
-                    setError('');
-                  }}
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-800 dark:hover:bg-stone-800 dark:hover:text-stone-100"
-                  onClick={() => setShowOwnerPassword((v) => !v)}
-                  aria-label={showOwnerPassword ? t('gate.hidePassword') : t('gate.showPassword')}
-                  title={showOwnerPassword ? t('gate.hidePassword') : t('gate.showPassword')}
-                >
-                  {showOwnerPassword ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
-                </button>
-              </span>
-            </label>
-            <button type="submit" className="btn-secondary w-full min-h-11 text-sm" disabled={busy}>
-              {busy ? t('gate.checking') : t('gate.ownerBtn')}
-            </button>
-          </form>
-        </details>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

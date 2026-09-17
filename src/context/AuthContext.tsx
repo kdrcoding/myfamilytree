@@ -17,7 +17,7 @@ const AUTH_KEY = STORAGE_KEYS.auth;
 
 export type FamilyEnterResult =
   | { ok: true; role: Role }
-  | { ok: false; reason: 'name' | 'password' };
+  | { ok: false; reason: 'name' | 'password' | 'use_owner' };
 
 /** What the current session may change on person records. */
 export type EditScope = 'full' | 'birthDate' | 'none';
@@ -340,10 +340,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!password) return { ok: false, reason: 'password' };
 
       const hash = await hashPassword(password);
-      if (hash === ACCESS.ownerHash) {
-        const nextRole = await signIn(password);
-        return nextRole ? { ok: true, role: nextRole } : { ok: false, reason: 'password' };
-      }
+      // Owner password must never unlock via the family form — use owner login.
+      if (hash === ACCESS.ownerHash) return { ok: false, reason: 'use_owner' };
       if (hash !== ACCESS.editorHash) return { ok: false, reason: 'password' };
 
       persistFamilyAuth(trimmed);
@@ -353,7 +351,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole('editor');
       return { ok: true, role: 'editor' };
     },
-    [signIn],
+    [],
   );
 
   const enterWithName = useCallback(async (name: string): Promise<boolean> => {
