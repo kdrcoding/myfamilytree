@@ -13,6 +13,7 @@ import {
   localParts,
   monthDay,
   requireEnv,
+  shiftLocalDate,
   telegramApi,
   DEFAULT_FAMILY_TIMEZONE,
   type FamilyMemberRow,
@@ -237,7 +238,13 @@ async function maybeSendUpcoming(opts: {
 
   if (upcoming.length === 0) return { sent: false, skipped: 'none_upcoming', count: 0 };
 
-  const period = isoWeekPeriod(opts.local.year, opts.local.month, opts.local.day);
+  // Sat/Sun/Mon share one claim key: ISO week of the Monday in this window
+  // (Sat→W_N+1 of next Mon, Sun→same, Mon→that Mon). Avoids double posts across
+  // the ISO week boundary between Sunday and Monday.
+  const daysToMonday =
+    opts.local.weekday === 'Sat' ? 2 : opts.local.weekday === 'Sun' ? 1 : 0;
+  const monday = shiftLocalDate(opts.local, daysToMonday);
+  const period = isoWeekPeriod(monday.year, monday.month, monday.day);
   const claimed = await claimNotice(opts.db, 'upcoming-week', period);
   if (!claimed) return { sent: false, skipped: 'already_claimed', count: upcoming.length };
 
@@ -274,8 +281,13 @@ async function maybeSendHealthAlert(opts: {
   force: boolean;
 }): Promise<{ sent: boolean; skipped?: string; hours?: number }> {
   if (opts.force) return { sent: false, skipped: 'force' };
-  const lastOk = opts.settings.last_ok_at ? new Date(opts.settings.last_ok_at).getTime() : 0;
-  const hours = lastOk > 0 ? (Date.now() - lastOk) / 3_600_000 : 999;
+  // First deploy / no heartbeat yet — don't false-alarm the group.
+  if (!opts.settings.last_ok_at) {
+    return { sent: false, skipped: 'bootstrap' };
+  }
+  const lastOk = new Date(opts.settings.last_ok_at).getTime();
+  if (!Number.isFinite(lastOk)) return { sent: false, skipped: 'bootstrap' };
+  const hours = (Date.now() - lastOk) / 3_600_000;
   if (hours < HEALTH_ALERT_HOURS) return { sent: false, skipped: 'healthy', hours };
 
   const lastAlert = opts.settings.last_health_alert_at
@@ -285,9 +297,7 @@ async function maybeSendHealthAlert(opts: {
     return { sent: false, skipped: 'alert_cooldown', hours };
   }
 
-  const lastOkLabel = opts.settings.last_ok_at
-    ? new Date(opts.settings.last_ok_at).toISOString()
-    : null;
+  const lastOkLabel = new Date(opts.settings.last_ok_at).toISOString();
   await telegramApi('sendMessage', {
     chat_id: opts.chatId,
     text: botHealthAlertText(Math.floor(hours), lastOkLabel),

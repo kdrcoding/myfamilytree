@@ -608,6 +608,7 @@ export const ruOverrides: Record<string, string> = {
   'bday.cheerAlready': 'Вы уже поздравили с этим именем.',
   'bday.cheerNameRequired': 'Пожалуйста, введите имя.',
   'bday.cheerFailed': 'Не удалось отправить поздравление. Попробуйте снова.',
+  'bday.cheerLimit': 'На этой странице уже много поздравлений — лучше через Telegram.',
   'bday.footer': 'Эта страница открыта для семьи — пароль не нужен.',
   'bday.seeTree': 'Смотреть семейное древо',
   'bday.seeTreeHint':

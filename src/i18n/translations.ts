@@ -433,6 +433,7 @@ export const en = {
   'bday.cheerAlready': 'You already congratulated with this name.',
   'bday.cheerNameRequired': 'Please enter your name.',
   'bday.cheerFailed': 'Could not send congratulations. Try again.',
+  'bday.cheerLimit': 'This page already has many congratulations — try Telegram instead.',
   'bday.footer': 'This page is open for family — no password needed.',
   'bday.seeTree': 'See the family tree',
   'bday.seeTreeHint':
@@ -1435,6 +1436,7 @@ export const uz: Record<TKey, string> = {
   'bday.cheerAlready': 'Bu ism bilan allaqachon tabriklagansiz.',
   'bday.cheerNameRequired': 'Iltimos, ismingizni yozing.',
   'bday.cheerFailed': 'Tabrik yuborilmadi. Qayta urinib ko‘ring.',
+  'bday.cheerLimit': 'Bu sahifada tabriklar ko‘p — Telegramdan yuboring.',
   'bday.footer': 'Bu sahifa oila uchun ochiq — parol kerak emas.',
   'bday.seeTree': 'Oilani ko‘rish',
   'bday.seeTreeHint':

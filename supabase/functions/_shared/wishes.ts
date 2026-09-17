@@ -438,6 +438,8 @@ export function upcomingBirthdaysNotice(
   rows: { name: string; when: string; age: number | null }[],
   datesUrl: string,
 ): string {
+  const esc = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   if (rows.length === 0) {
     return [
       '📅 <b>Shu hafta tug‘ilgan kunlar</b>',
@@ -451,7 +453,7 @@ export function upcomingBirthdaysNotice(
     .slice(0, 15)
     .map((r) => {
       const age = r.age != null ? ` · ${r.age}` : '';
-      return `• <b>${r.name}</b> — ${r.when}${age}`;
+      return `• <b>${esc(r.name)}</b> — ${esc(r.when)}${age}`;
     })
     .join('\n');
   const extra = rows.length > 15 ? `\n…va yana ${rows.length - 15} kishi` : '';

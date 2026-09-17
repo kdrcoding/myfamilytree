@@ -189,6 +189,25 @@ async function postWebCheer(db: ServiceDb, body: Record<string, unknown>): Promi
     });
   }
 
+  // Soft cap — unique names only; still stop spam floods on one birthday page.
+  const WEB_CHEER_CAP = 40;
+  try {
+    const webCount = await db.rest<{ id: number }[]>('telegram_birthday_cheers', {
+      query: {
+        select: 'id',
+        person_id: `eq.${personId}`,
+        year: `eq.${year}`,
+        source: 'eq.web',
+      },
+    });
+    if (Array.isArray(webCount) && webCount.length >= WEB_CHEER_CAP) {
+      const cheers = await loadCheers(db, personId, year);
+      return jsonResponse({ ok: false, error: 'cheer_limit', cheers, year }, 429);
+    }
+  } catch (err) {
+    console.warn('web cheer count failed', err);
+  }
+
   try {
     await db.rest('telegram_birthday_cheers', {
       method: 'POST',
@@ -203,16 +222,21 @@ async function postWebCheer(db: ServiceDb, body: Record<string, unknown>): Promi
       }),
     });
   } catch (err) {
-    // Unique race → treat as already cheered
-    console.warn('web cheer insert', err);
-    const cheers = await loadCheers(db, personId, year);
-    return jsonResponse({
-      ok: true,
-      already: true,
-      message: cheerAlreadyText(),
-      cheers,
-      year,
-    });
+    const msg = err instanceof Error ? err.message : String(err);
+    // Unique race (23505 / 409) → already cheered; anything else is a real failure.
+    if (/\b409\b|23505|unique/i.test(msg)) {
+      console.warn('web cheer unique race', err);
+      const cheers = await loadCheers(db, personId, year);
+      return jsonResponse({
+        ok: true,
+        already: true,
+        message: cheerAlreadyText(),
+        cheers,
+        year,
+      });
+    }
+    console.error('web cheer insert failed', err);
+    return jsonResponse({ ok: false, error: 'failed' }, 500);
   }
 
   const groupChatId = settings[0]?.group_chat_id;

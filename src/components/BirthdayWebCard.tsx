@@ -255,7 +255,11 @@ export function BirthdayWebCard({
       const result = await submitPublicCheer(person.id, trimmed);
       if (!result.ok) {
         setCheerErr(
-          result.error === 'name_required' ? t('bday.cheerNameRequired') : t('bday.cheerFailed'),
+          result.error === 'name_required'
+            ? t('bday.cheerNameRequired')
+            : result.error === 'cheer_limit'
+              ? t('bday.cheerLimit')
+              : t('bday.cheerFailed'),
         );
         return;
       }
