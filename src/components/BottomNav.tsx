@@ -35,8 +35,8 @@ export function BottomNav() {
                 className={({ isActive }) =>
                   `flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1.5 text-center transition-[background-color,color,transform] duration-200 ease-out ${
                     isActive
-                      ? 'bg-emerald-100 text-emerald-800 [&_svg]:scale-110 dark:bg-emerald-900/50 dark:text-emerald-200'
-                      : 'text-stone-600 hover:bg-stone-100/70 dark:text-stone-300 dark:hover:bg-stone-900'
+                      ? 'bottom-nav-tab-active [&_svg]:scale-110'
+                      : 'text-stone-600 hover:bg-teal-50/70 dark:text-stone-300 dark:hover:bg-teal-950/40'
                   }`
                 }
               >

@@ -90,15 +90,15 @@ export function Layout() {
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 ease-out ${
       isActive
-        ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200'
-        : 'text-stone-700 hover:bg-stone-100/80 hover:text-stone-900 dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-stone-100'
+        ? 'bg-teal-100 text-teal-900 dark:bg-teal-900/40 dark:text-teal-200'
+        : 'text-stone-700 hover:bg-teal-50/80 hover:text-teal-900 dark:text-stone-200 dark:hover:bg-teal-950/40 dark:hover:text-teal-100'
     }`;
 
   return (
-    <div className="app-shell flex min-h-dvh flex-col text-stone-900 dark:bg-stone-950 dark:text-stone-100">
+    <div className="app-shell flex min-h-dvh flex-col text-stone-900 dark:text-stone-100">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[90] focus:rounded-lg focus:bg-emerald-700 focus:px-3 focus:py-2 focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-[90] focus:rounded-lg focus:bg-teal-700 focus:px-3 focus:py-2 focus:text-white"
       >
         {t('nav.skip')}
       </a>
@@ -123,8 +123,8 @@ export function Layout() {
               className={({ isActive }) =>
                 `inline-flex items-center justify-center rounded-lg p-2 transition-colors duration-200 ease-out ${
                   isActive
-                    ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200'
-                    : 'text-stone-700 hover:bg-stone-100/80 dark:text-stone-200 dark:hover:bg-stone-800'
+                    ? 'bg-teal-100 text-teal-900 dark:bg-teal-900/40 dark:text-teal-200'
+                    : 'text-stone-700 hover:bg-teal-50/80 dark:text-stone-200 dark:hover:bg-teal-950/40'
                 }`
               }
               aria-label={t('nav.settings')}
@@ -175,7 +175,7 @@ export function Layout() {
                         className={({ isActive }) =>
                           `block px-4 py-2.5 text-sm font-semibold transition-colors duration-150 ${
                             isActive
-                              ? 'bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
+                              ? 'bg-teal-50 text-teal-900 dark:bg-teal-950/50 dark:text-teal-200'
                               : 'text-stone-800 hover:bg-stone-100 dark:text-stone-100 dark:hover:bg-stone-800'
                           }`
                         }
@@ -232,10 +232,12 @@ export function Layout() {
         }`}
       >
         <Suspense fallback={<PageSkeleton />}>
-          <Outlet />
+          <div key={location.pathname} className={`flex min-h-0 flex-1 flex-col ${isTreePage ? '' : 'page-outlet'}`}>
+            <Outlet />
+          </div>
         </Suspense>
         {!isTreePage && (
-          <footer className="mt-auto hidden border-t border-stone-200/80 px-4 py-6 sm:block dark:border-stone-800">
+          <footer className="mt-auto hidden border-t border-teal-900/10 px-4 py-6 sm:block dark:border-teal-200/10">
             <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 sm:flex-row sm:justify-between">
               <p className="text-center text-xs text-stone-500 dark:text-stone-400 sm:text-left">
                 {t('footer.note')}

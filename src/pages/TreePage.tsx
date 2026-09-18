@@ -148,7 +148,7 @@ function TreeSearch({
             <li key={p.id}>
               <button
                 type="button"
-                className={`tree-search-result ${large ? 'py-3' : 'py-2'} ${i === activeIndex ? 'bg-emerald-50 dark:bg-emerald-950/50' : ''}`}
+                className={`tree-search-result ${large ? 'py-3' : 'py-2'} ${i === activeIndex ? 'bg-teal-50 dark:bg-teal-950/50' : ''}`}
                 onPointerDown={(e) => e.preventDefault()}
                 onClick={() => select(p)}
               >
@@ -357,9 +357,9 @@ function TreeCanvas({
               </li>
               <li className="flex items-center gap-2">
                 <span aria-hidden className="flex items-center">
-                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                  <span className="inline-block h-0.5 w-3 bg-emerald-500" />
-                  <span className="-ml-px inline-block border-y-[3px] border-l-[5px] border-y-transparent border-l-emerald-500" />
+                  <span className="inline-block h-2 w-2 rounded-full bg-teal-400" />
+                  <span className="inline-block h-0.5 w-3 bg-teal-400" />
+                  <span className="-ml-px inline-block border-y-[3px] border-l-[5px] border-y-transparent border-l-teal-400" />
                 </span>
                 <span>{t('tree.legendChildren')}</span>
               </li>

@@ -14,9 +14,9 @@ import type { PersonFlowNode } from './layout';
 import { useTreeInteraction } from './TreeInteractionContext';
 
 const GENDER_ACCENT = {
-  male: 'border-l-sky-400 dark:border-l-sky-600',
-  female: 'border-l-rose-400 dark:border-l-rose-600',
-  unspecified: 'border-l-violet-400 dark:border-l-violet-600',
+  male: 'border-l-sky-400 dark:border-l-cyan-400',
+  female: 'border-l-rose-400 dark:border-l-rose-400',
+  unspecified: 'border-l-teal-400 dark:border-l-teal-300',
 };
 
 const HANDLE = '!h-1.5 !w-1.5 !min-h-0 !min-w-0 !border-0 !bg-transparent';
@@ -54,12 +54,12 @@ function PersonNodeComponent({ data, width, height }: NodeProps<PersonFlowNode>)
         onClick={() => onOpen(person.id)}
         aria-label={t('tree.openDetails', { name })}
         title={name}
-        className={`tree-person-card flex h-full w-full items-center gap-2.5 rounded-xl border border-l-4 px-3 text-left ring-1 ring-emerald-900/10 transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-500 dark:ring-white/5 dark:hover:shadow-lg dark:hover:shadow-black/40 ${
+        className={`tree-person-card flex h-full w-full items-center gap-2.5 rounded-2xl border border-l-4 px-3 text-left ring-1 ring-teal-900/10 focus-visible:ring-2 focus-visible:ring-teal-400 dark:ring-teal-200/10 ${
           GENDER_ACCENT[person.gender]
         } ${
           person.isDeceased
-            ? 'border-dashed border-stone-400 dark:border-stone-600'
-            : 'border-emerald-700/20 dark:border-stone-700'
+            ? 'border-dashed border-stone-400/80 dark:border-stone-500'
+            : 'border-teal-500/25 dark:border-teal-400/20'
         }`}
       >
         <Avatar person={person} size="sm" />

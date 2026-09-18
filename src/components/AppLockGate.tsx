@@ -197,20 +197,18 @@ export function AppLockGate({ children }: { children: ReactNode }) {
 
   const shellClass =
     mode === 'owner'
-      ? 'bg-gradient-to-b from-stone-900 via-stone-950 to-emerald-950 text-stone-100'
+      ? 'bg-gradient-to-b from-[#061412] via-[#0a1f1c] to-[#123530] text-stone-100'
       : fromSoftUnlock
-        ? 'bg-gradient-to-b from-emerald-100 via-emerald-50 to-stone-50 text-stone-900'
-        : 'app-shell text-stone-900 dark:bg-stone-950 dark:text-stone-100';
+        ? 'bg-gradient-to-b from-teal-100 via-teal-50/80 to-[#e4efeb] text-stone-900'
+        : 'app-shell text-stone-900 dark:text-stone-100';
 
   return (
     <div
       className={`flex min-h-dvh flex-col items-center justify-center px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] ${shellClass}`}
     >
       <div
-        className={`w-full max-w-sm rounded-3xl border p-6 shadow-[0_18px_50px_-28px_rgb(6_78_59_/_0.45)] animate-modal-in sm:p-8 ${
-          mode === 'owner'
-            ? 'border-emerald-800/60 bg-stone-900/95 text-stone-100'
-            : 'border-emerald-200/70 bg-white/90 text-stone-900 dark:border-stone-700 dark:bg-stone-900/90 dark:text-stone-100'
+        className={`gate-panel w-full max-w-sm rounded-3xl border p-6 sm:p-8 ${
+          mode === 'owner' ? 'gate-panel--owner' : ''
         }`}
       >
         <div className="flex items-center justify-between gap-2">
@@ -299,9 +297,9 @@ export function AppLockGate({ children }: { children: ReactNode }) {
           <>
             <BrandHero>
               {fromSoftUnlock && (
-                <p className="mt-4 inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200">
-                  {softKind === 'dates' ? `📅 ${t('dates.kicker')}` : `🎂 ${t('bday.kicker')}`}
-                </p>
+            <p className="mt-4 inline-flex items-center rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-800 dark:bg-teal-950/60 dark:text-teal-200">
+              {softKind === 'dates' ? `📅 ${t('dates.kicker')}` : `🎂 ${t('bday.kicker')}`}
+            </p>
               )}
               <h1 className="mt-4 font-display text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
                 {t('gate.welcomeTitle')}

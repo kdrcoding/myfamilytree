@@ -4,25 +4,24 @@
 
 @theme {
   --font-sans:
-    'Source Sans 3', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
-    Arial, sans-serif;
-  --font-display: 'Source Serif 4', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+    'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
 
-  --animate-modal-in: modal-in 0.18s ease-out;
+  --animate-modal-in: modal-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-fade-in: fade-in 0.22s ease-out;
+  --animate-toast-in: toast-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-rise-in: rise-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 
   @keyframes modal-in {
     from {
       opacity: 0;
-      transform: translateY(12px) scale(0.98);
+      transform: translateY(16px) scale(0.97);
     }
     to {
       opacity: 1;
       transform: translateY(0) scale(1);
     }
   }
-
-  /* Backdrop fade — pairs with the modal panel's slide-up. */
-  --animate-fade-in: fade-in 0.18s ease-out;
 
   @keyframes fade-in {
     from {
@@ -32,9 +31,6 @@
       opacity: 1;
     }
   }
-
-  /* Toast entrance: rise + fade from the bottom of the screen. */
-  --animate-toast-in: toast-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 
   @keyframes toast-in {
     from {
@@ -47,14 +43,10 @@
     }
   }
 
-  /* Staggered list reveal (member cards). `both` keeps cards hidden during
-     their delay so nothing flashes in before its turn. */
-  --animate-rise-in: rise-in 0.35s ease-out both;
-
   @keyframes rise-in {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(12px);
     }
     to {
       opacity: 1;
@@ -67,18 +59,9 @@
   html {
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
-    /* Slightly larger base so the whole UI reads comfortably for older family
-       members. Tailwind sizes are rem-based, so this scales text AND spacing
-       proportionally without breaking any layout. */
     font-size: 17px;
-    /* Tell the browser which palette native controls (select dropdowns, date
-       pickers, checkboxes, scrollbars, form autofill) should use. Without
-       this, a phone whose OS is in dark mode renders those native bits dark
-       even while the app is on the light theme — producing dark-on-white or
-       invisible text. Bound to the app's own theme, not the OS preference. */
     color-scheme: light;
   }
-  /* Easy Mode: bigger type and tap targets for older relatives. */
   html.easy {
     font-size: 20px;
   }
@@ -86,25 +69,27 @@
     color-scheme: dark;
   }
   body {
-    @apply antialiased;
-    transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
-    /* Disable the browser's pull-to-refresh gesture. On phones a long edit
-       form lives in a scrollable modal; swiping down to scroll up past the top
-       would otherwise trigger a full page reload and wipe the user's unsaved
-       work — reported as the page "refreshing by itself". */
+    @apply antialiased font-sans;
+    transition: background-color 0.25s, border-color 0.25s, color 0.25s;
     overscroll-behavior-y: contain;
-    /* Smooth momentum scrolling inside scrollable regions on iOS. */
     -webkit-overflow-scrolling: touch;
   }
 
   :root {
-    /* Bottom tab bar ≈ content height + safe-area (notched iPhones). */
     --bottom-nav-h: calc(3.75rem + env(safe-area-inset-bottom, 0px));
     --safe-top: env(safe-area-inset-top, 0px);
+    /* Aurora Lineage tokens */
+    --aurora-ink: #0a1f1c;
+    --aurora-ink-soft: #132e29;
+    --aurora-jade: #0d9488;
+    --aurora-jade-bright: #14b8a6;
+    --aurora-jade-deep: #0f766e;
+    --aurora-mist: #e4efeb;
+    --aurora-glass: rgb(255 255 255 / 0.62);
+    --aurora-glass-border: rgb(13 148 136 / 0.18);
+    --aurora-gold: #c4a35a;
   }
 
-  /* Honour the OS "reduce motion" setting: strip animations and transitions
-     for users who get motion sickness or simply prefer a calmer UI. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -117,68 +102,146 @@
   }
 }
 
-/* Light theme readability: the very lightest muted text (text-stone-400 on
-   white, ~2.9:1) is hard for older eyes. Nudge it one shade darker so
-   secondary details stay comfortably legible. Unlayered so it wins over the
-   Tailwind utility; scoped to light mode only, so dark mode is untouched. */
 html:not(.dark) .text-stone-400 {
   color: var(--color-stone-500);
 }
 
+/* —— Motion kit —— */
+@keyframes aurora-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes aurora-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes aurora-drift {
+  0%,
+  100% {
+    background-position: 0% 40%, 100% 60%, 50% 0%, 0 0;
+  }
+  50% {
+    background-position: 8% 48%, 92% 52%, 48% 8%, 0 0;
+  }
+}
+
+.aurora-rise {
+  animation: aurora-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.aurora-fade {
+  animation: aurora-fade 0.4s ease-out both;
+}
+
 @layer components {
   .card {
-    @apply rounded-2xl border border-emerald-900/10 bg-[#f7faf7] shadow-[0_1px_3px_0_rgb(28_25_23_/_0.05)] transition-[box-shadow,border-color] duration-200 ease-out dark:border-stone-800 dark:bg-stone-900 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.2)];
+    @apply rounded-2xl border shadow-sm transition-[box-shadow,border-color,transform] duration-200 ease-out;
+    border-color: var(--aurora-glass-border);
+    background: var(--aurora-glass);
+    backdrop-filter: blur(14px) saturate(1.2);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.4) inset, 0 8px 24px -16px rgb(10 31 28 / 0.18);
+  }
+  html.dark .card {
+    border-color: rgb(45 212 191 / 0.12);
+    background: rgb(19 46 41 / 0.72);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 8px 28px -14px rgb(0 0 0 / 0.5);
   }
 
-  /* 16px font on small screens stops iOS Safari from auto-zooming into
-     focused fields; the taller padding gives a comfortable touch target. */
   .input {
-    @apply w-full rounded-xl border border-stone-400 bg-white px-3 py-2.5 text-base text-stone-900 shadow-sm outline-none transition-[border-color,box-shadow] duration-200 placeholder:text-stone-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 sm:py-2 sm:text-sm dark:border-stone-600 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-400;
+    @apply w-full rounded-xl border px-3 py-2.5 text-base text-stone-900 outline-none transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-stone-500 focus:ring-2 sm:py-2 sm:text-sm dark:text-stone-100 dark:placeholder:text-stone-400;
+    border-color: rgb(13 148 136 / 0.28);
+    background: rgb(255 255 255 / 0.78);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.5) inset;
+  }
+  .input:focus {
+    border-color: var(--aurora-jade);
+    --tw-ring-color: rgb(13 148 136 / 0.28);
+  }
+  html.dark .input {
+    border-color: rgb(45 212 191 / 0.22);
+    background: rgb(7 15 14 / 0.75);
+    box-shadow: none;
   }
 
   .badge {
-    @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium;
+    @apply inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-medium;
   }
 
-  /* Buttons are slightly taller on touch screens (~44px targets). The
-     `active:scale-95` gives a tactile press response on phones (no hover). */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition-[background-color,transform,box-shadow] duration-200 ease-out hover:bg-emerald-800 hover:shadow-md active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:bg-emerald-600 dark:hover:bg-emerald-500 dark:focus-visible:ring-offset-stone-900;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-white transition-[background-color,transform,box-shadow] duration-200 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2;
+    background: linear-gradient(165deg, var(--aurora-jade-bright), var(--aurora-jade-deep));
+    box-shadow: 0 8px 20px -10px rgb(13 148 136 / 0.55);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(165deg, #2dd4bf, var(--aurora-jade));
+  }
+  .btn-primary:focus-visible {
+    --tw-ring-color: var(--aurora-jade);
+  }
+  html.dark .btn-primary {
+    background: linear-gradient(165deg, #2dd4bf, var(--aurora-jade-deep));
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-stone-700 shadow-sm transition-[background-color,transform,box-shadow,border-color] duration-200 ease-out hover:bg-stone-100 hover:border-stone-400 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700 dark:focus-visible:ring-offset-stone-900;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-sm font-semibold text-stone-700 transition-[background-color,transform,border-color] duration-200 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:text-stone-200;
+    border-color: rgb(13 148 136 / 0.22);
+    background: rgb(255 255 255 / 0.55);
+    backdrop-filter: blur(8px);
+  }
+  .btn-secondary:hover {
+    border-color: rgb(13 148 136 / 0.4);
+    background: rgb(255 255 255 / 0.85);
+  }
+  html.dark .btn-secondary {
+    border-color: rgb(45 212 191 / 0.2);
+    background: rgb(19 46 41 / 0.65);
+  }
+  html.dark .btn-secondary:hover {
+    background: rgb(19 46 41 / 0.9);
   }
 
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition-[background-color,transform,box-shadow] duration-200 ease-out hover:bg-red-700 hover:shadow-md active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:focus-visible:ring-offset-stone-900;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition-[background-color,transform] duration-200 ease-out hover:bg-red-700 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2;
   }
 
-  /* Easy Mode: taller buttons, easier to tap. */
   html.easy .btn-primary,
   html.easy .btn-secondary,
   html.easy .btn-danger {
     @apply px-5 py-3.5 text-base sm:py-3;
   }
-
   html.easy .input {
     @apply py-3.5 text-base sm:py-3 sm:text-base;
   }
-
   html.easy .icon-btn {
     @apply p-3 sm:p-2.5;
   }
 
-  /* Bigger on touch screens — 24px circles are too small for fingers. */
   .quick-add {
-    @apply flex h-8 w-8 items-center justify-center rounded-full border border-emerald-300 bg-white text-emerald-700 shadow-sm transition-transform hover:scale-110 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:h-6 sm:w-6 dark:border-emerald-700 dark:bg-stone-800 dark:text-emerald-300 dark:hover:bg-stone-700;
+    @apply flex h-8 w-8 items-center justify-center rounded-xl border text-teal-700 shadow-sm transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:h-6 sm:w-6 dark:text-teal-300;
+    border-color: rgb(13 148 136 / 0.35);
+    background: rgb(255 255 255 / 0.9);
+  }
+  html.dark .quick-add {
+    border-color: rgb(45 212 191 / 0.3);
+    background: rgb(19 46 41 / 0.95);
   }
 
   .icon-btn {
-    @apply inline-flex items-center justify-center rounded-xl p-2.5 text-stone-500 transition-[background-color,color,transform] duration-200 ease-out hover:bg-stone-100 hover:text-stone-800 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:p-2 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100;
+    @apply inline-flex items-center justify-center rounded-xl p-2.5 text-stone-500 transition-[background-color,color,transform] duration-200 ease-out hover:bg-teal-50 hover:text-teal-800 active:scale-[0.94] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:p-2 dark:text-stone-400 dark:hover:bg-teal-950/50 dark:hover:text-teal-200;
   }
 
-  /* Swipeable rows on phones without a visible scrollbar. */
   .scrollbar-none {
     scrollbar-width: none;
   }
@@ -187,92 +250,90 @@ html:not(.dark) .text-stone-400 {
   }
 }
 
-/* Family map: dim OpenStreetMap tiles in dark mode so the page stays dark. */
+/* Family map dark tiles */
 .dark .map-tiles {
-  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+  filter: brightness(0.55) invert(1) contrast(2.8) hue-rotate(160deg) saturate(0.35) brightness(0.72);
 }
 .dark .leaflet-container {
-  background: var(--color-stone-900);
+  background: #070f0e;
 }
 .dark .leaflet-popup-content-wrapper,
 .dark .leaflet-popup-tip {
-  background: var(--color-stone-800);
-  color: var(--color-stone-100);
+  background: #132e29;
+  color: #ecf4f1;
 }
 
-/* React Flow edge styling */
+/* React Flow edges */
 .react-flow__edge-path {
-  stroke: var(--color-stone-400);
-  stroke-width: 1.5;
+  stroke: rgb(13 148 136 / 0.45);
+  stroke-width: 1.6;
 }
 .dark .react-flow__edge-path {
-  stroke: var(--color-stone-600);
+  stroke: rgb(45 212 191 / 0.35);
 }
 .edge-spouse .react-flow__edge-path {
-  stroke: #b45309;
+  stroke: var(--aurora-gold);
   stroke-width: 2;
 }
 .dark .edge-spouse .react-flow__edge-path {
-  stroke: #d97706;
+  stroke: #e8c97a;
 }
-/* Divorced couples: a broken grey line instead of the marriage line. */
 .edge-divorced .react-flow__edge-path {
-  stroke: var(--color-stone-400);
+  stroke: rgb(120 113 108 / 0.7);
   stroke-width: 2;
   stroke-dasharray: 2 5;
 }
 .dark .edge-divorced .react-flow__edge-path {
-  stroke: var(--color-stone-500);
+  stroke: rgb(168 162 158 / 0.55);
 }
 
-/* Custom spouse edge — small gold rings (tap to edit wedding details) */
 .spouse-edge__halo {
-  stroke: var(--tree-canvas-bg, #dce8e2);
+  stroke: var(--tree-canvas-bg, #1a3d38);
 }
 .dark .spouse-edge__halo {
-  stroke: var(--color-stone-950);
+  stroke: #070f0e;
 }
 .spouse-edge__line {
-  stroke: #b45309;
+  stroke: var(--aurora-gold);
 }
 .dark .spouse-edge__line {
-  stroke: #d97706;
+  stroke: #e8c97a;
 }
 .spouse-edge--divorced .spouse-edge__line {
-  stroke: var(--color-stone-400);
+  stroke: rgb(120 113 108 / 0.7);
 }
 .dark .spouse-edge--divorced .spouse-edge__line {
-  stroke: var(--color-stone-500);
+  stroke: rgb(168 162 158 / 0.55);
 }
 .spouse-edge__badge {
-  fill: #faf6ef;
-  stroke: #d6c4a3;
+  fill: rgb(255 255 255 / 0.88);
+  stroke: rgb(196 163 90 / 0.45);
   stroke-width: 1;
 }
 .dark .spouse-edge__badge {
-  fill: #292524;
-  stroke: #78716c;
+  fill: #132e29;
+  stroke: rgb(232 201 122 / 0.35);
 }
 .spouse-edge--divorced .spouse-edge__badge {
-  fill: #f5f5f4;
+  fill: rgb(245 245 244 / 0.9);
   stroke: #a8a29e;
 }
 .dark .spouse-edge--divorced .spouse-edge__badge {
-  fill: var(--color-stone-900);
-  stroke: var(--color-stone-500);
+  fill: #0a1f1c;
+  stroke: #78716c;
 }
 .spouse-edge__badge-inner {
-  fill: #fffdf8;
+  fill: rgb(255 253 248 / 0.95);
   stroke: none;
 }
 .dark .spouse-edge__badge-inner {
-  fill: #1c1917;
+  fill: #0a1f1c;
 }
 .spouse-edge--divorced .spouse-edge__badge-inner {
   fill: #fafaf9;
 }
 .dark .spouse-edge--divorced .spouse-edge__badge-inner {
-  fill: var(--color-stone-800);
+  fill: #132e29;
 }
 .spouse-edge__ring {
   stroke: #92400e;
@@ -281,10 +342,10 @@ html:not(.dark) .text-stone-400 {
   stroke: #fbbf24;
 }
 .spouse-edge--divorced .spouse-edge__ring {
-  stroke: var(--color-stone-400);
+  stroke: #a8a29e;
 }
 .dark .spouse-edge--divorced .spouse-edge__ring {
-  stroke: var(--color-stone-500);
+  stroke: #78716c;
 }
 .spouse-edge__shine {
   fill: #fde68a;
@@ -302,21 +363,18 @@ html:not(.dark) .text-stone-400 {
   outline: none;
 }
 .spouse-edge__hit:focus-visible {
-  stroke: var(--color-emerald-500);
+  stroke: var(--aurora-jade-bright);
   stroke-opacity: 1;
   stroke-width: 2;
 }
-/* React Flow defaults edges to visibleStroke — ring hit circles need fill hits. */
 .react-flow__edge.edge-spouse,
 .react-flow__edge.edge-divorced {
   pointer-events: all;
 }
-/* Parent -> child lines: colour comes from per-couple DNA data (inline). */
 .edge-child .react-flow__edge-path {
   stroke-width: 2;
 }
 
-/* Touch screens: keep lines readable without covering the cards. */
 @media (pointer: coarse) {
   .react-flow__edge-path {
     stroke-width: 2;
@@ -336,70 +394,109 @@ html:not(.dark) .text-stone-400 {
   }
 }
 
-/* —— Tree page toolbar —— */
+/* —— Tree toolbar —— */
 .tree-page-toolbar {
-  @apply border-b border-stone-200/80 bg-white/90 px-3 py-2 shadow-[0_1px_3px_0_rgb(0_0_0_0.04)] backdrop-blur-sm sm:px-4 sm:py-3 dark:border-stone-800 dark:bg-stone-900/90 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.24)];
+  @apply border-b px-3 py-2 backdrop-blur-xl sm:px-4 sm:py-3;
+  border-color: rgb(13 148 136 / 0.14);
+  background: rgb(228 239 235 / 0.78);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.35) inset;
+}
+html.dark .tree-page-toolbar {
+  border-color: rgb(45 212 191 / 0.1);
+  background: rgb(7 15 14 / 0.82);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset;
 }
 
-/* —— Tree search refinement —— */
 .tree-search-input {
-  @apply w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-base text-stone-900 shadow-sm outline-none transition-all placeholder:text-stone-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 sm:py-2 sm:text-sm dark:border-stone-600 dark:bg-stone-800/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-emerald-500;
+  @apply w-full rounded-xl border px-3 py-2.5 text-base text-stone-900 outline-none transition-all placeholder:text-stone-400 focus:ring-2 sm:py-2 sm:text-sm dark:text-stone-100 dark:placeholder:text-stone-500;
+  border-color: rgb(13 148 136 / 0.25);
+  background: rgb(255 255 255 / 0.72);
+  backdrop-filter: blur(10px);
+}
+.tree-search-input:focus {
+  border-color: var(--aurora-jade);
+  --tw-ring-color: rgb(13 148 136 / 0.22);
+}
+html.dark .tree-search-input {
+  border-color: rgb(45 212 191 / 0.2);
+  background: rgb(19 46 41 / 0.7);
 }
 
 .tree-search-dropdown {
-  @apply absolute z-30 mt-1.5 max-h-[min(16rem,45vh)] w-full overflow-y-auto rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg shadow-stone-900/6 sm:max-h-80 dark:border-stone-700 dark:bg-stone-900 dark:shadow-black/30;
+  @apply absolute z-30 mt-1.5 max-h-[min(16rem,45vh)] w-full overflow-y-auto rounded-xl border p-1.5 sm:max-h-80;
+  border-color: rgb(13 148 136 / 0.18);
+  background: rgb(255 255 255 / 0.92);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 16px 40px -20px rgb(10 31 28 / 0.35);
+}
+html.dark .tree-search-dropdown {
+  border-color: rgb(45 212 191 / 0.15);
+  background: rgb(19 46 41 / 0.95);
+  box-shadow: 0 16px 40px -16px rgb(0 0 0 / 0.55);
 }
 
 .tree-search-result {
-  @apply flex w-full items-center gap-3 rounded-lg px-3 text-left transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500 dark:hover:bg-emerald-950/40;
+  @apply flex w-full items-center gap-3 rounded-lg px-3 text-left transition-colors hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-500 dark:hover:bg-teal-950/40;
 }
 
-/* Soft light shell — easy on the eyes, not harsh white, not dark. */
+/* Soft aurora shell */
 .app-shell {
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(167 243 208 / 0.28), transparent 55%),
-    linear-gradient(180deg, #e7efe9 0%, #eef3ef 42%, #e8ebe4 100%);
+    radial-gradient(ellipse 70% 45% at 15% -5%, rgb(45 212 191 / 0.22), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 95% 10%, rgb(13 148 136 / 0.14), transparent 50%),
+    linear-gradient(165deg, #e8f2ee 0%, #dceae5 40%, #e2ebe7 100%);
 }
 html.dark .app-shell {
-  background: #0c0a09;
+  background:
+    radial-gradient(ellipse 70% 50% at 20% -10%, rgb(13 148 136 / 0.18), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 90% 0%, rgb(20 184 166 / 0.08), transparent 50%),
+    linear-gradient(180deg, #070f0e 0%, #0a1f1c 55%, #071412 100%);
 }
 
 .app-header {
   padding-top: env(safe-area-inset-top, 0px);
-  border-color: rgb(6 78 59 / 0.12);
-  background: rgb(247 250 247 / 0.78);
-  backdrop-filter: blur(18px) saturate(1.15);
-  -webkit-backdrop-filter: blur(18px) saturate(1.15);
-  box-shadow: 0 1px 0 rgb(6 78 59 / 0.06);
+  border-color: rgb(13 148 136 / 0.14);
+  background: rgb(228 239 235 / 0.72);
+  backdrop-filter: blur(20px) saturate(1.25);
+  -webkit-backdrop-filter: blur(20px) saturate(1.25);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.4) inset;
   transition: background-color 0.25s ease, box-shadow 0.25s ease;
 }
 html.dark .app-header {
-  border-color: rgb(41 37 36);
-  background: rgb(12 10 9 / 0.78);
-  box-shadow: 0 1px 0 rgb(0 0 0 / 0.35);
+  border-color: rgb(45 212 191 / 0.1);
+  background: rgb(7 15 14 / 0.78);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset;
 }
 
 .app-bottom-nav {
-  border-color: rgb(6 78 59 / 0.12);
-  background: rgb(247 250 247 / 0.9);
-  backdrop-filter: blur(18px) saturate(1.15);
-  -webkit-backdrop-filter: blur(18px) saturate(1.15);
-  box-shadow: 0 -8px 24px -16px rgb(28 25 23 / 0.18);
+  border-color: rgb(13 148 136 / 0.14);
+  background: rgb(228 239 235 / 0.88);
+  backdrop-filter: blur(20px) saturate(1.25);
+  -webkit-backdrop-filter: blur(20px) saturate(1.25);
+  box-shadow: 0 -12px 32px -20px rgb(10 31 28 / 0.22);
 }
 html.dark .app-bottom-nav {
-  border-color: rgb(41 37 36);
-  background: rgb(12 10 9 / 0.88);
-  box-shadow: 0 -8px 24px -16px rgb(0 0 0 / 0.55);
+  border-color: rgb(45 212 191 / 0.1);
+  background: rgb(7 15 14 / 0.9);
+  box-shadow: 0 -12px 32px -18px rgb(0 0 0 / 0.55);
 }
 
-/* Family tree canvas — calm stone surfaces for light + dark */
+.bottom-nav-tab-active {
+  background: rgb(13 148 136 / 0.16);
+  color: #0f766e;
+}
+html.dark .bottom-nav-tab-active {
+  background: rgb(45 212 191 / 0.14);
+  color: #99f6e4;
+}
+
+/* Family tree canvas — Aurora mist (not flat white) */
 .family-tree-canvas {
   background: transparent !important;
 }
 .family-tree-canvas .react-flow__renderer,
 .family-tree-canvas .react-flow__pane {
   cursor: grab;
-  /* Keep iOS from stealing pan/pinch as page scroll or browser zoom. */
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
@@ -409,53 +506,75 @@ html.dark .app-bottom-nav {
 }
 .family-tree-canvas .react-flow__node {
   cursor: pointer;
-  /* Position updates used to ease, which made pan feel sticky. */
   transition: none;
 }
 
-/* Light theme: deeper soft sage (comfortable to look at) + cream cards. */
 :root {
-  --tree-canvas-bg: #c5d8cc;
-  --tree-canvas-bg-deep: #b3c9bc;
-  --tree-card-bg: #f3f7f4;
-  --tree-card-border: rgb(6 78 59 / 0.22);
-  --child-edge-halo: #c5d8cc;
+  --tree-canvas-bg: #1a3d38;
+  --tree-canvas-bg-deep: #122e2a;
+  --tree-card-bg: rgb(240 248 245 / 0.82);
+  --tree-card-border: rgb(45 212 191 / 0.28);
+  --child-edge-halo: #1a3d38;
 }
 html.dark {
-  --tree-canvas-bg: #0c0a09;
-  --tree-canvas-bg-deep: #0c0a09;
-  --tree-card-bg: #1c1917;
-  --tree-card-border: rgb(255 255 255 / 0.08);
-  --child-edge-halo: #0c0a09;
+  --tree-canvas-bg: #070f0e;
+  --tree-canvas-bg-deep: #040a09;
+  --tree-card-bg: rgb(19 46 41 / 0.88);
+  --tree-card-border: rgb(45 212 191 / 0.2);
+  --child-edge-halo: #070f0e;
 }
 
 .tree-canvas-surface {
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 0%, rgb(236 253 245 / 0.35), transparent 55%),
-    linear-gradient(165deg, var(--tree-canvas-bg) 0%, var(--tree-canvas-bg-deep) 100%);
+  background-color: var(--tree-canvas-bg);
+  background-image:
+    radial-gradient(ellipse 80% 55% at 20% 15%, rgb(45 212 191 / 0.28), transparent 55%),
+    radial-gradient(ellipse 60% 50% at 85% 75%, rgb(20 184 166 / 0.16), transparent 50%),
+    radial-gradient(circle at 1px 1px, rgb(236 253 245 / 0.07) 1px, transparent 0),
+    linear-gradient(155deg, var(--tree-canvas-bg) 0%, var(--tree-canvas-bg-deep) 100%);
+  background-size: auto, auto, 28px 28px, auto;
+  animation: aurora-drift 28s ease-in-out infinite;
 }
 html.dark .tree-canvas-surface {
-  background: var(--tree-canvas-bg);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 25% 10%, rgb(13 148 136 / 0.22), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgb(20 184 166 / 0.1), transparent 50%),
+    radial-gradient(circle at 1px 1px, rgb(45 212 191 / 0.06) 1px, transparent 0),
+    linear-gradient(165deg, #070f0e 0%, #0a1f1c 100%);
+  background-size: auto, auto, 28px 28px, auto;
 }
 
 .tree-person-card {
-  background-color: var(--tree-card-bg) !important;
+  background: var(--tree-card-bg) !important;
   border-color: var(--tree-card-border);
+  backdrop-filter: blur(12px) saturate(1.15);
+  -webkit-backdrop-filter: blur(12px) saturate(1.15);
   box-shadow:
-    0 1px 2px rgb(28 25 23 / 0.07),
-    0 6px 16px rgb(6 78 59 / 0.10) !important;
+    0 1px 0 rgb(255 255 255 / 0.35) inset,
+    0 10px 28px -14px rgb(0 0 0 / 0.35) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+.tree-person-card:hover {
+  transform: translateY(-2px);
+  border-color: rgb(45 212 191 / 0.55);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.4) inset,
+    0 16px 32px -12px rgb(0 0 0 / 0.4) !important;
 }
 .tree-person-name {
-  font-family: var(--font-display), ui-serif, Georgia, serif;
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
 }
 html.dark .tree-person-card {
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35) !important;
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.05) inset,
+    0 12px 28px -12px rgb(0 0 0 / 0.55) !important;
 }
 
 .family-tree-controls {
-  background: rgb(243 247 244 / 0.96) !important;
-  box-shadow: 0 4px 14px rgb(28 25 23 / 0.10) !important;
-  /* Sit above the bottom tab bar on phones. */
+  background: rgb(240 248 245 / 0.9) !important;
+  border-color: rgb(13 148 136 / 0.2) !important;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px -12px rgb(0 0 0 / 0.35) !important;
   margin-bottom: calc(var(--bottom-nav-h) + 0.5rem) !important;
 }
 @media (min-width: 1024px) {
@@ -465,37 +584,33 @@ html.dark .tree-person-card {
 }
 .family-tree-controls .react-flow__controls-button {
   background: transparent;
-  border-bottom-color: var(--color-stone-200);
-  fill: var(--color-stone-700);
+  border-bottom-color: rgb(13 148 136 / 0.15);
+  fill: #134e4a;
   transition: background 0.12s;
 }
 .family-tree-controls .react-flow__controls-button:hover {
-  background: var(--color-stone-100);
+  background: rgb(13 148 136 / 0.12);
 }
-
 .dark .family-tree-controls {
-  background: rgb(28 25 23 / 0.95) !important;
-  border-color: var(--color-stone-700) !important;
-  box-shadow: 0 4px 14px rgb(0 0 0 / 0.35) !important;
+  background: rgb(19 46 41 / 0.92) !important;
+  border-color: rgb(45 212 191 / 0.18) !important;
+  box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.55) !important;
 }
 .dark .family-tree-controls .react-flow__controls-button {
-  background: transparent;
-  border-bottom-color: var(--color-stone-700);
-  fill: var(--color-stone-200);
+  border-bottom-color: rgb(45 212 191 / 0.12);
+  fill: #99f6e4;
 }
 .dark .family-tree-controls .react-flow__controls-button:hover {
-  background: var(--color-stone-800);
+  background: rgb(45 212 191 / 0.12);
 }
 
-/* DNA halo matches the light/dark canvas so strands stay clear */
 .family-tree-canvas--light {
   --child-edge-halo: var(--tree-canvas-bg);
 }
 .family-tree-canvas--dark {
-  --child-edge-halo: #0c0a09;
+  --child-edge-halo: #070f0e;
 }
 
-/* Easy / phone tree: quieter cards, finger-sized zoom, no extra chrome. */
 .tree-easy .tree-person-nick,
 .tree-easy .tree-person-badges {
   display: none;
@@ -517,48 +632,63 @@ html.dark .tree-person-card {
 }
 .tree-easy .react-flow__edge-path {
   stroke-width: 2.25;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
-/* React Flow chrome in dark mode */
 .dark .react-flow__minimap {
-  background: var(--color-stone-900);
-  border-color: var(--color-stone-700) !important;
+  background: #0a1f1c;
+  border-color: rgb(45 212 191 / 0.2) !important;
 }
 .dark .react-flow__minimap-mask {
   fill: rgb(0 0 0 / 0.45);
 }
 .dark .react-flow__attribution {
-  background: rgb(28 25 23 / 0.7);
-  color: var(--color-stone-400);
+  background: rgb(19 46 41 / 0.75);
+  color: #a8a29e;
 }
 
-/* Tree legend panel */
 .tree-legend {
-  @apply rounded-xl border border-emerald-900/10 bg-[#f3f7f4]/95 p-2.5 text-[11px] shadow-sm backdrop-blur dark:border-stone-700/80 dark:bg-stone-900/95;
+  @apply rounded-xl border p-2.5 text-[11px] backdrop-blur-xl;
+  border-color: rgb(45 212 191 / 0.22);
+  background: rgb(240 248 245 / 0.88);
+  box-shadow: 0 8px 24px -14px rgb(0 0 0 / 0.3);
+}
+html.dark .tree-legend {
+  border-color: rgb(45 212 191 / 0.15);
+  background: rgb(19 46 41 / 0.92);
 }
 
-/* Tree tip panel */
 .tree-tip {
-  @apply max-w-[min(100%-1rem,20rem)] rounded-xl border border-emerald-200/80 bg-[#f3f7f4]/95 px-2.5 py-2 text-xs shadow-sm backdrop-blur sm:max-w-md sm:p-3 sm:text-sm dark:border-emerald-800/80 dark:bg-stone-900/95;
+  @apply max-w-[min(100%-1rem,20rem)] rounded-xl border px-2.5 py-2 text-xs backdrop-blur-xl sm:max-w-md sm:p-3 sm:text-sm;
+  border-color: rgb(45 212 191 / 0.25);
+  background: rgb(240 248 245 / 0.9);
+  box-shadow: 0 8px 24px -14px rgb(0 0 0 / 0.3);
+}
+html.dark .tree-tip {
+  border-color: rgb(45 212 191 / 0.18);
+  background: rgb(19 46 41 / 0.92);
 }
 
-/* Tree action buttons (zoom-to-fit, zoom-readable) */
 .tree-action-btn {
-  @apply rounded-xl border border-emerald-900/12 bg-[#f3f7f4]/95 px-2.5 py-2 text-xs font-semibold text-stone-600 shadow-sm backdrop-blur transition-all hover:border-emerald-400 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-700 dark:bg-stone-900/95 dark:text-stone-300 dark:hover:border-emerald-600 dark:hover:text-emerald-300;
+  @apply rounded-xl border px-2.5 py-2 text-xs font-semibold text-teal-800 backdrop-blur-xl transition-all hover:border-teal-400 hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:text-teal-200 dark:hover:border-teal-500 dark:hover:text-teal-100;
+  border-color: rgb(13 148 136 / 0.22);
+  background: rgb(240 248 245 / 0.88);
+}
+html.dark .tree-action-btn {
+  border-color: rgb(45 212 191 / 0.18);
+  background: rgb(19 46 41 / 0.9);
 }
 
-/* Empty tree state */
 .tree-empty {
   @apply flex flex-1 flex-col items-center justify-center gap-5 p-8 text-center;
 }
 
-/* —— Home page: heritage hero + calm sections —— */
+/* —— Home page Aurora —— */
 .home-hero {
   background:
-    radial-gradient(ellipse 90% 70% at 10% 15%, rgb(16 185 129 / 0.22), transparent 60%),
-    radial-gradient(ellipse 60% 50% at 90% 85%, rgb(6 78 59 / 0.60), transparent 55%),
-    linear-gradient(160deg, #071611 0%, #0f2f25 35%, #1a332c 65%, #1a2e28 82%, #14110f 100%);
+    radial-gradient(ellipse 90% 70% at 10% 15%, rgb(45 212 191 / 0.2), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 85%, rgb(13 148 136 / 0.35), transparent 55%),
+    linear-gradient(160deg, #061412 0%, #0a1f1c 35%, #123530 65%, #0d1f1c 100%);
   position: relative;
 }
 
@@ -569,7 +699,7 @@ html.dark .tree-person-card {
   left: 0;
   right: 0;
   height: 4rem;
-  background: linear-gradient(to top, rgb(0 0 0 / 0.12), transparent);
+  background: linear-gradient(to top, rgb(0 0 0 / 0.15), transparent);
   pointer-events: none;
 }
 
@@ -583,8 +713,8 @@ html.dark .tree-person-card {
 .home-hero__glow {
   position: absolute;
   border-radius: 999px;
-  filter: blur(40px);
-  opacity: 0.55;
+  filter: blur(48px);
+  opacity: 0.45;
 }
 
 .home-hero__glow--a {
@@ -592,7 +722,7 @@ html.dark .tree-person-card {
   height: 18rem;
   left: -4rem;
   top: -3rem;
-  background: rgb(52 211 153 / 0.28);
+  background: rgb(45 212 191 / 0.32);
 }
 
 .home-hero__glow--b {
@@ -600,7 +730,7 @@ html.dark .tree-person-card {
   height: 16rem;
   right: -3rem;
   top: 18%;
-  background: rgb(251 191 36 / 0.14);
+  background: rgb(196 163 90 / 0.12);
 }
 
 .home-hero__glow--c {
@@ -608,16 +738,15 @@ html.dark .tree-person-card {
   height: 14rem;
   left: 20%;
   bottom: -4rem;
-  background: rgb(16 185 129 / 0.18);
+  background: rgb(13 148 136 / 0.2);
 }
 
 .home-hero__pattern {
   position: absolute;
   inset: 0;
-  opacity: 0.22;
-  background-image:
-    radial-gradient(circle at 1px 1px, rgb(167 243 208 / 0.35) 1px, transparent 0);
-  background-size: 22px 22px;
+  opacity: 0.28;
+  background-image: radial-gradient(circle at 1px 1px, rgb(153 246 228 / 0.35) 1px, transparent 0);
+  background-size: 24px 24px;
   mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 20%, transparent 75%);
 }
 
@@ -625,7 +754,7 @@ html.dark .tree-person-card {
   position: absolute;
   width: 7.5rem;
   height: 7.5rem;
-  color: rgb(253 230 138 / 0.38);
+  color: rgb(196 163 90 / 0.35);
 }
 
 .home-hero__filigree--tl {
@@ -644,7 +773,7 @@ html.dark .tree-person-card {
   top: 50%;
   width: min(30rem, 75vw);
   height: auto;
-  color: rgb(167 243 208 / 0.10);
+  color: rgb(45 212 191 / 0.1);
   transform: translateY(-48%);
 }
 
@@ -655,30 +784,57 @@ html.dark .tree-person-card {
 
 .home-hero__mote {
   position: absolute;
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 999px;
-  background: rgb(253 230 138 / 0.55);
-  animation: home-mote 9s ease-in-out infinite;
+  background: rgb(153 246 228 / 0.55);
+  animation: home-mote 10s ease-in-out infinite;
 }
 
-.home-hero__mote--1 { left: 12%; top: 22%; animation-delay: 0s; }
-.home-hero__mote--2 { left: 28%; top: 68%; animation-delay: 1.2s; width: 3px; height: 3px; }
-.home-hero__mote--3 { left: 62%; top: 18%; animation-delay: 2.1s; }
-.home-hero__mote--4 { left: 78%; top: 54%; animation-delay: 3.4s; width: 4px; height: 4px; }
+.home-hero__mote--1 {
+  left: 12%;
+  top: 22%;
+  animation-delay: 0s;
+}
+.home-hero__mote--2 {
+  left: 28%;
+  top: 68%;
+  animation-delay: 1.2s;
+  width: 3px;
+  height: 3px;
+}
+.home-hero__mote--3 {
+  left: 62%;
+  top: 18%;
+  animation-delay: 2.1s;
+}
+.home-hero__mote--4 {
+  left: 78%;
+  top: 54%;
+  animation-delay: 3.4s;
+  width: 4px;
+  height: 4px;
+}
 
 @keyframes home-mote {
-  0%, 100% { transform: translateY(0); opacity: 0.25; }
-  50% { transform: translateY(-10px); opacity: 0.8; }
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-12px);
+    opacity: 0.85;
+  }
 }
 
 .home-hero__jewel {
   padding: 0.85rem 0.9rem 1rem;
-  border-radius: 1.25rem;
-  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 1.15rem;
+  border: 1px solid rgb(45 212 191 / 0.2);
   background: rgb(255 255 255 / 0.06);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 18px 40px -24px rgb(0 0 0 / 0.55);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
 }
 
 .home-faces {
@@ -690,7 +846,7 @@ html.dark .tree-person-card {
 .home-face {
   margin-left: -0.55rem;
   border-radius: 999px;
-  box-shadow: 0 0 0 2px rgb(15 47 37 / 0.85);
+  box-shadow: 0 0 0 2px rgb(10 31 28 / 0.85);
   transition: transform 0.2s ease, z-index 0s;
 }
 
@@ -707,7 +863,7 @@ html.dark .tree-person-card {
   align-items: center;
   justify-content: center;
   padding: 0 0.55rem;
-  background: rgb(6 78 59 / 0.85);
+  background: rgb(13 148 136 / 0.9);
   color: #ecfdf5;
   font-size: 0.7rem;
   font-weight: 700;
@@ -718,7 +874,7 @@ html.dark .tree-person-card {
   align-items: center;
   gap: 0.6rem;
   margin-top: 0.85rem;
-  color: rgb(253 230 138 / 0.7);
+  color: rgb(196 163 90 / 0.65);
 }
 
 .home-hero .home-rule {
@@ -727,7 +883,7 @@ html.dark .tree-person-card {
 
 .home-section .home-rule {
   justify-content: center;
-  color: rgb(5 122 85 / 0.55);
+  color: rgb(13 148 136 / 0.5);
 }
 
 .home-rule__line {
@@ -762,15 +918,16 @@ html.dark .tree-person-card {
   min-height: 5.25rem;
   padding: 1rem 1.05rem;
   border-radius: 1.15rem;
-  border: 1px solid rgb(28 25 23 / 0.08);
+  border: 1px solid rgb(13 148 136 / 0.14);
   text-align: left;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  backdrop-filter: blur(8px);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
 .home-path:hover,
 .home-path:focus-visible {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 28px -18px rgb(28 25 23 / 0.35);
+  transform: translateY(-3px);
+  box-shadow: 0 16px 32px -18px rgb(10 31 28 / 0.35);
 }
 
 .home-path__icon {
@@ -789,120 +946,171 @@ html.dark .tree-person-card {
 }
 
 .home-path--tree {
-  background: linear-gradient(145deg, #ecfdf5, #d1fae5 55%, #f0fdf4);
-  color: #064e3b;
+  background: linear-gradient(145deg, rgb(204 251 241 / 0.9), rgb(167 243 208 / 0.55) 55%, rgb(240 253 250 / 0.85));
+  color: #134e4a;
 }
-.home-path--tree .home-path__icon { background: #047857; color: #ecfdf5; }
+.home-path--tree .home-path__icon {
+  background: #0d9488;
+  color: #ecfdf5;
+}
 
 .home-path--members {
   background: linear-gradient(145deg, #fff7ed, #ffedd5 55%, #fffbeb);
   color: #7c2d12;
 }
-.home-path--members .home-path__icon { background: #c2410c; color: #fff7ed; }
+.home-path--members .home-path__icon {
+  background: #c2410c;
+  color: #fff7ed;
+}
 
 .home-path--map {
   background: linear-gradient(145deg, #e0f2fe, #bae6fd 55%, #f0f9ff);
   color: #0c4a6e;
 }
-.home-path--map .home-path__icon { background: #0369a1; color: #e0f2fe; }
+.home-path--map .home-path__icon {
+  background: #0369a1;
+  color: #e0f2fe;
+}
 
 .home-path--timeline {
   background: linear-gradient(145deg, #fef3c7, #fde68a 55%, #fffbeb);
   color: #78350f;
 }
-.home-path--timeline .home-path__icon { background: #b45309; color: #fffbeb; }
+.home-path--timeline .home-path__icon {
+  background: #b45309;
+  color: #fffbeb;
+}
 
 .home-path--related {
   background: linear-gradient(145deg, #fce7f3, #fbcfe8 55%, #fff1f2);
   color: #9d174d;
 }
-.home-path--related .home-path__icon { background: #be123c; color: #fff1f2; }
-
-html.dark .home-path--tree { background: linear-gradient(145deg, #064e3b, #022c22); color: #d1fae5; border-color: rgb(167 243 208 / 0.12); }
-html.dark .home-path--members { background: linear-gradient(145deg, #7c2d12, #431407); color: #ffedd5; border-color: rgb(253 186 116 / 0.14); }
-html.dark .home-path--map { background: linear-gradient(145deg, #0c4a6e, #082f49); color: #e0f2fe; border-color: rgb(125 211 252 / 0.14); }
-html.dark .home-path--timeline { background: linear-gradient(145deg, #78350f, #451a03); color: #fde68a; border-color: rgb(252 211 77 / 0.14); }
-html.dark .home-path--related { background: linear-gradient(145deg, #9d174d, #4c0519); color: #fce7f3; border-color: rgb(251 113 133 / 0.16); }
-
-.home-stat-card__icon {
-  color: #047857;
+.home-path--related .home-path__icon {
+  background: #be123c;
+  color: #fff1f2;
 }
 
-.home-stat-card--members { background-image: radial-gradient(circle at 90% 0%, rgb(16 185 129 / 0.14), transparent 46%); }
-.home-stat-card--gens { background-image: radial-gradient(circle at 90% 0%, rgb(245 158 11 / 0.16), transparent 46%); }
-.home-stat-card--living { background-image: radial-gradient(circle at 90% 0%, rgb(244 63 94 / 0.12), transparent 46%); }
-.home-stat-card--places { background-image: radial-gradient(circle at 90% 0%, rgb(14 165 233 / 0.14), transparent 46%); }
-.home-stat-card--gens .home-stat-card__icon { color: #b45309; }
-.home-stat-card--living .home-stat-card__icon { color: #be123c; }
-.home-stat-card--places .home-stat-card__icon { color: #0369a1; }
+html.dark .home-path--tree {
+  background: linear-gradient(145deg, #134e4a, #042f2e);
+  color: #ccfbf1;
+  border-color: rgb(45 212 191 / 0.14);
+}
+html.dark .home-path--members {
+  background: linear-gradient(145deg, #7c2d12, #431407);
+  color: #ffedd5;
+  border-color: rgb(253 186 116 / 0.14);
+}
+html.dark .home-path--map {
+  background: linear-gradient(145deg, #0c4a6e, #082f49);
+  color: #e0f2fe;
+  border-color: rgb(125 211 252 / 0.14);
+}
+html.dark .home-path--timeline {
+  background: linear-gradient(145deg, #78350f, #451a03);
+  color: #fde68a;
+  border-color: rgb(252 211 77 / 0.14);
+}
+html.dark .home-path--related {
+  background: linear-gradient(145deg, #9d174d, #4c0519);
+  color: #fce7f3;
+  border-color: rgb(251 113 133 / 0.16);
+}
+
+.home-stat-card__icon {
+  color: #0d9488;
+}
+
+.home-stat-card--members {
+  background-image: radial-gradient(circle at 90% 0%, rgb(13 148 136 / 0.16), transparent 46%);
+}
+.home-stat-card--gens {
+  background-image: radial-gradient(circle at 90% 0%, rgb(196 163 90 / 0.18), transparent 46%);
+}
+.home-stat-card--living {
+  background-image: radial-gradient(circle at 90% 0%, rgb(244 63 94 / 0.12), transparent 46%);
+}
+.home-stat-card--places {
+  background-image: radial-gradient(circle at 90% 0%, rgb(14 165 233 / 0.14), transparent 46%);
+}
+.home-stat-card--gens .home-stat-card__icon {
+  color: #b45309;
+}
+.home-stat-card--living .home-stat-card__icon {
+  color: #be123c;
+}
+.home-stat-card--places .home-stat-card__icon {
+  color: #0369a1;
+}
 
 @media (min-width: 640px) {
   .home-hero__pedigree {
     right: 0%;
     width: min(28rem, 44vw);
-    color: rgb(167 243 208 / 0.13);
+    color: rgb(45 212 191 / 0.12);
   }
 }
 
 html:not(.dark) .home-hero {
   background:
-    radial-gradient(ellipse 90% 70% at 12% 18%, rgb(16 185 129 / 0.18), transparent 58%),
-    radial-gradient(ellipse 70% 55% at 88% 80%, rgb(120 113 108 / 0.10), transparent 55%),
-    linear-gradient(160deg, #d7e6dc 0%, #cfe0d5 38%, #d9e4d8 72%, #e7efe9 100%);
-  color: #1c1917;
+    radial-gradient(ellipse 90% 70% at 12% 18%, rgb(45 212 191 / 0.22), transparent 58%),
+    radial-gradient(ellipse 70% 55% at 88% 80%, rgb(13 148 136 / 0.12), transparent 55%),
+    linear-gradient(160deg, #c5ddd6 0%, #b8d4cc 38%, #cfe0d9 72%, #e4efeb 100%);
+  color: #0a1f1c;
 }
 
 html:not(.dark) .home-hero::after {
   height: 7rem;
-  background: linear-gradient(to top, #e7efe9 12%, transparent);
+  background: linear-gradient(to top, #e4efeb 12%, transparent);
 }
 
 html.dark .home-hero::after {
   height: 5.5rem;
-  background: linear-gradient(to top, #0c0a09, transparent);
+  background: linear-gradient(to top, #070f0e, transparent);
 }
 
 html:not(.dark) .home-hero__pedigree {
-  color: rgb(6 78 59 / 0.14);
+  color: rgb(13 148 136 / 0.16);
 }
 
 html:not(.dark) .home-hero__filigree {
-  color: rgb(180 83 9 / 0.38);
+  color: rgb(180 83 9 / 0.32);
 }
 
 html:not(.dark) .home-hero__pattern {
-  opacity: 0.28;
-  background-image: radial-gradient(circle at 1px 1px, rgb(6 78 59 / 0.22) 1px, transparent 0);
+  opacity: 0.3;
+  background-image: radial-gradient(circle at 1px 1px, rgb(13 148 136 / 0.2) 1px, transparent 0);
 }
 
 html:not(.dark) .home-hero__jewel {
-  border-color: rgb(6 78 59 / 0.14);
-  background: rgb(255 255 255 / 0.55);
-  box-shadow: 0 16px 36px -22px rgb(6 78 59 / 0.28);
+  border-color: rgb(13 148 136 / 0.18);
+  background: rgb(255 255 255 / 0.5);
+  box-shadow: 0 16px 36px -22px rgb(10 31 28 / 0.28);
 }
 
 html:not(.dark) .home-face {
-  box-shadow: 0 0 0 2px #d7e6dc;
+  box-shadow: 0 0 0 2px #c5ddd6;
 }
 
 html:not(.dark) .home-face--more {
-  background: #047857;
+  background: #0d9488;
 }
 
 html:not(.dark) .home-hero__faces p {
-  color: rgb(6 95 70 / 0.72) !important;
+  color: rgb(15 118 110 / 0.75) !important;
 }
 
 html.dark .home-section .home-rule {
-  color: rgb(167 243 208 / 0.45);
+  color: rgb(45 212 191 / 0.4);
 }
 
 html:not(.dark) .home-hero__kicker {
-  color: rgb(6 95 70 / 0.85) !important;
+  color: rgb(15 118 110 / 0.88) !important;
 }
 
 html:not(.dark) .home-hero__title {
   color: #134e4a !important;
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.03em;
 }
 
 html:not(.dark) .home-hero__intro {
@@ -910,21 +1118,21 @@ html:not(.dark) .home-hero__intro {
 }
 
 html:not(.dark) .home-hero__search > p {
-  color: rgb(6 95 70 / 0.9) !important;
+  color: rgb(15 118 110 / 0.9) !important;
 }
 
 html:not(.dark) .home-hero__actions a:first-child {
-  background: #047857;
+  background: linear-gradient(165deg, #14b8a6, #0f766e);
   color: #ecfdf5;
-  box-shadow: 0 10px 24px rgb(6 78 59 / 0.22);
+  box-shadow: 0 10px 24px rgb(13 148 136 / 0.28);
 }
 
 html:not(.dark) .home-hero__actions a:first-child:hover {
-  background: #065f46;
+  background: linear-gradient(165deg, #2dd4bf, #0d9488);
 }
 
 html:not(.dark) .home-hero__actions button {
-  border-color: rgb(6 78 59 / 0.28);
+  border-color: rgb(13 148 136 / 0.28);
   background: rgb(255 255 255 / 0.45);
   color: #134e4a;
 }
@@ -933,29 +1141,48 @@ html:not(.dark) .home-hero__actions button:hover {
   background: rgb(255 255 255 / 0.7);
 }
 
-/* Home section cards — soft cream on sage, not stark white */
 .home-section-card {
-  @apply rounded-2xl border border-emerald-900/10 bg-[#f6f9f6]/95 shadow-[0_1px_3px_0_rgb(28_25_23_/_0.05)] transition-[box-shadow,border-color] duration-200 ease-out dark:border-stone-700/80 dark:bg-stone-900/95 dark:shadow-[0_1px_3px_0_rgb(0_0_0_0.20)];
+  @apply rounded-2xl border transition-[box-shadow,border-color,transform] duration-200 ease-out;
+  border-color: rgb(13 148 136 / 0.14);
+  background: rgb(255 255 255 / 0.58);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.45) inset, 0 8px 24px -16px rgb(10 31 28 / 0.15);
+}
+html.dark .home-section-card {
+  border-color: rgb(45 212 191 / 0.12);
+  background: rgb(19 46 41 / 0.75);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset;
 }
 
-/* Today’s birthday spotlight — warmer emerald wash so it’s unmistakable */
 .home-today-card {
-  @apply rounded-2xl border border-emerald-700/25 bg-gradient-to-br from-emerald-100/95 via-[#eef7f1] to-amber-50/80 shadow-[0_8px_24px_-12px_rgb(6_78_59_/_0.35)] dark:border-emerald-600/30 dark:from-emerald-950/80 dark:via-stone-900 dark:to-stone-900;
+  @apply rounded-2xl border;
+  border-color: rgb(13 148 136 / 0.28);
+  background: linear-gradient(145deg, rgb(204 251 241 / 0.95), rgb(236 253 245 / 0.9) 50%, rgb(254 243 199 / 0.55));
+  box-shadow: 0 12px 32px -16px rgb(13 148 136 / 0.35);
   animation: home-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+html.dark .home-today-card {
+  border-color: rgb(45 212 191 / 0.25);
+  background: linear-gradient(145deg, rgb(19 78 74 / 0.9), rgb(19 46 41 / 0.95));
 }
 
 .home-hero--celebrate .home-hero__kicker {
   letter-spacing: 0.28em;
 }
 
-/* Home list items — hover-lift for interactive rows */
 .home-list-item {
-  @apply flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 ease-out hover:bg-emerald-50/70 hover:shadow-sm hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500 sm:px-4 dark:hover:bg-stone-800/60;
+  @apply flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 ease-out hover:-translate-y-px hover:bg-teal-50/70 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-500 sm:px-4 dark:hover:bg-teal-950/40;
 }
 
-/* Stat card in the mini dashboard */
 .home-stat-card {
-  @apply rounded-xl border border-emerald-900/10 bg-[#f7faf7]/95 p-4 shadow-[0_1px_2px_0_rgb(28_25_23_/_0.04)] transition-[box-shadow,border-color,transform] duration-200 ease-out dark:border-stone-700/70 dark:bg-stone-900/90;
+  @apply rounded-xl border p-4 transition-[box-shadow,border-color,transform] duration-200 ease-out;
+  border-color: rgb(13 148 136 / 0.12);
+  background: rgb(255 255 255 / 0.55);
+  backdrop-filter: blur(10px);
+}
+html.dark .home-stat-card {
+  border-color: rgb(45 212 191 / 0.12);
+  background: rgb(19 46 41 / 0.7);
 }
 
 @keyframes home-rise {
@@ -1006,6 +1233,34 @@ html:not(.dark) .home-hero__actions button:hover {
   animation-delay: 0.2s;
 }
 
+.home-hero__title {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.03em;
+}
+
+/* Login gate aurora panel */
+.gate-panel {
+  animation: aurora-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  border-color: rgb(13 148 136 / 0.2);
+  background: rgb(255 255 255 / 0.72);
+  backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.5) inset, 0 24px 48px -28px rgb(10 31 28 / 0.4);
+}
+html.dark .gate-panel {
+  border-color: rgb(45 212 191 / 0.18);
+  background: rgb(19 46 41 / 0.88);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.05) inset, 0 24px 48px -24px rgb(0 0 0 / 0.6);
+}
+.gate-panel--owner {
+  border-color: rgb(45 212 191 / 0.28);
+  background: rgb(10 31 28 / 0.92);
+  color: #ecf4f1;
+}
+
+.page-outlet {
+  animation: aurora-fade 0.28s ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-hero__mark,
   .home-hero__kicker,
@@ -1014,24 +1269,33 @@ html:not(.dark) .home-hero__actions button:hover {
   .home-hero__search,
   .home-hero__actions,
   .home-hero__faces,
-  .home-section {
-    animation: none;
+  .home-section,
+  .home-today-card,
+  .aurora-rise,
+  .aurora-fade,
+  .gate-panel,
+  .page-outlet {
+    animation: none !important;
+  }
+  .tree-canvas-surface {
+    animation: none !important;
   }
   .home-hero__mote {
     animation: none;
   }
   .home-list-item,
+  .home-path,
   .btn-primary,
   .btn-secondary,
   .btn-danger,
   .icon-btn,
-  .home-stat-card {
+  .home-stat-card,
+  .tree-person-card {
     transition: none !important;
     transform: none !important;
   }
 }
 
-/* Print styles: hide nav, buttons, overlays; force light background */
 @media print {
   nav,
   .bottom-nav,
