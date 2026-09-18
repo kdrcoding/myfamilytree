@@ -192,7 +192,7 @@ export function Layout() {
                       className={({ isActive }) =>
                         `flex items-center gap-2 px-4 py-2.5 text-sm font-semibold ${
                           isActive
-                            ? 'bg-emerald-50 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
+                            ? 'bg-teal-50 text-teal-900 dark:bg-teal-950/50 dark:text-teal-200'
                             : 'text-stone-800 hover:bg-stone-100 dark:text-stone-100 dark:hover:bg-stone-800'
                         }`
                       }
