@@ -15,7 +15,7 @@
   @keyframes modal-in {
     from {
       opacity: 0;
-      transform: translateY(16px) scale(0.97);
+      transform: translateY(28px) scale(0.96);
     }
     to {
       opacity: 1;
@@ -110,7 +110,7 @@ html:not(.dark) .text-stone-400 {
 @keyframes aurora-rise {
   from {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(22px);
   }
   to {
     opacity: 1;
@@ -127,6 +127,39 @@ html:not(.dark) .text-stone-400 {
   }
 }
 
+@keyframes aurora-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(36px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes aurora-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-36px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes aurora-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes aurora-drift {
   0%,
   100% {
@@ -137,11 +170,58 @@ html:not(.dark) .text-stone-400 {
   }
 }
 
+@keyframes aurora-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
 .aurora-rise {
   animation: aurora-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .aurora-fade {
   animation: aurora-fade 0.4s ease-out both;
+}
+.aurora-slide-in {
+  animation: aurora-slide-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.aurora-slide-in-left {
+  animation: aurora-slide-in-left 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.aurora-slide-up {
+  animation: aurora-slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Stagger helpers for lists / path tiles */
+.aurora-stagger > *:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.aurora-stagger > *:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.aurora-stagger > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.aurora-stagger > *:nth-child(4) {
+  animation-delay: 0.22s;
+}
+.aurora-stagger > *:nth-child(5) {
+  animation-delay: 0.28s;
+}
+.aurora-stagger > *:nth-child(6) {
+  animation-delay: 0.34s;
+}
+.aurora-stagger > *:nth-child(7) {
+  animation-delay: 0.4s;
+}
+.aurora-stagger > *:nth-child(8) {
+  animation-delay: 0.46s;
+}
+.aurora-stagger > * {
+  animation: aurora-slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @layer components {
@@ -921,13 +1001,14 @@ html.dark .tree-action-btn {
   border: 1px solid rgb(13 148 136 / 0.14);
   text-align: left;
   backdrop-filter: blur(8px);
-  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease,
+    border-color 0.22s ease;
 }
 
 .home-path:hover,
 .home-path:focus-visible {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 32px -18px rgb(10 31 28 / 0.35);
+  transform: translateY(-4px) translateX(4px);
+  box-shadow: 0 18px 36px -18px rgb(10 31 28 / 0.38);
 }
 
 .home-path__icon {
@@ -943,6 +1024,13 @@ html.dark .tree-action-btn {
 .home-path__arrow {
   margin-left: auto;
   opacity: 0.45;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+}
+
+.home-path:hover .home-path__arrow,
+.home-path:focus-visible .home-path__arrow {
+  opacity: 1;
+  transform: translateX(4px);
 }
 
 .home-path--tree {
@@ -1240,7 +1328,7 @@ html.dark .home-stat-card {
 
 /* Login gate aurora panel */
 .gate-panel {
-  animation: aurora-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: aurora-slide-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   border-color: rgb(13 148 136 / 0.2);
   background: rgb(255 255 255 / 0.72);
   backdrop-filter: blur(20px) saturate(1.2);
@@ -1255,10 +1343,82 @@ html.dark .gate-panel {
   border-color: rgb(45 212 191 / 0.28);
   background: rgb(10 31 28 / 0.92);
   color: #ecf4f1;
+  animation: aurora-slide-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.gate-panel form > * {
+  animation: aurora-slide-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.gate-panel form > *:nth-child(1) {
+  animation-delay: 0.08s;
+}
+.gate-panel form > *:nth-child(2) {
+  animation-delay: 0.14s;
+}
+.gate-panel form > *:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.gate-panel form > *:nth-child(4) {
+  animation-delay: 0.26s;
+}
+.gate-panel form > *:nth-child(5) {
+  animation-delay: 0.32s;
 }
 
 .page-outlet {
-  animation: aurora-fade 0.28s ease-out both;
+  animation: aurora-slide-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.page-outlet--back {
+  animation: aurora-slide-in-left 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Bottom nav sliding pill */
+.app-bottom-nav {
+  position: relative;
+}
+.bottom-nav-track {
+  position: relative;
+}
+.bottom-nav-pill {
+  position: absolute;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  border-radius: 1rem;
+  background: rgb(13 148 136 / 0.16);
+  transition: left 0.35s cubic-bezier(0.22, 1, 0.36, 1), width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+html.dark .bottom-nav-pill {
+  background: rgb(45 212 191 / 0.14);
+}
+.bottom-nav-track a {
+  position: relative;
+  z-index: 1;
+}
+
+.card {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease,
+    border-color 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.home-section-card,
+.home-stat-card {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease;
+}
+.home-stat-card:hover {
+  transform: translateY(-3px);
+}
+
+.home-list-item {
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.home-list-item:hover {
+  transform: translateX(6px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1273,8 +1433,14 @@ html.dark .gate-panel {
   .home-today-card,
   .aurora-rise,
   .aurora-fade,
+  .aurora-slide-in,
+  .aurora-slide-in-left,
+  .aurora-slide-up,
+  .aurora-stagger > *,
   .gate-panel,
-  .page-outlet {
+  .gate-panel form > *,
+  .page-outlet,
+  .page-outlet--back {
     animation: none !important;
   }
   .tree-canvas-surface {
@@ -1283,6 +1449,9 @@ html.dark .gate-panel {
   .home-hero__mote {
     animation: none;
   }
+  .bottom-nav-pill {
+    transition: none !important;
+  }
   .home-list-item,
   .home-path,
   .btn-primary,
@@ -1290,6 +1459,8 @@ html.dark .gate-panel {
   .btn-danger,
   .icon-btn,
   .home-stat-card,
+  .home-section-card,
+  .card,
   .tree-person-card {
     transition: none !important;
     transform: none !important;

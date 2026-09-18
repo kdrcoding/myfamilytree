@@ -217,8 +217,8 @@ export function MembersPage() {
           {visible.map((person, i) => (
             <div
               key={person.id}
-              className="animate-rise-in"
-              style={{ animationDelay: `${Math.min(i * 25, 300)}ms` }}
+              className="aurora-slide-up"
+              style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
             >
               <PersonCard
                 person={person}

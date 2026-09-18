@@ -16,6 +16,26 @@ const WelcomeTour = lazy(() =>
   import('./WelcomeTour').then((m) => ({ default: m.WelcomeTour })),
 );
 
+/** Rough left-to-right order so page slides feel directional. */
+const ROUTE_ORDER = [
+  '/',
+  '/tree',
+  '/members',
+  '/map',
+  '/timeline',
+  '/related',
+  '/stats',
+  '/settings',
+  '/about',
+];
+
+function routeRank(path: string): number {
+  const exact = ROUTE_ORDER.indexOf(path);
+  if (exact >= 0) return exact;
+  const prefix = ROUTE_ORDER.findIndex((p) => p !== '/' && path.startsWith(p));
+  return prefix >= 0 ? prefix : 50;
+}
+
 export function Layout() {
   const { settings, toggleTheme } = useSettings();
   const { role, signOut } = useAuth();
@@ -23,6 +43,8 @@ export function Layout() {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  const prevPathRef = useRef(location.pathname);
+  const [slideBack, setSlideBack] = useState(false);
   const t = useT();
   const isTreePage = location.pathname === '/tree';
   const isSettingsPage = location.pathname === '/settings';
@@ -31,6 +53,15 @@ export function Layout() {
 
   useEffect(() => {
     setMoreOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const prev = prevPathRef.current;
+    const next = location.pathname;
+    if (prev !== next) {
+      setSlideBack(routeRank(next) < routeRank(prev));
+      prevPathRef.current = next;
+    }
   }, [location.pathname]);
 
   useEffect(() => {
@@ -232,7 +263,12 @@ export function Layout() {
         }`}
       >
         <Suspense fallback={<PageSkeleton />}>
-          <div key={location.pathname} className={`flex min-h-0 flex-1 flex-col ${isTreePage ? '' : 'page-outlet'}`}>
+          <div
+            key={location.pathname}
+            className={`flex min-h-0 flex-1 flex-col ${
+              isTreePage ? '' : slideBack ? 'page-outlet page-outlet--back' : 'page-outlet'
+            }`}
+          >
             <Outlet />
           </div>
         </Suspense>

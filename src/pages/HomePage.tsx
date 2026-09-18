@@ -252,7 +252,7 @@ export function HomePage() {
               {t('home.pathsIntro')}
             </p>
           </div>
-          <div className="home-paths">
+          <div className="home-paths aurora-stagger">
             {paths.map(({ to, title, hint, kind, Icon }) => (
               <Link key={to} to={to} className={`home-path home-path--${kind}`}>
                 <span className="home-path__icon">
@@ -397,7 +397,7 @@ export function HomePage() {
         {!easy && (
           <section
             aria-label={t('home.summaryLabel')}
-            className="home-section mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4"
+            className="home-section aurora-stagger mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4"
           >
             {[
               { Icon: Users, label: t('home.statMembers'), value: stats.total, tint: 'members' },
