@@ -84,10 +84,12 @@
     --aurora-jade: #0d9488;
     --aurora-jade-bright: #14b8a6;
     --aurora-jade-deep: #0f766e;
-    --aurora-mist: #e4efeb;
-    --aurora-glass: rgb(255 255 255 / 0.62);
-    --aurora-glass-border: rgb(13 148 136 / 0.18);
+    --aurora-mist: #9eb8ae;
+    --aurora-glass: rgb(200 222 214 / 0.82);
+    --aurora-glass-border: rgb(15 118 110 / 0.3);
     --aurora-gold: #c4a35a;
+    --aurora-surface: #b0c9bf;
+    --aurora-surface-deep: #8fafa3;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -231,7 +233,7 @@ html:not(.dark) .text-stone-400 {
     background: var(--aurora-glass);
     backdrop-filter: blur(14px) saturate(1.2);
     -webkit-backdrop-filter: blur(14px) saturate(1.2);
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.4) inset, 0 8px 24px -16px rgb(10 31 28 / 0.18);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.25) inset, 0 10px 28px -16px rgb(10 31 28 / 0.28);
   }
   html.dark .card {
     border-color: rgb(45 212 191 / 0.12);
@@ -241,9 +243,9 @@ html:not(.dark) .text-stone-400 {
 
   .input {
     @apply w-full rounded-xl border px-3 py-2.5 text-base text-stone-900 outline-none transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-stone-500 focus:ring-2 sm:py-2 sm:text-sm dark:text-stone-100 dark:placeholder:text-stone-400;
-    border-color: rgb(13 148 136 / 0.28);
-    background: rgb(255 255 255 / 0.78);
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.5) inset;
+    border-color: rgb(15 118 110 / 0.35);
+    background: rgb(214 230 224 / 0.95);
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.3) inset;
   }
   .input:focus {
     border-color: var(--aurora-jade);
@@ -275,14 +277,14 @@ html:not(.dark) .text-stone-400 {
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-sm font-semibold text-stone-700 transition-[background-color,transform,border-color] duration-200 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:text-stone-200;
-    border-color: rgb(13 148 136 / 0.22);
-    background: rgb(255 255 255 / 0.55);
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-sm font-semibold text-stone-800 transition-[background-color,transform,border-color] duration-200 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2 dark:text-stone-200;
+    border-color: rgb(15 118 110 / 0.28);
+    background: rgb(214 230 224 / 0.85);
     backdrop-filter: blur(8px);
   }
   .btn-secondary:hover {
-    border-color: rgb(13 148 136 / 0.4);
-    background: rgb(255 255 255 / 0.85);
+    border-color: rgb(13 148 136 / 0.45);
+    background: rgb(200 222 214 / 0.95);
   }
   html.dark .btn-secondary {
     border-color: rgb(45 212 191 / 0.2);
@@ -309,9 +311,9 @@ html:not(.dark) .text-stone-400 {
   }
 
   .quick-add {
-    @apply flex h-8 w-8 items-center justify-center rounded-xl border text-teal-700 shadow-sm transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:h-6 sm:w-6 dark:text-teal-300;
-    border-color: rgb(13 148 136 / 0.35);
-    background: rgb(255 255 255 / 0.9);
+    @apply flex h-8 w-8 items-center justify-center rounded-xl border text-teal-800 shadow-sm transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:h-6 sm:w-6 dark:text-teal-300;
+    border-color: rgb(15 118 110 / 0.4);
+    background: rgb(200 222 214 / 0.95);
   }
   html.dark .quick-add {
     border-color: rgb(45 212 191 / 0.3);
@@ -477,9 +479,9 @@ html:not(.dark) .text-stone-400 {
 /* —— Tree toolbar —— */
 .tree-page-toolbar {
   @apply border-b px-3 py-2 backdrop-blur-xl sm:px-4 sm:py-3;
-  border-color: rgb(13 148 136 / 0.14);
-  background: rgb(228 239 235 / 0.78);
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.35) inset;
+  border-color: rgb(15 118 110 / 0.25);
+  background: rgb(143 175 163 / 0.9);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.18) inset;
 }
 html.dark .tree-page-toolbar {
   border-color: rgb(45 212 191 / 0.1);
@@ -488,9 +490,9 @@ html.dark .tree-page-toolbar {
 }
 
 .tree-search-input {
-  @apply w-full rounded-xl border px-3 py-2.5 text-base text-stone-900 outline-none transition-all placeholder:text-stone-400 focus:ring-2 sm:py-2 sm:text-sm dark:text-stone-100 dark:placeholder:text-stone-500;
-  border-color: rgb(13 148 136 / 0.25);
-  background: rgb(255 255 255 / 0.72);
+  @apply w-full rounded-xl border px-3 py-2.5 text-base text-stone-900 outline-none transition-all placeholder:text-stone-500 focus:ring-2 sm:py-2 sm:text-sm dark:text-stone-100 dark:placeholder:text-stone-500;
+  border-color: rgb(15 118 110 / 0.3);
+  background: rgb(214 230 224 / 0.9);
   backdrop-filter: blur(10px);
 }
 .tree-search-input:focus {
@@ -504,10 +506,10 @@ html.dark .tree-search-input {
 
 .tree-search-dropdown {
   @apply absolute z-30 mt-1.5 max-h-[min(16rem,45vh)] w-full overflow-y-auto rounded-xl border p-1.5 sm:max-h-80;
-  border-color: rgb(13 148 136 / 0.18);
-  background: rgb(255 255 255 / 0.92);
+  border-color: rgb(15 118 110 / 0.25);
+  background: rgb(214 230 224 / 0.96);
   backdrop-filter: blur(16px);
-  box-shadow: 0 16px 40px -20px rgb(10 31 28 / 0.35);
+  box-shadow: 0 16px 40px -18px rgb(10 31 28 / 0.4);
 }
 html.dark .tree-search-dropdown {
   border-color: rgb(45 212 191 / 0.15);
@@ -519,12 +521,13 @@ html.dark .tree-search-dropdown {
   @apply flex w-full items-center gap-3 rounded-lg px-3 text-left transition-colors hover:bg-teal-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-500 dark:hover:bg-teal-950/40;
 }
 
-/* Soft aurora shell */
+/* Soft aurora shell — mid-tone mist, not washed white */
 .app-shell {
   background:
-    radial-gradient(ellipse 70% 45% at 15% -5%, rgb(45 212 191 / 0.22), transparent 55%),
-    radial-gradient(ellipse 55% 40% at 95% 10%, rgb(13 148 136 / 0.14), transparent 50%),
-    linear-gradient(165deg, #e8f2ee 0%, #dceae5 40%, #e2ebe7 100%);
+    radial-gradient(ellipse 70% 45% at 15% -5%, rgb(45 212 191 / 0.16), transparent 55%),
+    radial-gradient(ellipse 55% 40% at 95% 10%, rgb(15 118 110 / 0.24), transparent 50%),
+    linear-gradient(165deg, #8fafa3 0%, #7fa297 38%, #91b0a5 72%, #9eb8ae 100%);
+  color: #0f1f1c;
 }
 html.dark .app-shell {
   background:
@@ -535,11 +538,11 @@ html.dark .app-shell {
 
 .app-header {
   padding-top: env(safe-area-inset-top, 0px);
-  border-color: rgb(13 148 136 / 0.14);
-  background: rgb(228 239 235 / 0.72);
+  border-color: rgb(15 118 110 / 0.25);
+  background: rgb(143 175 163 / 0.88);
   backdrop-filter: blur(20px) saturate(1.25);
   -webkit-backdrop-filter: blur(20px) saturate(1.25);
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.4) inset;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.18) inset;
   transition: background-color 0.25s ease, box-shadow 0.25s ease;
 }
 html.dark .app-header {
@@ -549,11 +552,11 @@ html.dark .app-header {
 }
 
 .app-bottom-nav {
-  border-color: rgb(13 148 136 / 0.14);
-  background: rgb(228 239 235 / 0.88);
+  border-color: rgb(15 118 110 / 0.25);
+  background: rgb(143 175 163 / 0.92);
   backdrop-filter: blur(20px) saturate(1.25);
   -webkit-backdrop-filter: blur(20px) saturate(1.25);
-  box-shadow: 0 -12px 32px -20px rgb(10 31 28 / 0.22);
+  box-shadow: 0 -12px 32px -18px rgb(10 31 28 / 0.35);
 }
 html.dark .app-bottom-nav {
   border-color: rgb(45 212 191 / 0.1);
@@ -590,11 +593,11 @@ html.dark .bottom-nav-tab-active {
 }
 
 :root {
-  --tree-canvas-bg: #1a3d38;
-  --tree-canvas-bg-deep: #122e2a;
-  --tree-card-bg: rgb(240 248 245 / 0.82);
-  --tree-card-border: rgb(45 212 191 / 0.28);
-  --child-edge-halo: #1a3d38;
+  --tree-canvas-bg: #163530;
+  --tree-canvas-bg-deep: #0f2824;
+  --tree-card-bg: rgb(200 222 214 / 0.88);
+  --tree-card-border: rgb(20 184 166 / 0.35);
+  --child-edge-halo: #163530;
 }
 html.dark {
   --tree-canvas-bg: #070f0e;
@@ -651,10 +654,10 @@ html.dark .tree-person-card {
 }
 
 .family-tree-controls {
-  background: rgb(240 248 245 / 0.9) !important;
-  border-color: rgb(13 148 136 / 0.2) !important;
+  background: rgb(200 222 214 / 0.94) !important;
+  border-color: rgb(15 118 110 / 0.28) !important;
   backdrop-filter: blur(12px);
-  box-shadow: 0 8px 24px -12px rgb(0 0 0 / 0.35) !important;
+  box-shadow: 0 8px 24px -12px rgb(0 0 0 / 0.4) !important;
   margin-bottom: calc(var(--bottom-nav-h) + 0.5rem) !important;
 }
 @media (min-width: 1024px) {
@@ -729,9 +732,9 @@ html.dark .tree-person-card {
 
 .tree-legend {
   @apply rounded-xl border p-2.5 text-[11px] backdrop-blur-xl;
-  border-color: rgb(45 212 191 / 0.22);
-  background: rgb(240 248 245 / 0.88);
-  box-shadow: 0 8px 24px -14px rgb(0 0 0 / 0.3);
+  border-color: rgb(15 118 110 / 0.28);
+  background: rgb(200 222 214 / 0.92);
+  box-shadow: 0 8px 24px -14px rgb(0 0 0 / 0.35);
 }
 html.dark .tree-legend {
   border-color: rgb(45 212 191 / 0.15);
@@ -740,9 +743,9 @@ html.dark .tree-legend {
 
 .tree-tip {
   @apply max-w-[min(100%-1rem,20rem)] rounded-xl border px-2.5 py-2 text-xs backdrop-blur-xl sm:max-w-md sm:p-3 sm:text-sm;
-  border-color: rgb(45 212 191 / 0.25);
-  background: rgb(240 248 245 / 0.9);
-  box-shadow: 0 8px 24px -14px rgb(0 0 0 / 0.3);
+  border-color: rgb(15 118 110 / 0.3);
+  background: rgb(200 222 214 / 0.94);
+  box-shadow: 0 8px 24px -14px rgb(0 0 0 / 0.35);
 }
 html.dark .tree-tip {
   border-color: rgb(45 212 191 / 0.18);
@@ -750,9 +753,9 @@ html.dark .tree-tip {
 }
 
 .tree-action-btn {
-  @apply rounded-xl border px-2.5 py-2 text-xs font-semibold text-teal-800 backdrop-blur-xl transition-all hover:border-teal-400 hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:text-teal-200 dark:hover:border-teal-500 dark:hover:text-teal-100;
-  border-color: rgb(13 148 136 / 0.22);
-  background: rgb(240 248 245 / 0.88);
+  @apply rounded-xl border px-2.5 py-2 text-xs font-semibold text-teal-900 backdrop-blur-xl transition-all hover:border-teal-500 hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:text-teal-200 dark:hover:border-teal-500 dark:hover:text-teal-100;
+  border-color: rgb(15 118 110 / 0.3);
+  background: rgb(200 222 214 / 0.92);
 }
 html.dark .tree-action-btn {
   border-color: rgb(45 212 191 / 0.18);
@@ -1140,15 +1143,15 @@ html.dark .home-path--related {
 
 html:not(.dark) .home-hero {
   background:
-    radial-gradient(ellipse 90% 70% at 12% 18%, rgb(45 212 191 / 0.22), transparent 58%),
-    radial-gradient(ellipse 70% 55% at 88% 80%, rgb(13 148 136 / 0.12), transparent 55%),
-    linear-gradient(160deg, #c5ddd6 0%, #b8d4cc 38%, #cfe0d9 72%, #e4efeb 100%);
+    radial-gradient(ellipse 90% 70% at 12% 18%, rgb(20 184 166 / 0.28), transparent 58%),
+    radial-gradient(ellipse 70% 55% at 88% 80%, rgb(15 118 110 / 0.22), transparent 55%),
+    linear-gradient(160deg, #6f9589 0%, #5f8579 35%, #749c90 68%, #8aafa4 100%);
   color: #0a1f1c;
 }
 
 html:not(.dark) .home-hero::after {
   height: 7rem;
-  background: linear-gradient(to top, #e4efeb 12%, transparent);
+  background: linear-gradient(to top, #8fafa3 12%, transparent);
 }
 
 html.dark .home-hero::after {
@@ -1157,34 +1160,34 @@ html.dark .home-hero::after {
 }
 
 html:not(.dark) .home-hero__pedigree {
-  color: rgb(13 148 136 / 0.16);
+  color: rgb(10 31 28 / 0.18);
 }
 
 html:not(.dark) .home-hero__filigree {
-  color: rgb(180 83 9 / 0.32);
+  color: rgb(180 83 9 / 0.4);
 }
 
 html:not(.dark) .home-hero__pattern {
-  opacity: 0.3;
-  background-image: radial-gradient(circle at 1px 1px, rgb(13 148 136 / 0.2) 1px, transparent 0);
+  opacity: 0.35;
+  background-image: radial-gradient(circle at 1px 1px, rgb(10 31 28 / 0.18) 1px, transparent 0);
 }
 
 html:not(.dark) .home-hero__jewel {
-  border-color: rgb(13 148 136 / 0.18);
-  background: rgb(255 255 255 / 0.5);
-  box-shadow: 0 16px 36px -22px rgb(10 31 28 / 0.28);
+  border-color: rgb(10 31 28 / 0.16);
+  background: rgb(200 222 214 / 0.55);
+  box-shadow: 0 16px 36px -20px rgb(10 31 28 / 0.4);
 }
 
 html:not(.dark) .home-face {
-  box-shadow: 0 0 0 2px #c5ddd6;
+  box-shadow: 0 0 0 2px #6f9589;
 }
 
 html:not(.dark) .home-face--more {
-  background: #0d9488;
+  background: #0f766e;
 }
 
 html:not(.dark) .home-hero__faces p {
-  color: rgb(15 118 110 / 0.75) !important;
+  color: rgb(10 31 28 / 0.72) !important;
 }
 
 html.dark .home-section .home-rule {
@@ -1192,27 +1195,27 @@ html.dark .home-section .home-rule {
 }
 
 html:not(.dark) .home-hero__kicker {
-  color: rgb(15 118 110 / 0.88) !important;
+  color: rgb(10 31 28 / 0.75) !important;
 }
 
 html:not(.dark) .home-hero__title {
-  color: #134e4a !important;
+  color: #06241f !important;
   font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
   letter-spacing: -0.03em;
 }
 
 html:not(.dark) .home-hero__intro {
-  color: rgb(68 64 60 / 0.92) !important;
+  color: rgb(28 25 23 / 0.88) !important;
 }
 
 html:not(.dark) .home-hero__search > p {
-  color: rgb(15 118 110 / 0.9) !important;
+  color: rgb(10 31 28 / 0.8) !important;
 }
 
 html:not(.dark) .home-hero__actions a:first-child {
   background: linear-gradient(165deg, #14b8a6, #0f766e);
   color: #ecfdf5;
-  box-shadow: 0 10px 24px rgb(13 148 136 / 0.28);
+  box-shadow: 0 10px 24px rgb(10 31 28 / 0.28);
 }
 
 html:not(.dark) .home-hero__actions a:first-child:hover {
@@ -1220,21 +1223,21 @@ html:not(.dark) .home-hero__actions a:first-child:hover {
 }
 
 html:not(.dark) .home-hero__actions button {
-  border-color: rgb(13 148 136 / 0.28);
-  background: rgb(255 255 255 / 0.45);
-  color: #134e4a;
+  border-color: rgb(10 31 28 / 0.22);
+  background: rgb(200 222 214 / 0.55);
+  color: #0a1f1c;
 }
 
 html:not(.dark) .home-hero__actions button:hover {
-  background: rgb(255 255 255 / 0.7);
+  background: rgb(214 230 224 / 0.75);
 }
 
 .home-section-card {
   @apply rounded-2xl border transition-[box-shadow,border-color,transform] duration-200 ease-out;
-  border-color: rgb(13 148 136 / 0.14);
-  background: rgb(255 255 255 / 0.58);
+  border-color: rgb(15 118 110 / 0.22);
+  background: rgb(200 222 214 / 0.78);
   backdrop-filter: blur(14px);
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.45) inset, 0 8px 24px -16px rgb(10 31 28 / 0.15);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.28) inset, 0 10px 28px -16px rgb(10 31 28 / 0.28);
 }
 html.dark .home-section-card {
   border-color: rgb(45 212 191 / 0.12);
@@ -1244,9 +1247,9 @@ html.dark .home-section-card {
 
 .home-today-card {
   @apply rounded-2xl border;
-  border-color: rgb(13 148 136 / 0.28);
-  background: linear-gradient(145deg, rgb(204 251 241 / 0.95), rgb(236 253 245 / 0.9) 50%, rgb(254 243 199 / 0.55));
-  box-shadow: 0 12px 32px -16px rgb(13 148 136 / 0.35);
+  border-color: rgb(15 118 110 / 0.32);
+  background: linear-gradient(145deg, rgb(153 246 228 / 0.55), rgb(167 243 208 / 0.45) 50%, rgb(253 230 138 / 0.35));
+  box-shadow: 0 12px 32px -16px rgb(10 31 28 / 0.35);
   animation: home-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 html.dark .home-today-card {
@@ -1264,8 +1267,8 @@ html.dark .home-today-card {
 
 .home-stat-card {
   @apply rounded-xl border p-4 transition-[box-shadow,border-color,transform] duration-200 ease-out;
-  border-color: rgb(13 148 136 / 0.12);
-  background: rgb(255 255 255 / 0.55);
+  border-color: rgb(15 118 110 / 0.22);
+  background: rgb(200 222 214 / 0.82);
   backdrop-filter: blur(10px);
 }
 html.dark .home-stat-card {
@@ -1329,10 +1332,10 @@ html.dark .home-stat-card {
 /* Login gate aurora panel */
 .gate-panel {
   animation: aurora-slide-up 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
-  border-color: rgb(13 148 136 / 0.2);
-  background: rgb(255 255 255 / 0.72);
+  border-color: rgb(15 118 110 / 0.28);
+  background: rgb(200 222 214 / 0.88);
   backdrop-filter: blur(20px) saturate(1.2);
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.5) inset, 0 24px 48px -28px rgb(10 31 28 / 0.4);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.3) inset, 0 24px 48px -26px rgb(10 31 28 / 0.45);
 }
 html.dark .gate-panel {
   border-color: rgb(45 212 191 / 0.18);
@@ -1384,7 +1387,7 @@ html.dark .gate-panel {
   top: 0.25rem;
   bottom: 0.25rem;
   border-radius: 1rem;
-  background: rgb(13 148 136 / 0.16);
+  background: rgb(15 118 110 / 0.22);
   transition: left 0.35s cubic-bezier(0.22, 1, 0.36, 1), width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
   z-index: 0;

@@ -97,7 +97,7 @@ export function Modal({ onClose, children, labelledBy, size = 'md' }: ModalProps
         aria-modal="true"
         aria-labelledby={labelledBy}
         tabIndex={-1}
-        className={`max-h-[92vh] w-full ${SIZES[size]} animate-modal-in overflow-y-auto overscroll-contain rounded-t-2xl bg-white/95 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-stone-900 shadow-2xl outline-none backdrop-blur-xl sm:rounded-2xl sm:pb-5 dark:bg-stone-900/95 dark:text-stone-100 dark:ring-1 dark:ring-teal-500/20`}
+        className={`max-h-[92vh] w-full ${SIZES[size]} animate-modal-in overflow-y-auto overscroll-contain rounded-t-2xl bg-[rgb(200_222_214/0.96)] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] text-stone-900 shadow-2xl outline-none backdrop-blur-xl sm:rounded-2xl sm:pb-5 dark:bg-stone-900/95 dark:text-stone-100 dark:ring-1 dark:ring-teal-500/20`}
       >
         {/* Bottom-sheet affordance on phones. */}
         <div className="mx-auto -mt-1 mb-3 h-1.5 w-10 rounded-full bg-stone-200 sm:hidden dark:bg-stone-700" aria-hidden />

@@ -199,7 +199,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
     mode === 'owner'
       ? 'bg-gradient-to-b from-[#061412] via-[#0a1f1c] to-[#123530] text-stone-100'
       : fromSoftUnlock
-        ? 'bg-gradient-to-b from-teal-100 via-teal-50/80 to-[#e4efeb] text-stone-900'
+        ? 'bg-gradient-to-b from-[#6f9589] via-[#8aafa4] to-[#9eb8ae] text-stone-900'
         : 'app-shell text-stone-900 dark:text-stone-100';
 
   return (
