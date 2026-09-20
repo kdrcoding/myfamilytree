@@ -89,15 +89,18 @@ export async function birthdayPassStillValid(opts?: {
 /**
  * After opening `/dates?k=…` from Telegram with a valid signed link
  * (only when work remains). Token is required for API revalidation.
+ * Soft unlock clock starts on first successful open (not reset on clicks).
  */
 export function markDatesPass(token: string): void {
   const k = token.trim();
   if (!k || !canUseSession()) return;
   try {
-    sessionStorage.setItem(
-      DATES_KEY,
-      JSON.stringify({ at: Date.now(), token: k } satisfies DatesGrant),
-    );
+    const existing = readDatesGrant();
+    const at =
+      existing && existing.token === k && Date.now() - existing.at <= DATES_PASS_TTL_MS
+        ? existing.at
+        : Date.now();
+    sessionStorage.setItem(DATES_KEY, JSON.stringify({ at, token: k } satisfies DatesGrant));
   } catch {
     /* private mode */
   }
@@ -156,7 +159,7 @@ export function readDatesLinkToken(): string | null {
 }
 
 /** Name-only unlock while missing dates remain, grant is fresh, and link token still works. */
-export async function datesPassStillValid(opts?: {
+export async function datesPassStillValid(_opts?: {
   keepOnNetworkError?: boolean;
 }): Promise<boolean> {
   const grant = readDatesGrant();
@@ -177,7 +180,9 @@ export async function datesPassStillValid(opts?: {
     }
     return true;
   } catch {
-    return opts?.keepOnNetworkError === true;
+    // Never fail-open: a forged session grant + blocked network must not
+    // restore name-only editor access without a proven Telegram link.
+    return false;
   }
 }
 

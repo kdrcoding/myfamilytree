@@ -21,6 +21,7 @@ Missing dates page: `https://myfamilytree-smoky.vercel.app/dates?k=…` (signed 
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_WEBHOOK_SECRET`
 - `TELEGRAM_CRON_SECRET`
+- Optional: `DATES_LINK_SECRET` — dedicated signing key for `/dates?k=` links (falls back to `TELEGRAM_CRON_SECRET`)
 - Optional: `PUBLIC_APP_URL` = `https://myfamilytree-smoky.vercel.app`
 
 ## 3. SQL migrations
