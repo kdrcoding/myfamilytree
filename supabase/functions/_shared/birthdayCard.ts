@@ -350,8 +350,10 @@ function cardSvg(opts: {
   portrait: Img | null;
   simple: boolean;
   whoLine?: string;
+  headline?: string;
 }): string {
   const { p, name, ageLine, portrait, simple, whoLine } = opts;
+  const headline = opts.headline?.trim() || 'Tug‘ilgan kuningiz muborak';
   const photoBlock = portrait
     ? `
       <circle cx="540" cy="228" r="128" fill="#fbbf24" opacity="0.55"/>
@@ -404,7 +406,7 @@ function cardSvg(opts: {
   <rect x="46" y="40" width="988" height="22" rx="8" fill="${p.accent}"/>
   <rect x="46" y="650" width="988" height="30" rx="8" fill="${p.accent}" opacity="0.85"/>
   ${photoBlock}
-  <text x="540" y="${nameY - 48}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="${p.muted}">Tug‘ilgan kuningiz muborak</text>
+  <text x="540" y="${nameY - 48}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="${p.muted}">${headline}</text>
   <text x="540" y="${nameY}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="700" fill="${p.ink}">${name}</text>
   ${whoLine ? `<text x="540" y="${nameY + 36}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" fill="${p.muted}">${whoLine}</text>` : ''}
   <text x="540" y="${ageY}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" fill="${p.accent}">${ageLine}</text>
@@ -421,6 +423,10 @@ export type BirthdayCardOpts = {
   designSeed?: string;
   simple?: boolean;
   whoLine?: string | null;
+  /** Override the top greeting (default: Tug‘ilgan kuningiz muborak). */
+  headline?: string | null;
+  /** Override the age line under the name (e.g. upcoming “in 5 days”). */
+  subtitle?: string | null;
 };
 
 async function renderCardBase(opts: {
@@ -430,6 +436,7 @@ async function renderCardBase(opts: {
   portrait: Img | null;
   simple: boolean;
   whoLine?: string;
+  headline?: string;
 }): Promise<Img> {
   const svg = cardSvg(opts);
   try {
@@ -446,7 +453,14 @@ export async function buildBirthdayCardPng(opts: BirthdayCardOpts): Promise<Uint
   const printable = cardPrintableName(opts.name);
   const name = escapeXml(truncate(printable, 28));
   const ageLine = escapeXml(
-    opts.age != null ? `Bugun ${opts.age} yosh` : 'Oila sizni tabriklaydi',
+    opts.subtitle?.trim()
+      ? truncate(opts.subtitle.trim(), 48)
+      : opts.age != null
+        ? `Bugun ${opts.age} yosh`
+        : 'Oila sizni tabriklaydi',
+  );
+  const headline = escapeXml(
+    truncate(opts.headline?.trim() || 'Tug‘ilgan kuningiz muborak', 40),
   );
   const simple = Boolean(opts.simple);
 
@@ -457,7 +471,7 @@ export async function buildBirthdayCardPng(opts: BirthdayCardOpts): Promise<Uint
   const whoLine = opts.whoLine?.trim()
     ? escapeXml(truncate(opts.whoLine.trim(), 42))
     : '';
-  const raster = await renderCardBase({ p, name, ageLine, portrait, simple, whoLine });
+  const raster = await renderCardBase({ p, name, ageLine, portrait, simple, whoLine, headline });
   try {
     await compositeMotifs(raster, gender, simple);
   } catch (err) {

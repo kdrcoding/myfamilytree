@@ -17,7 +17,7 @@ const AUTH_KEY = STORAGE_KEYS.auth;
 
 export type FamilyEnterResult =
   | { ok: true; role: Role }
-  | { ok: false; reason: 'name' | 'password' | 'use_owner' };
+  | { ok: false; reason: 'name' | 'password' | 'use_owner' | 'session' };
 
 /** What the current session may change on person records. */
 export type EditScope = 'full' | 'birthDate' | 'none';
@@ -387,7 +387,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
         if (!sessionRes.ok || !sessionJson.ok || !sessionJson.token_hash) {
           console.error('family-session failed', sessionJson);
-          return { ok: false, reason: 'password' };
+          // Password hash matched locally — distinguish setup/network from wrong password.
+          if (sessionRes.status === 401 || sessionJson.error === 'password') {
+            return { ok: false, reason: 'password' };
+          }
+          return { ok: false, reason: 'session' };
         }
         const { error } = await supabase.auth.verifyOtp({
           token_hash: sessionJson.token_hash,
@@ -395,7 +399,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         if (error) {
           console.error('family verifyOtp failed', error);
-          return { ok: false, reason: 'password' };
+          return { ok: false, reason: 'session' };
         }
       }
 

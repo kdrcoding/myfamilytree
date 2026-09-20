@@ -154,6 +154,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
       if (!result.ok) {
         if (result.reason === 'name') setNameError(t('gate.nameRequired'));
         else if (result.reason === 'use_owner') setError(t('gate.useOwnerLogin'));
+        else if (result.reason === 'session') setError(t('gate.sessionFailed'));
         else setError(t('gate.wrong'));
       }
     } catch (err) {

@@ -150,6 +150,26 @@ async function setBirthDateWithLink(
     body: JSON.stringify({ birth_date: birthDate }),
   });
 
+  const actorName =
+    typeof body.actorName === 'string' ? body.actorName.trim().slice(0, 40) : '';
+  try {
+    await db.rest('family_audit_log', {
+      method: 'POST',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        actor: 'dates-link',
+        actor_name: actorName || null,
+        action: 'edit',
+        details: {
+          updated: [{ name: displayName(person), fields: ['birthDate'] }],
+          source: 'dates-link',
+        },
+      }),
+    });
+  } catch (auditErr) {
+    console.warn('birth-date fill audit failed', auditErr);
+  }
+
   return jsonResponse({ ok: true, personId, birthDate });
 }
 

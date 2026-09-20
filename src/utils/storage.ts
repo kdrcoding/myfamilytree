@@ -38,6 +38,10 @@ export const STORAGE_KEYS = {
   tourSeen: 'familytree.tourSeen.v1',
   // Dismissed invite banner for this browser session key.
   inviteBannerDismissed: 'familytree.inviteBanner.v1',
+  // One-time “Add to Home Screen” tip dismissed.
+  installTipDismissed: 'familytree.installTip.v1',
+  // Last time the owner downloaded a JSON backup (monthly nudge).
+  backupDownloadedAt: 'familytree.backupDownloadedAt.v1',
 } as const;
 
 /**

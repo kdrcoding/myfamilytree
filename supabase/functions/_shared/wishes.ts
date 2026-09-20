@@ -497,6 +497,88 @@ function formatUpcomingAge(age: number | null, lang: TgLang): string {
   return ` · ${age} yoshga to‘ladi`;
 }
 
+/** Card subtitle for the “next up” weekend reminder photo. */
+export function upcomingCardSubtitle(
+  days: number,
+  age: number | null,
+  lang: TgLang = 'uz',
+): string {
+  const when =
+    days === 0
+      ? lang === 'en'
+        ? 'Today'
+        : lang === 'ru'
+          ? 'Сегодня'
+          : 'Bugun'
+      : days === 1
+        ? lang === 'en'
+          ? 'Tomorrow'
+          : lang === 'ru'
+            ? 'Завтра'
+            : 'Ertaga'
+        : lang === 'en'
+          ? `In ${days} days`
+          : lang === 'ru'
+            ? `Через ${days} дн.`
+            : `${days} kundan keyin`;
+  if (age == null || !Number.isFinite(age)) return when;
+  if (lang === 'en') return `${when} · turns ${age}`;
+  if (lang === 'ru') return `${when} · исполняется ${age}`;
+  return `${when} · ${age} yoshga to‘ladi`;
+}
+
+export function upcomingCardHeadline(lang: TgLang = 'uz'): string {
+  if (lang === 'en') return 'Coming up next';
+  if (lang === 'ru') return 'Скоро день рождения';
+  return 'Tez orada tug‘ilgan kun';
+}
+
+/**
+ * Photo caption for the next-up person in the weekend reminder.
+ * Kept short for Telegram’s 1024-char caption limit.
+ */
+export function upcomingNextUpCaption(
+  name: string,
+  age: number | null,
+  days: number,
+  pageUrl: string,
+  lang: TgLang = 'uz',
+  seed?: string,
+): string {
+  const wish = birthdayWishCaption(name, age, lang, seed ?? `upcoming:${name}:${age ?? 'x'}`);
+  const whenPlain =
+    days === 0
+      ? lang === 'en'
+        ? 'today'
+        : lang === 'ru'
+          ? 'сегодня'
+          : 'bugun'
+      : days === 1
+        ? lang === 'en'
+          ? 'tomorrow'
+          : lang === 'ru'
+            ? 'завтра'
+            : 'ertaga'
+        : lang === 'en'
+          ? `in ${days} days`
+          : lang === 'ru'
+            ? `через ${days} дн.`
+            : `${days} kundan keyin`;
+  const title =
+    lang === 'en'
+      ? `🎂 Next up: ${name} (${whenPlain})`
+      : lang === 'ru'
+        ? `🎂 Следующий: ${name} (${whenPlain})`
+        : `🎂 Keyingi: ${name} (${whenPlain})`;
+  const open =
+    lang === 'en'
+      ? `Celebration page: ${pageUrl}`
+      : lang === 'ru'
+        ? `Страница праздника: ${pageUrl}`
+        : `Bayram sahifasi: ${pageUrl}`;
+  return [title, '', wish, '', open].join('\n').slice(0, 1024);
+}
+
 /** Weekend / Monday group reminder — clear when + age (not a bare number). */
 export function upcomingBirthdaysNotice(
   rows: UpcomingBirthdayRow[],

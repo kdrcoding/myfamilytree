@@ -48,8 +48,12 @@ without Telegram; the name is stored and announced in the group as
 
 ## Weekend / Monday reminder
 
-Once per ISO week (Sat–Mon window), the bot posts who has a birthday in the
-next 7 days.
+Once per ISO week (Sat–Mon window), the bot posts:
+
+1. A **photo card** for the next person up (short wish + “coming soon” subtitle)
+2. An HTML **list** of birthdays in the next 7 days
+
+Owner **Settings → Telegram** can **Preview** the exact text or **Send now** without waiting for the weekend.
 
 ## 4. Deploy Edge Functions
 

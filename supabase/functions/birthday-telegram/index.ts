@@ -28,7 +28,11 @@ import {
   missingDatesPageLink,
   publicAppUrl,
   upcomingBirthdaysNotice,
+  upcomingCardHeadline,
+  upcomingCardSubtitle,
+  upcomingNextUpCaption,
   TG_BUTTONS,
+  type UpcomingBirthdayRow,
 } from '../_shared/wishes.ts';
 import { missingDatesNotice, whoIsThisUzbek } from '../_shared/whoIsThis.ts';
 
@@ -217,73 +221,198 @@ async function maybeSendMissingDates(opts: {
   return { sent: true, count: names.length, url: datesUrl };
 }
 
-async function maybeSendUpcoming(opts: {
-  db: ServiceDb;
-  chatId: string;
-  members: FamilyMemberRow[];
-  local: { year: number; month: number; day: number; hour: number; weekday: string };
-  force: boolean;
-}): Promise<{ sent: boolean; skipped?: string; count?: number }> {
-  if (opts.force) return { sent: false, skipped: 'force' };
-  // Weekend or Monday — once per ISO week.
-  if (!['Sat', 'Sun', 'Mon'].includes(opts.local.weekday)) {
-    return { sent: false, skipped: 'not_weekend_or_monday' };
-  }
+type UpcomingBuilt = {
+  rows: UpcomingBirthdayRow[];
+  nextMember: FamilyMemberRow | null;
+  next: UpcomingBirthdayRow | null;
+};
 
-  const upcoming = opts.members
+function buildUpcomingList(
+  members: FamilyMemberRow[],
+  local: { year: number; month: number; day: number },
+): UpcomingBuilt {
+  const enriched = members
     .filter((m) => !m.is_deceased && !m.death_date)
     .map((m) => {
       const md = monthDay(m.birth_date);
       if (!md) return null;
-      const days = daysUntilBirthday(md, opts.local);
+      const days = daysUntilBirthday(md, local);
       if (days < 0 || days > 7) return null;
       const nextYear =
-        md.month < opts.local.month ||
-        (md.month === opts.local.month && md.day < opts.local.day)
-          ? opts.local.year + 1
-          : opts.local.year;
+        md.month < local.month || (md.month === local.month && md.day < local.day)
+          ? local.year + 1
+          : local.year;
       const age = ageTurning(md, nextYear);
-      return {
+      const row: UpcomingBirthdayRow = {
         name: displayName(m),
         days,
         month: md.month,
         day: md.day,
         age,
       };
+      return { member: m, row };
     })
     .filter((row): row is NonNullable<typeof row> => Boolean(row))
-    .sort((a, b) => a.days - b.days || a.name.localeCompare(b.name));
+    .sort(
+      (a, b) =>
+        a.row.days - b.row.days || a.row.name.localeCompare(b.row.name),
+    );
 
-  if (upcoming.length === 0) return { sent: false, skipped: 'none_upcoming', count: 0 };
+  return {
+    rows: enriched.map((e) => e.row),
+    nextMember: enriched[0]?.member ?? null,
+    next: enriched[0]?.row ?? null,
+  };
+}
+
+async function maybeSendUpcoming(opts: {
+  db: ServiceDb;
+  chatId: string;
+  members: FamilyMemberRow[];
+  local: { year: number; month: number; day: number; hour: number; weekday: string };
+  /** Birthday test runs skip the weekly reminder. */
+  force: boolean;
+  /** Owner “send / preview now” — skip weekday + weekly claim. */
+  ownerSend?: boolean;
+}): Promise<{
+  sent: boolean;
+  skipped?: string;
+  count?: number;
+  photoSent?: boolean;
+  text?: string;
+  caption?: string;
+}> {
+  // Test birthday sends should not also fire the weekly reminder.
+  if (opts.force && !opts.ownerSend) return { sent: false, skipped: 'force' };
+
+  if (!opts.ownerSend && !['Sat', 'Sun', 'Mon'].includes(opts.local.weekday)) {
+    return { sent: false, skipped: 'not_weekend_or_monday' };
+  }
+
+  const built = buildUpcomingList(opts.members, opts.local);
+  if (built.rows.length === 0) return { sent: false, skipped: 'none_upcoming', count: 0 };
 
   // Sat/Sun/Mon share one claim key: ISO week of the Monday in this window
   // (Sat→W_N+1 of next Mon, Sun→same, Mon→that Mon). Avoids double posts across
   // the ISO week boundary between Sunday and Monday.
-  const daysToMonday =
-    opts.local.weekday === 'Sat' ? 2 : opts.local.weekday === 'Sun' ? 1 : 0;
-  const monday = shiftLocalDate(opts.local, daysToMonday);
-  const period = isoWeekPeriod(monday.year, monday.month, monday.day);
-  const claimed = await claimNotice(opts.db, 'upcoming-week', period);
-  if (!claimed) return { sent: false, skipped: 'already_claimed', count: upcoming.length };
+  let period = '';
+  if (!opts.ownerSend) {
+    const daysToMonday =
+      opts.local.weekday === 'Sat' ? 2 : opts.local.weekday === 'Sun' ? 1 : 0;
+    const monday = shiftLocalDate(opts.local, daysToMonday);
+    period = isoWeekPeriod(monday.year, monday.month, monday.day);
+    const claimed = await claimNotice(opts.db, 'upcoming-week', period);
+    if (!claimed) return { sent: false, skipped: 'already_claimed', count: built.rows.length };
+  }
 
   try {
     const datesUrl = await missingDatesPageUrl();
+    const text = upcomingBirthdaysNotice(built.rows, datesUrl, 'uz');
+    let photoSent = false;
+    let caption: string | undefined;
+
+    if (built.next && built.nextMember) {
+      const person = built.nextMember;
+      const name = built.next.name;
+      const age = built.next.age;
+      const pageUrl = birthdayPageUrl(person.id);
+      caption = upcomingNextUpCaption(
+        name,
+        age,
+        built.next.days,
+        pageUrl,
+        'uz',
+        `upcoming:${person.id}:${built.next.month}-${built.next.day}`,
+      );
+      try {
+        const photoUrl = person.photo ? await opts.db.signPhoto(person.photo) : null;
+        let photoBytes: Uint8Array | null = null;
+        if (person.photo) {
+          try {
+            photoBytes = await opts.db.downloadPhotoBytes(person.photo);
+          } catch (photoErr) {
+            console.warn('upcoming photo download failed', person.id, photoErr);
+          }
+        }
+        const keyboard: Record<string, string>[][] = [
+          [{ text: TG_BUTTONS.openPage, url: pageUrl }],
+          [{ text: TG_BUTTONS.fillDates, url: datesUrl }],
+        ];
+        await sendGroupBirthdayPhoto({
+          chatId: opts.chatId,
+          caption: caption.slice(0, 1024),
+          markup: JSON.stringify({ inline_keyboard: keyboard }),
+          card: {
+            name,
+            age,
+            photoUrl,
+            photoBytes,
+            gender: person.gender,
+            designSeed: `upcoming:${person.id}:${built.next.month}-${built.next.day}`,
+            headline: upcomingCardHeadline('uz'),
+            subtitle: upcomingCardSubtitle(built.next.days, age, 'uz'),
+          },
+        });
+        photoSent = true;
+      } catch (photoErr) {
+        console.error('upcoming next-up photo failed; sending text list only', photoErr);
+      }
+    }
+
     await telegramApi('sendMessage', {
       chat_id: opts.chatId,
-      text: upcomingBirthdaysNotice(upcoming, datesUrl, 'uz'),
+      text,
       parse_mode: 'HTML',
       disable_web_page_preview: true,
       reply_markup: {
         inline_keyboard: [[{ text: TG_BUTTONS.fillDates, url: datesUrl }]],
       },
     });
-    return { sent: true, count: upcoming.length };
+    return { sent: true, count: built.rows.length, photoSent, text, caption };
   } catch (err) {
-    await releaseNotice(opts.db, 'upcoming-week', period).catch((releaseErr) => {
-      console.error('release upcoming-week claim failed', releaseErr);
-    });
+    if (period) {
+      await releaseNotice(opts.db, 'upcoming-week', period).catch((releaseErr) => {
+        console.error('release upcoming-week claim failed', releaseErr);
+      });
+    }
     throw err;
   }
+}
+
+async function previewUpcomingNotice(opts: {
+  db: ServiceDb;
+  members: FamilyMemberRow[];
+  local: { year: number; month: number; day: number };
+}): Promise<{
+  ok: boolean;
+  count: number;
+  text: string;
+  caption: string | null;
+  nextName: string | null;
+  skipped?: string;
+}> {
+  const built = buildUpcomingList(opts.members, opts.local);
+  const datesUrl = await missingDatesPageUrl();
+  const text = upcomingBirthdaysNotice(built.rows, datesUrl, 'uz');
+  if (!built.next || !built.nextMember) {
+    return { ok: true, count: 0, text, caption: null, nextName: null, skipped: 'none_upcoming' };
+  }
+  const pageUrl = birthdayPageUrl(built.nextMember.id);
+  const caption = upcomingNextUpCaption(
+    built.next.name,
+    built.next.age,
+    built.next.days,
+    pageUrl,
+    'uz',
+    `upcoming:${built.nextMember.id}:${built.next.month}-${built.next.day}`,
+  );
+  return {
+    ok: true,
+    count: built.rows.length,
+    text,
+    caption,
+    nextName: built.next.name,
+  };
 }
 
 const HEALTH_ALERT_HOURS = 26;
@@ -386,7 +515,12 @@ Deno.serve(async (req) => {
     const action = typeof body.action === 'string' ? body.action : '';
 
     // Owner JWT only — never accept cron secret for these.
-    if (action === 'mintDatesLink' || action === 'sendMissingDates') {
+    if (
+      action === 'mintDatesLink' ||
+      action === 'sendMissingDates' ||
+      action === 'previewUpcoming' ||
+      action === 'sendUpcoming'
+    ) {
       await assertOwnerJwt(req);
       await ensureCallbackWebhook();
       db = createServiceClient();
@@ -403,10 +537,7 @@ Deno.serve(async (req) => {
         query: { select: '*', id: 'eq.1' },
       });
       const settings = settingsRows[0];
-      if (!settings?.group_chat_id) {
-        return jsonResponse({ ok: false, error: 'no_group_chat_id' }, 400);
-      }
-      const tz = settings.timezone || DEFAULT_FAMILY_TIMEZONE;
+      const tz = settings?.timezone || DEFAULT_FAMILY_TIMEZONE;
       const local = localParts(tz);
       const members = await db.rest<FamilyMemberRow[]>('family_members', {
         query: {
@@ -415,6 +546,28 @@ Deno.serve(async (req) => {
           order: 'first_name.asc',
         },
       });
+
+      if (action === 'previewUpcoming') {
+        const preview = await previewUpcomingNotice({ db, members, local });
+        return jsonResponse(preview);
+      }
+
+      if (!settings?.group_chat_id) {
+        return jsonResponse({ ok: false, error: 'no_group_chat_id' }, 400);
+      }
+
+      if (action === 'sendUpcoming') {
+        const result = await maybeSendUpcoming({
+          db,
+          chatId: settings.group_chat_id,
+          members,
+          local,
+          force: true,
+          ownerSend: true,
+        });
+        return jsonResponse({ ok: result.sent, ...result });
+      }
+
       const result = await maybeSendMissingDates({
         db,
         chatId: settings.group_chat_id,

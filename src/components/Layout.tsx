@@ -11,6 +11,7 @@ import { PageSkeleton } from './PageSkeleton';
 import { BrandLogo } from './BrandLogo';
 import { LanguageMenuButton } from './LanguageSelect';
 import { StatusBanners } from './StatusBanners';
+import { InstallAppTip } from './InstallAppTip';
 
 const WelcomeTour = lazy(() =>
   import('./WelcomeTour').then((m) => ({ default: m.WelcomeTour })),
@@ -285,6 +286,7 @@ export function Layout() {
       </div>
 
       <StatusBanners />
+      <InstallAppTip />
       <BottomNav />
       <Suspense fallback={null}>
         <WelcomeTour />

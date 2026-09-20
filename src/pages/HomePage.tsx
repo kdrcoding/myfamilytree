@@ -35,6 +35,8 @@ import { FAMILY_TIMEZONE, dateKeyInTimeZone, nowInTimeZone } from '../utils/time
 import { fetchFamilyTimezone } from '../lib/telegramBot';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { Avatar } from '../components/Avatar';
+import { countMissingBirthDates, fetchFilledThisWeek } from '../lib/datesProgress';
+import { getUpcomingBirthdays } from '../utils/birthdays';
 
 /** How far ahead the homepage looks for upcoming birthdays & anniversaries. */
 const CELEBRATION_WINDOW_DAYS = 30;
@@ -55,6 +57,7 @@ export function HomePage() {
   const founders = useMemo(() => findFounders(people).slice(0, 2), [people]);
   const [familyTz, setFamilyTz] = useState(FAMILY_TIMEZONE);
   const [clockTick, setClockTick] = useState(0);
+  const [filledWeek, setFilledWeek] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,6 +105,23 @@ export function HomePage() {
         .filter((b): b is NonNullable<typeof b> => Boolean(b)),
     [upcomingCelebrations],
   );
+
+  const nextThreeBirthdays = useMemo(() => {
+    if (!showBirthDates) return [];
+    return getUpcomingBirthdays(people, familyNow).slice(0, 3);
+  }, [people, showBirthDates, familyNow]);
+
+  const missingDatesCount = useMemo(() => countMissingBirthDates(people), [people]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchFilledThisWeek().then((n) => {
+      if (!cancelled) setFilledWeek(n);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [people]);
 
   useEffect(() => {
     if (todaysBirthdays.length === 0) return;
@@ -238,6 +258,69 @@ export function HomePage() {
 
       <div className="mx-auto w-full max-w-3xl px-5 sm:px-8 -mt-8 relative z-10">
         {todaysBirthdays.length > 0 && <HomeBirthdayCelebration birthdays={todaysBirthdays} />}
+
+        {nextThreeBirthdays.length > 0 && (
+          <section className="home-section mt-8 sm:mt-10" aria-labelledby="home-whos-next">
+            <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h2
+                  id="home-whos-next"
+                  className="font-display text-lg font-semibold tracking-tight text-stone-900 dark:text-stone-50 sm:text-xl"
+                >
+                  {t('home.whosNextTitle')}
+                </h2>
+                <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{t('home.whosNextIntro')}</p>
+              </div>
+            </div>
+            <ul className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {nextThreeBirthdays.map((b) => {
+                const showAge = b.turningAge !== null && privacy.showAge(b.person);
+                return (
+                  <li key={b.person.id} className="min-w-[9.5rem] flex-1">
+                    <Link
+                      to={`/tree?person=${encodeURIComponent(b.person.id)}`}
+                      className="flex h-full flex-col items-center gap-2 rounded-2xl border border-stone-200/80 bg-white/80 px-3 py-4 text-center shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-emerald-300 dark:border-stone-700 dark:bg-stone-900/70 dark:hover:border-emerald-700"
+                    >
+                      <Avatar person={b.person} size="lg" eager />
+                      <p className="w-full truncate font-display text-sm font-semibold text-stone-900 dark:text-stone-100">
+                        {fullName(b.person)}
+                      </p>
+                      <p className="text-xs text-stone-500 dark:text-stone-400">
+                        {whenLabel(b.isToday, b.daysUntil)}
+                        {` · ${formatMonthDay(b.month, b.day, language)}`}
+                      </p>
+                      {showAge && (
+                        <p className="text-[0.7rem] font-medium text-emerald-800 dark:text-emerald-300">
+                          {b.isToday
+                            ? t('home.bdayTurnsToday', { age: b.turningAge! })
+                            : t('home.bdayTurns', { age: b.turningAge! })}
+                        </p>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
+        {(missingDatesCount > 0 || filledWeek > 0) && !easy && (
+          <section className="home-section mt-4" aria-label={t('home.datesProgressLabel')}>
+            <Link
+              to="/members?missing=1"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-amber-200/90 bg-amber-50/80 px-4 py-3 text-sm text-amber-950 transition hover:border-amber-300 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-100 dark:hover:border-amber-700"
+            >
+              <span className="font-medium">
+                {missingDatesCount > 0
+                  ? t('home.datesProgress', { left: missingDatesCount, filled: filledWeek })
+                  : t('home.datesProgressDone', { filled: filledWeek })}
+              </span>
+              <span className="text-xs font-semibold underline-offset-2 hover:underline">
+                {t('home.datesProgressCta')}
+              </span>
+            </Link>
+          </section>
+        )}
 
         <section className="home-section mt-10 sm:mt-12" aria-labelledby="home-paths">
           <div className="mb-4 text-center">

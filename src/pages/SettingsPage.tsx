@@ -32,6 +32,7 @@ import { listAuditLog } from '../lib/auditLog';
 import type { AuditEntry } from '../lib/auditLog';
 import { downloadBackup, forceBackup, listBackups } from '../lib/backups';
 import type { BackupMeta } from '../lib/backups';
+import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 import { useFamily } from '../context/FamilyContext';
 import { uploadPhoto } from '../lib/photoStorage';
 import { normalizeCountry } from '../utils/countries';
@@ -228,6 +229,9 @@ function BackupsCard() {
   const [backups, setBackups] = useState<BackupMeta[]>([]);
   const [busy, setBusy] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
+  const [lastDownloadAt, setLastDownloadAt] = useState<string | null>(() =>
+    loadJson<string>(STORAGE_KEYS.backupDownloadedAt, (v): v is string => typeof v === 'string'),
+  );
 
   const refresh = () => {
     listBackups().then(
@@ -243,6 +247,20 @@ function BackupsCard() {
   };
   useEffect(refresh, []);
 
+  const daysSinceDownload = (() => {
+    if (!lastDownloadAt) return null;
+    const t0 = new Date(lastDownloadAt).getTime();
+    if (!Number.isFinite(t0)) return null;
+    return Math.floor((Date.now() - t0) / 86_400_000);
+  })();
+  const needsMonthly = daysSinceDownload == null || daysSinceDownload >= 30;
+
+  const markDownloaded = () => {
+    const iso = new Date().toISOString();
+    saveJson(STORAGE_KEYS.backupDownloadedAt, iso);
+    setLastDownloadAt(iso);
+  };
+
   const takeNow = async () => {
     setBusy(true);
     try {
@@ -257,6 +275,25 @@ function BackupsCard() {
     }
   };
 
+  const downloadLatest = async () => {
+    const latest = backups[0];
+    if (!latest) {
+      toast(t('settings.backupsEmpty'), 'info');
+      return;
+    }
+    setBusy(true);
+    try {
+      await downloadBackup(latest.id);
+      markDownloaded();
+      toast(t('settings.backupDownloaded'), 'success');
+    } catch (error) {
+      console.error('Backup download failed:', error);
+      toast(t('settings.backupFailed'), 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <section className="card mt-3 p-4">
       <h2 className="settings-section-title flex items-center gap-2.5">
@@ -265,16 +302,33 @@ function BackupsCard() {
       <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
         {t('settings.backupsIntro')}
       </p>
+      {needsMonthly && !unavailable && (
+        <p className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+          {t('settings.backupMonthlyNudge')}
+        </p>
+      )}
       {unavailable && (
         <p className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
           {t('settings.setupNeeded')}
         </p>
       )}
-      <div className="mt-3">
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" className="btn-primary" onClick={() => void downloadLatest()} disabled={busy || backups.length === 0}>
+          <Download className="h-4 w-4" aria-hidden /> {t('settings.backupDownloadLatest')}
+        </button>
         <button type="button" className="btn-secondary" onClick={() => void takeNow()} disabled={busy}>
           <Archive className="h-4 w-4" aria-hidden /> {t('settings.backupNow')}
         </button>
       </div>
+      {lastDownloadAt && (
+        <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
+          {t('settings.backupLastDownload', {
+            when: new Date(lastDownloadAt).toLocaleDateString(
+              language === 'uz' ? 'uz-UZ' : language === 'ru' ? 'ru-RU' : 'en-GB',
+            ),
+          })}
+        </p>
+      )}
       {!unavailable &&
       backups.length === 0 ? (
         <p className="mt-3 text-sm text-stone-400">{t('settings.backupsEmpty')}</p>
@@ -296,10 +350,15 @@ function BackupsCard() {
                 type="button"
                 className="btn-secondary !px-2.5 !py-1.5 !text-xs"
                 onClick={() => {
-                  downloadBackup(b.id).catch((error: unknown) => {
-                    console.error('Backup download failed:', error);
-                    toast(t('settings.backupFailed'), 'error');
-                  });
+                  downloadBackup(b.id)
+                    .then(() => {
+                      markDownloaded();
+                      toast(t('settings.backupDownloaded'), 'success');
+                    })
+                    .catch((error: unknown) => {
+                      console.error('Backup download failed:', error);
+                      toast(t('settings.backupFailed'), 'error');
+                    });
                 }}
               >
                 <Download className="h-3.5 w-3.5" aria-hidden /> {t('settings.backupDownload')}

@@ -99,6 +99,7 @@ export async function setPublicBirthDate(
   personId: string,
   birthDate: string,
   linkToken: string,
+  actorName?: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const base = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
@@ -112,7 +113,12 @@ export async function setPublicBirthDate(
       ...publicFnHeaders(anon),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ personId, birthDate, k: token }),
+    body: JSON.stringify({
+      personId,
+      birthDate,
+      k: token,
+      actorName: actorName?.trim().slice(0, 40) || undefined,
+    }),
   });
   try {
     const parsed = (await res.json()) as { ok?: boolean; error?: string };

@@ -111,6 +111,56 @@ export async function mintDatesFillLink(): Promise<{
   return data as { ok: boolean; url?: string; expiresAt?: number; error?: string };
 }
 
+/** Owner: preview the exact weekend reminder text (does not post). */
+export async function previewUpcomingReminder(): Promise<{
+  ok: boolean;
+  count?: number;
+  text?: string;
+  caption?: string | null;
+  nextName?: string | null;
+  skipped?: string;
+  error?: string;
+}> {
+  if (!supabase) throw new Error('Supabase not configured');
+  const { data, error } = await supabase.functions.invoke('birthday-telegram', {
+    body: { action: 'previewUpcoming' },
+  });
+  if (error) throw error;
+  return data as {
+    ok: boolean;
+    count?: number;
+    text?: string;
+    caption?: string | null;
+    nextName?: string | null;
+    skipped?: string;
+    error?: string;
+  };
+}
+
+/** Owner: post the weekend upcoming reminder now (photo + list). */
+export async function sendUpcomingReminderNow(): Promise<{
+  ok: boolean;
+  sent?: boolean;
+  count?: number;
+  photoSent?: boolean;
+  skipped?: string;
+  error?: string;
+}> {
+  if (!supabase) throw new Error('Supabase not configured');
+  const { data, error } = await supabase.functions.invoke('birthday-telegram', {
+    body: { action: 'sendUpcoming' },
+  });
+  if (error) throw error;
+  return data as {
+    ok: boolean;
+    sent?: boolean;
+    count?: number;
+    photoSent?: boolean;
+    skipped?: string;
+    error?: string;
+  };
+}
+
 /** Owner: post a missing-dates reminder to the group with a fresh signed link. */
 export async function sendMissingDatesNow(): Promise<{
   ok: boolean;

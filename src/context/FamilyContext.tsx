@@ -17,11 +17,13 @@ import { setPublicBirthDate } from '../features/birthday/publicApi';
 import { readDatesLinkToken } from '../lib/birthdayPass';
 import { normalizeCountry } from '../utils/countries';
 import { validateFamilyData } from '../utils/validation';
+import { loadJson, STORAGE_KEYS } from '../utils/storage';
 import {
   applyRelationLink,
   buildIndex,
   computeBloodline,
   computeGenerations,
+  fullName,
   normalizePeople,
   relationshipDescriptor,
   removePerson,
@@ -302,7 +304,12 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           }
           const existing = peopleRef.current.find((p) => p.id === person.id);
           if (!existing) return false;
-          const result = await setPublicBirthDate(person.id, birthDate, token);
+          const result = await setPublicBirthDate(
+            person.id,
+            birthDate,
+            token,
+            loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string')?.trim(),
+          );
           if (!result.ok) {
             toast(translate(language, 'form.softUnlockBirthOnly'), 'error');
             return false;
@@ -313,6 +320,9 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           peopleRef.current = next;
           setPeopleState(next);
           writeFamilyCache(next);
+          logChange('edit', {
+            updated: [{ name: fullName(person), fields: ['birthDate'] }],
+          });
           return true;
         }
         return mutate((current) => {

@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, Copy, ExternalLink, Link2, Send, MessageCircle } from 'lucide-react';
+import { Activity, Copy, ExternalLink, Eye, Link2, Send, MessageCircle } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
 import { fullName } from '../utils/family';
 import { getUpcomingBirthdays } from '../utils/birthdays';
 import { formatMonthDay } from '../utils/dates';
+import { countMissingBirthDates, fetchFilledThisWeek } from '../lib/datesProgress';
 import { ToggleSwitch } from './ui/ToggleSwitch';
 import {
   TELEGRAM_TIMEZONES,
@@ -14,8 +15,10 @@ import {
   fetchTelegramBotRuns,
   fetchTelegramSettings,
   mintDatesFillLink,
+  previewUpcomingReminder,
   runBirthdayTest,
   sendMissingDatesNow,
+  sendUpcomingReminderNow,
   updateTelegramSettings,
   type TelegramBotRun,
   type TelegramSettings,
@@ -55,6 +58,10 @@ export function TelegramBirthdaysCard() {
   const [busy, setBusy] = useState(false);
   const [testPersonId, setTestPersonId] = useState('');
   const [unavailable, setUnavailable] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewText, setPreviewText] = useState('');
+  const [previewCaption, setPreviewCaption] = useState<string | null>(null);
+  const [filledWeek, setFilledWeek] = useState(0);
 
   const refresh = async () => {
     setLoading(true);
@@ -77,6 +84,16 @@ export function TelegramBirthdaysCard() {
   useEffect(() => {
     void refresh();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchFilledThisWeek().then((n) => {
+      if (!cancelled) setFilledWeek(n);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [people]);
 
   const patch = async (partial: Parameters<typeof updateTelegramSettings>[0]) => {
     setBusy(true);
@@ -112,7 +129,7 @@ export function TelegramBirthdaysCard() {
   }, [living, testPersonId]);
 
   const readyCount = living.filter((p) => /^\d{4}-\d{2}-\d{2}$/.test((p.birthDate ?? '').trim())).length;
-  const missingCount = living.length - readyCount;
+  const missingCount = countMissingBirthDates(people);
   const upcomingWeek = useMemo(
     () => getUpcomingBirthdays(people).filter((b) => b.daysUntil <= 7),
     [people],
@@ -158,9 +175,13 @@ export function TelegramBirthdaysCard() {
         {missingCount > 0 ? (
           <p className="mt-1.5 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
             {t('telegram.coverageMissing', { n: missingCount })}
+            {filledWeek > 0 ? ` · ${t('telegram.filledThisWeek', { n: filledWeek })}` : ''}
           </p>
         ) : (
-          <p className="mt-1.5 text-xs text-emerald-800 dark:text-emerald-300">{t('telegram.coverageOk')}</p>
+          <p className="mt-1.5 text-xs text-emerald-800 dark:text-emerald-300">
+            {t('telegram.coverageOk')}
+            {filledWeek > 0 ? ` · ${t('telegram.filledThisWeek', { n: filledWeek })}` : ''}
+          </p>
         )}
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
           {missingCount > 0 && (
@@ -456,11 +477,160 @@ export function TelegramBirthdaysCard() {
           >
             <Link2 className="h-4 w-4" aria-hidden /> {t('telegram.sendDatesNow')}
           </button>
+          <button
+            type="button"
+            className="btn-secondary !min-h-10"
+            disabled={busy}
+            onClick={() => {
+              void (async () => {
+                setBusy(true);
+                try {
+                  const result = await previewUpcomingReminder();
+                  if (!result.ok || !result.text) {
+                    toast(result.error || t('telegram.previewFailed'), 'error');
+                    return;
+                  }
+                  setPreviewText(result.text);
+                  setPreviewCaption(result.caption ?? null);
+                  setPreviewOpen(true);
+                } catch (error) {
+                  console.error(error);
+                  toast(t('telegram.previewFailed'), 'error');
+                } finally {
+                  setBusy(false);
+                }
+              })();
+            }}
+          >
+            <Eye className="h-4 w-4" aria-hidden /> {t('telegram.previewReminder')}
+          </button>
+          <button
+            type="button"
+            className="btn-secondary !min-h-10"
+            disabled={busy || !settings.group_chat_id}
+            onClick={() => {
+              void (async () => {
+                setBusy(true);
+                try {
+                  const result = await sendUpcomingReminderNow();
+                  if (!result.ok && !result.sent) {
+                    toast(
+                      result.error ||
+                        (result.skipped
+                          ? t('telegram.testSkipped', { reason: result.skipped })
+                          : t('telegram.sendUpcomingFailed')),
+                      'error',
+                    );
+                  } else {
+                    toast(
+                      t('telegram.sendUpcomingOk', {
+                        n: result.count ?? 0,
+                        photo: result.photoSent ? t('telegram.sendUpcomingPhotoYes') : t('telegram.sendUpcomingPhotoNo'),
+                      }),
+                      'success',
+                    );
+                  }
+                  await refresh();
+                } catch (error) {
+                  console.error(error);
+                  toast(t('telegram.sendUpcomingFailed'), 'error');
+                } finally {
+                  setBusy(false);
+                }
+              })();
+            }}
+          >
+            <Send className="h-4 w-4" aria-hidden /> {t('telegram.sendUpcomingNow')}
+          </button>
         </div>
         <p className="text-xs leading-relaxed text-stone-500 dark:text-stone-400">
           {t('telegram.datesLinkHint')}
         </p>
       </div>
+
+      {previewOpen && (
+        <div
+          className="fixed inset-0 z-[80] flex items-end justify-center bg-stone-950/50 p-3 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="tg-preview-title"
+          onClick={() => setPreviewOpen(false)}
+        >
+          <div
+            className="max-h-[85dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-200 bg-white p-4 shadow-xl dark:border-stone-700 dark:bg-stone-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="tg-preview-title" className="text-sm font-semibold">
+              {t('telegram.previewTitle')}
+            </h3>
+            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{t('telegram.previewIntro')}</p>
+            {previewCaption && (
+              <div className="mt-3">
+                <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-stone-500">
+                  {t('telegram.previewCaption')}
+                </p>
+                <pre className="mt-1 whitespace-pre-wrap rounded-xl border border-stone-200 bg-stone-50 p-3 text-xs leading-relaxed text-stone-800 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200">
+                  {previewCaption}
+                </pre>
+              </div>
+            )}
+            <div className="mt-3">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-stone-500">
+                {t('telegram.previewList')}
+              </p>
+              <pre className="mt-1 whitespace-pre-wrap rounded-xl border border-stone-200 bg-stone-50 p-3 text-xs leading-relaxed text-stone-800 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200">
+                {previewText.replace(/<\/?b>/g, '')}
+              </pre>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button type="button" className="btn-secondary !min-h-10" onClick={() => setPreviewOpen(false)}>
+                {t('telegram.previewClose')}
+              </button>
+              <button
+                type="button"
+                className="btn-primary !min-h-10"
+                disabled={busy || !settings.group_chat_id}
+                onClick={() => {
+                  void (async () => {
+                    setBusy(true);
+                    try {
+                      const result = await sendUpcomingReminderNow();
+                      if (!result.ok && !result.sent) {
+                        toast(
+                          result.error ||
+                            (result.skipped
+                              ? t('telegram.testSkipped', { reason: result.skipped })
+                              : t('telegram.sendUpcomingFailed')),
+                          'error',
+                        );
+                      } else {
+                        toast(
+                          t('telegram.sendUpcomingOk', {
+                            n: result.count ?? 0,
+                            photo: result.photoSent
+                              ? t('telegram.sendUpcomingPhotoYes')
+                              : t('telegram.sendUpcomingPhotoNo'),
+                          }),
+                          'success',
+                        );
+                        setPreviewOpen(false);
+                      }
+                      await refresh();
+                    } catch (error) {
+                      console.error(error);
+                      toast(t('telegram.sendUpcomingFailed'), 'error');
+                    } finally {
+                      setBusy(false);
+                    }
+                  })();
+                }}
+              >
+                <Send className="h-4 w-4" aria-hidden /> {t('telegram.sendUpcomingNow')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
