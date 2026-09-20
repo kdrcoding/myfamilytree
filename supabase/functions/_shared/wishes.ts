@@ -449,37 +449,121 @@ export function cheerAnnounceWebText(display: string, honoree: string): string {
   return `💛 <b>${display}</b> (saytdan) — ${honoree}ni tabriklamoqda!`;
 }
 
-export function upcomingBirthdaysNotice(
-  rows: { name: string; when: string; age: number | null }[],
-  datesUrl: string,
-): string {
-  const esc = (s: string) =>
-    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  if (rows.length === 0) {
-    return [
-      '📅 <b>Shu hafta tug‘ilgan kunlar</b>',
-      '',
-      'Keyingi 7 kunda to‘liq tug‘ilgan kun yo‘q.',
-      '',
-      `Sanalarni to‘ldirish: ${datesUrl}`,
-    ].join('\n');
+export type UpcomingBirthdayRow = {
+  name: string;
+  days: number;
+  month: number;
+  day: number;
+  age: number | null;
+};
+
+const MONTH_SHORT: Record<TgLang, string[]> = {
+  uz: ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'],
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+  ru: ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'],
+};
+
+function escHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function formatMonthDayShort(month: number, day: number, lang: TgLang): string {
+  const names = MONTH_SHORT[lang];
+  const m = names[Math.max(0, Math.min(11, month - 1))] ?? String(month);
+  return lang === 'en' ? `${day} ${m}` : `${day}-${m}`;
+}
+
+function formatUpcomingWhen(days: number, month: number, day: number, lang: TgLang): string {
+  const date = formatMonthDayShort(month, day, lang);
+  if (days === 0) {
+    if (lang === 'en') return `today (${date})`;
+    if (lang === 'ru') return `сегодня (${date})`;
+    return `bugun (${date})`;
   }
+  if (days === 1) {
+    if (lang === 'en') return `tomorrow (${date})`;
+    if (lang === 'ru') return `завтра (${date})`;
+    return `ertaga (${date})`;
+  }
+  if (lang === 'en') return `in ${days} days (${date})`;
+  if (lang === 'ru') return `через ${days} дн. (${date})`;
+  return `${days} kundan keyin (${date})`;
+}
+
+function formatUpcomingAge(age: number | null, lang: TgLang): string {
+  if (age == null || !Number.isFinite(age)) return '';
+  if (lang === 'en') return ` · turns ${age}`;
+  if (lang === 'ru') return ` · исполняется ${age}`;
+  return ` · ${age} yoshga to‘ladi`;
+}
+
+/** Weekend / Monday group reminder — clear when + age (not a bare number). */
+export function upcomingBirthdaysNotice(
+  rows: UpcomingBirthdayRow[],
+  datesUrl: string,
+  lang: TgLang = 'uz',
+): string {
+  const title =
+    lang === 'en'
+      ? '📅 <b>Birthdays this week</b> — reminder'
+      : lang === 'ru'
+        ? '📅 <b>Дни рождения на этой неделе</b> — напоминание'
+        : '📅 <b>Shu hafta tug‘ilgan kunlar</b> — eslatma';
+
+  if (rows.length === 0) {
+    const emptyTitle =
+      lang === 'en'
+        ? '📅 <b>Birthdays this week</b>'
+        : lang === 'ru'
+          ? '📅 <b>Дни рождения на этой неделе</b>'
+          : '📅 <b>Shu hafta tug‘ilgan kunlar</b>';
+    const empty =
+      lang === 'en'
+        ? 'No full birth dates in the next 7 days.'
+        : lang === 'ru'
+          ? 'В ближайшие 7 дней нет полных дат рождения.'
+          : 'Keyingi 7 kunda to‘liq tug‘ilgan kun yo‘q.';
+    const fill =
+      lang === 'en'
+        ? `Fill missing dates: ${datesUrl}`
+        : lang === 'ru'
+          ? `Заполнить даты: ${datesUrl}`
+          : `Sanalarni to‘ldirish: ${datesUrl}`;
+    return [emptyTitle, '', empty, '', fill].join('\n');
+  }
+
   const list = rows
     .slice(0, 15)
     .map((r) => {
-      const age = r.age != null ? ` · ${r.age}` : '';
-      return `• <b>${esc(r.name)}</b> — ${esc(r.when)}${age}`;
+      const when = formatUpcomingWhen(r.days, r.month, r.day, lang);
+      const age = formatUpcomingAge(r.age, lang);
+      return `• <b>${escHtml(r.name)}</b> — ${escHtml(when)}${escHtml(age)}`;
     })
     .join('\n');
-  const extra = rows.length > 15 ? `\n…va yana ${rows.length - 15} kishi` : '';
-  return [
-    '📅 <b>Shu hafta tug‘ilgan kunlar</b> — eslatma',
-    '',
-    list + extra,
-    '',
-    'Guruhda “Men tabriklayman” ni bosing yoki bayram sahifasini oching.',
-    `Sanalari yo‘qlar: ${datesUrl}`,
-  ].join('\n');
+  const more = rows.length - 15;
+  const extra =
+    more > 0
+      ? lang === 'en'
+        ? `\n…and ${more} more`
+        : lang === 'ru'
+          ? `\n…и ещё ${more}`
+          : `\n…va yana ${more} kishi`
+      : '';
+
+  const tip =
+    lang === 'en'
+      ? 'Tap “I celebrate” in the group or open the birthday page.'
+      : lang === 'ru'
+        ? 'В группе нажмите «Поздравляю» или откройте страницу праздника.'
+        : 'Guruhda “Men tabriklayman” ni bosing yoki bayram sahifasini oching.';
+  const missing =
+    lang === 'en'
+      ? `Missing dates: ${datesUrl}`
+      : lang === 'ru'
+        ? `Нет дат: ${datesUrl}`
+        : `Sanalari yo‘qlar: ${datesUrl}`;
+
+  return [title, '', list + extra, '', tip, missing].join('\n');
 }
 
 export function botHealthAlertText(hours: number, lastOk: string | null): string {

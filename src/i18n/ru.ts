@@ -588,6 +588,8 @@ export const ruOverrides: Record<string, string> = {
   'telegram.nextEmpty': 'В ближайшие 7 дней нет полной даты рождения.',
   'telegram.nextToday': 'Сегодня',
   'telegram.nextTomorrow': 'Завтра',
+  'telegram.nextInDays': 'через {n} дн.',
+  'telegram.nextTurns': 'исполняется {age}',
   'telegram.openMembers': 'Открыть членов семьи',
   'telegram.openMissingDates': 'Заполнить даты рождения',
   'telegram.healthTitle': 'Здоровье бота (владелец)',

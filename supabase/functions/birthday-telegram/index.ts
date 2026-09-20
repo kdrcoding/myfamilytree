@@ -237,18 +237,18 @@ async function maybeSendUpcoming(opts: {
       if (!md) return null;
       const days = daysUntilBirthday(md, opts.local);
       if (days < 0 || days > 7) return null;
-      const when =
-        days === 0 ? 'bugun' : days === 1 ? 'ertaga' : `${days} kundan keyin`;
       const nextYear =
         md.month < opts.local.month ||
         (md.month === opts.local.month && md.day < opts.local.day)
           ? opts.local.year + 1
           : opts.local.year;
+      const age = ageTurning(md, nextYear);
       return {
         name: displayName(m),
-        when,
-        age: ageTurning(md, nextYear),
         days,
+        month: md.month,
+        day: md.day,
+        age,
       };
     })
     .filter((row): row is NonNullable<typeof row> => Boolean(row))
@@ -270,10 +270,7 @@ async function maybeSendUpcoming(opts: {
     const datesUrl = await missingDatesPageUrl();
     await telegramApi('sendMessage', {
       chat_id: opts.chatId,
-      text: upcomingBirthdaysNotice(
-        upcoming.map(({ name, when, age }) => ({ name, when, age })),
-        datesUrl,
-      ),
+      text: upcomingBirthdaysNotice(upcoming, datesUrl, 'uz'),
       parse_mode: 'HTML',
       disable_web_page_preview: true,
       reply_markup: {

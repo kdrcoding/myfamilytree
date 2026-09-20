@@ -191,13 +191,14 @@ export function TelegramBirthdaysCard() {
             {upcomingWeek.map((b) => (
               <li key={b.person.id} className="flex flex-wrap items-baseline justify-between gap-2">
                 <span className="font-medium">{fullName(b.person)}</span>
-                <span className="text-xs text-stone-500">
+                <span className="text-xs text-stone-500 dark:text-stone-400">
                   {b.isToday
                     ? t('telegram.nextToday')
                     : b.daysUntil === 1
                       ? t('telegram.nextTomorrow')
-                      : formatMonthDay(b.month, b.day, language)}
-                  {b.turningAge != null ? ` · ${b.turningAge}` : ''}
+                      : t('telegram.nextInDays', { n: b.daysUntil })}
+                  {` · ${formatMonthDay(b.month, b.day, language)}`}
+                  {b.turningAge != null ? ` · ${t('telegram.nextTurns', { age: b.turningAge })}` : ''}
                 </span>
               </li>
             ))}
