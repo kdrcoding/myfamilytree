@@ -692,6 +692,93 @@ html.dark .tree-person-card {
     0 12px 28px -12px rgb(0 0 0 / 0.55) !important;
 }
 
+/* Soft glow when name + year + photo + a life detail are filled */
+.tree-person-card--complete {
+  border-color: rgb(196 163 90 / 0.55) !important;
+  box-shadow:
+    0 0 0 1px rgb(196 163 90 / 0.35),
+    0 0 18px rgb(20 184 166 / 0.28),
+    0 0 32px rgb(196 163 90 / 0.18),
+    0 1px 0 rgb(255 255 255 / 0.35) inset,
+    0 10px 28px -14px rgb(0 0 0 / 0.35) !important;
+  animation: tree-complete-glow 3.6s ease-in-out infinite;
+}
+.tree-person-card--complete:hover {
+  border-color: rgb(196 163 90 / 0.7) !important;
+  box-shadow:
+    0 0 0 1px rgb(196 163 90 / 0.45),
+    0 0 22px rgb(20 184 166 / 0.34),
+    0 0 36px rgb(196 163 90 / 0.22),
+    0 1px 0 rgb(255 255 255 / 0.4) inset,
+    0 16px 32px -12px rgb(0 0 0 / 0.4) !important;
+}
+html.dark .tree-person-card--complete {
+  border-color: rgb(196 163 90 / 0.45) !important;
+  box-shadow:
+    0 0 0 1px rgb(196 163 90 / 0.28),
+    0 0 16px rgb(45 212 191 / 0.22),
+    0 0 28px rgb(196 163 90 / 0.14),
+    0 1px 0 rgb(255 255 255 / 0.05) inset,
+    0 12px 28px -12px rgb(0 0 0 / 0.55) !important;
+}
+
+.tree-person-complete-spark {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.45rem;
+  font-size: 0.7rem;
+  line-height: 1;
+  color: #b45309;
+  opacity: 0.85;
+  pointer-events: none;
+  animation: tree-complete-spark 2.8s ease-in-out infinite;
+}
+html.dark .tree-person-complete-spark {
+  color: #d6b56a;
+  opacity: 0.9;
+}
+
+@keyframes tree-complete-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+    box-shadow:
+      0 0 0 1px rgb(196 163 90 / 0.32),
+      0 0 14px rgb(20 184 166 / 0.22),
+      0 0 26px rgb(196 163 90 / 0.12),
+      0 1px 0 rgb(255 255 255 / 0.3) inset,
+      0 10px 28px -14px rgb(0 0 0 / 0.35);
+  }
+  50% {
+    filter: brightness(1.03);
+    box-shadow:
+      0 0 0 1px rgb(196 163 90 / 0.5),
+      0 0 22px rgb(20 184 166 / 0.34),
+      0 0 38px rgb(196 163 90 / 0.22),
+      0 1px 0 rgb(255 255 255 / 0.35) inset,
+      0 10px 28px -14px rgb(0 0 0 / 0.35);
+  }
+}
+
+@keyframes tree-complete-spark {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.15) rotate(12deg);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tree-person-card--complete,
+  .tree-person-complete-spark {
+    animation: none;
+  }
+}
+
 .family-tree-controls {
   background: rgb(200 222 214 / 0.94) !important;
   border-color: rgb(15 118 110 / 0.28) !important;

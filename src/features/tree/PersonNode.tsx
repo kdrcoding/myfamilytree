@@ -7,6 +7,7 @@ import { usePrivacy } from '../../hooks/usePrivacy';
 import { useT } from '../../i18n/useT';
 import { lifespan } from '../../utils/dates';
 import { fullName, prettyLabel } from '../../utils/family';
+import { isProfileComplete } from '../../utils/profileComplete';
 import { Avatar } from '../../components/Avatar';
 import { DeceasedBadge, GenderBadge } from '../../components/badges';
 import { CARD_H, CARD_W } from './layout';
@@ -30,6 +31,7 @@ function PersonNodeComponent({ data, width, height }: NodeProps<PersonFlowNode>)
   if (!person) return null;
 
   const name = fullName(person);
+  const complete = isProfileComplete(person);
   const years = privacy.showBirthDate()
     ? lifespan(
         person.birthDate,
@@ -52,16 +54,25 @@ function PersonNodeComponent({ data, width, height }: NodeProps<PersonFlowNode>)
       <button
         type="button"
         onClick={() => onOpen(person.id)}
-        aria-label={t('tree.openDetails', { name })}
-        title={name}
-        className={`tree-person-card flex h-full w-full items-center gap-2.5 rounded-2xl border border-l-4 px-3 text-left ring-1 ring-teal-900/10 focus-visible:ring-2 focus-visible:ring-teal-400 dark:ring-teal-200/10 ${
+        aria-label={
+          complete
+            ? t('tree.openDetailsComplete', { name })
+            : t('tree.openDetails', { name })
+        }
+        title={complete ? `${name} · ${t('tree.profileComplete')}` : name}
+        className={`tree-person-card relative flex h-full w-full items-center gap-2.5 rounded-2xl border border-l-4 px-3 text-left ring-1 ring-teal-900/10 focus-visible:ring-2 focus-visible:ring-teal-400 dark:ring-teal-200/10 ${
           GENDER_ACCENT[person.gender]
         } ${
           person.isDeceased
             ? 'border-dashed border-stone-400/80 dark:border-stone-500'
             : 'border-teal-500/25 dark:border-teal-400/20'
-        }`}
+        } ${complete ? 'tree-person-card--complete' : ''}`}
       >
+        {complete && (
+          <span className="tree-person-complete-spark" aria-hidden>
+            ✦
+          </span>
+        )}
         <Avatar person={person} size="sm" />
         <span className="min-w-0 flex-1">
           <span

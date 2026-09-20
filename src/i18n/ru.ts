@@ -1003,6 +1003,8 @@ export const ruOverrides: Record<string, string> = {
   'tree.quickChild': 'Добавить ребёнка для {name}',
   'tree.quickParent': 'Добавить родителя для {name}',
   'tree.openDetails': 'Открыть подробнее: {name}',
+  'tree.openDetailsComplete': 'Открыть подробнее: {name} — профиль выглядит полным',
+  'tree.profileComplete': 'Профиль выглядит полным',
   'tree.legendDivorced': 'В разводе',
 
   'credit.madeBy': 'Приложение сделал Кадир',
