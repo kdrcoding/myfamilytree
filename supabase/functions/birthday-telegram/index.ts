@@ -47,11 +47,15 @@ async function assertAuthorized(req: Request): Promise<void> {
   if (!cronSecret) throw new Error('TELEGRAM_CRON_SECRET missing');
   if (req.headers.get('x-cron-secret') === cronSecret) return;
 
+  await assertOwnerJwt(req);
+}
+
+/** Owner JWT only — used for mint/send dates helpers (not cron). */
+async function assertOwnerJwt(req: Request): Promise<void> {
   const auth = req.headers.get('Authorization') || '';
   if (!auth.startsWith('Bearer ')) {
     throw new Error('Unauthorized');
   }
-  // Owner JWT from the app (Test send). Never accept the service-role key here.
   const url = requireEnv('SUPABASE_URL');
   const anon =
     Deno.env.get('SUPABASE_ANON_KEY') ||
@@ -381,14 +385,13 @@ Deno.serve(async (req) => {
   let force = false;
 
   try {
-    await assertAuthorized(req);
-    await ensureCallbackWebhook();
-
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const action = typeof body.action === 'string' ? body.action : '';
 
-    // Owner-only helpers (JWT). Cron never sends these actions.
+    // Owner JWT only — never accept cron secret for these.
     if (action === 'mintDatesLink' || action === 'sendMissingDates') {
+      await assertOwnerJwt(req);
+      await ensureCallbackWebhook();
       db = createServiceClient();
       if (action === 'mintDatesLink') {
         const link = await missingDatesPageLink();
@@ -424,6 +427,9 @@ Deno.serve(async (req) => {
       });
       return jsonResponse({ ok: result.sent, ...result });
     }
+
+    await assertAuthorized(req);
+    await ensureCallbackWebhook();
 
     force = Boolean(body.force);
     trigger = force ? 'test' : 'cron';

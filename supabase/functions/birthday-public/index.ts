@@ -138,6 +138,10 @@ async function setBirthDateWithLink(
   if (!person || person.is_deceased || person.death_date) {
     return jsonResponse({ ok: false, error: 'not_found' }, 404);
   }
+  // Only fill missing month/day — do not overwrite known full birthdays.
+  if (monthDay(person.birth_date)) {
+    return jsonResponse({ ok: false, error: 'already_has_date' }, 409);
+  }
 
   await db.rest('family_members', {
     method: 'PATCH',

@@ -58,6 +58,7 @@ cd C:\Users\Mqodi\projects\myfamilytree
 npx supabase functions deploy telegram-webhook --no-verify-jwt
 npx supabase functions deploy birthday-telegram --no-verify-jwt
 npx supabase functions deploy birthday-public --no-verify-jwt
+npx supabase functions deploy family-session --no-verify-jwt
 ```
 
 Set webhook (once). `callback_query` is required so **Men tabriklayman** works

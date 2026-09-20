@@ -147,7 +147,12 @@ function initialAuthState(): { role: Role; ready: boolean; softUnlock: SoftUnloc
     applyOwnerName();
     return { role: 'owner', ready: true, softUnlock: null };
   }
-  if (restorePasswordEditor()) return { role: 'editor', ready: true, softUnlock: null };
+  // With Supabase, family editors need a live family@ JWT — do not unlock from
+  // stale localStorage alone (AppLockGate would skip the password screen).
+  if (restorePasswordEditor()) {
+    if (!supabase) return { role: 'editor', ready: true, softUnlock: null };
+    return { role: 'viewer', ready: false, softUnlock: null };
+  }
   if (hasSoftUnlockGrant() && readDisplayName().length >= 2) {
     return { role: 'viewer', ready: false, softUnlock: readSoftUnlockKind() };
   }
