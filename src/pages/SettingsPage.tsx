@@ -120,7 +120,7 @@ function ChangeLogCard() {
     <section className="card mt-3 p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <h2 className="settings-section-title flex items-center gap-2.5">
             <ScrollText className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.logTitle')}
           </h2>
           <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{t('settings.logIntro')}</p>
@@ -259,7 +259,7 @@ function BackupsCard() {
 
   return (
     <section className="card mt-3 p-4">
-      <h2 className="flex items-center gap-2 text-sm font-semibold">
+      <h2 className="settings-section-title flex items-center gap-2.5">
         <Archive className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.backupsTitle')}
       </h2>
       <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
@@ -337,7 +337,7 @@ function CountriesCard() {
 
   return (
     <section className="card mt-3 p-4">
-      <h2 className="flex items-center gap-2 text-sm font-semibold">
+      <h2 className="settings-section-title flex items-center gap-2.5">
         <Globe className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.countriesTitle')}
       </h2>
       <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
@@ -413,7 +413,7 @@ function PhotosCard() {
 
   return (
     <section className="card mt-3 p-4">
-      <h2 className="flex items-center gap-2 text-sm font-semibold">
+      <h2 className="settings-section-title flex items-center gap-2.5">
         <Images className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.photosTitle')}
       </h2>
       <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{t('settings.photosIntro')}</p>
@@ -481,7 +481,7 @@ export function SettingsPage() {
     <div className="mx-auto w-full max-w-3xl px-4 py-5 sm:px-6 sm:py-8">
       <header className="flex items-center gap-3">
         <BrandMark size="md" title={t('site.title')} />
-        <h1 className="font-display text-lg font-semibold tracking-tight text-stone-900 sm:text-xl dark:text-stone-50">
+        <h1 className="font-display text-xl font-semibold tracking-tight text-stone-900 sm:text-2xl dark:text-teal-50">
           {t('settings.title')}
         </h1>
       </header>
@@ -531,21 +531,17 @@ export function SettingsPage() {
 
       {/* Invite relatives */}
       <section className="card mt-3 p-4 sm:p-5">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-stone-900 dark:text-teal-50">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-600/15 text-teal-700 dark:bg-teal-400/15 dark:text-teal-300">
+        <h2 className="settings-section-title flex items-center gap-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-600/15 text-teal-700 dark:bg-teal-400/20 dark:text-teal-200">
             <Link2 className="h-4 w-4" aria-hidden />
           </span>
           {t('invite.title')}
         </h2>
-        <p className="mt-2 text-xs leading-relaxed text-stone-600 dark:text-stone-300">
-          {t('invite.intro')}
-        </p>
-        <div className="mt-3 break-all rounded-xl border border-teal-900/15 bg-teal-50/80 px-3 py-2.5 font-mono text-xs font-medium text-teal-950 dark:border-teal-400/20 dark:bg-teal-950/50 dark:text-teal-100 sm:text-sm">
-          {inviteUrl()}
-        </div>
+        <p className="settings-section-body mt-2.5">{t('invite.intro')}</p>
+        <div className="settings-link-box">{inviteUrl()}</div>
         <button
           type="button"
-          className="btn-primary mt-3 !min-h-10"
+          className="btn-primary mt-3.5 !min-h-11 !text-[15px] !font-semibold tracking-tight"
           onClick={() => {
             void navigator.clipboard.writeText(inviteUrl()).then(
               () => toast(t('invite.copied'), 'success'),
@@ -559,13 +555,14 @@ export function SettingsPage() {
       </section>
 
       {/* Access — always visible so owner login is not buried in Easy Mode. */}
-      <section className="card mt-3 p-4">
-        <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <KeyRound className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.accessTitle')}
+      <section className="card mt-3 p-4 sm:p-5">
+        <h2 className="settings-section-title flex items-center gap-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-600/15 text-teal-700 dark:bg-teal-400/20 dark:text-teal-200">
+            <KeyRound className="h-4 w-4" aria-hidden />
+          </span>
+          {t('settings.accessTitle')}
         </h2>
-        <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">
-          {t('settings.accessIntro')}
-        </p>
+        <p className="settings-section-body mt-2.5">{t('settings.accessIntro')}</p>
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
           <span className="badge border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
             <Eye className="h-3 w-3" aria-hidden />
@@ -644,7 +641,7 @@ export function SettingsPage() {
       {/* Privacy — owner-only: controls what the whole family's data hides publicly. */}
       {canDelete && (
       <section className="card mt-3 p-4">
-        <h2 className="flex items-center gap-2 text-sm font-semibold">
+        <h2 className="settings-section-title flex items-center gap-2.5">
           <ShieldCheck className="h-4 w-4 text-emerald-600" aria-hidden />{' '}
           {t('settings.privacyTitle')}
         </h2>
@@ -710,7 +707,7 @@ export function SettingsPage() {
       {/* Data management — owner-only: export/import/restore act on the whole dataset. */}
       {canDelete && (
       <section className="card mt-3 p-4">
-        <h2 className="flex items-center gap-2 text-sm font-semibold">
+        <h2 className="settings-section-title flex items-center gap-2.5">
           <Database className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.dataTitle')}
         </h2>
         <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{t('settings.dataIntro')}</p>

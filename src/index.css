@@ -69,10 +69,14 @@
     color-scheme: dark;
   }
   body {
-    @apply antialiased font-sans;
+    @apply antialiased font-sans text-stone-900;
+    letter-spacing: -0.011em;
     transition: background-color 0.25s, border-color 0.25s, color 0.25s;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
+  }
+  html.dark body {
+    @apply text-teal-50;
   }
 
   :root {
@@ -535,7 +539,31 @@ html.dark .app-shell {
     radial-gradient(ellipse 70% 50% at 20% -10%, rgb(13 148 136 / 0.18), transparent 55%),
     radial-gradient(ellipse 50% 40% at 90% 0%, rgb(20 184 166 / 0.08), transparent 50%),
     linear-gradient(180deg, #070f0e 0%, #0a1f1c 55%, #071412 100%);
-  color: #e7f5f1;
+  color: #f0faf7;
+}
+
+/* Settings / card section type */
+.settings-section-title {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  @apply text-base font-semibold tracking-tight text-stone-900 dark:text-teal-50;
+  letter-spacing: -0.02em;
+}
+.settings-section-body {
+  @apply text-sm leading-relaxed text-stone-600 dark:text-stone-300;
+  letter-spacing: -0.005em;
+}
+.settings-link-box {
+  @apply mt-3 break-all rounded-xl border px-3.5 py-3 text-sm font-medium;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  border-color: rgb(15 118 110 / 0.22);
+  background: rgb(236 253 245 / 0.9);
+  color: #042f2e;
+}
+html.dark .settings-link-box {
+  border-color: rgb(45 212 191 / 0.28);
+  background: rgb(4 47 46 / 0.85);
+  color: #ccfbf1;
 }
 
 .app-header {
