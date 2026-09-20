@@ -530,17 +530,22 @@ export function SettingsPage() {
       </section>
 
       {/* Invite relatives */}
-      <section className="card mt-3 p-4">
-        <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <Link2 className="h-4 w-4 text-emerald-600" aria-hidden /> {t('invite.title')}
+      <section className="card mt-3 p-4 sm:p-5">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-stone-900 dark:text-teal-50">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-600/15 text-teal-700 dark:bg-teal-400/15 dark:text-teal-300">
+            <Link2 className="h-4 w-4" aria-hidden />
+          </span>
+          {t('invite.title')}
         </h2>
-        <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{t('invite.intro')}</p>
-        <p className="mt-2 break-all rounded-lg bg-stone-50 px-3 py-2 text-sm font-medium dark:bg-stone-800/60">
-          {inviteUrl()}
+        <p className="mt-2 text-xs leading-relaxed text-stone-600 dark:text-stone-300">
+          {t('invite.intro')}
         </p>
+        <div className="mt-3 break-all rounded-xl border border-teal-900/15 bg-teal-50/80 px-3 py-2.5 font-mono text-xs font-medium text-teal-950 dark:border-teal-400/20 dark:bg-teal-950/50 dark:text-teal-100 sm:text-sm">
+          {inviteUrl()}
+        </div>
         <button
           type="button"
-          className="btn-primary mt-2.5 !min-h-10"
+          className="btn-primary mt-3 !min-h-10"
           onClick={() => {
             void navigator.clipboard.writeText(inviteUrl()).then(
               () => toast(t('invite.copied'), 'success'),
@@ -584,11 +589,11 @@ export function SettingsPage() {
           )}
         </div>
         {canDelete && (
-        <details className="mt-3 rounded-lg bg-stone-50 p-3 text-sm dark:bg-stone-800/60">
-          <summary className="cursor-pointer font-medium text-stone-700 dark:text-stone-300">
+        <details className="mt-3 rounded-xl border border-teal-900/10 bg-teal-50/70 p-3 text-sm dark:border-teal-400/15 dark:bg-teal-950/40">
+          <summary className="cursor-pointer font-medium text-stone-800 dark:text-teal-100">
             {t('settings.howChange')}
           </summary>
-          <div className="mt-2 space-y-2 text-stone-600 dark:text-stone-400">
+          <div className="mt-2 space-y-2 text-stone-600 dark:text-stone-300">
             <p>{t('settings.howChangeText')}</p>
             <div className="flex flex-wrap gap-2">
               <input
@@ -614,7 +619,7 @@ export function SettingsPage() {
               </button>
             </div>
             {hashResult && (
-              <code className="block break-all rounded-lg bg-stone-200 p-2 text-xs dark:bg-stone-700">
+              <code className="block break-all rounded-lg border border-teal-900/10 bg-white/80 p-2 text-xs text-teal-950 dark:border-teal-400/20 dark:bg-teal-950/60 dark:text-teal-100">
                 {hashResult}
               </code>
             )}
