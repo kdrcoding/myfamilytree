@@ -29,9 +29,21 @@ function isSettings(value: unknown): value is AppSettings {
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = usePersistentState<AppSettings>(
     STORAGE_KEYS.settings,
-    { theme: 'dark', language: 'uz', privacy: DEFAULT_PRIVACY, easyMode: true },
+    { theme: 'dark', language: 'uz', privacy: DEFAULT_PRIVACY, easyMode: false },
     isSettings,
   );
+
+  // One-time: Easy Mode used to ship on by default; turn it off for everyone once.
+  useEffect(() => {
+    const FLAG = 'familytree.easyModeDefaultOff.v1';
+    try {
+      if (localStorage.getItem(FLAG) === '1') return;
+      localStorage.setItem(FLAG, '1');
+    } catch {
+      return;
+    }
+    setSettings((s) => (s.easyMode ? { ...s, easyMode: false } : s));
+  }, [setSettings]);
 
   const language = normalizeLanguage(settings.language);
   const easyMode = Boolean(settings.easyMode);

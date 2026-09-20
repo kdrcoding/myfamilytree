@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { ChevronDown, LogOut, Moon, Settings, Sun } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -12,10 +12,6 @@ import { BrandLogo } from './BrandLogo';
 import { LanguageMenuButton } from './LanguageSelect';
 import { StatusBanners } from './StatusBanners';
 import { InstallAppTip } from './InstallAppTip';
-
-const WelcomeTour = lazy(() =>
-  import('./WelcomeTour').then((m) => ({ default: m.WelcomeTour })),
-);
 
 /** Rough left-to-right order so page slides feel directional. */
 const ROUTE_ORDER = [
@@ -288,9 +284,6 @@ export function Layout() {
       <StatusBanners />
       <InstallAppTip />
       <BottomNav />
-      <Suspense fallback={null}>
-        <WelcomeTour />
-      </Suspense>
     </div>
   );
 }

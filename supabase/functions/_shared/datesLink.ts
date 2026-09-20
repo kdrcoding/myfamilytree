@@ -57,7 +57,10 @@ export async function verifyDatesLinkToken(
 ): Promise<boolean> {
   const secret = datesLinkSecret();
   if (!secret) return false;
-  const raw = (token ?? '').trim();
+  const raw = (token ?? '')
+    .trim()
+    .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '')
+    .replace(/\s+/g, '');
   const m = /^v1\.(\d{9,12})\.([A-Za-z0-9_-]{20,100})$/.exec(raw);
   if (!m) return false;
   const exp = Number(m[1]);

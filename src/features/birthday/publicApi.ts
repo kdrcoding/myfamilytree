@@ -77,8 +77,9 @@ export async function fetchMissingBirthdays(linkToken: string): Promise<MissingB
   const base = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
   if (!base || !anon || !isSupabaseConfigured) return { ok: false, error: 'not_configured' };
-  const token = linkToken.trim();
+  const token = normalizeDatesLinkToken(linkToken);
   if (!token) return { ok: false, error: 'unauthorized' };
+  if (!looksLikeDatesLinkToken(token)) return { ok: false, error: 'unauthorized' };
 
   const res = await fetch(
     `${base}/functions/v1/birthday-public?mode=missing&k=${encodeURIComponent(token)}`,
@@ -104,8 +105,9 @@ export async function setPublicBirthDate(
   const base = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
   if (!base || !anon || !isSupabaseConfigured) return { ok: false, error: 'not_configured' };
-  const token = linkToken.trim();
+  const token = normalizeDatesLinkToken(linkToken);
   if (!token) return { ok: false, error: 'unauthorized' };
+  if (!looksLikeDatesLinkToken(token)) return { ok: false, error: 'unauthorized' };
 
   const res = await fetch(`${base}/functions/v1/birthday-public?mode=set-birth`, {
     method: 'POST',
@@ -134,10 +136,36 @@ export async function setPublicBirthDate(
 
 /** Expiry ms from a dates link token (display only — server still verifies). */
 export function peekDatesLinkExpiryMs(token: string | null | undefined): number | null {
-  const m = /^v1\.(\d{9,12})\./.exec((token ?? '').trim());
+  const m = /^v1\.(\d{9,12})\./.exec(normalizeDatesLinkToken(token ?? ''));
   if (!m) return null;
   const exp = Number(m[1]);
   return Number.isFinite(exp) ? exp * 1000 : null;
+}
+
+/**
+ * Clean a copied/pasted `k=` token so spaces, zero-width chars, and junk
+ * wrappers do not break a real `v1.<exp>.<sig>` link.
+ */
+export function normalizeDatesLinkToken(raw: string): string {
+  let s = raw.trim();
+  if (!s) return '';
+  try {
+    // Only decode when it looks percent-encoded — avoids throwing on lone %.
+    if (/%[0-9A-Fa-f]{2}/.test(s)) s = decodeURIComponent(s);
+  } catch {
+    /* keep raw */
+  }
+  s = s
+    .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '')
+    .replace(/\s+/g, '')
+    .replace(/^['"<(\[]+|['">)\]]+$/g, '');
+  const m = /^(v1\.\d{9,12}\.[A-Za-z0-9_-]{20,100})/.exec(s);
+  return m ? m[1]! : s;
+}
+
+/** True when the token looks like our signed dates-link format (not verified). */
+export function looksLikeDatesLinkToken(token: string | null | undefined): boolean {
+  return /^v1\.\d{9,12}\.[A-Za-z0-9_-]{20,100}$/.test(normalizeDatesLinkToken(token ?? ''));
 }
 
 export type WebCheerResult = {

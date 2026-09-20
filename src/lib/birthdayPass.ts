@@ -1,4 +1,4 @@
-import { fetchPublicBirthday, fetchMissingBirthdays } from '../features/birthday/publicApi';
+import { fetchPublicBirthday, fetchMissingBirthdays, normalizeDatesLinkToken } from '../features/birthday/publicApi';
 
 const BDAY_KEY = 'familytree.birthdayPass.v1';
 const DATES_KEY = 'familytree.datesPass.v1';
@@ -92,7 +92,7 @@ export async function birthdayPassStillValid(): Promise<boolean> {
  * Soft unlock clock starts on first successful open (not reset on clicks).
  */
 export function markDatesPass(token: string): void {
-  const k = token.trim();
+  const k = normalizeDatesLinkToken(token);
   if (!k || !canUseSession()) return;
   try {
     const existing = readDatesGrant();
