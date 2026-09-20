@@ -235,7 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const name = readDisplayName();
       if (hasSoftUnlockGrant() && name.length >= 2) {
-        const kind = await resolveSoftUnlockKind({ keepOnNetworkError: true });
+        const kind = await resolveSoftUnlockKind();
         if (cancelled) return;
         if (kind) {
           setSoftUnlockKind(kind);
@@ -303,7 +303,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false;
     const recheck = async () => {
-      const kind = await resolveSoftUnlockKind({ keepOnNetworkError: true });
+      const kind = await resolveSoftUnlockKind();
       if (cancelled) return;
       if (!kind) {
         setSoftUnlock(null);
@@ -411,7 +411,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const enterWithName = useCallback(async (name: string): Promise<boolean> => {
     const trimmed = name.trim().slice(0, 40);
     if (trimmed.length < 2) return false;
-    const kind = await resolveSoftUnlockKind({ keepOnNetworkError: false });
+    const kind = await resolveSoftUnlockKind();
     if (!kind) return false;
     saveJson(STORAGE_KEYS.displayName, trimmed);
     saveJson(STORAGE_KEYS.namedDevice, true);

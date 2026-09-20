@@ -64,7 +64,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
       setSoftKind(null);
       return;
     }
-    void softUnlockStillValid({ keepOnNetworkError: true }).then(async (ok) => {
+    void softUnlockStillValid().then(async (ok) => {
       if (cancelled) return;
       setSoftAccess(ok ? 'yes' : 'no');
       if (!ok) {
@@ -72,7 +72,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
         return;
       }
       if (readDatesPass()) {
-        const bdayOk = await birthdayPassStillValid({ keepOnNetworkError: true });
+        const bdayOk = await birthdayPassStillValid();
         if (!cancelled) setSoftKind(bdayOk && !claimedFromDates ? 'bday' : 'dates');
       } else {
         if (!cancelled) setSoftKind('bday');

@@ -65,9 +65,7 @@ export function readBirthdayPass(): Grant | null {
  * `?from=bday` is not proof. Access is name-only only while this tab
  * already opened a live birthday page and that page is still open.
  */
-export async function birthdayPassStillValid(_opts?: {
-  keepOnNetworkError?: boolean;
-}): Promise<boolean> {
+export async function birthdayPassStillValid(): Promise<boolean> {
   const grant = readBirthdayPass();
   if (!grant) return false;
 
@@ -161,9 +159,7 @@ export function readDatesLinkToken(): string | null {
 }
 
 /** Name-only unlock while missing dates remain, grant is fresh, and link token still works. */
-export async function datesPassStillValid(_opts?: {
-  keepOnNetworkError?: boolean;
-}): Promise<boolean> {
+export async function datesPassStillValid(): Promise<boolean> {
   const grant = readDatesGrant();
   if (!grant) return false;
   if (Date.now() - grant.at > DATES_PASS_TTL_MS) {
@@ -210,20 +206,16 @@ export function readSoftUnlockKind(): SoftUnlockKind | null {
 }
 
 /** Resolve which soft unlock is currently valid (dates preferred when both). */
-export async function resolveSoftUnlockKind(opts?: {
-  keepOnNetworkError?: boolean;
-}): Promise<SoftUnlockKind | null> {
-  if (await datesPassStillValid(opts)) return 'dates';
-  if (await birthdayPassStillValid(opts)) return 'bday';
+export async function resolveSoftUnlockKind(): Promise<SoftUnlockKind | null> {
+  if (await datesPassStillValid()) return 'dates';
+  if (await birthdayPassStillValid()) return 'bday';
   setSoftUnlockKind(null);
   return null;
 }
 
 /** Birthday page or missing-dates page soft unlock. */
-export async function softUnlockStillValid(opts?: {
-  keepOnNetworkError?: boolean;
-}): Promise<boolean> {
-  return (await resolveSoftUnlockKind(opts)) != null;
+export async function softUnlockStillValid(): Promise<boolean> {
+  return (await resolveSoftUnlockKind()) != null;
 }
 
 export function clearSoftUnlock(): void {
