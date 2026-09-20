@@ -4,13 +4,13 @@ const BDAY_KEY = 'familytree.birthdayPass.v1';
 const DATES_KEY = 'familytree.datesPass.v1';
 const SOFT_KIND_KEY = 'familytree.softUnlockKind.v1';
 
-/** Missing-dates soft unlock lasts at most 2 hours. */
+/** Missing-dates soft unlock lasts at most 2 hours after opening a valid link. */
 export const DATES_PASS_TTL_MS = 2 * 60 * 60 * 1000;
 
 export type SoftUnlockKind = 'bday' | 'dates';
 
 type Grant = { personId: string };
-type DatesGrant = { at: number };
+type DatesGrant = { at: number; token: string };
 
 function canUseSession(): boolean {
   try {
@@ -86,11 +86,18 @@ export async function birthdayPassStillValid(opts?: {
   }
 }
 
-/** After opening the public missing-dates page from Telegram (only when work remains). */
-export function markDatesPass(): void {
-  if (!canUseSession()) return;
+/**
+ * After opening `/dates?k=…` from Telegram with a valid signed link
+ * (only when work remains). Token is required for API revalidation.
+ */
+export function markDatesPass(token: string): void {
+  const k = token.trim();
+  if (!k || !canUseSession()) return;
   try {
-    sessionStorage.setItem(DATES_KEY, JSON.stringify({ at: Date.now() } satisfies DatesGrant));
+    sessionStorage.setItem(
+      DATES_KEY,
+      JSON.stringify({ at: Date.now(), token: k } satisfies DatesGrant),
+    );
   } catch {
     /* private mode */
   }
@@ -110,17 +117,24 @@ function readDatesGrant(): DatesGrant | null {
   try {
     const raw = sessionStorage.getItem(DATES_KEY);
     if (!raw) return null;
-    // Legacy: plain "1"
-    if (raw === '1') return { at: Date.now() };
+    // Legacy grants without a signed token are no longer valid.
+    if (raw === '1') {
+      clearDatesPass();
+      return null;
+    }
     const parsed: unknown = JSON.parse(raw);
     if (
       parsed &&
       typeof parsed === 'object' &&
       'at' in parsed &&
-      typeof (parsed as DatesGrant).at === 'number'
+      typeof (parsed as DatesGrant).at === 'number' &&
+      'token' in parsed &&
+      typeof (parsed as { token?: unknown }).token === 'string' &&
+      (parsed as DatesGrant).token.trim().length > 0
     ) {
-      return parsed as DatesGrant;
+      return { at: (parsed as DatesGrant).at, token: (parsed as DatesGrant).token.trim() };
     }
+    clearDatesPass();
   } catch {
     /* ignore */
   }
@@ -137,13 +151,22 @@ export function readDatesPass(): boolean {
   return true;
 }
 
-/** Name-only unlock while missing dates remain and the grant is fresh. */
+export function readDatesLinkToken(): string | null {
+  return readDatesGrant()?.token ?? null;
+}
+
+/** Name-only unlock while missing dates remain, grant is fresh, and link token still works. */
 export async function datesPassStillValid(opts?: {
   keepOnNetworkError?: boolean;
 }): Promise<boolean> {
-  if (!readDatesPass()) return false;
+  const grant = readDatesGrant();
+  if (!grant) return false;
+  if (Date.now() - grant.at > DATES_PASS_TTL_MS) {
+    clearDatesPass();
+    return false;
+  }
   try {
-    const data = await fetchMissingBirthdays();
+    const data = await fetchMissingBirthdays(grant.token);
     if (!data.ok) {
       clearDatesPass();
       return false;

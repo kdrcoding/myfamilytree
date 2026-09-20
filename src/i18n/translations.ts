@@ -462,18 +462,25 @@ export const en = {
   'dates.kicker': 'Oq-Ariq OILASI',
   'dates.title': 'Missing birth dates',
   'dates.intro':
-    'These relatives need a full birth date (month and day) so the Telegram bot can congratulate them. Tap a name, enter yours, and fill the date — no password from this link.',
+    'Open this page from the family’s Telegram link. Enter your name, then fill birth dates — no password while that link is valid (about 7 days).',
   'dates.loading': 'Loading the list…',
   'dates.count': '{n} people still need a date',
   'dates.fillAll': 'Open the list to fill dates',
   'dates.fillHint': 'Next screen asks only for your name while this fill-in link is open.',
   'dates.openTree': 'See the family tree',
+  'dates.openHome': 'Open the family site',
   'dates.emptyTitle': 'Everyone has a birthday date',
   'dates.emptyBody': 'The bot can congratulate the whole living family. Thank you!',
   'dates.failedTitle': 'Could not load this list',
   'dates.failedBody': 'Check your connection and try again.',
   'dates.retry': 'Try again',
-  'dates.footer': 'This page is open for family — no password needed to see the list.',
+  'dates.lockedTitle': 'This page needs a family link',
+  'dates.lockedBody':
+    'Typing /dates in the browser is not enough. Open the “Fill dates” button from the Telegram group message — that link works for about 7 days.',
+  'dates.expiredTitle': 'This link has expired',
+  'dates.expiredBody':
+    'Fill-dates links last about 7 days. Wait for the next Telegram reminder, or ask the family admin for a new link.',
+  'dates.footer': 'Signed Telegram links only — valid about 7 days. Filling still asks for your name.',
 
   // Invite link
   'invite.title': 'Invite relatives',
@@ -1469,18 +1476,25 @@ export const uz: Record<TKey, string> = {
   'dates.kicker': 'Oq-Ariq OILASI',
   'dates.title': 'Tug‘ilgan kun sanasi yo‘qlar',
   'dates.intro':
-    'Bu oila a’zolarida to‘liq sana (oy va kun) yo‘q — bot ularni tabriklay olmaydi. Ismni bosing, o‘z ismingizni yozing va sanani to‘ldiring — bu havoladan parol kerak emas.',
+    'Bu sahifani oila Telegram havolasidan oching. Ismingizni yozing, so‘ng sanalarni to‘ldiring — havola taxminan 7 kun amal qiladi, parol kerak emas.',
   'dates.loading': 'Ro‘yxat yuklanmoqda…',
   'dates.count': 'Hali {n} kishida sana yo‘q',
   'dates.fillAll': 'Sanalarni to‘ldirish uchun ochish',
   'dates.fillHint': 'Keyingi ekranda faqat ismingiz so‘raladi — bu havola ochiq ekan parol kerak emas.',
   'dates.openTree': 'Oilani ko‘rish',
+  'dates.openHome': 'Oila saytini ochish',
   'dates.emptyTitle': 'Hammada tug‘ilgan kun bor',
   'dates.emptyBody': 'Bot butun oilani tabriklay oladi. Rahmat!',
   'dates.failedTitle': 'Ro‘yxatni yuklab bo‘lmadi',
   'dates.failedBody': 'Aloqani tekshirib qayta urinib ko‘ring.',
   'dates.retry': 'Qayta urinish',
-  'dates.footer': 'Bu sahifa oila uchun ochiq — ro‘yxatni ko‘rish uchun parol kerak emas.',
+  'dates.lockedTitle': 'Bu sahifa uchun oila havolasi kerak',
+  'dates.lockedBody':
+    'Brauzerda /dates yozish yetarli emas. Guruhdagi Telegram xabaridagi “Sanalarni to‘ldirish” tugmasini bosing — havola taxminan 7 kun ishlaydi.',
+  'dates.expiredTitle': 'Bu havolaning muddati tugagan',
+  'dates.expiredBody':
+    'To‘ldirish havolasi taxminan 7 kun amal qiladi. Keyingi Telegram eslatmasini kuting yoki adminidan yangi havola so‘rang.',
+  'dates.footer': 'Faqat imzolangan Telegram havolalari — taxminan 7 kun. To‘ldirishda ism so‘raladi.',
 
   'invite.title': 'Qarindoshlarni taklif qilish',
   'invite.intro':

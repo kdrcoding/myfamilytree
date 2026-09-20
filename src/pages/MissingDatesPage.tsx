@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { CalendarDays, Loader2, Sparkles, UserRoundPen } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { CalendarDays, Loader2, Lock, Sparkles, UserRoundPen } from 'lucide-react';
 import { BrandLogo } from '../components/BrandLogo';
 import { useSettings } from '../context/SettingsContext';
 import { useT } from '../i18n/useT';
@@ -13,16 +13,19 @@ import {
 } from '../features/birthday/publicApi';
 import { prettyLabel } from '../utils/family';
 
+type PageState = 'loading' | 'locked' | 'expired' | 'failed' | 'empty' | 'list';
+
 /**
- * Password-free list of relatives missing a full birth date.
- * Linked from the Telegram Monday reminder and birthday posts.
+ * Fill missing birth dates via a signed Telegram link (`/dates?k=…`).
+ * Bare `/dates` is locked. Valid links last ~7 days; filling still asks for a name.
  */
 export function MissingDatesPage() {
   const t = useT();
   const { settings, setLanguage } = useSettings();
+  const [searchParams] = useSearchParams();
+  const linkToken = (searchParams.get('k') || searchParams.get('token') || '').trim();
   const [people, setPeople] = useState<MissingBirthdayPerson[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
+  const [state, setState] = useState<PageState>(linkToken ? 'loading' : 'locked');
   const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
@@ -34,45 +37,52 @@ export function MissingDatesPage() {
   }, [settings.theme]);
 
   useEffect(() => {
+    if (!linkToken) {
+      setState('locked');
+      setPeople([]);
+      return;
+    }
+
     let cancelled = false;
     const load = async () => {
+      setState('loading');
       try {
         if (!isSupabaseConfigured) {
           if (!cancelled) {
-            setFailed(true);
+            setState('failed');
             setPeople([]);
           }
           return;
         }
-        const next = await fetchMissingBirthdays();
+        const next = await fetchMissingBirthdays(linkToken);
         if (cancelled) return;
         if (!next.ok) {
-          setFailed(true);
           setPeople([]);
+          setState(next.error === 'unauthorized' ? 'expired' : 'failed');
           return;
         }
-        setFailed(false);
-        setPeople(next.people ?? []);
-        if ((next.count ?? next.people?.length ?? 0) > 0) {
-          markDatesPass();
+        const list = next.people ?? [];
+        setPeople(list);
+        if (list.length > 0) {
+          markDatesPass(linkToken);
+          setState('list');
+        } else {
+          setState('empty');
         }
       } catch (error) {
         console.error(error);
         if (!cancelled) {
-          setFailed(true);
+          setState('failed');
           setPeople([]);
         }
-      } finally {
-        if (!cancelled) setLoading(false);
       }
     };
 
-    setLoading(true);
     void load();
     return () => {
       cancelled = true;
     };
-  }, [retryKey]);
+  }, [linkToken, retryKey]);
 
   useEffect(() => {
     const previous = document.title;
@@ -82,7 +92,10 @@ export function MissingDatesPage() {
     };
   }, [t]);
 
-  const fillHref = '/members?missing=1&from=dates';
+  const fillHref = `/members?missing=1&from=dates`;
+  const keepPass = () => {
+    if (linkToken && people.length > 0) markDatesPass(linkToken);
+  };
 
   return (
     <div className="relative min-h-dvh overflow-hidden bg-gradient-to-b from-amber-50 via-rose-50/40 to-emerald-50/60">
@@ -120,14 +133,29 @@ export function MissingDatesPage() {
           </p>
         </header>
 
-        {loading && (
+        {state === 'loading' && (
           <div className="mt-20 flex flex-1 flex-col items-center justify-center gap-3 text-amber-900">
             <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
             <p className="text-sm font-medium">{t('dates.loading')}</p>
           </div>
         )}
 
-        {!loading && failed && (
+        {(state === 'locked' || state === 'expired') && (
+          <div className="mt-16 rounded-3xl border border-white/70 bg-white/90 p-8 text-center shadow-lg shadow-amber-900/5 backdrop-blur">
+            <Lock className="mx-auto h-10 w-10 text-amber-700" aria-hidden />
+            <h2 className="mt-4 font-display text-xl font-semibold text-amber-950">
+              {state === 'locked' ? t('dates.lockedTitle') : t('dates.expiredTitle')}
+            </h2>
+            <p className="mt-2 text-sm text-stone-600">
+              {state === 'locked' ? t('dates.lockedBody') : t('dates.expiredBody')}
+            </p>
+            <Link to="/" className="btn-primary mt-5 inline-flex min-h-11 items-center justify-center">
+              {t('dates.openHome')}
+            </Link>
+          </div>
+        )}
+
+        {state === 'failed' && (
           <div className="mt-16 rounded-3xl border border-white/70 bg-white/90 p-8 text-center shadow-lg shadow-amber-900/5 backdrop-blur">
             <CalendarDays className="mx-auto h-10 w-10 text-amber-600" aria-hidden />
             <h2 className="mt-4 font-display text-xl font-semibold text-amber-950">{t('dates.failedTitle')}</h2>
@@ -142,7 +170,7 @@ export function MissingDatesPage() {
           </div>
         )}
 
-        {!loading && !failed && people.length === 0 && (
+        {state === 'empty' && (
           <div className="mt-16 rounded-3xl border border-white/70 bg-white/90 p-8 text-center shadow-lg shadow-emerald-900/5 backdrop-blur">
             <p className="text-4xl" aria-hidden>
               🎉
@@ -150,16 +178,15 @@ export function MissingDatesPage() {
             <h2 className="mt-4 font-display text-xl font-semibold text-emerald-950">{t('dates.emptyTitle')}</h2>
             <p className="mt-2 text-sm text-stone-600">{t('dates.emptyBody')}</p>
             <Link
-              to="/tree?from=dates"
+              to="/"
               className="btn-primary mt-6 inline-flex min-h-11 w-full items-center justify-center"
-              onClick={() => markDatesPass()}
             >
-              {t('dates.openTree')}
+              {t('dates.openHome')}
             </Link>
           </div>
         )}
 
-        {!loading && !failed && people.length > 0 && (
+        {state === 'list' && (
           <>
             <p className="mt-8 text-center text-sm font-medium text-amber-900/90">
               {t('dates.count', { n: people.length })}
@@ -172,13 +199,11 @@ export function MissingDatesPage() {
                   isVisiblePhotoUrl(person.photoUrl) && person.photoUrl ? person.photoUrl : null;
                 return (
                   <li key={person.id}>
-            <Link
-              to={`/members?missing=1&from=dates&edit=${encodeURIComponent(person.id)}`}
-              onClick={() => {
-                if (people.length > 0) markDatesPass();
-              }}
-              className="flex items-center gap-3 rounded-2xl border border-amber-900/10 bg-white/90 px-3 py-2.5 shadow-sm transition hover:bg-amber-50/80"
-            >
+                    <Link
+                      to={`/members?missing=1&from=dates&edit=${encodeURIComponent(person.id)}`}
+                      onClick={keepPass}
+                      className="flex items-center gap-3 rounded-2xl border border-amber-900/10 bg-white/90 px-3 py-2.5 shadow-sm transition hover:bg-amber-50/80"
+                    >
                       {photo ? (
                         <img
                           src={photo}
@@ -206,7 +231,7 @@ export function MissingDatesPage() {
 
             <Link
               to={fillHref}
-              onClick={() => markDatesPass()}
+              onClick={keepPass}
               className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-amber-700 px-4 py-3 text-base font-semibold text-white shadow-md shadow-amber-900/20"
             >
               <CalendarDays className="h-5 w-5" aria-hidden />

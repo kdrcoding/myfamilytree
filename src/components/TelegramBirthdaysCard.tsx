@@ -164,7 +164,7 @@ export function TelegramBirthdaysCard() {
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
           {missingCount > 0 && (
             <Link
-              to="/dates"
+              to="/members?missing=1"
               className="inline-flex text-xs font-semibold text-amber-800 underline dark:text-amber-200"
             >
               {t('telegram.openMissingDates')}

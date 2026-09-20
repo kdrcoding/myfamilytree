@@ -72,21 +72,25 @@ export async function fetchPublicBirthday(personId: string): Promise<PublicBirth
   return { ok: false, error: 'failed' };
 }
 
-/** Living relatives who still need a full birth date (month + day). */
-export async function fetchMissingBirthdays(): Promise<MissingBirthdays> {
+/** Living relatives who still need a full birth date (month + day). Requires Telegram link token. */
+export async function fetchMissingBirthdays(linkToken: string): Promise<MissingBirthdays> {
   const base = import.meta.env.VITE_SUPABASE_URL as string | undefined;
   const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
   if (!base || !anon || !isSupabaseConfigured) return { ok: false, error: 'not_configured' };
+  const token = linkToken.trim();
+  if (!token) return { ok: false, error: 'unauthorized' };
 
-  const res = await fetch(`${base}/functions/v1/birthday-public?mode=missing`, {
-    headers: publicFnHeaders(anon),
-  });
+  const res = await fetch(
+    `${base}/functions/v1/birthday-public?mode=missing&k=${encodeURIComponent(token)}`,
+    { headers: publicFnHeaders(anon) },
+  );
   try {
     const parsed = (await res.json()) as MissingBirthdays;
     if (parsed && typeof parsed.ok === 'boolean') return parsed;
   } catch {
     /* HTML / empty gateway body */
   }
+  if (res.status === 401) return { ok: false, error: 'unauthorized' };
   return { ok: false, error: 'failed' };
 }
 

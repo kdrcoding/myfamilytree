@@ -4,7 +4,8 @@
  * “yesterday” page. After that the link expires so profiles stay private.
  *
  * Also serves:
- * - `?mode=missing` — living relatives without a full birth date
+ * - `?mode=missing&k=<token>` — living relatives without a full birth date
+ *   (requires a signed Telegram link token, valid ~7 days)
  * - POST `?mode=cheer` — web “Men tabriklayman” with a display name
  */
 import {
@@ -21,6 +22,7 @@ import {
   DEFAULT_FAMILY_TIMEZONE,
   type FamilyMemberRow,
 } from '../_shared/telegram.ts';
+import { verifyDatesLinkToken } from '../_shared/datesLink.ts';
 import { cardDesignSeed, normalizeCardGender, pickCardDesign } from '../_shared/cardTheme.ts';
 import {
   birthdayPageWish,
@@ -266,6 +268,10 @@ Deno.serve(async (req) => {
     const db = createServiceClient();
 
     if (url.searchParams.get('mode') === 'missing') {
+      const token = url.searchParams.get('k') || url.searchParams.get('token') || '';
+      if (!(await verifyDatesLinkToken(token))) {
+        return jsonResponse({ ok: false, error: 'unauthorized' }, 401);
+      }
       return await listMissingBirthdays(db);
     }
 

@@ -1,5 +1,7 @@
 /** Rotating group birthday captions — Uzbek-first for the family group. */
 
+import { createDatesLinkToken } from './datesLink.ts';
+
 export type TgLang = 'uz' | 'en' | 'ru';
 
 export function ordinalAge(age: number): string {
@@ -361,8 +363,10 @@ export function birthdayPageUrl(personId: string): string {
   return `${publicAppUrl()}/bday/${encodeURIComponent(personId)}`;
 }
 
-export function missingDatesPageUrl(): string {
-  return `${publicAppUrl()}/dates`;
+/** Telegram fill-dates link — signed, valid ~7 days. Bare /dates is locked. */
+export async function missingDatesPageUrl(): Promise<string> {
+  const token = await createDatesLinkToken();
+  return `${publicAppUrl()}/dates?k=${encodeURIComponent(token)}`;
 }
 
 export function cheerCallbackData(personId: string, year: number): string {

@@ -180,7 +180,7 @@ async function maybeSendMissingDates(opts: {
   if (!claimed) return { sent: false, skipped: 'already_claimed', count: names.length };
 
   try {
-    const datesUrl = missingDatesPageUrl();
+    const datesUrl = await missingDatesPageUrl();
     await telegramApi('sendMessage', {
       chat_id: opts.chatId,
       text: missingDatesNotice(names, datesUrl),
@@ -249,7 +249,7 @@ async function maybeSendUpcoming(opts: {
   if (!claimed) return { sent: false, skipped: 'already_claimed', count: upcoming.length };
 
   try {
-    const datesUrl = missingDatesPageUrl();
+    const datesUrl = await missingDatesPageUrl();
     await telegramApi('sendMessage', {
       chat_id: opts.chatId,
       text: upcomingBirthdaysNotice(
@@ -484,7 +484,7 @@ Deno.serve(async (req) => {
     const missingCount = members.filter(
       (m) => !m.is_deceased && !m.death_date && !monthDay(m.birth_date),
     ).length;
-    const datesUrl = missingCount > 0 ? missingDatesPageUrl() : null;
+    const datesUrl = missingCount > 0 ? await missingDatesPageUrl() : null;
 
     for (const person of celebrating) {
       const skipClaim = Boolean(force);

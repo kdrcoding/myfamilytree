@@ -74,7 +74,7 @@ export function missingDatesNotice(names: string[], pageUrl: string): string {
     '',
     list + extra,
     '',
-    'Pastdagi tugmani bosing — parolsiz sahifa ochiladi, sanalarni to‘ldirasiz.',
+    'Pastdagi tugmani bosing — maxsus havola (~7 kun) ochiladi. Ismingizni yozib sanalarni to‘ldirasiz.',
     `Havola: ${escapeHtml(pageUrl)}`,
   ].join('\n');
 }
