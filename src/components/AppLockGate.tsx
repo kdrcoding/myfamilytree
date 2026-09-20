@@ -235,7 +235,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
                 <KeyRound className="h-6 w-6" aria-hidden />
               </span>
             </div>
-            <h1 className="mt-4 text-center font-display text-xl font-semibold tracking-tight text-stone-50">
+            <h1 className="mt-4 text-center font-display text-xl font-semibold tracking-tight text-stone-100">
               {t('gate.ownerTitle')}
             </h1>
             <p className="mt-2 text-center text-sm text-stone-400">{t('gate.ownerIntro')}</p>
@@ -302,7 +302,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
               {softKind === 'dates' ? `📅 ${t('dates.kicker')}` : `🎂 ${t('bday.kicker')}`}
             </p>
               )}
-              <h1 className="mt-4 font-display text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
+              <h1 className="mt-4 font-display text-xl font-semibold tracking-tight text-stone-900 dark:text-stone-100">
                 {t('gate.welcomeTitle')}
               </h1>
               <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">{intro}</p>

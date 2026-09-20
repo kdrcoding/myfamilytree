@@ -369,7 +369,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (supabase) {
         const base = import.meta.env.VITE_SUPABASE_URL as string | undefined;
         const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-        if (!base || !anon) return { ok: false, reason: 'password' };
+        if (!base || !anon) return { ok: false, reason: 'session' };
 
         const sessionRes = await fetch(`${base}/functions/v1/family-session`, {
           method: 'POST',

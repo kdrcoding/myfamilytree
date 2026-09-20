@@ -76,7 +76,7 @@
     -webkit-overflow-scrolling: touch;
   }
   html.dark body {
-    @apply text-teal-50;
+    color: #d5e2de;
   }
 
   :root {
@@ -240,7 +240,7 @@ html:not(.dark) .text-stone-400 {
     box-shadow: 0 1px 0 rgb(255 255 255 / 0.25) inset, 0 10px 28px -16px rgb(10 31 28 / 0.28);
   }
   html.dark .card {
-    @apply text-teal-50;
+    color: #d5e2de;
     border-color: rgb(45 212 191 / 0.12);
     background: rgb(19 46 41 / 0.72);
     box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 8px 28px -14px rgb(0 0 0 / 0.5);
@@ -267,9 +267,10 @@ html:not(.dark) .text-stone-400 {
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-white transition-[background-color,transform,box-shadow] duration-200 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-[background-color,transform,box-shadow] duration-200 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 sm:py-2;
+    color: #ecf4f1;
     background: linear-gradient(165deg, var(--aurora-jade-bright), var(--aurora-jade-deep));
-    box-shadow: 0 8px 20px -10px rgb(13 148 136 / 0.55);
+    box-shadow: 0 6px 16px -10px rgb(13 148 136 / 0.4);
   }
   .btn-primary:hover {
     background: linear-gradient(165deg, #2dd4bf, var(--aurora-jade));
@@ -278,7 +279,12 @@ html:not(.dark) .text-stone-400 {
     --tw-ring-color: var(--aurora-jade);
   }
   html.dark .btn-primary {
-    background: linear-gradient(165deg, #2dd4bf, var(--aurora-jade-deep));
+    color: #e7f0ed;
+    background: linear-gradient(165deg, #0f766e, #115e59);
+    box-shadow: 0 6px 14px -10px rgb(0 0 0 / 0.55);
+  }
+  html.dark .btn-primary:hover {
+    background: linear-gradient(165deg, #0d9488, #0f766e);
   }
 
   .btn-secondary {
@@ -539,14 +545,17 @@ html.dark .app-shell {
     radial-gradient(ellipse 70% 50% at 20% -10%, rgb(13 148 136 / 0.18), transparent 55%),
     radial-gradient(ellipse 50% 40% at 90% 0%, rgb(20 184 166 / 0.08), transparent 50%),
     linear-gradient(180deg, #070f0e 0%, #0a1f1c 55%, #071412 100%);
-  color: #f0faf7;
+  color: #d5e2de;
 }
 
 /* Settings / card section type */
 .settings-section-title {
   font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
-  @apply text-base font-semibold tracking-tight text-stone-900 dark:text-teal-50;
+  @apply text-base font-semibold tracking-tight text-stone-900;
   letter-spacing: -0.02em;
+}
+html.dark .settings-section-title {
+  color: #e2ebe8;
 }
 .settings-section-body {
   @apply text-sm leading-relaxed text-stone-600 dark:text-stone-300;
@@ -561,9 +570,9 @@ html.dark .app-shell {
   color: #042f2e;
 }
 html.dark .settings-link-box {
-  border-color: rgb(45 212 191 / 0.28);
-  background: rgb(4 47 46 / 0.85);
-  color: #ccfbf1;
+  border-color: rgb(45 212 191 / 0.22);
+  background: rgb(4 47 46 / 0.75);
+  color: #b6d4cc;
 }
 
 .app-header {
@@ -599,8 +608,8 @@ html.dark .app-bottom-nav {
   color: #0f766e;
 }
 html.dark .bottom-nav-tab-active {
-  background: rgb(45 212 191 / 0.14);
-  color: #99f6e4;
+  background: rgb(45 212 191 / 0.12);
+  color: #5eead4;
 }
 
 /* Family tree canvas — Aurora mist (not flat white) */
@@ -711,7 +720,7 @@ html.dark .tree-person-card {
 }
 .dark .family-tree-controls .react-flow__controls-button {
   border-bottom-color: rgb(45 212 191 / 0.12);
-  fill: #99f6e4;
+  fill: #5eead4;
 }
 .dark .family-tree-controls .react-flow__controls-button:hover {
   background: rgb(45 212 191 / 0.12);
@@ -1113,27 +1122,27 @@ html.dark .tree-action-btn {
 
 html.dark .home-path--tree {
   background: linear-gradient(145deg, #134e4a, #042f2e);
-  color: #ccfbf1;
+  color: #b6d4cc;
   border-color: rgb(45 212 191 / 0.14);
 }
 html.dark .home-path--members {
   background: linear-gradient(145deg, #7c2d12, #431407);
-  color: #ffedd5;
+  color: #f0dcc8;
   border-color: rgb(253 186 116 / 0.14);
 }
 html.dark .home-path--map {
   background: linear-gradient(145deg, #0c4a6e, #082f49);
-  color: #e0f2fe;
+  color: #c5dff0;
   border-color: rgb(125 211 252 / 0.14);
 }
 html.dark .home-path--timeline {
   background: linear-gradient(145deg, #78350f, #451a03);
-  color: #fde68a;
+  color: #f0e0a8;
   border-color: rgb(252 211 77 / 0.14);
 }
 html.dark .home-path--related {
   background: linear-gradient(145deg, #9d174d, #4c0519);
-  color: #fce7f3;
+  color: #f0d4e0;
   border-color: rgb(251 113 133 / 0.16);
 }
 
@@ -1375,8 +1384,13 @@ html.dark .gate-panel {
 .gate-panel--owner {
   border-color: rgb(45 212 191 / 0.28);
   background: rgb(10 31 28 / 0.92);
-  color: #ecf4f1;
+  color: #d5e2de;
   animation: aurora-slide-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Dark gate titles — soft ink, not stark white */
+html.dark .gate-panel h1 {
+  color: #e2ebe8;
 }
 
 .gate-panel form > * {

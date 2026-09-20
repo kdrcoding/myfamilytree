@@ -7,7 +7,8 @@ import { useLanguage, useT } from '../i18n/useT';
 import { fullName } from '../utils/family';
 import { getUpcomingBirthdays } from '../utils/birthdays';
 import { formatMonthDay } from '../utils/dates';
-import { countMissingBirthDates, fetchFilledThisWeek } from '../lib/datesProgress';
+import { fetchFilledThisWeek } from '../lib/datesProgress';
+import { hasFullBirthDate } from '../features/birthday/publicApi';
 import { ToggleSwitch } from './ui/ToggleSwitch';
 import {
   TELEGRAM_TIMEZONES,
@@ -128,8 +129,8 @@ export function TelegramBirthdaysCard() {
     }
   }, [living, testPersonId]);
 
-  const readyCount = living.filter((p) => /^\d{4}-\d{2}-\d{2}$/.test((p.birthDate ?? '').trim())).length;
-  const missingCount = countMissingBirthDates(people);
+  const readyCount = living.filter((p) => hasFullBirthDate(p.birthDate)).length;
+  const missingCount = Math.max(0, living.length - readyCount);
   const upcomingWeek = useMemo(
     () => getUpcomingBirthdays(people).filter((b) => b.daysUntil <= 7),
     [people],
@@ -178,7 +179,7 @@ export function TelegramBirthdaysCard() {
             {filledWeek > 0 ? ` · ${t('telegram.filledThisWeek', { n: filledWeek })}` : ''}
           </p>
         ) : (
-          <p className="mt-1.5 text-xs text-emerald-800 dark:text-emerald-300">
+          <p className="mt-1.5 text-xs text-emerald-900 dark:text-emerald-200">
             {t('telegram.coverageOk')}
             {filledWeek > 0 ? ` · ${t('telegram.filledThisWeek', { n: filledWeek })}` : ''}
           </p>
@@ -194,7 +195,7 @@ export function TelegramBirthdaysCard() {
           )}
           <Link
             to={missingCount > 0 ? '/members?missing=1' : '/members'}
-            className="inline-flex text-xs font-semibold text-emerald-800 underline dark:text-emerald-300"
+            className="inline-flex text-xs font-semibold text-emerald-900 underline dark:text-emerald-200"
           >
             {t('telegram.openMembers')}
           </Link>
@@ -263,7 +264,7 @@ export function TelegramBirthdaysCard() {
                 key={run.id}
                 className="flex flex-wrap items-baseline justify-between gap-2 border-t border-stone-200/80 pt-1 dark:border-stone-700"
               >
-                <span className={run.ok ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}>
+                <span className={run.ok ? 'text-emerald-800 dark:text-emerald-200' : 'text-rose-700 dark:text-rose-300'}>
                   {run.ok ? t('telegram.healthOk') : t('telegram.healthFail')}
                   {' · '}
                   {run.trigger}

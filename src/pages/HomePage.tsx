@@ -290,7 +290,7 @@ export function HomePage() {
                         {` · ${formatMonthDay(b.month, b.day, language)}`}
                       </p>
                       {showAge && (
-                        <p className="text-[0.7rem] font-medium text-emerald-800 dark:text-emerald-300">
+                        <p className="text-[0.7rem] font-medium text-emerald-900 dark:text-emerald-200">
                           {b.isToday
                             ? t('home.bdayTurnsToday', { age: b.turningAge! })
                             : t('home.bdayTurns', { age: b.turningAge! })}
@@ -364,7 +364,7 @@ export function HomePage() {
                 {showBirthDates && !easy && (
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-900 transition-colors hover:bg-emerald-50 dark:text-emerald-200 dark:hover:bg-emerald-950/40"
                     onClick={() => {
                       downloadFamilyCalendarIcs(people, {
                         language,
@@ -411,7 +411,7 @@ export function HomePage() {
                           <span
                             className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${
                               b.isToday
-                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
+                                ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200'
                                 : 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400'
                             }`}
                           >
@@ -556,7 +556,7 @@ export function HomePage() {
             {t('home.privacyBefore')}
             <Link
               to="/settings"
-              className="font-medium text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-400"
+              className="font-medium text-emerald-900 underline-offset-2 hover:underline dark:text-emerald-200"
             >
               {t('home.settingsLink')}
             </Link>

@@ -79,7 +79,7 @@ export function InstallAppTip() {
     <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.25rem+var(--safe-bottom))] z-[55] flex justify-center px-3 sm:bottom-6">
       <div
         role="status"
-        className="pointer-events-auto flex max-w-lg items-start gap-3 rounded-2xl border border-emerald-300/80 bg-emerald-50/95 px-3 py-3 text-sm text-emerald-950 shadow-lg backdrop-blur-sm dark:border-emerald-800 dark:bg-emerald-950/95 dark:text-emerald-100"
+        className="pointer-events-auto flex max-w-lg items-start gap-3 rounded-2xl border border-emerald-800/25 bg-emerald-50/95 px-3 py-3 text-sm text-emerald-950 shadow-lg backdrop-blur-sm dark:border-emerald-800 dark:bg-emerald-950/90 dark:text-emerald-100"
       >
         <Smartphone className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" aria-hidden />
         <div className="min-w-0 flex-1">

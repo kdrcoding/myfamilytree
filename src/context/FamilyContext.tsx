@@ -23,7 +23,6 @@ import {
   buildIndex,
   computeBloodline,
   computeGenerations,
-  fullName,
   normalizePeople,
   relationshipDescriptor,
   removePerson,
@@ -320,9 +319,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           peopleRef.current = next;
           setPeopleState(next);
           writeFamilyCache(next);
-          logChange('edit', {
-            updated: [{ name: fullName(person), fields: ['birthDate'] }],
-          });
+          // Audit is written by birthday-public set-birth — do not double-log.
           return true;
         }
         return mutate((current) => {
