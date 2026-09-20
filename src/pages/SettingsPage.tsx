@@ -41,6 +41,7 @@ import { ToggleSwitch } from '../components/ui/ToggleSwitch';
 import { JoinRequestsCard } from '../components/JoinRequestsCard';
 import { UnlockModal } from '../components/UnlockModal';
 import { TelegramBirthdaysCard } from '../components/TelegramBirthdaysCard';
+import { TraditionsCard } from '../components/TraditionsCard';
 import { BrandMark } from '../components/BrandLogo';
 import { LanguageSelect } from '../components/LanguageSelect';
 
@@ -808,6 +809,7 @@ export function SettingsPage() {
         </>
       )}
 
+      <TraditionsCard />
       {canDelete && <JoinRequestsCard />}
       {canDelete && <TelegramBirthdaysCard />}
       {canDelete && <ChangeLogCard />}

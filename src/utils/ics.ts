@@ -2,6 +2,8 @@ import type { FamilyPerson } from '../types/family';
 import { fullName } from './family';
 import { getUpcomingBirthdays } from './birthdays';
 import { getUpcomingAnniversaries } from './anniversaries';
+import { getUpcomingTraditions, type CustomTradition } from './traditions';
+import { livingPeopleOnly } from './living';
 
 /** Escape text for iCalendar text values. */
 function esc(value: string): string {
@@ -40,14 +42,19 @@ function uid(seed: string): string {
 }
 
 /**
- * Yearly recurring calendar of living birthdays + wedding anniversaries.
- * Phones keep reminding every year via RRULE.
+ * Yearly recurring calendar of living birthdays + wedding anniversaries,
+ * plus one-off / yearly family traditions (no person names on holidays).
  */
 export function buildFamilyCalendarIcs(
   people: FamilyPerson[],
-  options: { calendarName?: string; language?: 'en' | 'uz' | 'ru' } = {},
+  options: {
+    calendarName?: string;
+    language?: 'en' | 'uz' | 'ru';
+    customTraditions?: CustomTradition[];
+  } = {},
 ): string {
   const calendarName = options.calendarName ?? 'Oq-Ariq family';
+  const living = livingPeopleOnly(people);
   const now = new Date();
   const stamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
 
@@ -60,7 +67,7 @@ export function buildFamilyCalendarIcs(
     `X-WR-CALNAME:${esc(calendarName)}`,
   ];
 
-  for (const b of getUpcomingBirthdays(people, now)) {
+  for (const b of getUpcomingBirthdays(living, now)) {
     const name = fullName(b.person);
     const summary =
       options.language === 'uz'
@@ -83,7 +90,7 @@ export function buildFamilyCalendarIcs(
     lines.push('END:VEVENT');
   }
 
-  for (const a of getUpcomingAnniversaries(people, now)) {
+  for (const a of getUpcomingAnniversaries(living, now)) {
     const names = `${fullName(a.a)} & ${fullName(a.b)}`;
     const summary =
       options.language === 'uz'
@@ -106,6 +113,53 @@ export function buildFamilyCalendarIcs(
     lines.push('END:VEVENT');
   }
 
+  for (const row of getUpcomingTraditions(options.customTraditions ?? [], now)) {
+    const label =
+      row.customTitle?.trim() ||
+      (row.kind === 'navruz'
+        ? options.language === 'uz'
+          ? 'Navro‘z'
+          : options.language === 'ru'
+            ? 'Навруз'
+            : 'Navruz'
+        : row.kind === 'eid_fitr'
+          ? options.language === 'uz'
+            ? 'Hayit (Ramazon)'
+            : options.language === 'ru'
+              ? 'Ураза-байрам'
+              : 'Eid al-Fitr'
+          : row.kind === 'eid_adha'
+            ? options.language === 'uz'
+              ? 'Qurbon hayiti'
+              : options.language === 'ru'
+                ? 'Курбан-байрам'
+                : 'Eid al-Adha'
+            : row.kind === 'new_year'
+              ? options.language === 'uz'
+                ? 'Yangi yil'
+                : options.language === 'ru'
+                  ? 'Новый год'
+                  : 'New Year'
+              : options.language === 'uz'
+                ? 'Oila uchrashuvi'
+                : options.language === 'ru'
+                  ? 'Семейная встреча'
+                  : 'Family reunion');
+    const occurrence = new Date(row.year, row.month - 1, row.day);
+    lines.push('BEGIN:VEVENT');
+    lines.push(`UID:${uid(`trad-${row.id}`)}`);
+    lines.push(`DTSTAMP:${stamp}`);
+    lines.push(
+      `DTSTART;VALUE=DATE:${dateStamp(occurrence.getFullYear(), occurrence.getMonth() + 1, occurrence.getDate())}`,
+    );
+    if (row.kind !== 'reunion') {
+      lines.push('RRULE:FREQ=YEARLY');
+    }
+    lines.push(`SUMMARY:${esc(label)}`);
+    lines.push('TRANSP:TRANSPARENT');
+    lines.push('END:VEVENT');
+  }
+
   lines.push('END:VCALENDAR');
   return lines.map(fold).join('\r\n') + '\r\n';
 }
@@ -113,7 +167,12 @@ export function buildFamilyCalendarIcs(
 /** Trigger a browser download of the calendar file. */
 export function downloadFamilyCalendarIcs(
   people: FamilyPerson[],
-  options: { calendarName?: string; language?: 'en' | 'uz' | 'ru'; filename?: string } = {},
+  options: {
+    calendarName?: string;
+    language?: 'en' | 'uz' | 'ru';
+    filename?: string;
+    customTraditions?: CustomTradition[];
+  } = {},
 ): void {
   const ics = buildFamilyCalendarIcs(people, options);
   const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });

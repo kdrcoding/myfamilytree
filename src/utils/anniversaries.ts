@@ -1,5 +1,6 @@
 import type { FamilyPerson } from '../types/family';
 import { isDivorced, marriageDateOf } from './family';
+import { isLivingPerson } from './living';
 
 export interface UpcomingAnniversary {
   a: FamilyPerson;
@@ -41,7 +42,7 @@ export function getCoupleAnniversary(
   b: FamilyPerson,
   now: Date = new Date(),
 ): UpcomingAnniversary | null {
-  if (a.isDeceased || a.deathDate || b.isDeceased || b.deathDate) return null;
+  if (!isLivingPerson(a) || !isLivingPerson(b)) return null;
   if (isDivorced(a, b)) return null;
   const md = monthDay(marriageDateOf(a, b));
   if (!md) return null;

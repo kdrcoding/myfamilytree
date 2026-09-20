@@ -1,4 +1,5 @@
 import type { FamilyPerson } from '../types/family';
+import { isLivingPerson } from './living';
 
 export interface UpcomingBirthday {
   person: FamilyPerson;
@@ -47,7 +48,7 @@ export function getUpcomingBirthdays(
   const result: UpcomingBirthday[] = [];
 
   for (const person of people) {
-    if (person.isDeceased || person.deathDate) continue;
+    if (!isLivingPerson(person)) continue;
     const md = monthDay(person.birthDate);
     if (!md) continue;
 

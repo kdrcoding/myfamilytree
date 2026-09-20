@@ -3,18 +3,22 @@ import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
   CalendarPlus,
+  Flower2,
   GitBranch,
   Globe,
   Heart,
   HeartHandshake,
   History,
   MapPinned,
+  MoonStar,
+  Sparkles,
   TreePine,
   UserRoundPlus,
   Users,
 } from 'lucide-react';
 import { JoinFamilyModal } from '../components/JoinFamilyModal';
 import { BirthdayTodayModal } from '../components/BirthdayTodayModal';
+import { TraditionTodayModal } from '../components/TraditionTodayModal';
 import { HomeBirthdayCelebration } from '../components/HomeBirthdayCelebration';
 import { HomeHeroAtmosphere, HomeSectionRule } from '../components/HomeDecor';
 import { PersonSearch } from '../components/PersonSearch';
@@ -24,6 +28,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
+import type { TKey } from '../i18n/translations';
 import { computeStats } from '../utils/stats';
 import { findFounders, fullName, prettyLabel } from '../utils/family';
 import { formatDate, formatMonthDay } from '../utils/dates';
@@ -37,6 +42,13 @@ import { usePrivacy } from '../hooks/usePrivacy';
 import { Avatar } from '../components/Avatar';
 import { countMissingBirthDates, fetchFilledThisWeek } from '../lib/datesProgress';
 import { getUpcomingBirthdays } from '../utils/birthdays';
+import { isLivingPerson } from '../utils/living';
+import {
+  traditionNotifyKey,
+  type CustomTradition,
+  type UpcomingTradition,
+} from '../utils/traditions';
+import { fetchCustomTraditions } from '../lib/traditionsStore';
 
 /** How far ahead the homepage looks for upcoming birthdays & anniversaries. */
 const CELEBRATION_WINDOW_DAYS = 30;
@@ -50,6 +62,8 @@ export function HomePage() {
   const language = useLanguage();
   const [joinOpen, setJoinOpen] = useState(false);
   const [bdayPopupOpen, setBdayPopupOpen] = useState(false);
+  const [traditionPopupOpen, setTraditionPopupOpen] = useState(false);
+  const [customTraditions, setCustomTraditions] = useState<CustomTradition[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
   const { role } = useAuth();
   const easy = role !== 'owner' && Boolean(settings.easyMode);
@@ -88,10 +102,25 @@ export function HomePage() {
 
   const familyNow = useMemo(() => nowInTimeZone(familyTz), [familyTz, clockTick]);
 
+  useEffect(() => {
+    let cancelled = false;
+    void fetchCustomTraditions().then((list) => {
+      if (!cancelled) setCustomTraditions(list);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const showBirthDates = privacy.showBirthDate();
   const upcomingCelebrations = useMemo(
-    () => getUpcomingCelebrations(people, { includeBirthdays: showBirthDates, now: familyNow }),
-    [people, showBirthDates, familyNow],
+    () =>
+      getUpcomingCelebrations(people, {
+        includeBirthdays: showBirthDates,
+        now: familyNow,
+        customTraditions,
+      }),
+    [people, showBirthDates, familyNow, customTraditions],
   );
   const celebrations = useMemo(
     () => windowCelebrations(upcomingCelebrations, CELEBRATION_WINDOW_DAYS),
@@ -105,6 +134,15 @@ export function HomePage() {
         .filter((b): b is NonNullable<typeof b> => Boolean(b)),
     [upcomingCelebrations],
   );
+  const todaysTraditions = useMemo(
+    () =>
+      upcomingCelebrations
+        .filter((c) => c.isToday && c.kind === 'tradition')
+        .map((c) => (c.kind === 'tradition' ? c.tradition : null))
+        .filter((row): row is UpcomingTradition => Boolean(row)),
+    [upcomingCelebrations],
+  );
+  const celebratingToday = todaysBirthdays.length > 0 || todaysTraditions.length > 0;
 
   const nextThreeBirthdays = useMemo(() => {
     if (!showBirthDates) return [];
@@ -138,6 +176,20 @@ export function HomePage() {
   }, [todaysBirthdays, familyTz]);
 
   useEffect(() => {
+    if (todaysTraditions.length === 0) return;
+    // Let the birthday popup go first when both land on the same day.
+    if (bdayPopupOpen) return;
+    const notifyKey = todaysTraditions.map(traditionNotifyKey).sort().join('|');
+    const last = loadJson<string>(
+      STORAGE_KEYS.traditionNotified,
+      (v): v is string => typeof v === 'string',
+    );
+    if (last === notifyKey) return;
+    saveJson(STORAGE_KEYS.traditionNotified, notifyKey);
+    setTraditionPopupOpen(true);
+  }, [todaysTraditions, bdayPopupOpen]);
+
+  useEffect(() => {
     if (searchParams.get('invite') === '1' || searchParams.get('join') === '1') {
       setJoinOpen(true);
       const next = new URLSearchParams(searchParams);
@@ -156,11 +208,25 @@ export function HomePage() {
         : t('home.bdayInDays', { n: daysUntil });
 
   const faces = useMemo(() => {
-    const withPhoto = people.filter((p) => Boolean(p.photo));
-    const rest = people.filter((p) => !p.photo);
+    const living = people.filter(isLivingPerson);
+    const withPhoto = living.filter((p) => Boolean(p.photo));
+    const rest = living.filter((p) => !p.photo);
     return [...withPhoto, ...rest].slice(0, 14);
   }, [people]);
-  const moreFaces = Math.max(0, people.length - faces.length);
+  const moreFaces = Math.max(0, people.filter(isLivingPerson).length - faces.length);
+
+  const traditionHeroTitle = useMemo(() => {
+    const first = todaysTraditions[0];
+    if (!first) return null;
+    const title =
+      first.customTitle?.trim() ||
+      (first.titleKey ? t(first.titleKey as TKey) : t('tradition.reunionFallback'));
+    if (first.kind === 'navruz') return t('tradition.wishNavruz', { title });
+    if (first.kind === 'eid_fitr') return t('tradition.wishEidFitr', { title });
+    if (first.kind === 'eid_adha') return t('tradition.wishEidAdha', { title });
+    if (first.kind === 'new_year') return t('tradition.wishNewYear', { title });
+    return t('tradition.wishReunion', { title });
+  }, [todaysTraditions, t]);
 
   const paths = [
     { to: '/tree', title: t('nav.tree'), hint: t('home.pathTreeHint'), kind: 'tree' as const, Icon: TreePine },
@@ -173,7 +239,7 @@ export function HomePage() {
   return (
     <div className="home-page">
       <section
-        className={`home-hero overflow-hidden text-stone-50 ${todaysBirthdays.length > 0 ? 'home-hero--celebrate' : ''}`}
+        className={`home-hero overflow-hidden text-stone-50 ${celebratingToday ? 'home-hero--celebrate' : ''}`}
         aria-labelledby="home-brand"
       >
         <HomeHeroAtmosphere />
@@ -184,7 +250,11 @@ export function HomePage() {
           </div>
 
           <p className="home-hero__kicker mt-6 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-emerald-200/80 sm:text-xs">
-            {todaysBirthdays.length > 0 ? t('home.bdayPopupKicker') : t('home.kicker')}
+            {celebratingToday
+              ? todaysBirthdays.length > 0
+                ? t('home.bdayPopupKicker')
+                : t('tradition.popupKicker')
+              : t('home.kicker')}
           </p>
 
           <h1
@@ -200,9 +270,11 @@ export function HomePage() {
               ? t('home.bdayPopupTitleOne', { name: fullName(todaysBirthdays[0]!.person) })
               : todaysBirthdays.length > 1
                 ? t('home.bdayPopupTitleMany', { n: todaysBirthdays.length })
-                : easy
-                  ? t('home.introEasy')
-                  : t('home.intro')}
+                : traditionHeroTitle
+                  ? traditionHeroTitle
+                  : easy
+                    ? t('home.introEasy')
+                    : t('home.intro')}
           </p>
 
           <div className="home-hero__search home-hero__jewel relative z-20 mt-8 max-w-lg">
@@ -369,6 +441,7 @@ export function HomePage() {
                       downloadFamilyCalendarIcs(people, {
                         language,
                         calendarName: t('site.title'),
+                        customTraditions,
                       });
                       toast(t('home.calendarDownloaded'), 'info');
                     }}
@@ -418,6 +491,49 @@ export function HomePage() {
                             {whenLabel(b.isToday, b.daysUntil)}
                           </span>
                         </Link>
+                      </li>
+                    );
+                  }
+
+                  if (c.kind === 'tradition') {
+                    const row = c.tradition;
+                    const label =
+                      row.customTitle?.trim() ||
+                      (row.titleKey ? t(row.titleKey as TKey) : t('tradition.reunionFallback'));
+                    const Icon =
+                      row.kind === 'navruz'
+                        ? Flower2
+                        : row.kind === 'eid_fitr' || row.kind === 'eid_adha'
+                          ? MoonStar
+                          : row.kind === 'reunion'
+                            ? Users
+                            : Sparkles;
+                    return (
+                      <li key={c.key}>
+                        <div className="home-list-item pointer-events-none">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-200">
+                            <Icon className="h-5 w-5" aria-hidden />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-display font-semibold text-stone-900 dark:text-stone-100">
+                              {label}
+                            </p>
+                            <p className="text-sm text-stone-500 dark:text-stone-400">
+                              {t('home.celebrationTradition')}
+                              {' · '}
+                              {formatMonthDay(row.month, row.day, language)}
+                            </p>
+                          </div>
+                          <span
+                            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums ${
+                              row.isToday
+                                ? 'bg-amber-100 text-amber-900 dark:bg-amber-900/50 dark:text-amber-200'
+                                : 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400'
+                            }`}
+                          >
+                            {whenLabel(row.isToday, row.daysUntil)}
+                          </span>
+                        </div>
                       </li>
                     );
                   }
@@ -573,6 +689,12 @@ export function HomePage() {
             setBdayPopupOpen(false);
             setBirthdayModalOpen(false);
           }}
+        />
+      )}
+      {traditionPopupOpen && todaysTraditions.length > 0 && !bdayPopupOpen && (
+        <TraditionTodayModal
+          traditions={todaysTraditions}
+          onClose={() => setTraditionPopupOpen(false)}
         />
       )}
     </div>

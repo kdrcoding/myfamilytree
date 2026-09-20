@@ -1,4 +1,5 @@
 import type { FamilyPerson } from '../types/family';
+import { isLivingPerson } from './living';
 
 function filled(value?: string | null): boolean {
   return Boolean(value && value.trim());
@@ -12,8 +13,10 @@ export function hasBirthYear(value?: string | null): boolean {
 /**
  * “Looking complete” on the tree — not every field, just the important ones:
  * name + birth year + photo + at least one life detail.
+ * Living people only — never celebrate or glow deceased cards.
  */
 export function isProfileComplete(person: FamilyPerson): boolean {
+  if (!isLivingPerson(person)) return false;
   const hasName =
     filled(person.firstName) || filled(person.lastName) || filled(person.nickname);
   if (!hasName) return false;

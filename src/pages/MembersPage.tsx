@@ -11,6 +11,7 @@ import { hasFullBirthDate } from '../features/birthday/publicApi';
 import { calculateAge, birthYear } from '../utils/dates';
 import { distinctCountries } from '../utils/countries';
 import { fullName } from '../utils/family';
+import { isLivingPerson } from '../utils/living';
 import { DEFAULT_FILTERS, matchesFilters, matchesSearch } from '../utils/filters';
 import type { Filters } from '../utils/filters';
 import { FilterPanel } from '../components/FilterPanel';
@@ -60,14 +61,14 @@ export function MembersPage() {
   ];
 
   const missingLiving = useMemo(
-    () => people.filter((p) => !p.isDeceased && !p.deathDate && !hasFullBirthDate(p.birthDate)),
+    () => people.filter((p) => isLivingPerson(p) && !hasFullBirthDate(p.birthDate)),
     [people],
   );
 
   const visible = useMemo(() => {
     const filtered = people.filter((p) => {
       if (missingOnly) {
-        if (p.isDeceased || p.deathDate || hasFullBirthDate(p.birthDate)) return false;
+        if (!isLivingPerson(p) || hasFullBirthDate(p.birthDate)) return false;
         return matchesSearch(p, query);
       }
       return matchesSearch(p, query) && matchesFilters(p, filters, generations);

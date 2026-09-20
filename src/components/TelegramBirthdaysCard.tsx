@@ -7,6 +7,7 @@ import { useLanguage, useT } from '../i18n/useT';
 import { fullName } from '../utils/family';
 import { getUpcomingBirthdays } from '../utils/birthdays';
 import { formatMonthDay } from '../utils/dates';
+import { isLivingPerson } from '../utils/living';
 import { fetchFilledThisWeek } from '../lib/datesProgress';
 import { hasFullBirthDate } from '../features/birthday/publicApi';
 import { ToggleSwitch } from './ui/ToggleSwitch';
@@ -113,7 +114,7 @@ export function TelegramBirthdaysCard() {
   const living = useMemo(
     () =>
       people
-        .filter((p) => !p.isDeceased && !p.deathDate)
+        .filter(isLivingPerson)
         .slice()
         .sort((a, b) => fullName(a).localeCompare(fullName(b))),
     [people],

@@ -3,6 +3,9 @@ import type { UpcomingAnniversary } from './anniversaries';
 import { getUpcomingAnniversaries } from './anniversaries';
 import type { UpcomingBirthday } from './birthdays';
 import { getUpcomingBirthdays } from './birthdays';
+import type { CustomTradition, UpcomingTradition } from './traditions';
+import { getUpcomingTraditions } from './traditions';
+import { isLivingPerson } from './living';
 
 export type UpcomingCelebration =
   | { kind: 'birthday'; key: string; daysUntil: number; isToday: boolean; birthday: UpcomingBirthday }
@@ -12,19 +15,32 @@ export type UpcomingCelebration =
       daysUntil: number;
       isToday: boolean;
       anniversary: UpcomingAnniversary;
+    }
+  | {
+      kind: 'tradition';
+      key: string;
+      daysUntil: number;
+      isToday: boolean;
+      tradition: UpcomingTradition;
     };
 
 /**
- * Birthdays and wedding anniversaries merged into one timeline, soonest first.
- * Deceased / divorced couples stay out (same rules as the source helpers).
+ * Birthdays, wedding anniversaries, and family traditions — soonest first.
+ * Deceased people never appear (fail-closed). Traditions never name anyone.
  */
 export function getUpcomingCelebrations(
   people: FamilyPerson[],
-  options: { includeBirthdays?: boolean; now?: Date } = {},
+  options: {
+    includeBirthdays?: boolean;
+    now?: Date;
+    customTraditions?: CustomTradition[];
+  } = {},
 ): UpcomingCelebration[] {
-  const { includeBirthdays = true, now } = options;
-  const birthdays = includeBirthdays ? getUpcomingBirthdays(people, now) : [];
-  const anniversaries = getUpcomingAnniversaries(people, now);
+  const { includeBirthdays = true, now, customTraditions = [] } = options;
+  const living = people.filter(isLivingPerson);
+  const birthdays = includeBirthdays ? getUpcomingBirthdays(living, now) : [];
+  const anniversaries = getUpcomingAnniversaries(living, now);
+  const traditions = getUpcomingTraditions(customTraditions, now);
 
   const items: UpcomingCelebration[] = [
     ...birthdays.map((birthday) => ({
@@ -41,15 +57,31 @@ export function getUpcomingCelebrations(
       isToday: anniversary.isToday,
       anniversary,
     })),
+    ...traditions.map((tradition) => ({
+      kind: 'tradition' as const,
+      key: `trad-${tradition.id}`,
+      daysUntil: tradition.daysUntil,
+      isToday: tradition.isToday,
+      tradition,
+    })),
   ];
 
-  items.sort(
-    (a, b) =>
-      a.daysUntil - b.daysUntil ||
-      (a.kind === 'birthday' ? a.birthday.person.firstName : a.anniversary.a.firstName).localeCompare(
-        b.kind === 'birthday' ? b.birthday.person.firstName : b.anniversary.a.firstName,
-      ),
-  );
+  items.sort((a, b) => {
+    if (a.daysUntil !== b.daysUntil) return a.daysUntil - b.daysUntil;
+    const nameA =
+      a.kind === 'birthday'
+        ? a.birthday.person.firstName
+        : a.kind === 'anniversary'
+          ? a.anniversary.a.firstName
+          : a.tradition.customTitle || a.tradition.kind;
+    const nameB =
+      b.kind === 'birthday'
+        ? b.birthday.person.firstName
+        : b.kind === 'anniversary'
+          ? b.anniversary.a.firstName
+          : b.tradition.customTitle || b.tradition.kind;
+    return nameA.localeCompare(nameB);
+  });
   return items;
 }
 

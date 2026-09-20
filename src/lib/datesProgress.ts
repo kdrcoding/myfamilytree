@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type { FamilyPerson } from '../types/family';
 import { hasFullBirthDate } from '../features/birthday/publicApi';
+import { isLivingPerson } from '../utils/living';
 
 export type DatesProgress = {
   missing: number;
@@ -9,9 +10,7 @@ export type DatesProgress = {
 
 /** Living people still missing a full YYYY-MM-DD birth date. */
 export function countMissingBirthDates(people: FamilyPerson[]): number {
-  return people.filter(
-    (p) => !p.isDeceased && !p.deathDate && !hasFullBirthDate(p.birthDate),
-  ).length;
+  return people.filter((p) => isLivingPerson(p) && !hasFullBirthDate(p.birthDate)).length;
 }
 
 /**

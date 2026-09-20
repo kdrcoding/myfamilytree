@@ -5,12 +5,18 @@ import { BirthdayWebCard } from './BirthdayWebCard';
 import { usePhotoUrl } from '../context/PhotoUrlsContext';
 import { useFamily } from '../context/FamilyContext';
 import { useLanguage, useT } from '../i18n/useT';
-import { isVisiblePhotoUrl, fetchPublicBirthday, celebrationDesign, type PublicBirthday } from '../features/birthday/publicApi';
+import {
+  isVisiblePhotoUrl,
+  fetchPublicBirthday,
+  celebrationDesign,
+  type PublicBirthday,
+} from '../features/birthday/publicApi';
 import { birthdayPalette, normalizeCardGender } from '../features/birthday/themes';
 import type { UpcomingBirthday } from '../utils/birthdays';
 import { fullName } from '../utils/family';
 import { describeWho } from '../utils/whoIsThis';
 import { isStoragePhoto } from '../lib/photoStorage';
+import { isLivingPerson } from '../utils/living';
 import type { FamilyPerson } from '../types/family';
 
 function localCelebration(
@@ -53,7 +59,9 @@ function OneCelebration({
   const language = useLanguage();
   const signed = usePhotoUrl(birthday.person.photo);
   const inline =
-    birthday.person.photo && !isStoragePhoto(birthday.person.photo) && isVisiblePhotoUrl(birthday.person.photo)
+    birthday.person.photo &&
+    !isStoragePhoto(birthday.person.photo) &&
+    isVisiblePhotoUrl(birthday.person.photo)
       ? birthday.person.photo
       : null;
   const fallbackPhoto = signed || inline;
@@ -90,26 +98,32 @@ function OneCelebration({
 }
 
 /**
- * Today’s birthday(s) on Home — the same web celebration as /bday/:id,
- * compact, with a link to the full page. Not the Telegram PNG card.
+ * Today’s birthday(s) on Home — living people only (fail-closed).
  */
 export function HomeBirthdayCelebration({ birthdays }: { birthdays: UpcomingBirthday[] }) {
   const t = useT();
   const { people } = useFamily();
+  const livingBirthdays = useMemo(
+    () => birthdays.filter((b) => isLivingPerson(b.person)),
+    [birthdays],
+  );
   const [active, setActive] = useState(0);
   const [fetched, setFetched] = useState<Record<string, PublicBirthday>>({});
-
-  const ids = useMemo(() => birthdays.map((b) => b.person.id).join('|'), [birthdays]);
+  const ids = useMemo(
+    () => livingBirthdays.map((b) => b.person.id).join('|'),
+    [livingBirthdays],
+  );
 
   useEffect(() => {
     setActive(0);
   }, [ids]);
 
   useEffect(() => {
+    if (livingBirthdays.length === 0) return;
     let cancelled = false;
     const load = async () => {
       const entries = await Promise.all(
-        birthdays.map(async (b) => {
+        livingBirthdays.map(async (b) => {
           try {
             const data = await fetchPublicBirthday(b.person.id);
             return [b.person.id, data] as const;
@@ -125,13 +139,13 @@ export function HomeBirthdayCelebration({ birthdays }: { birthdays: UpcomingBirt
     return () => {
       cancelled = true;
     };
-  }, [ids, birthdays]);
+  }, [ids, livingBirthdays]);
 
-  if (birthdays.length === 0) return null;
+  if (livingBirthdays.length === 0) return null;
 
-  const index = Math.min(active, birthdays.length - 1);
-  const current = birthdays[index]!;
-  const multi = birthdays.length > 1;
+  const index = Math.min(active, livingBirthdays.length - 1);
+  const current = livingBirthdays[index]!;
+  const multi = livingBirthdays.length > 1;
 
   return (
     <section className="home-section mt-8 sm:mt-10" aria-labelledby="home-today-bday">
@@ -144,7 +158,7 @@ export function HomeBirthdayCelebration({ birthdays }: { birthdays: UpcomingBirt
         </h2>
         {multi && (
           <p className="text-xs font-medium text-emerald-800/80 dark:text-emerald-200/80">
-            {t('home.todayBirthdayCount', { n: birthdays.length })}
+            {t('home.todayBirthdayCount', { n: livingBirthdays.length })}
           </p>
         )}
       </div>
@@ -156,20 +170,24 @@ export function HomeBirthdayCelebration({ birthdays }: { birthdays: UpcomingBirt
           <button
             type="button"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-emerald-900/15 bg-white text-emerald-900 shadow-sm disabled:opacity-40 dark:border-emerald-700/40 dark:bg-stone-900 dark:text-emerald-100"
-            onClick={() => setActive((i) => (i - 1 + birthdays.length) % birthdays.length)}
+            onClick={() =>
+              setActive((i) => (i - 1 + livingBirthdays.length) % livingBirthdays.length)
+            }
             aria-label={t('home.prevBirthday')}
           >
             <ChevronLeft className="h-5 w-5" aria-hidden />
           </button>
           <div className="flex gap-1.5" role="tablist" aria-label={t('home.todaySpotlightTitle')}>
-            {birthdays.map((b, i) => (
+            {livingBirthdays.map((b, i) => (
               <button
                 key={b.person.id}
                 type="button"
                 role="tab"
                 aria-selected={i === index}
                 className={`h-2.5 rounded-full transition-all ${
-                  i === index ? 'w-6 bg-emerald-700 dark:bg-emerald-400' : 'w-2.5 bg-emerald-300 dark:bg-emerald-800'
+                  i === index
+                    ? 'w-6 bg-emerald-700 dark:bg-emerald-400'
+                    : 'w-2.5 bg-emerald-300 dark:bg-emerald-800'
                 }`}
                 onClick={() => setActive(i)}
                 aria-label={fullName(b.person)}
@@ -179,7 +197,7 @@ export function HomeBirthdayCelebration({ birthdays }: { birthdays: UpcomingBirt
           <button
             type="button"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-emerald-900/15 bg-white text-emerald-900 shadow-sm dark:border-emerald-700/40 dark:bg-stone-900 dark:text-emerald-100"
-            onClick={() => setActive((i) => (i + 1) % birthdays.length)}
+            onClick={() => setActive((i) => (i + 1) % livingBirthdays.length)}
             aria-label={t('home.nextBirthday')}
           >
             <ChevronRight className="h-5 w-5" aria-hidden />

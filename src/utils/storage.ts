@@ -42,6 +42,10 @@ export const STORAGE_KEYS = {
   installTipDismissed: 'familytree.installTip.v1',
   // Last time the owner downloaded a JSON backup (monthly nudge).
   backupDownloadedAt: 'familytree.backupDownloadedAt.v1',
+  // Custom family reunions / tradition dates (mirrored from app_settings when online).
+  traditions: 'familytree.traditions.v1',
+  // Last tradition-day popup key (id:YYYY-MM-DD) so it fires once per holiday.
+  traditionNotified: 'familytree.traditionNotified.v1',
 } as const;
 
 /**

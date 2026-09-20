@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { Cake, PartyPopper } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { UpcomingBirthday } from '../utils/birthdays';
 import { fullName } from '../utils/family';
+import { isLivingPerson } from '../utils/living';
 import { usePrivacy } from '../hooks/usePrivacy';
 import { useT } from '../i18n/useT';
 import { Avatar } from './Avatar';
@@ -14,14 +16,19 @@ interface BirthdayTodayModalProps {
 
 /**
  * Once-per-day welcome popup when someone in the family has a birthday today.
+ * Living people only — never congratulates or names the deceased.
  */
 export function BirthdayTodayModal({ birthdays, onClose }: BirthdayTodayModalProps) {
   const t = useT();
   const privacy = usePrivacy();
-  if (birthdays.length === 0) return null;
+  const living = useMemo(
+    () => birthdays.filter((b) => isLivingPerson(b.person)),
+    [birthdays],
+  );
+  if (living.length === 0) return null;
 
-  const multi = birthdays.length > 1;
-  const first = birthdays[0]!;
+  const multi = living.length > 1;
+  const first = living[0]!;
 
   return (
     <Modal onClose={onClose} labelledBy="bday-today-title" size="sm">
@@ -38,9 +45,12 @@ export function BirthdayTodayModal({ birthdays, onClose }: BirthdayTodayModalPro
           {t('home.bdayPopupKicker')}
         </p>
 
-        <h2 id="bday-today-title" className="relative mt-2 font-display text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
+        <h2
+          id="bday-today-title"
+          className="relative mt-2 font-display text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-50"
+        >
           {multi
-            ? t('home.bdayPopupTitleMany', { n: birthdays.length })
+            ? t('home.bdayPopupTitleMany', { n: living.length })
             : t('home.bdayPopupTitleOne', { name: fullName(first.person) })}
         </h2>
 
@@ -49,7 +59,7 @@ export function BirthdayTodayModal({ birthdays, onClose }: BirthdayTodayModalPro
         </p>
 
         <ul className="relative mt-5 space-y-2 text-left">
-          {birthdays.map((b) => {
+          {living.map((b) => {
             const showAge = b.turningAge !== null && privacy.showAge(b.person);
             return (
               <li key={b.person.id}>
