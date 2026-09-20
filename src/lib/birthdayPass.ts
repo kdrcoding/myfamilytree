@@ -65,7 +65,7 @@ export function readBirthdayPass(): Grant | null {
  * `?from=bday` is not proof. Access is name-only only while this tab
  * already opened a live birthday page and that page is still open.
  */
-export async function birthdayPassStillValid(opts?: {
+export async function birthdayPassStillValid(_opts?: {
   keepOnNetworkError?: boolean;
 }): Promise<boolean> {
   const grant = readBirthdayPass();
@@ -80,9 +80,11 @@ export async function birthdayPassStillValid(opts?: {
       clearBirthdayPass();
       return false;
     }
-    return opts?.keepOnNetworkError === true;
+    // Unknown API errors: fail closed (same as dates soft unlock).
+    return false;
   } catch {
-    return opts?.keepOnNetworkError === true;
+    // Never fail-open on network errors for soft unlock.
+    return false;
   }
 }
 

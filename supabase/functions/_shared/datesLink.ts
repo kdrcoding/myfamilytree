@@ -2,6 +2,9 @@
  * Signed missing-dates page links for Telegram.
  * Format: v1.<expUnix>.<base64url(HMAC-SHA256(secret, "dates-link:v1:"+exp))>
  * Valid for DATES_LINK_TTL_MS from mint time. Bare /dates without a token is locked.
+ *
+ * Prefer DATES_LINK_SECRET (dedicated). Falls back to TELEGRAM_CRON_SECRET only
+ * so older projects keep working until the dedicated secret is set.
  */
 
 export const DATES_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -36,13 +39,15 @@ async function hmacSign(secret: string, message: string): Promise<string> {
   return b64url(sig);
 }
 
+export type DatesLinkMint = { token: string; expiresAt: number };
+
 /** Mint a new token that expires in 7 days. */
-export async function createDatesLinkToken(nowMs = Date.now()): Promise<string> {
+export async function createDatesLinkToken(nowMs = Date.now()): Promise<DatesLinkMint> {
   const secret = datesLinkSecret();
   if (!secret) throw new Error('DATES_LINK_SECRET or TELEGRAM_CRON_SECRET missing');
-  const exp = Math.floor((nowMs + DATES_LINK_TTL_MS) / 1000);
-  const sig = await hmacSign(secret, `dates-link:v1:${exp}`);
-  return `v1.${exp}.${sig}`;
+  const expiresAt = Math.floor((nowMs + DATES_LINK_TTL_MS) / 1000);
+  const sig = await hmacSign(secret, `dates-link:v1:${expiresAt}`);
+  return { token: `v1.${expiresAt}.${sig}`, expiresAt };
 }
 
 /** True when token is well-formed, signature matches, and not expired. */
@@ -57,8 +62,15 @@ export async function verifyDatesLinkToken(
   if (!m) return false;
   const exp = Number(m[1]);
   if (!Number.isFinite(exp) || exp * 1000 < nowMs) return false;
-  // Reject absurd far-future tokens (mint skew / clock abuse).
   if (exp * 1000 > nowMs + DATES_LINK_TTL_MS + 60_000) return false;
   const expected = await hmacSign(secret, `dates-link:v1:${exp}`);
   return timingSafeEqual(m[2]!, expected);
+}
+
+/** Read expiry from a token without verifying (UI only). */
+export function peekDatesLinkExpiryMs(token: string | null | undefined): number | null {
+  const m = /^v1\.(\d{9,12})\./.exec((token ?? '').trim());
+  if (!m) return null;
+  const exp = Number(m[1]);
+  return Number.isFinite(exp) ? exp * 1000 : null;
 }

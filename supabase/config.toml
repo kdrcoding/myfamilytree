@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.birthday-public]
 verify_jwt = false
+
+[functions.family-session]
+verify_jwt = false

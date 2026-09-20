@@ -52,6 +52,7 @@ function roleForHash(hash: string): Role {
 
 function roleForEmail(email: string | undefined): Role {
   if (email === AUTH_EMAILS.owner) return 'owner';
+  if (email === AUTH_EMAILS.editor) return 'editor';
   return 'viewer';
 }
 
@@ -193,21 +194,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         removeKey(AUTH_KEY);
       }
 
-      if (restorePasswordEditor()) {
-        setSoftUnlock(null);
-        setSoftUnlockKind(null);
-        setRole('editor');
-        setReady(true);
-        if (supabase) {
-          const { data } = await supabase.auth.getSession();
-          if (cancelled) return;
-          if (roleForEmail(data.session?.user.email) === 'owner') {
-            dropLeftoverOwnerJwt();
-            if (cancelled) return;
-            setRole('editor');
-          }
+      if (supabase) {
+        const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
+        const sessionRole = roleForEmail(data.session?.user.email);
+        if (sessionRole === 'owner') {
+          adoptOwner();
+          return;
         }
-        return;
+        if (sessionRole === 'editor') {
+          const name = readDisplayName();
+          persistFamilyAuth(name.length >= 2 ? name : 'Family');
+          clearSoftUnlock();
+          setSoftUnlock(null);
+          setRole('editor');
+          setReady(true);
+          return;
+        }
+      }
+
+      // Local family flag without a family JWT can no longer do full edits
+      // (anon is birth_date-only). Force a fresh password login.
+      if (restorePasswordEditor()) {
+        if (supabase) {
+          removeKey(STORAGE_KEYS.familyAuthed);
+          removeKey(AUTH_KEY);
+        } else {
+          setSoftUnlock(null);
+          setSoftUnlockKind(null);
+          setRole('editor');
+          setReady(true);
+          return;
+        }
       }
 
       const name = readDisplayName();
@@ -225,15 +243,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSoftUnlock(null);
       }
 
-      if (supabase) {
-        const { data } = await supabase.auth.getSession();
-        if (cancelled) return;
-        if (roleForEmail(data.session?.user.email) === 'owner') {
-          adoptOwner();
-          return;
-        }
-      }
-
       if (!cancelled) setReady(true);
     };
 
@@ -246,29 +255,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      const ownerSession = roleForEmail(session?.user.email) === 'owner';
+      const sessionRole = roleForEmail(session?.user.email);
 
       if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (!ownerSession) return;
-        if (restorePasswordEditor()) {
-          dropLeftoverOwnerJwt();
+        if (sessionRole === 'owner') {
+          if (restorePasswordEditor()) {
+            dropLeftoverOwnerJwt();
+            return;
+          }
+          adoptOwner();
           return;
         }
-        adoptOwner();
-        return;
-      }
-
-      if (event === 'SIGNED_OUT') {
-        if (restorePasswordEditor()) {
+        if (sessionRole === 'editor') {
+          const name = readDisplayName();
+          persistFamilyAuth(name.length >= 2 ? name : 'Family');
+          clearSoftUnlock();
           setSoftUnlock(null);
           setRole('editor');
           return;
         }
+        return;
+      }
+
+      if (event === 'SIGNED_OUT') {
         if (hasSoftUnlockGrant() && readDisplayName().length >= 2) {
           setRole((current) => (current === 'owner' ? 'editor' : current));
           return;
         }
-        setRole((current) => (current === 'owner' ? 'viewer' : current));
+        setRole((current) =>
+          current === 'owner' || current === 'editor' ? 'viewer' : current,
+        );
       }
     });
     return () => {
@@ -344,10 +360,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (hash === ACCESS.ownerHash) return { ok: false, reason: 'use_owner' };
       if (hash !== ACCESS.editorHash) return { ok: false, reason: 'password' };
 
+      // Full family edits require the family@ JWT (anon is birth_date-only).
+      if (supabase) {
+        const base = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+        const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+        if (!base || !anon) return { ok: false, reason: 'password' };
+
+        const sessionRes = await fetch(`${base}/functions/v1/family-session`, {
+          method: 'POST',
+          headers: {
+            apikey: anon,
+            Authorization: `Bearer ${anon}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ password }),
+        });
+        const sessionJson = (await sessionRes.json().catch(() => ({}))) as {
+          ok?: boolean;
+          token_hash?: string;
+          error?: string;
+        };
+        if (!sessionRes.ok || !sessionJson.ok || !sessionJson.token_hash) {
+          console.error('family-session failed', sessionJson);
+          return { ok: false, reason: 'password' };
+        }
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: sessionJson.token_hash,
+          type: 'email',
+        });
+        if (error) {
+          console.error('family verifyOtp failed', error);
+          return { ok: false, reason: 'password' };
+        }
+      }
+
       persistFamilyAuth(trimmed);
       clearSoftUnlock();
       setSoftUnlock(null);
-      if (supabase) void supabase.auth.signOut();
       setRole('editor');
       return { ok: true, role: 'editor' };
     },

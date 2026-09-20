@@ -365,8 +365,19 @@ export function birthdayPageUrl(personId: string): string {
 
 /** Telegram fill-dates link — signed, valid ~7 days. Bare /dates is locked. */
 export async function missingDatesPageUrl(): Promise<string> {
-  const token = await createDatesLinkToken();
+  const { token } = await createDatesLinkToken();
   return `${publicAppUrl()}/dates?k=${encodeURIComponent(token)}`;
+}
+
+export async function missingDatesPageLink(): Promise<{
+  url: string;
+  expiresAt: number;
+}> {
+  const { token, expiresAt } = await createDatesLinkToken();
+  return {
+    url: `${publicAppUrl()}/dates?k=${encodeURIComponent(token)}`,
+    expiresAt,
+  };
 }
 
 export function cheerCallbackData(personId: string, year: number): string {

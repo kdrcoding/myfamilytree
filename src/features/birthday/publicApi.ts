@@ -94,6 +94,46 @@ export async function fetchMissingBirthdays(linkToken: string): Promise<MissingB
   return { ok: false, error: 'failed' };
 }
 
+/** Soft-unlock birth date write — server enforces token + birth_date only. */
+export async function setPublicBirthDate(
+  personId: string,
+  birthDate: string,
+  linkToken: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const base = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+  if (!base || !anon || !isSupabaseConfigured) return { ok: false, error: 'not_configured' };
+  const token = linkToken.trim();
+  if (!token) return { ok: false, error: 'unauthorized' };
+
+  const res = await fetch(`${base}/functions/v1/birthday-public?mode=set-birth`, {
+    method: 'POST',
+    headers: {
+      ...publicFnHeaders(anon),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ personId, birthDate, k: token }),
+  });
+  try {
+    const parsed = (await res.json()) as { ok?: boolean; error?: string };
+    if (parsed && typeof parsed.ok === 'boolean') {
+      return parsed.ok ? { ok: true } : { ok: false, error: parsed.error || 'failed' };
+    }
+  } catch {
+    /* ignore */
+  }
+  if (res.status === 401) return { ok: false, error: 'unauthorized' };
+  return { ok: false, error: 'failed' };
+}
+
+/** Expiry ms from a dates link token (display only — server still verifies). */
+export function peekDatesLinkExpiryMs(token: string | null | undefined): number | null {
+  const m = /^v1\.(\d{9,12})\./.exec((token ?? '').trim());
+  if (!m) return null;
+  const exp = Number(m[1]);
+  return Number.isFinite(exp) ? exp * 1000 : null;
+}
+
 export type WebCheerResult = {
   ok: boolean;
   already?: boolean;

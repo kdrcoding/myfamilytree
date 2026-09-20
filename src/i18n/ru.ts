@@ -568,6 +568,14 @@ export const ruOverrides: Record<string, string> = {
   'telegram.testOk': 'Отправлено открыток: {n}.',
   'telegram.testSkipped': 'Нечего отправлять ({reason}).',
   'telegram.testFailed': 'Тест не удался — проверьте логи Edge Function и токен бота.',
+  'telegram.copyDatesLink': 'Скопировать ссылку на даты',
+  'telegram.sendDatesNow': 'Отправить напоминание о датах',
+  'telegram.datesLinkCopied': 'Ссылка скопирована (действует ~7 дней).',
+  'telegram.datesLinkFailed': 'Не удалось создать ссылку.',
+  'telegram.sendDatesOk': 'Напоминание отправлено ({n} чел.).',
+  'telegram.sendDatesFailed': 'Не удалось отправить напоминание.',
+  'telegram.datesLinkHint':
+    'Скопируйте свежую ссылку на 7 дней или отправьте напоминание в группу. Простой /dates остаётся закрытым.',
   'telegram.saved': 'Настройки Telegram сохранены',
   'telegram.saveFailed': 'Не удалось сохранить настройки Telegram',
   'telegram.coverageTitle': 'Кого бот может поздравить',
@@ -655,6 +663,7 @@ export const ruOverrides: Record<string, string> = {
   'dates.expiredTitle': 'Срок ссылки истёк',
   'dates.expiredBody':
     'Ссылки для заполнения действуют около 7 дней. Дождитесь следующего напоминания в Telegram или попросите новую ссылку у администратора.',
+  'dates.validUntil': 'Ссылка действует до {when}',
   'dates.footer': 'Только подписанные ссылки из Telegram — около 7 дней. При заполнении спрашивается имя.',
 
   'invite.title': 'Пригласить родственников',

@@ -96,6 +96,45 @@ export async function runBirthdayTest(testPersonId?: string): Promise<{
   };
 }
 
+/** Owner: mint a fresh signed /dates?k= link (valid ~7 days). */
+export async function mintDatesFillLink(): Promise<{
+  ok: boolean;
+  url?: string;
+  expiresAt?: number;
+  error?: string;
+}> {
+  if (!supabase) throw new Error('Supabase not configured');
+  const { data, error } = await supabase.functions.invoke('birthday-telegram', {
+    body: { action: 'mintDatesLink' },
+  });
+  if (error) throw error;
+  return data as { ok: boolean; url?: string; expiresAt?: number; error?: string };
+}
+
+/** Owner: post a missing-dates reminder to the group with a fresh signed link. */
+export async function sendMissingDatesNow(): Promise<{
+  ok: boolean;
+  sent?: boolean;
+  count?: number;
+  url?: string;
+  skipped?: string;
+  error?: string;
+}> {
+  if (!supabase) throw new Error('Supabase not configured');
+  const { data, error } = await supabase.functions.invoke('birthday-telegram', {
+    body: { action: 'sendMissingDates' },
+  });
+  if (error) throw error;
+  return data as {
+    ok: boolean;
+    sent?: boolean;
+    count?: number;
+    url?: string;
+    skipped?: string;
+    error?: string;
+  };
+}
+
 export function botOpenUrl(botUsername: string | null | undefined): string | null {
   const bot = botUsername?.replace(/^@/, '');
   return bot ? `https://t.me/${bot}` : null;

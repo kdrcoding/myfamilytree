@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, ExternalLink, Send, MessageCircle } from 'lucide-react';
+import { Activity, Copy, ExternalLink, Link2, Send, MessageCircle } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
@@ -13,7 +13,9 @@ import {
   botOpenUrl,
   fetchTelegramBotRuns,
   fetchTelegramSettings,
+  mintDatesFillLink,
   runBirthdayTest,
+  sendMissingDatesNow,
   updateTelegramSettings,
   type TelegramBotRun,
   type TelegramSettings,
@@ -396,7 +398,68 @@ export function TelegramBirthdaysCard() {
           >
             <Send className="h-4 w-4" aria-hidden /> {t('telegram.testSend')}
           </button>
+          <button
+            type="button"
+            className="btn-secondary !min-h-10"
+            disabled={busy}
+            onClick={() => {
+              void (async () => {
+                setBusy(true);
+                try {
+                  const result = await mintDatesFillLink();
+                  if (!result.ok || !result.url) {
+                    toast(result.error || t('telegram.datesLinkFailed'), 'error');
+                    return;
+                  }
+                  await navigator.clipboard.writeText(result.url);
+                  toast(t('telegram.datesLinkCopied'), 'success');
+                } catch (error) {
+                  console.error(error);
+                  toast(t('telegram.datesLinkFailed'), 'error');
+                } finally {
+                  setBusy(false);
+                }
+              })();
+            }}
+          >
+            <Copy className="h-4 w-4" aria-hidden /> {t('telegram.copyDatesLink')}
+          </button>
+          <button
+            type="button"
+            className="btn-secondary !min-h-10"
+            disabled={busy || !settings.group_chat_id || missingCount === 0}
+            onClick={() => {
+              void (async () => {
+                setBusy(true);
+                try {
+                  const result = await sendMissingDatesNow();
+                  if (!result.ok && !result.sent) {
+                    toast(
+                      result.error ||
+                        (result.skipped
+                          ? t('telegram.testSkipped', { reason: result.skipped })
+                          : t('telegram.sendDatesFailed')),
+                      'error',
+                    );
+                  } else {
+                    toast(t('telegram.sendDatesOk', { n: result.count ?? 0 }), 'success');
+                  }
+                  await refresh();
+                } catch (error) {
+                  console.error(error);
+                  toast(t('telegram.sendDatesFailed'), 'error');
+                } finally {
+                  setBusy(false);
+                }
+              })();
+            }}
+          >
+            <Link2 className="h-4 w-4" aria-hidden /> {t('telegram.sendDatesNow')}
+          </button>
         </div>
+        <p className="text-xs leading-relaxed text-stone-500 dark:text-stone-400">
+          {t('telegram.datesLinkHint')}
+        </p>
       </div>
     </section>
   );

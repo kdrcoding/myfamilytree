@@ -6,6 +6,7 @@
  * Also serves:
  * - `?mode=missing&k=<token>` — living relatives without a full birth date
  *   (requires a signed Telegram link token, valid ~7 days)
+ * - POST `?mode=set-birth` — update only birth_date with a valid dates link token
  * - POST `?mode=cheer` — web “Men tabriklayman” with a display name
  */
 import {
@@ -108,6 +109,44 @@ async function listMissingBirthdays(db: ServiceDb): Promise<Response> {
   }
 
   return jsonResponse({ ok: true, count: people.length, people });
+}
+
+async function setBirthDateWithLink(
+  db: ServiceDb,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  const token = typeof body.k === 'string' ? body.k : typeof body.token === 'string' ? body.token : '';
+  if (!(await verifyDatesLinkToken(token))) {
+    return jsonResponse({ ok: false, error: 'unauthorized' }, 401);
+  }
+  const personId = typeof body.personId === 'string' ? body.personId.trim() : '';
+  const birthDate = typeof body.birthDate === 'string' ? body.birthDate.trim() : '';
+  if (!personId || personId.length > 80) {
+    return jsonResponse({ ok: false, error: 'personId required' }, 400);
+  }
+  if (!monthDay(birthDate)) {
+    return jsonResponse({ ok: false, error: 'invalid_birth_date' }, 400);
+  }
+
+  const people = await db.rest<MemberRow[]>('family_members', {
+    query: {
+      select: 'id,first_name,last_name,nickname,gender,birth_date,death_date,is_deceased,photo',
+      id: `eq.${personId}`,
+    },
+  });
+  const person = people[0];
+  if (!person || person.is_deceased || person.death_date) {
+    return jsonResponse({ ok: false, error: 'not_found' }, 404);
+  }
+
+  await db.rest('family_members', {
+    method: 'PATCH',
+    query: { id: `eq.${personId}` },
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify({ birth_date: birthDate }),
+  });
+
+  return jsonResponse({ ok: true, personId, birthDate });
 }
 
 async function loadCheers(
@@ -278,6 +317,11 @@ Deno.serve(async (req) => {
     if (url.searchParams.get('mode') === 'cheer' && req.method === 'POST') {
       const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
       return await postWebCheer(db, body);
+    }
+
+    if (url.searchParams.get('mode') === 'set-birth' && req.method === 'POST') {
+      const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+      return await setBirthDateWithLink(db, body);
     }
 
     let personId = url.searchParams.get('personId') || '';

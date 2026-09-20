@@ -13,6 +13,8 @@ import type { AuditAction } from '../lib/auditLog';
 import { autoBackup, forceBackup } from '../lib/backups';
 import { loadFamily, readFamilyCache, writeFamilyCache } from '../lib/familyCache';
 import { diffFamily, isEmptyDiff, markSeeded, pushDiff } from '../lib/familyDb';
+import { setPublicBirthDate } from '../features/birthday/publicApi';
+import { readDatesLinkToken } from '../lib/birthdayPass';
 import { normalizeCountry } from '../utils/countries';
 import { validateFamilyData } from '../utils/validation';
 import {
@@ -290,15 +292,32 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
           return applyRelationLink(current, personId, link);
         }, 'edit');
       },
-      updatePerson: (person, parentIds, spouseIds) => {
+      updatePerson: async (person, parentIds, spouseIds) => {
+        if (editScope === 'birthDate') {
+          const token = readDatesLinkToken();
+          const birthDate = (person.birthDate ?? '').trim();
+          if (!token) {
+            toast(translate(language, 'form.softUnlockBirthOnly'), 'error');
+            return false;
+          }
+          const existing = peopleRef.current.find((p) => p.id === person.id);
+          if (!existing) return false;
+          const result = await setPublicBirthDate(person.id, birthDate, token);
+          if (!result.ok) {
+            toast(translate(language, 'form.softUnlockBirthOnly'), 'error');
+            return false;
+          }
+          const next = peopleRef.current.map((p) =>
+            p.id === person.id ? { ...p, birthDate: birthDate || undefined } : p,
+          );
+          peopleRef.current = next;
+          setPeopleState(next);
+          writeFamilyCache(next);
+          return true;
+        }
         return mutate((current) => {
           const existing = current.find((p) => p.id === person.id);
           if (!existing) return current;
-          if (editScope === 'birthDate') {
-            // Soft dates unlock: only birthDate may change.
-            const updated = { ...existing, birthDate: person.birthDate };
-            return current.map((p) => (p.id === person.id ? updated : p));
-          }
           if (!isOwner) {
             // Family editors may change DETAIL fields, never structure or
             // wedding rows (those live on relationships, owner JWT only).

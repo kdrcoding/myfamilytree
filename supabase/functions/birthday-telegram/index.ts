@@ -25,6 +25,7 @@ import {
   botHealthAlertText,
   cheerCallbackData,
   missingDatesPageUrl,
+  missingDatesPageLink,
   publicAppUrl,
   upcomingBirthdaysNotice,
   TG_BUTTONS,
@@ -164,39 +165,52 @@ async function maybeSendMissingDates(opts: {
   members: FamilyMemberRow[];
   local: { year: number; month: number; day: number; hour: number; weekday: string };
   force: boolean;
-}): Promise<{ sent: boolean; skipped?: string; count?: number }> {
-  if (opts.force) return { sent: false, skipped: 'force' };
-  // Monday preferred; Tuesday catch-up if GitHub Actions missed Monday.
-  if (opts.local.weekday !== 'Mon' && opts.local.weekday !== 'Tue') {
-    return { sent: false, skipped: 'not_monday_or_tuesday' };
-  }
+}): Promise<{ sent: boolean; skipped?: string; count?: number; url?: string }> {
   const names = opts.members
     .filter((m) => !m.is_deceased && !m.death_date && !monthDay(m.birth_date))
     .map((m) => displayName(m));
   if (names.length === 0) return { sent: false, skipped: 'none_missing', count: 0 };
 
-  const period = isoWeekPeriod(opts.local.year, opts.local.month, opts.local.day);
-  const claimed = await claimNotice(opts.db, 'missing-dates', period);
-  if (!claimed) return { sent: false, skipped: 'already_claimed', count: names.length };
+  // Owner "send now" bypasses weekday + weekly claim.
+  if (!opts.force) {
+    if (opts.local.weekday !== 'Mon' && opts.local.weekday !== 'Tue') {
+      return { sent: false, skipped: 'not_monday_or_tuesday' };
+    }
+    const period = isoWeekPeriod(opts.local.year, opts.local.month, opts.local.day);
+    const claimed = await claimNotice(opts.db, 'missing-dates', period);
+    if (!claimed) return { sent: false, skipped: 'already_claimed', count: names.length };
 
-  try {
-    const datesUrl = await missingDatesPageUrl();
-    await telegramApi('sendMessage', {
-      chat_id: opts.chatId,
-      text: missingDatesNotice(names, datesUrl),
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
-      reply_markup: {
-        inline_keyboard: [[{ text: TG_BUTTONS.fillDates, url: datesUrl }]],
-      },
-    });
-    return { sent: true, count: names.length };
-  } catch (err) {
-    await releaseNotice(opts.db, 'missing-dates', period).catch((releaseErr) => {
-      console.error('release missing-dates claim failed', releaseErr);
-    });
-    throw err;
+    try {
+      const datesUrl = await missingDatesPageUrl();
+      await telegramApi('sendMessage', {
+        chat_id: opts.chatId,
+        text: missingDatesNotice(names, datesUrl),
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+        reply_markup: {
+          inline_keyboard: [[{ text: TG_BUTTONS.fillDates, url: datesUrl }]],
+        },
+      });
+      return { sent: true, count: names.length, url: datesUrl };
+    } catch (err) {
+      await releaseNotice(opts.db, 'missing-dates', period).catch((releaseErr) => {
+        console.error('release missing-dates claim failed', releaseErr);
+      });
+      throw err;
+    }
   }
+
+  const datesUrl = await missingDatesPageUrl();
+  await telegramApi('sendMessage', {
+    chat_id: opts.chatId,
+    text: missingDatesNotice(names, datesUrl),
+    parse_mode: 'HTML',
+    disable_web_page_preview: true,
+    reply_markup: {
+      inline_keyboard: [[{ text: TG_BUTTONS.fillDates, url: datesUrl }]],
+    },
+  });
+  return { sent: true, count: names.length, url: datesUrl };
 }
 
 async function maybeSendUpcoming(opts: {
@@ -371,6 +385,46 @@ Deno.serve(async (req) => {
     await ensureCallbackWebhook();
 
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const action = typeof body.action === 'string' ? body.action : '';
+
+    // Owner-only helpers (JWT). Cron never sends these actions.
+    if (action === 'mintDatesLink' || action === 'sendMissingDates') {
+      db = createServiceClient();
+      if (action === 'mintDatesLink') {
+        const link = await missingDatesPageLink();
+        return jsonResponse({
+          ok: true,
+          url: link.url,
+          expiresAt: link.expiresAt,
+        });
+      }
+
+      const settingsRows = await db.rest<SettingsRow[]>('telegram_settings', {
+        query: { select: '*', id: 'eq.1' },
+      });
+      const settings = settingsRows[0];
+      if (!settings?.group_chat_id) {
+        return jsonResponse({ ok: false, error: 'no_group_chat_id' }, 400);
+      }
+      const tz = settings.timezone || DEFAULT_FAMILY_TIMEZONE;
+      const local = localParts(tz);
+      const members = await db.rest<FamilyMemberRow[]>('family_members', {
+        query: {
+          select:
+            'id,first_name,last_name,nickname,gender,birth_date,death_date,is_deceased,photo',
+          order: 'first_name.asc',
+        },
+      });
+      const result = await maybeSendMissingDates({
+        db,
+        chatId: settings.group_chat_id,
+        members,
+        local,
+        force: true,
+      });
+      return jsonResponse({ ok: result.sent, ...result });
+    }
+
     force = Boolean(body.force);
     trigger = force ? 'test' : 'cron';
     const testPersonId = typeof body.testPersonId === 'string' ? body.testPersonId : null;

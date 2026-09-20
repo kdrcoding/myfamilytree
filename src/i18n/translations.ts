@@ -393,6 +393,14 @@ export const en = {
   'telegram.testOk': 'Sent {n} birthday card(s).',
   'telegram.testSkipped': 'Nothing to send ({reason}).',
   'telegram.testFailed': 'Test send failed — check Edge Function logs and bot token.',
+  'telegram.copyDatesLink': 'Copy fill-dates link',
+  'telegram.sendDatesNow': 'Send dates reminder now',
+  'telegram.datesLinkCopied': 'Fill-dates link copied (valid ~7 days).',
+  'telegram.datesLinkFailed': 'Could not create a fill-dates link.',
+  'telegram.sendDatesOk': 'Sent missing-dates reminder ({n} people).',
+  'telegram.sendDatesFailed': 'Could not send the missing-dates reminder.',
+  'telegram.datesLinkHint':
+    'Copy a fresh 7-day link, or post a new reminder to the Telegram group. Bare /dates stays locked.',
   'telegram.saved': 'Telegram settings saved',
   'telegram.saveFailed': 'Could not save Telegram settings',
   'telegram.coverageTitle': 'Who the bot can congratulate',
@@ -480,6 +488,7 @@ export const en = {
   'dates.expiredTitle': 'This link has expired',
   'dates.expiredBody':
     'Fill-dates links last about 7 days. Wait for the next Telegram reminder, or ask the family admin for a new link.',
+  'dates.validUntil': 'Link valid until {when}',
   'dates.footer': 'Signed Telegram links only — valid about 7 days. Filling still asks for your name.',
 
   // Invite link
@@ -1407,6 +1416,14 @@ export const uz: Record<TKey, string> = {
   'telegram.testOk': '{n} ta otkritka yuborildi.',
   'telegram.testSkipped': 'Yuboriladigan narsa yo‘q ({reason}).',
   'telegram.testFailed': 'Sinov muvaffaqiyatsiz — Edge Function loglari va bot tokenini tekshiring.',
+  'telegram.copyDatesLink': 'Sanalar havolasini nusxalash',
+  'telegram.sendDatesNow': 'Sanalar eslatmasini hozir yuborish',
+  'telegram.datesLinkCopied': 'Sanalar havolasi nusxalandi (taxminan 7 kun).',
+  'telegram.datesLinkFailed': 'Sanalar havolasini yaratib bo‘lmadi.',
+  'telegram.sendDatesOk': 'Sanalar eslatmasi yuborildi ({n} kishi).',
+  'telegram.sendDatesFailed': 'Sanalar eslatmasini yuborib bo‘lmadi.',
+  'telegram.datesLinkHint':
+    'Yangi 7 kunlik havolani nusxalang yoki guruhga eslatma yuboring. Oddiy /dates yopiq qoladi.',
   'telegram.saved': 'Telegram sozlamalari saqlandi',
   'telegram.saveFailed': 'Telegram sozlamalarini saqlab bo‘lmadi',
   'telegram.coverageTitle': 'Bot kimni tabriklay oladi',
@@ -1494,6 +1511,7 @@ export const uz: Record<TKey, string> = {
   'dates.expiredTitle': 'Bu havolaning muddati tugagan',
   'dates.expiredBody':
     'To‘ldirish havolasi taxminan 7 kun amal qiladi. Keyingi Telegram eslatmasini kuting yoki adminidan yangi havola so‘rang.',
+  'dates.validUntil': 'Havola amal qiladi: {when}',
   'dates.footer': 'Faqat imzolangan Telegram havolalari — taxminan 7 kun. To‘ldirishda ism so‘raladi.',
 
   'invite.title': 'Qarindoshlarni taklif qilish',
