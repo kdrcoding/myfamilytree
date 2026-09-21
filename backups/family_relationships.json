@@ -712,14 +712,6 @@
         "married_on": null
     },
     {
-        "key": "parent|nazir-ali|rossiyadegi-amakimiz",
-        "kind": "parent-child",
-        "person_a": "nazir-ali",
-        "person_b": "rossiyadegi-amakimiz",
-        "created_at": "2026-07-14T07:39:38.418928+00:00",
-        "married_on": null
-    },
-    {
         "key": "parent|nazir-ali|yoshi-kotta-ammamiz",
         "kind": "parent-child",
         "person_a": "nazir-ali",
@@ -925,14 +917,6 @@
         "person_a": "qumirxon",
         "person_b": "meliqozi",
         "created_at": "2026-07-14T06:41:43.055383+00:00",
-        "married_on": null
-    },
-    {
-        "key": "parent|qumirxon|rossiyadegi-amakimiz",
-        "kind": "parent-child",
-        "person_a": "qumirxon",
-        "person_b": "rossiyadegi-amakimiz",
-        "created_at": "2026-07-14T07:39:38.418928+00:00",
         "married_on": null
     },
     {
