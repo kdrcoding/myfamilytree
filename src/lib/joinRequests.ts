@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import type { FamilyPerson, RelationLink } from '../types/family';
 import { JOIN_REQUEST_TYPE } from '../types/family';
-import { loadJson, STORAGE_KEYS } from '../utils/storage';
+import { resolveActorName } from '../utils/actorName';
 import { AUTH_EMAILS } from '../config/access';
 
 export type JoinRequestStatus = 'pending' | 'approved' | 'rejected';
@@ -21,10 +21,7 @@ export interface StoredJoinRequest {
 }
 
 function displayName(): string | null {
-  return (
-    loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string')?.trim() ||
-    null
-  );
+  return resolveActorName() || null;
 }
 
 /**

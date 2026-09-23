@@ -17,7 +17,7 @@ import { setPublicBirthDate } from '../features/birthday/publicApi';
 import { readDatesLinkToken } from '../lib/birthdayPass';
 import { normalizeCountry } from '../utils/countries';
 import { validateFamilyData } from '../utils/validation';
-import { loadJson, STORAGE_KEYS } from '../utils/storage';
+import { resolveActorName } from '../utils/actorName';
 import {
   applyRelationLink,
   buildIndex,
@@ -307,7 +307,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
             person.id,
             birthDate,
             token,
-            loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string')?.trim(),
+            resolveActorName() || undefined,
           );
           if (!result.ok) {
             toast(translate(language, 'form.softUnlockBirthOnly'), 'error');

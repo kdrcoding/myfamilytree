@@ -150,6 +150,7 @@ export const ruOverrides: Record<string, string> = {
   'gate.welcomeTitle': 'Добро пожаловать в семью',
   'gate.welcomeIntro': 'Одно быстрое уточнение — чтобы знать, кто смотрит сайт.',
   'gate.welcomeBtn': 'Войти как член семьи',
+  'gate.continueAs': 'Продолжить как {name}',
   'gate.namePlaceholder': 'например, Азиза',
   'gate.ownerToggle': 'Вход владельца / Кадир',
   'gate.ownerTitle': 'Вход владельца',

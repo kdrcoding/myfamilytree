@@ -11,6 +11,7 @@ import { rememberActorName, resolveActorName } from '../utils/actorName';
 import { BrandHero } from './BrandLogo';
 import { LanguageMenuButton } from './LanguageSelect';
 import { useSettings } from '../context/SettingsContext';
+import { prettyLabel } from '../utils/family';
 
 function readSavedName(): string {
   return resolveActorName();
@@ -86,6 +87,13 @@ export function AppLockGate({ children }: { children: ReactNode }) {
       rememberActorName(OWNER_DEFAULT_NAME);
     }
   }, [ready, role]);
+
+  // After sign-out / returning to the gate, show the saved name chip again.
+  useEffect(() => {
+    if (unlocked) return;
+    const saved = readSavedName();
+    if (saved.length >= 2) setNameDraft(saved);
+  }, [unlocked]);
 
   useEffect(() => {
     if (!fromSoftUnlock) return;
@@ -339,7 +347,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-teal-800/20 bg-white px-3 text-sm font-semibold text-teal-950 shadow-sm dark:border-emerald-700/40 dark:bg-stone-950 dark:text-emerald-100">
                       <Users className="h-4 w-4 text-teal-700 dark:text-emerald-400" aria-hidden />
-                      {nameDraft.trim()}
+                      {prettyLabel(nameDraft.trim())}
                     </span>
                     <button
                       type="button"
@@ -413,6 +421,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
                         setError('');
                       }}
                       autoComplete="current-password"
+                      autoFocus={nameDraft.trim().length >= 2}
                       required
                       aria-invalid={Boolean(error)}
                       aria-describedby={error ? 'gate-family-error' : undefined}
@@ -453,7 +462,11 @@ export function AppLockGate({ children }: { children: ReactNode }) {
               </p>
               <button type="submit" className="btn-primary w-full min-h-12 text-base" disabled={busy}>
                 <Users className="h-4 w-4" aria-hidden />
-                {busy ? t('gate.checking') : t('gate.welcomeBtn')}
+                {busy
+                  ? t('gate.checking')
+                  : fromSoftUnlock && nameDraft.trim().length >= 2
+                    ? t('gate.continueAs', { name: prettyLabel(nameDraft.trim()) })
+                    : t('gate.welcomeBtn')}
               </button>
             </form>
 

@@ -222,8 +222,28 @@ export function BirthdayWebCard({
   useEffect(() => {
     const next = resolveActorName(role);
     if (!next) return;
+    rememberActorName(next);
     setCheerName(next);
     setEditingName(false);
+  }, [role]);
+
+  // Same-tab navigations (home → /bday) keep Auth mounted; refresh name if storage changed.
+  useEffect(() => {
+    const refresh = () => {
+      const next = resolveActorName(role);
+      if (!next) return;
+      setCheerName((prev) => (prev.trim() === next ? prev : next));
+      setEditingName(false);
+    };
+    const onVis = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, [role]);
 
   const shownName = prettyLabel(person.name);

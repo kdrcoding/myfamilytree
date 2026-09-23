@@ -45,7 +45,7 @@ export function resolveActorName(role?: Role | null): string {
 
 /** Persist the actor name everywhere birthday + gate look for it. */
 export function rememberActorName(name: string): string {
-  const trimmed = name.trim().slice(0, 40);
+  const trimmed = name.trim().replace(/\s+/g, ' ').slice(0, 40);
   if (trimmed.length < 2) return '';
   saveJson(STORAGE_KEYS.displayName, trimmed);
   writeRaw(CHEER_NAME_KEY, trimmed);

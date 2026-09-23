@@ -11,7 +11,7 @@ import {
   type SoftUnlockKind,
 } from '../lib/birthdayPass';
 import { supabase } from '../lib/supabase';
-import { rememberActorName } from '../utils/actorName';
+import { rememberActorName, resolveActorName } from '../utils/actorName';
 import { loadJson, saveJson, removeKey, STORAGE_KEYS } from '../utils/storage';
 
 const AUTH_KEY = STORAGE_KEYS.auth;
@@ -63,25 +63,6 @@ function applyOwnerName() {
   removeKey(STORAGE_KEYS.familyAuthed);
 }
 
-function readDisplayName(): string {
-  const fromJson = loadJson<string>(
-    STORAGE_KEYS.displayName,
-    (v): v is string => typeof v === 'string',
-  );
-  if (fromJson?.trim()) return fromJson.trim();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.displayName);
-    if (!raw) return '';
-    const trimmed = raw.trim().replace(/^["']|["']$/g, '');
-    if (trimmed.length >= 2 && !trimmed.startsWith('{') && !trimmed.startsWith('[')) {
-      return trimmed;
-    }
-  } catch {
-    /* private mode */
-  }
-  return '';
-}
-
 function isFamilyAuthed(): boolean {
   const stored = loadJson<string>(
     STORAGE_KEYS.familyAuthed,
@@ -97,17 +78,10 @@ function persistFamilyAuth(name: string) {
   saveJson(STORAGE_KEYS.namedDevice, true);
   saveJson(STORAGE_KEYS.familyAuthed, ACCESS.editorHash);
   saveJson(AUTH_KEY, ACCESS.editorHash);
-  if (!isFamilyAuthed()) {
-    removeKey(STORAGE_KEYS.familyCache);
-    removeKey(STORAGE_KEYS.photoUrls);
-    saveJson(STORAGE_KEYS.displayName, name);
-    saveJson(STORAGE_KEYS.familyAuthed, ACCESS.editorHash);
-    saveJson(AUTH_KEY, ACCESS.editorHash);
-  }
 }
 
 function restorePasswordEditor(): boolean {
-  const name = readDisplayName();
+  const name = resolveActorName();
   if (name.length < 2 || !isFamilyAuthed()) return false;
   if (
     loadJson<string>(STORAGE_KEYS.familyAuthed, (v): v is string => typeof v === 'string') !==
@@ -154,7 +128,7 @@ function initialAuthState(): { role: Role; ready: boolean; softUnlock: SoftUnloc
     if (!supabase) return { role: 'editor', ready: true, softUnlock: null };
     return { role: 'viewer', ready: false, softUnlock: null };
   }
-  if (hasSoftUnlockGrant() && readDisplayName().length >= 2) {
+  if (hasSoftUnlockGrant() && resolveActorName().length >= 2) {
     return { role: 'viewer', ready: false, softUnlock: readSoftUnlockKind() };
   }
   if (hasOwnerSessionHint()) return { role: 'viewer', ready: false, softUnlock: null };
@@ -209,7 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         if (sessionRole === 'editor') {
-          const name = readDisplayName();
+          const name = resolveActorName();
           persistFamilyAuth(name.length >= 2 ? name : 'Family');
           clearSoftUnlock();
           setSoftUnlock(null);
@@ -234,7 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const name = readDisplayName();
+      const name = resolveActorName();
       if (hasSoftUnlockGrant() && name.length >= 2) {
         const kind = await resolveSoftUnlockKind();
         if (cancelled) return;
@@ -273,7 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         if (sessionRole === 'editor') {
-          const name = readDisplayName();
+          const name = resolveActorName();
           persistFamilyAuth(name.length >= 2 ? name : 'Family');
           clearSoftUnlock();
           setSoftUnlock(null);
@@ -284,7 +258,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (event === 'SIGNED_OUT') {
-        if (hasSoftUnlockGrant() && readDisplayName().length >= 2) {
+        if (hasSoftUnlockGrant() && resolveActorName().length >= 2) {
           setRole((current) => (current === 'owner' ? 'editor' : current));
           return;
         }
@@ -432,7 +406,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(() => {
     if (supabase) void supabase.auth.signOut();
     removeKey(AUTH_KEY);
-    removeKey(STORAGE_KEYS.displayName);
+    // Keep display / cheer name so /bday and soft unlock do not re-ask.
     removeKey(STORAGE_KEYS.namedDevice);
     removeKey(STORAGE_KEYS.familyAuthed);
     removeKey(STORAGE_KEYS.skipOwnerAuto);

@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import type { FamilyPerson } from '../types/family';
+import { resolveActorName } from '../utils/actorName';
 import { fullName } from '../utils/family';
-import { loadJson, STORAGE_KEYS } from '../utils/storage';
 
 /** What kind of operation produced a change (set by the calling action). */
 export type AuditAction = 'add' | 'edit' | 'delete' | 'divorce' | 'import' | 'reset';
@@ -175,9 +175,7 @@ async function callLogRpc(
  * can't be forged.
  */
 export function logChange(action: AuditAction, details: AuditDetails): void {
-  const actorName =
-    loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string')?.trim() ||
-    null;
+  const actorName = resolveActorName() || null;
   void callLogRpc(action, details, actorName);
 }
 
