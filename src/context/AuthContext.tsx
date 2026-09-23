@@ -11,6 +11,7 @@ import {
   type SoftUnlockKind,
 } from '../lib/birthdayPass';
 import { supabase } from '../lib/supabase';
+import { rememberActorName } from '../utils/actorName';
 import { loadJson, saveJson, removeKey, STORAGE_KEYS } from '../utils/storage';
 
 const AUTH_KEY = STORAGE_KEYS.auth;
@@ -57,7 +58,7 @@ function roleForEmail(email: string | undefined): Role {
 }
 
 function applyOwnerName() {
-  saveJson(STORAGE_KEYS.displayName, OWNER_DEFAULT_NAME);
+  rememberActorName(OWNER_DEFAULT_NAME);
   removeKey(STORAGE_KEYS.namedDevice);
   removeKey(STORAGE_KEYS.familyAuthed);
 }
@@ -92,7 +93,7 @@ function isFamilyAuthed(): boolean {
 }
 
 function persistFamilyAuth(name: string) {
-  saveJson(STORAGE_KEYS.displayName, name);
+  rememberActorName(name);
   saveJson(STORAGE_KEYS.namedDevice, true);
   saveJson(STORAGE_KEYS.familyAuthed, ACCESS.editorHash);
   saveJson(AUTH_KEY, ACCESS.editorHash);
@@ -417,7 +418,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (trimmed.length < 2) return false;
     const kind = await resolveSoftUnlockKind();
     if (!kind) return false;
-    saveJson(STORAGE_KEYS.displayName, trimmed);
+    rememberActorName(trimmed);
     saveJson(STORAGE_KEYS.namedDevice, true);
     removeKey(STORAGE_KEYS.familyAuthed);
     removeKey(AUTH_KEY);

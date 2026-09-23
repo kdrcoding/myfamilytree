@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { Heart, Loader2, PartyPopper, Sparkles } from 'lucide-react';
+import { BadgeCheck, Heart, Loader2, PartyPopper, Sparkles } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage, useT } from '../i18n/useT';
 import {
   CARD_PALETTES,
@@ -18,8 +19,7 @@ import {
 } from '../features/birthday/publicApi';
 import { webBirthdayWish, type WishLang } from '../features/birthday/pageWishes';
 import { prettyLabel } from '../utils/family';
-
-const CHEER_NAME_KEY = 'oqariq-bday-cheer-name';
+import { rememberActorName, resolveActorName } from '../utils/actorName';
 
 const BIRTHDAY_CARD_CSS = `
   .bday-web .bday-wash {
@@ -199,8 +199,11 @@ export function BirthdayWebCard({
 }: BirthdayWebCardProps) {
   const t = useT();
   const language = useLanguage() as WishLang;
+  const { role } = useAuth();
   const [photoFailed, setPhotoFailed] = useState(false);
-  const [cheerName, setCheerName] = useState('');
+  const knownName = useMemo(() => resolveActorName(role), [role]);
+  const [cheerName, setCheerName] = useState(knownName);
+  const [editingName, setEditingName] = useState(!knownName);
   const [cheerBusy, setCheerBusy] = useState(false);
   const [cheerMsg, setCheerMsg] = useState<string | null>(null);
   const [cheerErr, setCheerErr] = useState<string | null>(null);
@@ -217,13 +220,11 @@ export function BirthdayWebCard({
   }, [person.photoUrl]);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(CHEER_NAME_KEY);
-      if (saved) setCheerName(saved);
-    } catch {
-      /* private mode */
-    }
-  }, []);
+    const next = resolveActorName(role);
+    if (!next) return;
+    setCheerName(next);
+    setEditingName(false);
+  }, [role]);
 
   const shownName = prettyLabel(person.name);
   const whoLine = person.whoLine ? prettyLabel(person.whoLine) : null;
@@ -263,11 +264,8 @@ export function BirthdayWebCard({
         );
         return;
       }
-      try {
-        localStorage.setItem(CHEER_NAME_KEY, trimmed);
-      } catch {
-        /* ignore */
-      }
+      rememberActorName(trimmed);
+      setEditingName(false);
       if (result.cheers) onCheersChange?.(result.cheers);
       setCheerMsg(result.already ? t('bday.cheerAlready') : t('bday.cheerOk'));
     } catch (error) {
@@ -437,19 +435,43 @@ export function BirthdayWebCard({
               <p className="text-sm font-semibold" style={{ color: palette.ink }}>
                 {t('bday.cheerTitle')}
               </p>
-              <p className="mt-1 text-xs leading-relaxed text-stone-600">{t('bday.cheerHint')}</p>
-              <label className="mt-3 block">
-                <span className="sr-only">{t('bday.cheerName')}</span>
-                <input
-                  className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm outline-none ring-0 focus:border-stone-400"
-                  value={cheerName}
-                  onChange={(e) => setCheerName(e.target.value)}
-                  placeholder={t('bday.cheerNamePlaceholder')}
-                  maxLength={40}
-                  autoComplete="nickname"
-                  disabled={cheerBusy}
-                />
-              </label>
+              {!editingName && cheerName.trim() ? (
+                <>
+                  <p className="mt-1 text-xs leading-relaxed text-stone-600">
+                    {t('bday.cheerKnownHint')}
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-emerald-700/20 bg-white/90 px-3 text-sm font-semibold text-emerald-950 shadow-sm">
+                      <BadgeCheck className="h-4 w-4 text-emerald-700" aria-hidden />
+                      {t('bday.cheerAs', { name: prettyLabel(cheerName) })}
+                    </span>
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-stone-500 underline-offset-2 hover:underline"
+                      onClick={() => setEditingName(true)}
+                    >
+                      {t('bday.cheerChangeName')}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="mt-1 text-xs leading-relaxed text-stone-600">{t('bday.cheerHint')}</p>
+                  <label className="mt-3 block">
+                    <span className="sr-only">{t('bday.cheerName')}</span>
+                    <input
+                      className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-sm outline-none ring-0 focus:border-stone-400"
+                      value={cheerName}
+                      onChange={(e) => setCheerName(e.target.value)}
+                      placeholder={t('bday.cheerNamePlaceholder')}
+                      maxLength={40}
+                      autoComplete="nickname"
+                      autoFocus
+                      disabled={cheerBusy}
+                    />
+                  </label>
+                </>
+              )}
               <button
                 type="submit"
                 className="bday-cheer-btn mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white disabled:opacity-60"

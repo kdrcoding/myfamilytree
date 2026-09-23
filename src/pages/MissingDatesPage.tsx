@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CalendarDays, Check, Loader2, Lock, Sparkles, UserRound } from 'lucide-react';
+import { BadgeCheck, CalendarDays, Check, Loader2, Lock, Sparkles, UserRound } from 'lucide-react';
 import { BrandLogo } from '../components/BrandLogo';
+import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
@@ -16,18 +17,11 @@ import {
   setPublicBirthDate,
   type MissingBirthdayPerson,
 } from '../features/birthday/publicApi';
+import { rememberActorName, resolveActorName } from '../utils/actorName';
 import { prettyLabel } from '../utils/family';
 import { isValidDateString } from '../utils/dates';
-import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
 
 type PageState = 'loading' | 'locked' | 'bad' | 'expired' | 'failed' | 'empty' | 'list';
-
-function readSavedName(): string {
-  return (
-    loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string')?.trim() ??
-    ''
-  );
-}
 
 function formatExpiry(ms: number, language: string): string {
   try {
@@ -48,6 +42,7 @@ export function MissingDatesPage() {
   const t = useT();
   const language = useLanguage();
   const { toast } = useToast();
+  const { role } = useAuth();
   const { settings, setLanguage } = useSettings();
   const [searchParams] = useSearchParams();
   const linkToken = useMemo(
@@ -64,11 +59,20 @@ export function MissingDatesPage() {
     return 'loading';
   });
   const [retryKey, setRetryKey] = useState(0);
-  const [actorName, setActorName] = useState(readSavedName);
+  const knownName = useMemo(() => resolveActorName(role), [role]);
+  const [actorName, setActorName] = useState(knownName);
+  const [editingName, setEditingName] = useState(!knownName);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftDate, setDraftDate] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
   const [nameError, setNameError] = useState('');
+
+  useEffect(() => {
+    const next = resolveActorName(role);
+    if (!next) return;
+    setActorName(next);
+    setEditingName(false);
+  }, [role]);
 
   const expiresAt = useMemo(() => peekDatesLinkExpiryMs(linkToken), [linkToken]);
   const expiryLabel =
@@ -147,10 +151,12 @@ export function MissingDatesPage() {
     const trimmed = actorName.trim().slice(0, 40);
     if (trimmed.length < 2) {
       setNameError(t('dates.nameRequired'));
+      setEditingName(true);
       return null;
     }
     setNameError('');
-    saveJson(STORAGE_KEYS.displayName, trimmed);
+    rememberActorName(trimmed);
+    setEditingName(false);
     return trimmed;
   };
 
@@ -302,28 +308,53 @@ export function MissingDatesPage() {
         {state === 'list' && (
           <>
             <div className="home-section-card mt-8 p-4">
-              <label className="block text-left text-xs font-semibold uppercase tracking-wide text-teal-900/80">
+              <p className="text-left text-xs font-semibold uppercase tracking-wide text-teal-900/80">
                 {t('dates.yourName')}
-              </label>
-              <div className="mt-1.5 flex items-center gap-2">
-                <UserRound className="h-4 w-4 shrink-0 text-teal-800" aria-hidden />
-                <input
-                  type="text"
-                  className="input min-h-11 flex-1"
-                  value={actorName}
-                  maxLength={40}
-                  autoComplete="name"
-                  placeholder={t('dates.yourNamePlaceholder')}
-                  onChange={(e) => {
-                    setActorName(e.target.value);
-                    if (nameError) setNameError('');
-                  }}
-                />
-              </div>
-              {nameError ? (
-                <p className="mt-1.5 text-left text-xs font-medium text-rose-700">{nameError}</p>
+              </p>
+              {!editingName && actorName.trim() ? (
+                <>
+                  <p className="mt-1.5 text-left text-xs text-stone-600">{t('dates.yourNameKnownHint')}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-teal-800/20 bg-white/90 px-3 text-sm font-semibold text-teal-950 shadow-sm">
+                      <BadgeCheck className="h-4 w-4 text-teal-700" aria-hidden />
+                      {prettyLabel(actorName)}
+                    </span>
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-stone-500 underline-offset-2 hover:underline"
+                      onClick={() => setEditingName(true)}
+                    >
+                      {t('dates.changeName')}
+                    </button>
+                  </div>
+                </>
               ) : (
-                <p className="mt-1.5 text-left text-xs text-stone-600">{t('dates.yourNameHint')}</p>
+                <>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <UserRound className="h-4 w-4 shrink-0 text-teal-800" aria-hidden />
+                    <input
+                      type="text"
+                      className="input min-h-11 flex-1"
+                      value={actorName}
+                      maxLength={40}
+                      autoComplete="name"
+                      autoFocus
+                      placeholder={t('dates.yourNamePlaceholder')}
+                      onChange={(e) => {
+                        setActorName(e.target.value);
+                        if (nameError) setNameError('');
+                      }}
+                      onBlur={() => {
+                        if (actorName.trim().length >= 2) rememberActorName(actorName);
+                      }}
+                    />
+                  </div>
+                  {nameError ? (
+                    <p className="mt-1.5 text-left text-xs font-medium text-rose-700">{nameError}</p>
+                  ) : (
+                    <p className="mt-1.5 text-left text-xs text-stone-600">{t('dates.yourNameHint')}</p>
+                  )}
+                </>
               )}
             </div>
 

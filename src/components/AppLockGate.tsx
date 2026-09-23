@@ -7,16 +7,13 @@ import { useAuth } from '../context/AuthContext';
 import { useT } from '../i18n/useT';
 import { birthdayPassStillValid, hasSoftUnlockGrant, readDatesPass, softUnlockStillValid } from '../lib/birthdayPass';
 import { SW_UPDATE_EVENT } from '../lib/swUpdate';
-import { loadJson, saveJson, STORAGE_KEYS } from '../utils/storage';
+import { rememberActorName, resolveActorName } from '../utils/actorName';
 import { BrandHero } from './BrandLogo';
 import { LanguageMenuButton } from './LanguageSelect';
 import { useSettings } from '../context/SettingsContext';
 
 function readSavedName(): string {
-  return (
-    loadJson<string>(STORAGE_KEYS.displayName, (v): v is string => typeof v === 'string')?.trim() ??
-    ''
-  );
+  return resolveActorName();
 }
 
 type GateMode = 'family' | 'owner';
@@ -86,7 +83,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready) return;
     if (role === 'owner') {
-      saveJson(STORAGE_KEYS.displayName, OWNER_DEFAULT_NAME);
+      rememberActorName(OWNER_DEFAULT_NAME);
     }
   }, [ready, role]);
 
@@ -99,9 +96,34 @@ export function AppLockGate({ children }: { children: ReactNode }) {
     };
   }, [fromSoftUnlock, settings.theme]);
 
+  // Soft unlock from /bday or /dates: reuse the name already on this device.
+  useEffect(() => {
+    if (!fromSoftUnlock || unlocked || softAccess !== 'yes') return;
+    const saved = readSavedName();
+    if (saved.length < 2) return;
+    let cancelled = false;
+    setBusy(true);
+    setError('');
+    void enterWithName(saved).then((ok) => {
+      if (cancelled) return;
+      if (!ok) {
+        setSoftAccess('no');
+        setError(softKind === 'dates' ? t('gate.introDatesEnded') : t('gate.introBdayEnded'));
+      }
+      setBusy(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fromSoftUnlock, unlocked, softAccess, softKind, enterWithName, t]);
+
   if (unlocked) return <>{children}</>;
 
-  if (!ready || (role === 'viewer' && softAccess === 'unknown')) {
+  if (
+    !ready ||
+    (role === 'viewer' && softAccess === 'unknown') ||
+    (fromSoftUnlock && softAccess === 'yes' && readSavedName().length >= 2)
+  ) {
     return (
       <div className="flex min-h-dvh items-center justify-center app-shell">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-600" aria-hidden />
@@ -309,37 +331,69 @@ export function AppLockGate({ children }: { children: ReactNode }) {
             </BrandHero>
 
             <form onSubmit={(e) => void submitFamily(e)} className="mt-6 space-y-4">
-              <label className="block text-left">
-                <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
-                  {t('gate.yourName')}
-                </span>
-                <input
-                  type="text"
-                  className="input min-h-12 text-base sm:text-base"
-                  value={nameDraft}
-                  onChange={(e) => {
-                    setNameDraft(e.target.value);
-                    setNameError('');
-                  }}
-                  autoComplete="given-name"
-                  maxLength={40}
-                  autoFocus
-                  required
-                  minLength={2}
-                  placeholder={t('gate.namePlaceholder')}
-                />
-                <span className="mt-1.5 block text-xs leading-relaxed text-stone-400 dark:text-stone-500">
-                  {t('gate.nameHint')}
-                </span>
-                {nameError && (
-                  <span
-                    role="alert"
-                    className="mt-2 block rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
-                  >
-                    {nameError}
+              {nameDraft.trim().length >= 2 ? (
+                <div className="rounded-2xl border border-teal-800/15 bg-white/70 px-3 py-3 text-left dark:border-stone-700 dark:bg-stone-900/50">
+                  <p className="text-xs font-medium text-stone-600 dark:text-stone-400">
+                    {t('gate.nameKnownHint')}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-teal-800/20 bg-white px-3 text-sm font-semibold text-teal-950 shadow-sm dark:border-emerald-700/40 dark:bg-stone-950 dark:text-emerald-100">
+                      <Users className="h-4 w-4 text-teal-700 dark:text-emerald-400" aria-hidden />
+                      {nameDraft.trim()}
+                    </span>
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-stone-500 underline-offset-2 hover:underline dark:text-stone-400"
+                      onClick={() => {
+                        setNameDraft('');
+                        setNameError('');
+                      }}
+                    >
+                      {t('gate.changeName')}
+                    </button>
+                  </div>
+                  {nameError && (
+                    <span
+                      role="alert"
+                      className="mt-2 block rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                    >
+                      {nameError}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <label className="block text-left">
+                  <span className="mb-1 block text-sm font-medium text-stone-700 dark:text-stone-300">
+                    {t('gate.yourName')}
                   </span>
-                )}
-              </label>
+                  <input
+                    type="text"
+                    className="input min-h-12 text-base sm:text-base"
+                    value={nameDraft}
+                    onChange={(e) => {
+                      setNameDraft(e.target.value);
+                      setNameError('');
+                    }}
+                    autoComplete="given-name"
+                    maxLength={40}
+                    autoFocus
+                    required
+                    minLength={2}
+                    placeholder={t('gate.namePlaceholder')}
+                  />
+                  <span className="mt-1.5 block text-xs leading-relaxed text-stone-400 dark:text-stone-500">
+                    {t('gate.nameHint')}
+                  </span>
+                  {nameError && (
+                    <span
+                      role="alert"
+                      className="mt-2 block rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                    >
+                      {nameError}
+                    </span>
+                  )}
+                </label>
+              )}
 
               {!fromSoftUnlock && (
                 <label className="block text-left">
