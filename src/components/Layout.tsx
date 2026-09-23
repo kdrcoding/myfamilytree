@@ -44,12 +44,12 @@ export function Layout() {
   const [slideBack, setSlideBack] = useState(false);
   const t = useT();
   const isTreePage = location.pathname === '/tree';
-  const isSettingsPage = location.pathname === '/settings';
   const easy = role !== 'owner' && Boolean(settings.easyMode);
   const isDark = settings.theme === 'dark';
 
   useEffect(() => {
     setMoreOpen(false);
+    window.scrollTo(0, 0);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -162,8 +162,8 @@ export function Layout() {
             </NavLink>
           </nav>
 
-          <div className="ml-auto flex items-center gap-0.5 lg:ml-3">
-            {!isSettingsPage && <LanguageMenuButton />}
+          <div className="ml-auto flex shrink-0 items-center gap-0.5 lg:ml-3">
+            <LanguageMenuButton />
 
             <button
               type="button"

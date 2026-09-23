@@ -1,14 +1,14 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Home, Settings, TreePine, Users } from 'lucide-react';
 import { useT } from '../i18n/useT';
 
-/** Four clear tabs — Settings is the gear icon. */
+/** Four clear tabs with labels — Settings included for older relatives. */
 const TABS = [
-  { to: '/', labelKey: 'nav.home' as const, icon: Home, end: true, iconOnly: false },
-  { to: '/tree', labelKey: 'nav.tree' as const, icon: TreePine, end: false, iconOnly: false },
-  { to: '/members', labelKey: 'nav.members' as const, icon: Users, end: false, iconOnly: false },
-  { to: '/settings', labelKey: 'nav.settings' as const, icon: Settings, end: false, iconOnly: true },
+  { to: '/', labelKey: 'nav.home' as const, icon: Home, end: true },
+  { to: '/tree', labelKey: 'nav.tree' as const, icon: TreePine, end: false },
+  { to: '/members', labelKey: 'nav.members' as const, icon: Users, end: false },
+  { to: '/settings', labelKey: 'nav.settings' as const, icon: Settings, end: false },
 ];
 
 /**
@@ -28,7 +28,7 @@ export function BottomNav() {
       : location.pathname === tab.to || location.pathname.startsWith(`${tab.to}/`),
   );
 
-  const updatePill = () => {
+  const updatePill = useCallback(() => {
     const idx = activeIndex >= 0 ? activeIndex : 0;
     const el = itemRefs.current[idx];
     const track = trackRef.current;
@@ -40,17 +40,17 @@ export function BottomNav() {
       width: box.width,
       ready: true,
     });
-  };
+  }, [activeIndex]);
 
   useLayoutEffect(() => {
     updatePill();
-  }, [location.pathname, activeIndex]);
+  }, [location.pathname, updatePill]);
 
   useEffect(() => {
     const onResize = () => updatePill();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, [activeIndex]);
+  }, [updatePill]);
 
   return (
     <nav
@@ -80,8 +80,6 @@ export function BottomNav() {
               <NavLink
                 to={tab.to}
                 end={tab.end}
-                aria-label={tab.iconOnly ? t(tab.labelKey) : undefined}
-                title={tab.iconOnly ? t(tab.labelKey) : undefined}
                 className={({ isActive }) =>
                   `flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-1.5 text-center transition-[color,transform] duration-250 ease-out ${
                     isActive
@@ -90,15 +88,10 @@ export function BottomNav() {
                   }`
                 }
               >
-                <Icon
-                  className={`${tab.iconOnly ? 'h-7 w-7' : 'h-6 w-6'} transition-transform duration-250 ease-out`}
-                  aria-hidden
-                />
-                {!tab.iconOnly && (
-                  <span className="max-w-full truncate text-xs font-bold leading-tight">
-                    {t(tab.labelKey)}
-                  </span>
-                )}
+                <Icon className="h-6 w-6 transition-transform duration-250 ease-out" aria-hidden />
+                <span className="max-w-full truncate text-xs font-bold leading-tight">
+                  {t(tab.labelKey)}
+                </span>
               </NavLink>
             </li>
           );

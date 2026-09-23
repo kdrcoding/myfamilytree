@@ -61,6 +61,7 @@
     scroll-behavior: smooth;
     font-size: 17px;
     color-scheme: light;
+    scrollbar-gutter: stable;
   }
   html.easy {
     font-size: 20px;
@@ -82,6 +83,7 @@
   :root {
     --bottom-nav-h: calc(3.75rem + env(safe-area-inset-bottom, 0px));
     --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
     /* Aurora Lineage tokens */
     --aurora-ink: #0a1f1c;
     --aurora-ink-soft: #132e29;
@@ -1504,6 +1506,34 @@ html.dark .gate-panel h1 {
 }
 .page-outlet--back {
   animation: aurora-slide-in-left 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (max-width: 1023px) {
+  /* Softer page change on phones — less sideways shove under the sticky header. */
+  @keyframes aurora-slide-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes aurora-slide-in-left {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .page-outlet,
+  .page-outlet--back {
+    animation-duration: 0.28s;
+  }
 }
 
 /* Bottom nav sliding pill */

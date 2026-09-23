@@ -538,12 +538,20 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-5 sm:px-6 sm:py-8">
+    <div className="mx-auto w-full max-w-3xl px-4 pb-6 pt-4 sm:px-6 sm:py-8">
       <header className="flex items-center gap-3">
-        <BrandMark size="md" title={t('site.title')} />
-        <h1 className="font-display text-xl font-semibold tracking-tight text-stone-900 sm:text-2xl dark:text-teal-50">
-          {t('settings.title')}
-        </h1>
+        <BrandMark size="sm" title={t('site.title')} className="sm:hidden" />
+        <BrandMark size="md" title={t('site.title')} className="hidden sm:block" />
+        <div className="min-w-0">
+          <h1 className="font-display text-xl font-semibold tracking-tight text-stone-900 sm:text-2xl dark:text-stone-50">
+            {t('settings.title')}
+          </h1>
+          {!canDelete && (
+            <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
+              {t('settings.currentRole', { role: roleLabel })}
+            </p>
+          )}
+        </div>
       </header>
 
       {/* Language, theme, and Easy Mode — one compact card (no duplicates). */}
@@ -562,7 +570,7 @@ export function SettingsPage() {
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              className={`${settings.theme === 'light' ? 'btn-primary' : 'btn-secondary'} !min-h-10 justify-center`}
+              className={`${settings.theme === 'light' ? 'btn-primary' : 'btn-secondary'} !min-h-11 justify-center`}
               onClick={() => setTheme('light')}
               aria-pressed={settings.theme === 'light'}
             >
@@ -570,7 +578,7 @@ export function SettingsPage() {
             </button>
             <button
               type="button"
-              className={`${settings.theme === 'dark' ? 'btn-primary' : 'btn-secondary'} !min-h-10 justify-center`}
+              className={`${settings.theme === 'dark' ? 'btn-primary' : 'btn-secondary'} !min-h-11 justify-center`}
               onClick={() => setTheme('dark')}
               aria-pressed={settings.theme === 'dark'}
             >
@@ -589,32 +597,7 @@ export function SettingsPage() {
         </div>
       </section>
 
-      {/* Invite relatives */}
-      <section className="card mt-3 p-4 sm:p-5">
-        <h2 className="settings-section-title flex items-center gap-2.5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-600/15 text-teal-700 dark:bg-teal-400/20 dark:text-teal-200">
-            <Link2 className="h-4 w-4" aria-hidden />
-          </span>
-          {t('invite.title')}
-        </h2>
-        <p className="settings-section-body mt-2.5">{t('invite.intro')}</p>
-        <div className="settings-link-box">{inviteUrl()}</div>
-        <button
-          type="button"
-          className="btn-primary mt-3.5 !min-h-11 !text-[15px] !font-semibold tracking-tight"
-          onClick={() => {
-            void navigator.clipboard.writeText(inviteUrl()).then(
-              () => toast(t('invite.copied'), 'success'),
-              () => toast(inviteUrl(), 'info'),
-            );
-          }}
-        >
-          <Link2 className="h-4 w-4" aria-hidden />
-          {t('invite.copyBtn')}
-        </button>
-      </section>
-
-      {/* Access — always visible so owner login is not buried in Easy Mode. */}
+      {/* Access first for normal users — sign out / unlock are the things they need. */}
       <section className="card mt-3 p-4 sm:p-5">
         <h2 className="settings-section-title flex items-center gap-2.5">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-600/15 text-teal-700 dark:bg-teal-400/20 dark:text-teal-200">
@@ -623,25 +606,25 @@ export function SettingsPage() {
           {t('settings.accessTitle')}
         </h2>
         <p className="settings-section-body mt-2.5">{t('settings.accessIntro')}</p>
-        <div className="mt-2.5 flex flex-wrap items-center gap-2">
-          <span className="badge border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-            <Eye className="h-3 w-3" aria-hidden />
-            {t('settings.currentRole', { role: roleLabel })}
-          </span>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           {canDelete ? (
-            <button type="button" className="btn-secondary !min-h-10" onClick={() => void handleSignOut()}>
+            <span className="badge w-fit border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+              <Eye className="h-3 w-3" aria-hidden />
+              {t('settings.currentRole', { role: roleLabel })}
+            </span>
+          ) : null}
+          {canDelete ? (
+            <button type="button" className="btn-secondary !min-h-11 w-full sm:w-auto" onClick={() => void handleSignOut()}>
               <LogOut className="h-4 w-4" aria-hidden /> {t('settings.signOut')}
             </button>
           ) : (
             <>
-              <button type="button" className="btn-secondary !min-h-10" onClick={() => setUnlockOpen(true)}>
+              <button type="button" className="btn-secondary !min-h-11 w-full sm:w-auto" onClick={() => setUnlockOpen(true)}>
                 <KeyRound className="h-4 w-4" aria-hidden /> {t('settings.unlock')}
               </button>
-              {canEdit && (
-                <button type="button" className="btn-secondary !min-h-10" onClick={() => void handleSignOut()}>
-                  <LogOut className="h-4 w-4" aria-hidden /> {t('settings.signOut')}
-                </button>
-              )}
+              <button type="button" className="btn-secondary !min-h-11 w-full sm:w-auto" onClick={() => void handleSignOut()}>
+                <LogOut className="h-4 w-4" aria-hidden /> {t('settings.signOut')}
+              </button>
             </>
           )}
         </div>
@@ -655,7 +638,7 @@ export function SettingsPage() {
             <div className="flex flex-wrap gap-2">
               <input
                 type="text"
-                className="input !w-64"
+                className="input !w-full sm:!w-64"
                 placeholder={t('settings.newPassword')}
                 value={hashInput}
                 onChange={(e) => setHashInput(e.target.value)}
@@ -663,7 +646,7 @@ export function SettingsPage() {
               />
               <button
                 type="button"
-                className="btn-secondary"
+                className="btn-secondary !min-h-11"
                 onClick={async () => {
                   try {
                     setHashResult(hashInput ? await hashPassword(hashInput) : '');
@@ -686,10 +669,35 @@ export function SettingsPage() {
         )}
       </section>
 
+      {/* Invite relatives */}
+      <section className="card mt-3 p-4 sm:p-5">
+        <h2 className="settings-section-title flex items-center gap-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-600/15 text-teal-700 dark:bg-teal-400/20 dark:text-teal-200">
+            <Link2 className="h-4 w-4" aria-hidden />
+          </span>
+          {t('invite.title')}
+        </h2>
+        <p className="settings-section-body mt-2.5">{t('invite.intro')}</p>
+        <div className="settings-link-box break-all">{inviteUrl()}</div>
+        <button
+          type="button"
+          className="btn-primary mt-3.5 !min-h-11 w-full !text-[15px] !font-semibold tracking-tight sm:w-auto"
+          onClick={() => {
+            void navigator.clipboard.writeText(inviteUrl()).then(
+              () => toast(t('invite.copied'), 'success'),
+              () => toast(inviteUrl(), 'info'),
+            );
+          }}
+        >
+          <Link2 className="h-4 w-4" aria-hidden />
+          {t('invite.copyBtn')}
+        </button>
+      </section>
+
       {hideAdvanced && (
         <button
           type="button"
-          className="btn-secondary mt-3 w-full !min-h-10"
+          className="btn-secondary mt-3 w-full !min-h-11"
           onClick={() => setShowAdvanced(true)}
         >
           {t('settings.showAdvanced')}
@@ -771,8 +779,8 @@ export function SettingsPage() {
           <Database className="h-4 w-4 text-emerald-600" aria-hidden /> {t('settings.dataTitle')}
         </h2>
         <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{t('settings.dataIntro')}</p>
-        <div className="mt-2.5 flex flex-wrap gap-2">
-          <button type="button" className="btn-secondary !min-h-10" onClick={exportJson}>
+        <div className="mt-2.5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <button type="button" className="btn-secondary !min-h-11 w-full sm:w-auto" onClick={exportJson}>
             <Download className="h-4 w-4" aria-hidden /> {t('settings.exportBackup')}
           </button>
           {canEdit && (
@@ -790,7 +798,7 @@ export function SettingsPage() {
               />
               <button
                 type="button"
-                className="btn-secondary !min-h-10"
+                className="btn-secondary !min-h-11 w-full sm:w-auto"
                 onClick={() => importInputRef.current?.click()}
               >
                 <Upload className="h-4 w-4" aria-hidden /> {t('settings.importBackup')}
@@ -798,7 +806,7 @@ export function SettingsPage() {
             </>
           )}
           {canDelete && (
-            <button type="button" className="btn-danger !min-h-10" onClick={resetSample}>
+            <button type="button" className="btn-danger !min-h-11 w-full sm:w-auto" onClick={resetSample}>
               <RotateCcw className="h-4 w-4" aria-hidden /> {t('settings.restore')}
             </button>
           )}
