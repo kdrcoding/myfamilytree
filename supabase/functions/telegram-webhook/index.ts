@@ -104,6 +104,7 @@ async function saveCheer(
       telegram_user_id: user.id,
       display_name: tgDisplayName(user),
       username: user.username || null,
+      source: 'telegram',
     }),
   });
   return 'inserted';
@@ -276,6 +277,23 @@ Deno.serve(async (req) => {
           chatId,
           cheerThanksText(escapeHtml(display), escapeHtml(displayName(person)), page),
         );
+
+        // Deep-link /start cheers happen in DM — still announce in the family group.
+        try {
+          const settingsRows = await db.rest<{ group_chat_id: string | null }[]>('telegram_settings', {
+            query: { select: 'group_chat_id', id: 'eq.1' },
+          });
+          const groupChatId = settingsRows[0]?.group_chat_id;
+          if (groupChatId && String(groupChatId) !== String(chatId)) {
+            await sendText(
+              groupChatId,
+              cheerAnnounceText(escapeHtml(display), escapeHtml(displayName(person))),
+            );
+          }
+        } catch (err) {
+          console.error('cheer group announce failed', err);
+        }
+
         return jsonResponse({ ok: true, cheer: person.id });
       }
 

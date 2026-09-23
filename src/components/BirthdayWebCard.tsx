@@ -46,12 +46,13 @@ const BIRTHDAY_CARD_CSS = `
     animation: bday-orb-drift 15s ease-in-out 1.4s infinite reverse;
   }
   .bday-web .bday-stage {
-    border-color: color-mix(in srgb, var(--bday-accent) 28%, #e7e5e4);
+    border-color: color-mix(in srgb, var(--bday-accent) 22%, #e7e5e4);
     background:
-      linear-gradient(180deg, color-mix(in srgb, white 92%, var(--bday-card-a)) 0%, color-mix(in srgb, white 96%, var(--bday-card-b)) 100%);
+      linear-gradient(165deg, color-mix(in srgb, white 94%, var(--bday-card-a)) 0%, white 48%, color-mix(in srgb, white 94%, var(--bday-card-b)) 100%);
     box-shadow:
-      0 1px 0 color-mix(in srgb, white 80%, transparent),
-      0 18px 50px color-mix(in srgb, var(--bday-accent) 16%, transparent);
+      0 1px 0 color-mix(in srgb, white 88%, transparent),
+      0 22px 56px color-mix(in srgb, var(--bday-accent) 14%, transparent),
+      0 2px 10px color-mix(in srgb, var(--bday-accent) 8%, transparent);
     animation: bday-stage-in 0.95s var(--bday-ease) 0.05s both;
   }
   .bday-web .bday-bunting { animation: bday-bunting-in 0.9s var(--bday-spring) 0.12s both; transform-origin: top center; }
@@ -73,29 +74,38 @@ const BIRTHDAY_CARD_CSS = `
     animation: bday-badge-in 0.75s var(--bday-spring) 0.46s both, bday-badge-glow 3.6s ease-in-out 1.3s infinite;
   }
   .bday-web .bday-fallback { background: linear-gradient(145deg, var(--bday-bg-b), var(--bday-bg-a)); }
-  .bday-web .bday-ring {
-    background: conic-gradient(from 120deg, var(--bday-c0), var(--bday-c2), var(--bday-c3), var(--bday-c1), var(--bday-c0));
-    opacity: 0.72;
-    filter: blur(0.5px);
-    animation: bday-spin 9s linear infinite;
+  .bday-web .bday-photo {
+    width: fit-content;
+    margin-inline: auto;
+    animation: bday-photo-in 1s var(--bday-spring) 0.18s both;
   }
-  .bday-web .bday-photo { animation: bday-photo-in 1s var(--bday-spring) 0.18s both; }
   .bday-web .bday-photo > img,
   .bday-web .bday-photo > .bday-fallback {
     animation: bday-photo-settle 1.15s var(--bday-ease) 0.18s both;
   }
+  .bday-web .bday-ring {
+    background: conic-gradient(from 120deg, var(--bday-c0), var(--bday-c2), var(--bday-c3), var(--bday-c1), var(--bday-c0));
+    opacity: 0.85;
+    border-radius: 9999px;
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+    animation: bday-spin 9s linear infinite;
+  }
   .bday-web .bday-photo-glow {
-    background: radial-gradient(circle, color-mix(in srgb, var(--bday-accent) 35%, transparent) 0%, transparent 70%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--bday-accent) 42%, transparent) 0%, transparent 68%);
+    border-radius: 9999px;
     animation: bday-glow-pulse 3.4s ease-in-out 0.6s infinite;
   }
   .bday-web .bday-emoji { animation: bday-rise 0.7s var(--bday-ease) 0.58s both; }
   .bday-web .bday-cheer-form {
-    border-color: color-mix(in srgb, var(--bday-accent) 28%, #e7e5e4);
-    background: color-mix(in srgb, var(--bday-accent) 8%, white);
+    border-color: color-mix(in srgb, var(--bday-accent) 24%, #e7e5e4);
+    background:
+      linear-gradient(160deg, color-mix(in srgb, white 88%, var(--bday-accent)) 0%, color-mix(in srgb, white 96%, var(--bday-card-a)) 100%);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
     animation: bday-rise 0.75s var(--bday-ease) 0.62s both;
   }
   .bday-web .bday-cheer-btn {
-    background: var(--bday-accent);
+    background: linear-gradient(180deg, color-mix(in srgb, white 18%, var(--bday-accent)) 0%, var(--bday-accent) 100%);
     box-shadow: 0 10px 24px color-mix(in srgb, var(--bday-accent) 28%, transparent);
     transition: transform 0.2s var(--bday-ease), box-shadow 0.2s ease, filter 0.2s ease;
   }
@@ -107,7 +117,8 @@ const BIRTHDAY_CARD_CSS = `
   .bday-web .bday-cheer-btn:active:not(:disabled) { transform: translateY(0) scale(0.985); }
   .bday-web .bday-cheer-ok { animation: bday-ok-pop 0.55s var(--bday-spring) both; }
   .bday-web .bday-cheers {
-    border-color: color-mix(in srgb, var(--bday-accent) 22%, #e7e5e4);
+    border-color: color-mix(in srgb, var(--bday-accent) 18%, #e7e5e4);
+    background: color-mix(in srgb, white 82%, var(--bday-card-a));
     animation: bday-rise 0.8s var(--bday-ease) 0.7s both;
   }
   .bday-web .bday-chip {
@@ -153,8 +164,8 @@ const BIRTHDAY_CARD_CSS = `
     to { opacity: 1; }
   }
   @keyframes bday-wash-breathe {
-    0%, 100% { filter: saturate(1) brightness(1); transform: scale(1); }
-    50% { filter: saturate(1.08) brightness(1.03); transform: scale(1.02); }
+    0%, 100% { filter: saturate(1) brightness(1); }
+    50% { filter: saturate(1.07) brightness(1.025); }
   }
   @keyframes bday-stage-in {
     from { opacity: 0; transform: translateY(28px) scale(0.97); }
@@ -234,10 +245,10 @@ const BIRTHDAY_CARD_CSS = `
       transform: translate3d(0, -8%, 0) rotate(0deg);
       opacity: 0;
     }
-    8% { opacity: 1; }
+    8% { opacity: 0.72; }
     45% {
       transform: translate3d(var(--bday-sway, 18px), 48vh, 0) rotate(160deg);
-      opacity: 0.95;
+      opacity: 0.55;
     }
     100% {
       transform: translate3d(calc(var(--bday-sway, 18px) * -0.55), 112vh, 0) rotate(340deg);
@@ -464,7 +475,7 @@ export function BirthdayWebCard({
 
   const confettiPieces = useMemo(() => {
     const base = stickers.length > 0 ? stickers : ['🎉', '✨', '🎂'];
-    const count = compact ? 8 : fillPage ? 22 : 14;
+    const count = compact ? 6 : fillPage ? 16 : 10;
     return Array.from({ length: count }, (_, i) => ({
       sticker: base[i % base.length]!,
       left: 4 + ((i * 13 + (i % 5) * 7) % 92),
@@ -580,20 +591,14 @@ export function BirthdayWebCard({
             {when === 'yesterday' ? t('bday.yesterdayKicker') : t('bday.kicker')}
           </p>
 
-          <div className="bday-photo relative mx-auto mt-6">
-            <div className="bday-photo-glow pointer-events-none absolute -inset-8 z-0 rounded-full" />
-            <div className="bday-ring pointer-events-none absolute -inset-3.5 z-0 rounded-full" />
-            <span className="bday-wiggle pointer-events-none absolute -left-5 -top-4 z-20 text-3xl drop-shadow-sm" aria-hidden>
+          <div className="bday-photo relative mx-auto mt-6 w-fit">
+            <div className="bday-photo-glow pointer-events-none absolute -inset-7 z-0 rounded-full" />
+            <div className="bday-ring pointer-events-none absolute -inset-2.5 z-0 rounded-full" />
+            <span className="bday-wiggle pointer-events-none absolute -left-4 -top-3 z-20 text-2xl drop-shadow-sm" aria-hidden>
               {emoji[0]}
             </span>
-            <span className="bday-float pointer-events-none absolute -right-4 top-0 z-20 text-2xl drop-shadow-sm" aria-hidden>
+            <span className="bday-float pointer-events-none absolute -right-3 top-1 z-20 text-xl drop-shadow-sm" aria-hidden>
               {emoji[3]}
-            </span>
-            <span className="bday-float-slow pointer-events-none absolute -left-6 top-1/2 z-20 text-2xl drop-shadow-sm" aria-hidden>
-              🥳
-            </span>
-            <span className="bday-wiggle pointer-events-none absolute -right-6 top-[42%] z-20 text-2xl drop-shadow-sm" aria-hidden>
-              🎉
             </span>
             {photoSrc ? (
               <img
@@ -610,10 +615,10 @@ export function BirthdayWebCard({
                 {shownName.slice(0, 1).toUpperCase()}
               </div>
             )}
-            <span className="bday-float pointer-events-none absolute -bottom-1 -right-4 z-20 text-3xl drop-shadow-sm" aria-hidden>
+            <span className="bday-float pointer-events-none absolute -bottom-1 -right-3 z-20 text-2xl drop-shadow-sm" aria-hidden>
               {emoji[1]}
             </span>
-            <span className="bday-wiggle pointer-events-none absolute -bottom-2 -left-3 z-20 text-2xl drop-shadow-sm" aria-hidden>
+            <span className="bday-wiggle pointer-events-none absolute -bottom-1 -left-3 z-20 text-xl drop-shadow-sm" aria-hidden>
               🎂
             </span>
           </div>
@@ -668,7 +673,7 @@ export function BirthdayWebCard({
                     {t('bday.cheerKnownHint')}
                   </p>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-emerald-700/20 bg-white/90 px-3 text-sm font-semibold text-emerald-950 shadow-sm">
+                    <span className="bday-known-chip inline-flex min-h-10 items-center gap-1.5 rounded-full border border-emerald-700/25 bg-white/95 px-3 text-sm font-semibold text-emerald-950 shadow-sm ring-1 ring-emerald-600/10">
                       <BadgeCheck className="h-4 w-4 text-emerald-700" aria-hidden />
                       {t('bday.cheerAs', { name: prettyLabel(cheerName) })}
                     </span>

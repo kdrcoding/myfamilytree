@@ -232,24 +232,17 @@ async function postWebCheer(db: ServiceDb, body: Record<string, unknown>): Promi
   const occurrence = phase === 'yesterday' ? shiftLocalDate(local, -1) : local;
   const year = occurrence.year;
   const honoree = displayName(person);
+  const nameKey = name.toLocaleLowerCase('en-US');
 
-  const existing = await db.rest<{ id: number }[]>('telegram_birthday_cheers', {
-    query: {
-      select: 'id',
-      person_id: `eq.${personId}`,
-      year: `eq.${year}`,
-      source: 'eq.web',
-      display_name: `ilike.${name}`,
-      limit: '1',
-    },
-  });
-  if (Array.isArray(existing) && existing.length > 0) {
-    const cheers = await loadCheers(db, personId, year);
+  // Check all cheers (web + Telegram) by display name — avoid broken PostgREST
+  // `ilike.` filters when names contain %, _, commas, etc.
+  const cheersBefore = await loadCheers(db, personId, year);
+  if (cheersBefore.some((c) => c.name.trim().toLocaleLowerCase('en-US') === nameKey)) {
     return jsonResponse({
       ok: true,
       already: true,
       message: cheerAlreadyText(),
-      cheers,
+      cheers: cheersBefore,
       year,
     });
   }
@@ -266,8 +259,7 @@ async function postWebCheer(db: ServiceDb, body: Record<string, unknown>): Promi
       },
     });
     if (Array.isArray(webCount) && webCount.length >= WEB_CHEER_CAP) {
-      const cheers = await loadCheers(db, personId, year);
-      return jsonResponse({ ok: false, error: 'cheer_limit', cheers, year }, 429);
+      return jsonResponse({ ok: false, error: 'cheer_limit', cheers: cheersBefore, year }, 429);
     }
   } catch (err) {
     console.warn('web cheer count failed', err);
