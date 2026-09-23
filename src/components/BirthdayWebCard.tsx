@@ -22,6 +22,10 @@ import { prettyLabel } from '../utils/family';
 import { rememberActorName, resolveActorName } from '../utils/actorName';
 
 const BIRTHDAY_CARD_CSS = `
+  .bday-web {
+    --bday-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --bday-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+  }
   .bday-web .bday-wash {
     background:
       radial-gradient(ellipse 90% 60% at 50% -10%, color-mix(in srgb, var(--bday-c0) 62%, white) 0%, transparent 55%),
@@ -29,9 +33,18 @@ const BIRTHDAY_CARD_CSS = `
       radial-gradient(ellipse at 0% 70%, color-mix(in srgb, var(--bday-c3) 42%, white) 0%, transparent 40%),
       radial-gradient(ellipse at 50% 110%, color-mix(in srgb, var(--bday-c1) 35%, white) 0%, transparent 45%),
       linear-gradient(168deg, var(--bday-card-a) 0%, white 42%, var(--bday-card-b) 100%);
+    animation: bday-wash-in 1.1s var(--bday-ease) both, bday-wash-breathe 14s ease-in-out 1.1s infinite;
   }
-  .bday-web .bday-orb-a { background: color-mix(in srgb, var(--bday-c0) 38%, transparent); filter: blur(10px); }
-  .bday-web .bday-orb-b { background: color-mix(in srgb, var(--bday-c1) 32%, transparent); filter: blur(12px); }
+  .bday-web .bday-orb-a {
+    background: color-mix(in srgb, var(--bday-c0) 38%, transparent);
+    filter: blur(10px);
+    animation: bday-orb-drift 11s ease-in-out infinite;
+  }
+  .bday-web .bday-orb-b {
+    background: color-mix(in srgb, var(--bday-c1) 32%, transparent);
+    filter: blur(12px);
+    animation: bday-orb-drift 15s ease-in-out 1.4s infinite reverse;
+  }
   .bday-web .bday-stage {
     border-color: color-mix(in srgb, var(--bday-accent) 28%, #e7e5e4);
     background:
@@ -39,91 +52,237 @@ const BIRTHDAY_CARD_CSS = `
     box-shadow:
       0 1px 0 color-mix(in srgb, white 80%, transparent),
       0 18px 50px color-mix(in srgb, var(--bday-accent) 16%, transparent);
+    animation: bday-stage-in 0.95s var(--bday-ease) 0.05s both;
   }
+  .bday-web .bday-bunting { animation: bday-bunting-in 0.9s var(--bday-spring) 0.12s both; transform-origin: top center; }
   .bday-web .bday-from { background: color-mix(in srgb, var(--bday-accent) 14%, white); color: var(--bday-ink); }
-  .bday-web .bday-kicker { color: var(--bday-muted); }
-  .bday-web .bday-title { color: var(--bday-ink); }
+  .bday-web .bday-kicker { color: var(--bday-muted); animation: bday-rise 0.7s var(--bday-ease) 0.2s both; }
+  .bday-web .bday-kicker svg { animation: bday-twinkle 2.4s ease-in-out 0.8s infinite; }
+  .bday-web .bday-title { color: var(--bday-ink); animation: bday-title-in 0.95s var(--bday-spring) 0.32s both; }
   .bday-web .bday-who {
     color: var(--bday-ink);
     background: color-mix(in srgb, var(--bday-accent) 12%, white);
     border-color: color-mix(in srgb, var(--bday-accent) 24%, #e7e5e4);
+    animation: bday-rise 0.7s var(--bday-ease) 0.4s both;
   }
-  .bday-web .bday-gender-note { color: var(--bday-muted); }
-  .bday-web .bday-wish { color: color-mix(in srgb, var(--bday-ink) 78%, #57534e); }
-  .bday-web .bday-age { background: var(--bday-accent); box-shadow: 0 12px 28px color-mix(in srgb, var(--bday-accent) 32%, transparent); }
+  .bday-web .bday-gender-note { color: var(--bday-muted); animation: bday-rise 0.7s var(--bday-ease) 0.44s both; }
+  .bday-web .bday-wish { color: color-mix(in srgb, var(--bday-ink) 78%, #57534e); animation: bday-rise 0.8s var(--bday-ease) 0.52s both; }
+  .bday-web .bday-age {
+    background: var(--bday-accent);
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--bday-accent) 32%, transparent);
+    animation: bday-badge-in 0.75s var(--bday-spring) 0.46s both, bday-badge-glow 3.6s ease-in-out 1.3s infinite;
+  }
   .bday-web .bday-fallback { background: linear-gradient(145deg, var(--bday-bg-b), var(--bday-bg-a)); }
   .bday-web .bday-ring {
     background: conic-gradient(from 120deg, var(--bday-c0), var(--bday-c2), var(--bday-c3), var(--bday-c1), var(--bday-c0));
     opacity: 0.72;
     filter: blur(0.5px);
+    animation: bday-spin 9s linear infinite;
+  }
+  .bday-web .bday-photo { animation: bday-photo-in 1s var(--bday-spring) 0.18s both; }
+  .bday-web .bday-photo > img,
+  .bday-web .bday-photo > .bday-fallback {
+    animation: bday-photo-settle 1.15s var(--bday-ease) 0.18s both;
   }
   .bday-web .bday-photo-glow {
     background: radial-gradient(circle, color-mix(in srgb, var(--bday-accent) 35%, transparent) 0%, transparent 70%);
+    animation: bday-glow-pulse 3.4s ease-in-out 0.6s infinite;
   }
-  .bday-web .bday-cheers { border-color: color-mix(in srgb, var(--bday-accent) 22%, #e7e5e4); }
+  .bday-web .bday-emoji { animation: bday-rise 0.7s var(--bday-ease) 0.58s both; }
+  .bday-web .bday-cheer-form {
+    border-color: color-mix(in srgb, var(--bday-accent) 28%, #e7e5e4);
+    background: color-mix(in srgb, var(--bday-accent) 8%, white);
+    animation: bday-rise 0.75s var(--bday-ease) 0.62s both;
+  }
+  .bday-web .bday-cheer-btn {
+    background: var(--bday-accent);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--bday-accent) 28%, transparent);
+    transition: transform 0.2s var(--bday-ease), box-shadow 0.2s ease, filter 0.2s ease;
+  }
+  .bday-web .bday-cheer-btn:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.015);
+    box-shadow: 0 14px 30px color-mix(in srgb, var(--bday-accent) 38%, transparent);
+    filter: brightness(1.04);
+  }
+  .bday-web .bday-cheer-btn:active:not(:disabled) { transform: translateY(0) scale(0.985); }
+  .bday-web .bday-cheer-ok { animation: bday-ok-pop 0.55s var(--bday-spring) both; }
+  .bday-web .bday-cheers {
+    border-color: color-mix(in srgb, var(--bday-accent) 22%, #e7e5e4);
+    animation: bday-rise 0.8s var(--bday-ease) 0.7s both;
+  }
   .bday-web .bday-chip {
     border-color: color-mix(in srgb, var(--bday-accent) 18%, white);
     background: linear-gradient(135deg, var(--bday-card-a), var(--bday-card-b));
     color: var(--bday-ink);
+    animation: bday-chip-in 0.55s var(--bday-spring) both;
   }
   .bday-web .bday-avatar {
     background: linear-gradient(145deg, var(--bday-accent-soft), var(--bday-accent));
     color: white;
   }
-  .bday-web .bday-cheer-form {
-    border-color: color-mix(in srgb, var(--bday-accent) 28%, #e7e5e4);
-    background: color-mix(in srgb, var(--bday-accent) 8%, white);
-  }
-  .bday-web .bday-cheer-btn { background: var(--bday-accent); }
   .bday-web.bday-yesterday .bday-wash { filter: saturate(0.82); }
-  .bday-web.bday-yesterday .bday-float, .bday-web.bday-yesterday .bday-float-slow { opacity: 0.55; }
-  .bday-web .bday-kicker { animation: bday-fade 0.7s ease-out both; }
-  .bday-web .bday-photo { animation: bday-pop 0.85s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both; }
-  .bday-web .bday-title { animation: bday-fade 0.8s ease-out 0.18s both; }
-  .bday-web .bday-who { animation: bday-fade 0.8s ease-out 0.22s both; }
-  .bday-web .bday-age { animation: bday-fade 0.8s ease-out 0.28s both; }
-  .bday-web .bday-wish { animation: bday-fade 0.8s ease-out 0.38s both; }
-  .bday-web .bday-emoji { animation: bday-fade 0.8s ease-out 0.48s both; }
-  .bday-web .bday-cheers { animation: bday-fade 0.8s ease-out 0.55s both; }
-  .bday-web .bday-ring { animation: bday-spin 10s linear infinite; }
-  .bday-web .bday-float { animation: bday-bob 4.5s ease-in-out infinite; }
-  .bday-web .bday-float-slow { animation: bday-bob 6.2s ease-in-out 0.8s infinite; }
-  .bday-web .bday-wiggle { animation: bday-wiggle 3.4s ease-in-out infinite; }
-  .bday-web .bday-confetti span { animation: bday-fall linear infinite; }
-  @keyframes bday-fade {
-    from { opacity: 0; transform: translateY(12px); }
+  .bday-web.bday-yesterday .bday-float,
+  .bday-web.bday-yesterday .bday-float-slow { opacity: 0.55; }
+  .bday-web .bday-float { animation: bday-drift-a 5.2s ease-in-out infinite; }
+  .bday-web .bday-float-slow { animation: bday-drift-b 7s ease-in-out 0.6s infinite; }
+  .bday-web .bday-wiggle { animation: bday-wiggle 3.8s ease-in-out infinite; }
+  .bday-web .bday-confetti span {
+    animation-name: bday-fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform, opacity;
+  }
+  .bday-web .bday-burst span {
+    position: absolute;
+    left: 50%;
+    top: 42%;
+    animation: bday-burst-piece 1.05s var(--bday-ease) both;
+    pointer-events: none;
+    font-size: 1.35rem;
+    filter: drop-shadow(0 4px 8px rgb(0 0 0 / 0.12));
+  }
+  .bday-web.bday-celebrating .bday-photo-glow {
+    animation: bday-glow-burst 0.9s var(--bday-ease) both;
+  }
+  .bday-web.bday-celebrating .bday-ring {
+    animation: bday-spin 9s linear infinite, bday-ring-flash 0.9s var(--bday-ease) both;
+  }
+
+  @keyframes bday-wash-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes bday-wash-breathe {
+    0%, 100% { filter: saturate(1) brightness(1); transform: scale(1); }
+    50% { filter: saturate(1.08) brightness(1.03); transform: scale(1.02); }
+  }
+  @keyframes bday-stage-in {
+    from { opacity: 0; transform: translateY(28px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes bday-bunting-in {
+    from { opacity: 0; transform: scaleX(0.72) translateY(-8px); }
+    to { opacity: 1; transform: scaleX(1) translateY(0); }
+  }
+  @keyframes bday-rise {
+    from { opacity: 0; transform: translateY(14px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  @keyframes bday-pop {
-    from { transform: scale(0.84); }
-    to { transform: scale(1); }
+  @keyframes bday-title-in {
+    from { opacity: 0; transform: translateY(18px) scale(0.94); letter-spacing: 0.04em; }
+    to { opacity: 1; transform: translateY(0) scale(1); letter-spacing: 0; }
+  }
+  @keyframes bday-photo-in {
+    from { opacity: 0; transform: scale(0.72) rotate(-6deg); }
+    to { opacity: 1; transform: scale(1) rotate(0deg); }
+  }
+  @keyframes bday-photo-settle {
+    0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bday-accent) 0%, transparent); }
+    55% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--bday-accent) 18%, transparent); }
+    100% { box-shadow: 0 12px 28px color-mix(in srgb, var(--bday-accent) 22%, transparent); }
+  }
+  @keyframes bday-badge-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.88); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes bday-badge-glow {
+    0%, 100% { box-shadow: 0 12px 28px color-mix(in srgb, var(--bday-accent) 32%, transparent); transform: translateY(0); }
+    50% { box-shadow: 0 16px 34px color-mix(in srgb, var(--bday-accent) 48%, transparent); transform: translateY(-2px); }
   }
   @keyframes bday-spin {
     from { transform: rotate(0deg) scale(1); opacity: 0.55; }
-    50% { transform: rotate(180deg) scale(1.03); opacity: 0.85; }
+    50% { transform: rotate(180deg) scale(1.04); opacity: 0.9; }
     to { transform: rotate(360deg) scale(1); opacity: 0.55; }
   }
-  @keyframes bday-bob {
-    0%, 100% { transform: translateY(0) rotate(-6deg); }
-    50% { transform: translateY(-16px) rotate(8deg); }
+  @keyframes bday-glow-pulse {
+    0%, 100% { opacity: 0.55; transform: scale(0.92); }
+    50% { opacity: 1; transform: scale(1.08); }
+  }
+  @keyframes bday-glow-burst {
+    0% { opacity: 0.6; transform: scale(0.9); }
+    40% { opacity: 1; transform: scale(1.35); }
+    100% { opacity: 0.7; transform: scale(1.05); }
+  }
+  @keyframes bday-ring-flash {
+    0%, 100% { filter: blur(0.5px) brightness(1); }
+    40% { filter: blur(0.5px) brightness(1.35); }
+  }
+  @keyframes bday-drift-a {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg) scale(1); }
+    33% { transform: translate3d(10px, -18px, 0) rotate(6deg) scale(1.06); }
+    66% { transform: translate3d(-8px, -8px, 0) rotate(-4deg) scale(0.98); }
+  }
+  @keyframes bday-drift-b {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(6deg); }
+    40% { transform: translate3d(-12px, -20px, 0) rotate(-10deg); }
+    75% { transform: translate3d(8px, -6px, 0) rotate(8deg); }
   }
   @keyframes bday-wiggle {
-    0%, 100% { transform: rotate(-8deg) scale(1); }
-    50% { transform: rotate(10deg) scale(1.08); }
+    0%, 100% { transform: rotate(-10deg) scale(1); }
+    50% { transform: rotate(12deg) scale(1.1); }
+  }
+  @keyframes bday-twinkle {
+    0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.85; }
+    50% { transform: rotate(18deg) scale(1.18); opacity: 1; }
+  }
+  @keyframes bday-orb-drift {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.7; }
+    50% { transform: translate3d(18px, -22px, 0) scale(1.12); opacity: 1; }
   }
   @keyframes bday-fall {
-    0% { transform: translateY(-12%) rotate(0deg); opacity: 0; }
-    12% { opacity: 1; }
-    100% { transform: translateY(118%) rotate(220deg); opacity: 0.15; }
+    0% {
+      transform: translate3d(0, -8%, 0) rotate(0deg);
+      opacity: 0;
+    }
+    8% { opacity: 1; }
+    45% {
+      transform: translate3d(var(--bday-sway, 18px), 48vh, 0) rotate(160deg);
+      opacity: 0.95;
+    }
+    100% {
+      transform: translate3d(calc(var(--bday-sway, 18px) * -0.55), 112vh, 0) rotate(340deg);
+      opacity: 0;
+    }
   }
+  @keyframes bday-chip-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.86); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes bday-ok-pop {
+    from { opacity: 0; transform: translateY(6px) scale(0.92); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes bday-burst-piece {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+    18% { opacity: 1; }
+    100% {
+      opacity: 0;
+      transform: translate(
+          calc(-50% + var(--bx, 0px)),
+          calc(-50% + var(--by, -80px))
+        )
+        scale(var(--bs, 1))
+        rotate(var(--br, 40deg));
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .bday-web .bday-kicker, .bday-web .bday-photo, .bday-web .bday-title, .bday-web .bday-who, .bday-web .bday-age, .bday-web .bday-wish,
-    .bday-web .bday-emoji, .bday-web .bday-cheers, .bday-web .bday-ring, .bday-web .bday-float, .bday-web .bday-float-slow,
-    .bday-web .bday-wiggle, .bday-web .bday-confetti span {
+    .bday-web .bday-wash, .bday-web .bday-stage, .bday-web .bday-bunting, .bday-web .bday-kicker, .bday-web .bday-kicker svg,
+    .bday-web .bday-photo, .bday-web .bday-photo > img, .bday-web .bday-photo > .bday-fallback, .bday-web .bday-photo-glow,
+    .bday-web .bday-title, .bday-web .bday-who, .bday-web .bday-gender-note, .bday-web .bday-age, .bday-web .bday-wish,
+    .bday-web .bday-emoji, .bday-web .bday-cheer-form, .bday-web .bday-cheers, .bday-web .bday-chip, .bday-web .bday-ring,
+    .bday-web .bday-float, .bday-web .bday-float-slow, .bday-web .bday-wiggle, .bday-web .bday-orb-a, .bday-web .bday-orb-b,
+    .bday-web .bday-confetti span, .bday-web .bday-burst span, .bday-web .bday-cheer-ok, .bday-web .bday-cheer-btn {
       animation: none !important;
+      transition: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      filter: none !important;
     }
   }
 `;
+
+const BURST_PIECES = ['🎉', '✨', '💛', '🥳', '🎊', '⭐', '💖', '🎂', '🌸', '🎈', '💫', '🙌'] as const;
 
 function paletteStyle(gender: CardGender): CSSProperties {
   const palette = CARD_PALETTES[gender];
@@ -171,7 +330,7 @@ interface BirthdayWebCardProps {
 function Bunting({ colors }: { colors: [string, string, string, string] }) {
   const flags = Array.from({ length: 11 }, (_, i) => colors[i % colors.length]!);
   return (
-    <svg className="mx-auto mb-3 h-8 w-full max-w-sm" viewBox="0 0 330 36" aria-hidden>
+    <svg className="bday-bunting mx-auto mb-3 h-8 w-full max-w-sm" viewBox="0 0 330 36" aria-hidden>
       <path d="M4 6 H326" stroke={colors[0]} strokeWidth="2" fill="none" />
       {flags.map((fill, i) => {
         const x = 8 + i * 29;
@@ -207,6 +366,8 @@ export function BirthdayWebCard({
   const [cheerBusy, setCheerBusy] = useState(false);
   const [cheerMsg, setCheerMsg] = useState<string | null>(null);
   const [cheerErr, setCheerErr] = useState<string | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
+  const [burstKey, setBurstKey] = useState(0);
   const gender = normalizeCardGender(person.gender);
   const emoji = designEmoji(design, gender);
   const stickers = partyStickers(gender);
@@ -288,6 +449,11 @@ export function BirthdayWebCard({
       setEditingName(false);
       if (result.cheers) onCheersChange?.(result.cheers);
       setCheerMsg(result.already ? t('bday.cheerAlready') : t('bday.cheerOk'));
+      if (!result.already) {
+        setBurstKey((k) => k + 1);
+        setCelebrating(true);
+        window.setTimeout(() => setCelebrating(false), 1100);
+      }
     } catch (error) {
       console.error(error);
       setCheerErr(t('bday.cheerFailed'));
@@ -296,34 +462,75 @@ export function BirthdayWebCard({
     }
   };
 
+  const confettiPieces = useMemo(() => {
+    const base = stickers.length > 0 ? stickers : ['🎉', '✨', '🎂'];
+    const count = compact ? 8 : fillPage ? 22 : 14;
+    return Array.from({ length: count }, (_, i) => ({
+      sticker: base[i % base.length]!,
+      left: 4 + ((i * 13 + (i % 5) * 7) % 92),
+      top: -(6 + (i % 7) * 4),
+      size: 14 + (i % 6) * 3.5,
+      duration: 4.2 + (i % 7) * 0.55,
+      delay: (i % 10) * 0.32,
+      sway: `${(i % 2 === 0 ? 1 : -1) * (14 + (i % 5) * 8)}px`,
+    }));
+  }, [stickers, compact, fillPage]);
+
   return (
     <div
       className={`bday-web relative overflow-hidden ${when === 'yesterday' ? 'bday-yesterday' : ''} ${
-        fillPage ? 'min-h-dvh' : ''
-      } ${compact ? 'rounded-[1.75rem] border border-white/40 shadow-lg' : ''}`}
+        celebrating ? 'bday-celebrating' : ''
+      } ${fillPage ? 'min-h-dvh' : ''} ${compact ? 'rounded-[1.75rem] border border-white/40 shadow-lg' : ''}`}
       data-design={design}
       data-gender={gender}
       style={paletteStyle(gender)}
     >
       <div className="bday-wash pointer-events-none absolute inset-0" />
       {!compact && (
-      <div className="bday-confetti pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        {stickers.map((sticker, i) => (
-          <span
-            key={`fall-${sticker}-${i}`}
-            className="absolute"
-            style={{
-              left: `${6 + ((i * 17) % 88)}%`,
-              top: `-${8 + (i % 5)}%`,
-              fontSize: 18 + (i % 5) * 4,
-              animationDuration: `${3.6 + (i % 6) * 0.45}s`,
-              animationDelay: `${(i % 8) * 0.28}s`,
-            }}
-          >
-            {sticker}
-          </span>
-        ))}
-      </div>
+        <div className="bday-confetti pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+          {confettiPieces.map((piece, i) => (
+            <span
+              key={`fall-${piece.sticker}-${i}`}
+              className="absolute"
+              style={
+                {
+                  left: `${piece.left}%`,
+                  top: `${piece.top}%`,
+                  fontSize: piece.size,
+                  animationDuration: `${piece.duration}s`,
+                  animationDelay: `${piece.delay}s`,
+                  '--bday-sway': piece.sway,
+                } as CSSProperties
+              }
+            >
+              {piece.sticker}
+            </span>
+          ))}
+        </div>
+      )}
+      {burstKey > 0 && (
+        <div key={burstKey} className="bday-burst pointer-events-none absolute inset-0 z-30 overflow-hidden" aria-hidden>
+          {BURST_PIECES.map((piece, i) => {
+            const angle = (i / BURST_PIECES.length) * Math.PI * 2;
+            const dist = 72 + (i % 4) * 28;
+            return (
+              <span
+                key={`${piece}-${i}`}
+                style={
+                  {
+                    animationDelay: `${i * 0.03}s`,
+                    '--bx': `${Math.cos(angle) * dist}px`,
+                    '--by': `${Math.sin(angle) * dist - 24}px`,
+                    '--bs': `${0.85 + (i % 3) * 0.2}`,
+                    '--br': `${(i % 2 === 0 ? 1 : -1) * (28 + i * 12)}deg`,
+                  } as CSSProperties
+                }
+              >
+                {piece}
+              </span>
+            );
+          })}
+        </div>
       )}
       <span className="bday-float pointer-events-none absolute left-[6%] top-[14%] text-4xl" aria-hidden>
         {stickers[0]}
@@ -500,7 +707,9 @@ export function BirthdayWebCard({
                 {cheerBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
                 {t('bday.cheerSubmit')}
               </button>
-              {cheerMsg && <p className="mt-2 text-xs font-medium text-emerald-700">{cheerMsg}</p>}
+              {cheerMsg && (
+                <p className="bday-cheer-ok mt-2 text-xs font-medium text-emerald-700">{cheerMsg}</p>
+              )}
               {cheerErr && <p className="mt-2 text-xs font-medium text-rose-700">{cheerErr}</p>}
             </form>
           )}
@@ -523,6 +732,7 @@ export function BirthdayWebCard({
                     <li
                       key={`${c.name}-${i}`}
                       className="bday-chip inline-flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-sm"
+                      style={{ animationDelay: `${0.75 + Math.min(i, 12) * 0.05}s` }}
                     >
                       <span
                         className="bday-avatar flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold shadow-sm"
