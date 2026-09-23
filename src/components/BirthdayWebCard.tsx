@@ -24,102 +24,136 @@ import { rememberActorName, resolveActorName } from '../utils/actorName';
 const BIRTHDAY_CARD_CSS = `
   .bday-web {
     --bday-ease: cubic-bezier(0.22, 1, 0.36, 1);
-    --bday-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
+    --bday-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .bday-web .bday-wash {
     background:
-      radial-gradient(ellipse 90% 60% at 50% -10%, color-mix(in srgb, var(--bday-c0) 62%, white) 0%, transparent 55%),
-      radial-gradient(ellipse at 100% 30%, color-mix(in srgb, var(--bday-c2) 48%, white) 0%, transparent 42%),
-      radial-gradient(ellipse at 0% 70%, color-mix(in srgb, var(--bday-c3) 42%, white) 0%, transparent 40%),
-      radial-gradient(ellipse at 50% 110%, color-mix(in srgb, var(--bday-c1) 35%, white) 0%, transparent 45%),
-      linear-gradient(168deg, var(--bday-card-a) 0%, white 42%, var(--bday-card-b) 100%);
-    animation: bday-wash-in 1.1s var(--bday-ease) both, bday-wash-breathe 14s ease-in-out 1.1s infinite;
+      radial-gradient(ellipse 95% 55% at 50% -8%, color-mix(in srgb, var(--bday-c0) 72%, white) 0%, transparent 58%),
+      radial-gradient(ellipse at 100% 28%, color-mix(in srgb, var(--bday-c2) 58%, white) 0%, transparent 44%),
+      radial-gradient(ellipse at 0% 72%, color-mix(in srgb, var(--bday-c3) 52%, white) 0%, transparent 42%),
+      radial-gradient(ellipse at 50% 108%, color-mix(in srgb, var(--bday-c1) 48%, white) 0%, transparent 48%),
+      linear-gradient(168deg, var(--bday-card-a) 0%, white 40%, var(--bday-card-b) 100%);
+    animation: bday-wash-in 0.9s var(--bday-ease) both, bday-wash-breathe 8s ease-in-out 0.9s infinite;
   }
   .bday-web .bday-orb-a {
-    background: color-mix(in srgb, var(--bday-c0) 38%, transparent);
-    filter: blur(10px);
-    animation: bday-orb-drift 11s ease-in-out infinite;
+    background: color-mix(in srgb, var(--bday-c0) 48%, transparent);
+    filter: blur(12px);
+    animation: bday-orb-drift 8s ease-in-out infinite;
   }
   .bday-web .bday-orb-b {
-    background: color-mix(in srgb, var(--bday-c1) 32%, transparent);
-    filter: blur(12px);
-    animation: bday-orb-drift 15s ease-in-out 1.4s infinite reverse;
+    background: color-mix(in srgb, var(--bday-c1) 42%, transparent);
+    filter: blur(14px);
+    animation: bday-orb-drift 11s ease-in-out 0.8s infinite reverse;
+  }
+  .bday-web .bday-orb-c {
+    background: color-mix(in srgb, var(--bday-c2) 38%, transparent);
+    filter: blur(16px);
+    animation: bday-orb-drift 13s ease-in-out 1.6s infinite;
   }
   .bday-web .bday-stage {
-    border-color: color-mix(in srgb, var(--bday-accent) 22%, #e7e5e4);
+    border-color: color-mix(in srgb, var(--bday-accent) 26%, #e7e5e4);
     background:
-      linear-gradient(165deg, color-mix(in srgb, white 94%, var(--bday-card-a)) 0%, white 48%, color-mix(in srgb, white 94%, var(--bday-card-b)) 100%);
+      linear-gradient(165deg, color-mix(in srgb, white 92%, var(--bday-card-a)) 0%, white 46%, color-mix(in srgb, white 92%, var(--bday-card-b)) 100%);
     box-shadow:
-      0 1px 0 color-mix(in srgb, white 88%, transparent),
-      0 22px 56px color-mix(in srgb, var(--bday-accent) 14%, transparent),
-      0 2px 10px color-mix(in srgb, var(--bday-accent) 8%, transparent);
-    animation: bday-stage-in 0.95s var(--bday-ease) 0.05s both;
+      0 1px 0 color-mix(in srgb, white 90%, transparent),
+      0 24px 60px color-mix(in srgb, var(--bday-accent) 18%, transparent),
+      0 2px 12px color-mix(in srgb, var(--bday-accent) 10%, transparent);
+    animation: bday-stage-in 0.85s var(--bday-spring) 0.04s both;
   }
-  .bday-web .bday-bunting { animation: bday-bunting-in 0.9s var(--bday-spring) 0.12s both; transform-origin: top center; }
+  .bday-web .bday-bunting {
+    animation: bday-bunting-in 0.85s var(--bday-spring) 0.1s both, bday-bunting-sway 3.2s ease-in-out 1s infinite;
+    transform-origin: top center;
+  }
   .bday-web .bday-from { background: color-mix(in srgb, var(--bday-accent) 14%, white); color: var(--bday-ink); }
-  .bday-web .bday-kicker { color: var(--bday-muted); animation: bday-rise 0.7s var(--bday-ease) 0.2s both; }
-  .bday-web .bday-kicker svg { animation: bday-twinkle 2.4s ease-in-out 0.8s infinite; }
-  .bday-web .bday-title { color: var(--bday-ink); animation: bday-title-in 0.95s var(--bday-spring) 0.32s both; }
+  .bday-web .bday-kicker {
+    color: var(--bday-muted);
+    animation: bday-rise 0.6s var(--bday-ease) 0.16s both;
+  }
+  .bday-web .bday-kicker svg { animation: bday-twinkle 1.6s ease-in-out 0.6s infinite; }
+  .bday-web .bday-title {
+    color: var(--bday-ink);
+    animation: bday-title-in 0.9s var(--bday-spring) 0.28s both, bday-title-bounce 4.5s ease-in-out 1.4s infinite;
+  }
   .bday-web .bday-who {
     color: var(--bday-ink);
-    background: color-mix(in srgb, var(--bday-accent) 12%, white);
-    border-color: color-mix(in srgb, var(--bday-accent) 24%, #e7e5e4);
-    animation: bday-rise 0.7s var(--bday-ease) 0.4s both;
+    background: color-mix(in srgb, var(--bday-accent) 14%, white);
+    border-color: color-mix(in srgb, var(--bday-accent) 28%, #e7e5e4);
+    animation: bday-rise 0.65s var(--bday-ease) 0.36s both;
   }
-  .bday-web .bday-gender-note { color: var(--bday-muted); animation: bday-rise 0.7s var(--bday-ease) 0.44s both; }
-  .bday-web .bday-wish { color: color-mix(in srgb, var(--bday-ink) 78%, #57534e); animation: bday-rise 0.8s var(--bday-ease) 0.52s both; }
+  .bday-web .bday-gender-note { color: var(--bday-muted); animation: bday-rise 0.65s var(--bday-ease) 0.4s both; }
+  .bday-web .bday-wish { color: color-mix(in srgb, var(--bday-ink) 78%, #57534e); animation: bday-rise 0.7s var(--bday-ease) 0.48s both; }
   .bday-web .bday-age {
-    background: var(--bday-accent);
-    box-shadow: 0 12px 28px color-mix(in srgb, var(--bday-accent) 32%, transparent);
-    animation: bday-badge-in 0.75s var(--bday-spring) 0.46s both, bday-badge-glow 3.6s ease-in-out 1.3s infinite;
+    background: linear-gradient(135deg, var(--bday-accent-soft), var(--bday-accent));
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--bday-accent) 36%, transparent);
+    animation: bday-badge-in 0.7s var(--bday-spring) 0.42s both, bday-badge-bounce 2.4s ease-in-out 1.2s infinite;
   }
   .bday-web .bday-fallback { background: linear-gradient(145deg, var(--bday-bg-b), var(--bday-bg-a)); }
   .bday-web .bday-photo {
     width: fit-content;
     margin-inline: auto;
-    animation: bday-photo-in 1s var(--bday-spring) 0.18s both;
+    animation: bday-photo-in 0.95s var(--bday-spring) 0.14s both;
   }
   .bday-web .bday-photo > img,
   .bday-web .bday-photo > .bday-fallback {
-    animation: bday-photo-settle 1.15s var(--bday-ease) 0.18s both;
+    animation: bday-photo-settle 1.1s var(--bday-ease) 0.14s both;
   }
   .bday-web .bday-ring {
-    background: conic-gradient(from 120deg, var(--bday-c0), var(--bday-c2), var(--bday-c3), var(--bday-c1), var(--bday-c0));
-    opacity: 0.85;
+    background: conic-gradient(from 90deg, var(--bday-c0), var(--bday-c1), var(--bday-c2), var(--bday-c3), var(--bday-c0));
+    opacity: 0.95;
     border-radius: 9999px;
-    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
-    mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
-    animation: bday-spin 9s linear infinite;
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+    animation: bday-spin 6.5s linear infinite;
   }
   .bday-web .bday-photo-glow {
-    background: radial-gradient(circle, color-mix(in srgb, var(--bday-accent) 42%, transparent) 0%, transparent 68%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--bday-accent) 55%, transparent) 0%, transparent 70%);
     border-radius: 9999px;
-    animation: bday-glow-pulse 3.4s ease-in-out 0.6s infinite;
+    animation: bday-glow-pulse 2.4s ease-in-out 0.4s infinite;
   }
-  .bday-web .bday-emoji { animation: bday-rise 0.7s var(--bday-ease) 0.58s both; }
+  .bday-web .bday-spark {
+    position: absolute;
+    z-index: 25;
+    pointer-events: none;
+    font-size: 0.95rem;
+    animation: bday-spark 1.8s ease-in-out infinite;
+    filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.12));
+  }
+  .bday-web .bday-emoji {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.35rem 0.55rem;
+    animation: bday-rise 0.65s var(--bday-ease) 0.52s both;
+  }
+  .bday-web .bday-emoji span {
+    display: inline-block;
+    animation: bday-emoji-hop 1.8s ease-in-out infinite;
+  }
   .bday-web .bday-cheer-form {
-    border-color: color-mix(in srgb, var(--bday-accent) 24%, #e7e5e4);
+    border-color: color-mix(in srgb, var(--bday-accent) 28%, #e7e5e4);
     background:
-      linear-gradient(160deg, color-mix(in srgb, white 88%, var(--bday-accent)) 0%, color-mix(in srgb, white 96%, var(--bday-card-a)) 100%);
-    box-shadow: inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
-    animation: bday-rise 0.75s var(--bday-ease) 0.62s both;
+      linear-gradient(160deg, color-mix(in srgb, white 84%, var(--bday-accent)) 0%, color-mix(in srgb, white 96%, var(--bday-card-a)) 100%);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 75%, transparent), 0 10px 28px color-mix(in srgb, var(--bday-accent) 10%, transparent);
+    animation: bday-rise 0.7s var(--bday-ease) 0.56s both;
   }
   .bday-web .bday-cheer-btn {
-    background: linear-gradient(180deg, color-mix(in srgb, white 18%, var(--bday-accent)) 0%, var(--bday-accent) 100%);
-    box-shadow: 0 10px 24px color-mix(in srgb, var(--bday-accent) 28%, transparent);
+    background: linear-gradient(180deg, color-mix(in srgb, white 22%, var(--bday-accent)) 0%, var(--bday-accent) 100%);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--bday-accent) 32%, transparent);
     transition: transform 0.2s var(--bday-ease), box-shadow 0.2s ease, filter 0.2s ease;
+    animation: bday-btn-pulse 2.2s ease-in-out 1.5s infinite;
   }
   .bday-web .bday-cheer-btn:hover:not(:disabled) {
-    transform: translateY(-2px) scale(1.015);
-    box-shadow: 0 14px 30px color-mix(in srgb, var(--bday-accent) 38%, transparent);
-    filter: brightness(1.04);
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 16px 34px color-mix(in srgb, var(--bday-accent) 42%, transparent);
+    filter: brightness(1.06);
+    animation: none;
   }
-  .bday-web .bday-cheer-btn:active:not(:disabled) { transform: translateY(0) scale(0.985); }
+  .bday-web .bday-cheer-btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
   .bday-web .bday-cheer-ok { animation: bday-ok-pop 0.55s var(--bday-spring) both; }
   .bday-web .bday-cheers {
-    border-color: color-mix(in srgb, var(--bday-accent) 18%, #e7e5e4);
-    background: color-mix(in srgb, white 82%, var(--bday-card-a));
-    animation: bday-rise 0.8s var(--bday-ease) 0.7s both;
+    border-color: color-mix(in srgb, var(--bday-accent) 20%, #e7e5e4);
+    background: color-mix(in srgb, white 80%, var(--bday-card-a));
+    animation: bday-rise 0.75s var(--bday-ease) 0.64s both;
   }
   .bday-web .bday-chip {
     border-color: color-mix(in srgb, var(--bday-accent) 18%, white);
@@ -133,30 +167,64 @@ const BIRTHDAY_CARD_CSS = `
   }
   .bday-web.bday-yesterday .bday-wash { filter: saturate(0.82); }
   .bday-web.bday-yesterday .bday-float,
-  .bday-web.bday-yesterday .bday-float-slow { opacity: 0.55; }
-  .bday-web .bday-float { animation: bday-drift-a 5.2s ease-in-out infinite; }
-  .bday-web .bday-float-slow { animation: bday-drift-b 7s ease-in-out 0.6s infinite; }
-  .bday-web .bday-wiggle { animation: bday-wiggle 3.8s ease-in-out infinite; }
-  .bday-web .bday-confetti span {
+  .bday-web.bday-yesterday .bday-float-slow,
+  .bday-web.bday-yesterday .bday-bounce { opacity: 0.55; }
+  .bday-web .bday-float { animation: bday-drift-a 3.8s ease-in-out infinite; }
+  .bday-web .bday-float-slow { animation: bday-drift-b 5.2s ease-in-out 0.4s infinite; }
+  .bday-web .bday-wiggle { animation: bday-wiggle 2.4s ease-in-out infinite; }
+  .bday-web .bday-bounce { animation: bday-bounce 2.1s ease-in-out infinite; }
+  .bday-web .bday-balloon {
+    position: absolute;
+    width: 2.1rem;
+    height: 2.7rem;
+    border-radius: 50% 50% 50% 50% / 45% 45% 55% 55%;
+    animation: bday-balloon 6s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 2;
+    filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.12));
+  }
+  .bday-web .bday-balloon::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    width: 1px;
+    height: 2.4rem;
+    background: color-mix(in srgb, var(--bday-ink) 28%, transparent);
+    transform: translateX(-50%);
+  }
+  .bday-web .bday-confetti span,
+  .bday-web .bday-dots i {
     animation-name: bday-fall;
     animation-timing-function: linear;
     animation-iteration-count: infinite;
     will-change: transform, opacity;
   }
+  .bday-web .bday-dots i {
+    position: absolute;
+    top: -4%;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 2px;
+    opacity: 0.9;
+  }
   .bday-web .bday-burst span {
     position: absolute;
     left: 50%;
-    top: 42%;
-    animation: bday-burst-piece 1.05s var(--bday-ease) both;
+    top: 38%;
+    animation: bday-burst-piece 1.15s var(--bday-ease) both;
     pointer-events: none;
-    font-size: 1.35rem;
-    filter: drop-shadow(0 4px 8px rgb(0 0 0 / 0.12));
+    font-size: 1.55rem;
+    filter: drop-shadow(0 4px 8px rgb(0 0 0 / 0.14));
   }
   .bday-web.bday-celebrating .bday-photo-glow {
     animation: bday-glow-burst 0.9s var(--bday-ease) both;
   }
   .bday-web.bday-celebrating .bday-ring {
-    animation: bday-spin 9s linear infinite, bday-ring-flash 0.9s var(--bday-ease) both;
+    animation: bday-spin 6.5s linear infinite, bday-ring-flash 0.9s var(--bday-ease) both;
+  }
+  .bday-web.bday-celebrating .bday-stage {
+    animation: bday-stage-celebrate 0.7s var(--bday-spring) both;
   }
 
   @keyframes bday-wash-in {
@@ -164,116 +232,151 @@ const BIRTHDAY_CARD_CSS = `
     to { opacity: 1; }
   }
   @keyframes bday-wash-breathe {
-    0%, 100% { filter: saturate(1) brightness(1); }
-    50% { filter: saturate(1.07) brightness(1.025); }
+    0%, 100% { filter: saturate(1.05) brightness(1); }
+    50% { filter: saturate(1.22) brightness(1.05); }
   }
   @keyframes bday-stage-in {
-    from { opacity: 0; transform: translateY(28px) scale(0.97); }
+    from { opacity: 0; transform: translateY(32px) scale(0.94); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
+  @keyframes bday-stage-celebrate {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.025); }
+    100% { transform: scale(1); }
+  }
   @keyframes bday-bunting-in {
-    from { opacity: 0; transform: scaleX(0.72) translateY(-8px); }
+    from { opacity: 0; transform: scaleX(0.7) translateY(-10px); }
     to { opacity: 1; transform: scaleX(1) translateY(0); }
   }
+  @keyframes bday-bunting-sway {
+    0%, 100% { transform: rotate(-1.4deg); }
+    50% { transform: rotate(1.4deg); }
+  }
   @keyframes bday-rise {
-    from { opacity: 0; transform: translateY(14px); }
+    from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
   }
   @keyframes bday-title-in {
-    from { opacity: 0; transform: translateY(18px) scale(0.94); letter-spacing: 0.04em; }
-    to { opacity: 1; transform: translateY(0) scale(1); letter-spacing: 0; }
+    from { opacity: 0; transform: translateY(20px) scale(0.9); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes bday-title-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
   }
   @keyframes bday-photo-in {
-    from { opacity: 0; transform: scale(0.72) rotate(-6deg); }
+    from { opacity: 0; transform: scale(0.62) rotate(-10deg); }
+    70% { transform: scale(1.06) rotate(2deg); }
     to { opacity: 1; transform: scale(1) rotate(0deg); }
   }
   @keyframes bday-photo-settle {
     0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bday-accent) 0%, transparent); }
-    55% { box-shadow: 0 0 0 14px color-mix(in srgb, var(--bday-accent) 18%, transparent); }
-    100% { box-shadow: 0 12px 28px color-mix(in srgb, var(--bday-accent) 22%, transparent); }
+    50% { box-shadow: 0 0 0 16px color-mix(in srgb, var(--bday-accent) 22%, transparent); }
+    100% { box-shadow: 0 14px 32px color-mix(in srgb, var(--bday-accent) 26%, transparent); }
   }
   @keyframes bday-badge-in {
-    from { opacity: 0; transform: translateY(10px) scale(0.88); }
+    from { opacity: 0; transform: translateY(12px) scale(0.8); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
-  @keyframes bday-badge-glow {
-    0%, 100% { box-shadow: 0 12px 28px color-mix(in srgb, var(--bday-accent) 32%, transparent); transform: translateY(0); }
-    50% { box-shadow: 0 16px 34px color-mix(in srgb, var(--bday-accent) 48%, transparent); transform: translateY(-2px); }
+  @keyframes bday-badge-bounce {
+    0%, 100% { transform: translateY(0) scale(1); box-shadow: 0 12px 28px color-mix(in srgb, var(--bday-accent) 36%, transparent); }
+    50% { transform: translateY(-4px) scale(1.04); box-shadow: 0 18px 36px color-mix(in srgb, var(--bday-accent) 48%, transparent); }
   }
   @keyframes bday-spin {
-    from { transform: rotate(0deg) scale(1); opacity: 0.55; }
-    50% { transform: rotate(180deg) scale(1.04); opacity: 0.9; }
-    to { transform: rotate(360deg) scale(1); opacity: 0.55; }
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
   @keyframes bday-glow-pulse {
-    0%, 100% { opacity: 0.55; transform: scale(0.92); }
-    50% { opacity: 1; transform: scale(1.08); }
+    0%, 100% { opacity: 0.55; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.14); }
   }
   @keyframes bday-glow-burst {
     0% { opacity: 0.6; transform: scale(0.9); }
-    40% { opacity: 1; transform: scale(1.35); }
-    100% { opacity: 0.7; transform: scale(1.05); }
+    40% { opacity: 1; transform: scale(1.45); }
+    100% { opacity: 0.75; transform: scale(1.08); }
   }
   @keyframes bday-ring-flash {
-    0%, 100% { filter: blur(0.5px) brightness(1); }
-    40% { filter: blur(0.5px) brightness(1.35); }
+    0%, 100% { filter: brightness(1); }
+    40% { filter: brightness(1.45); }
   }
   @keyframes bday-drift-a {
-    0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg) scale(1); }
-    33% { transform: translate3d(10px, -18px, 0) rotate(6deg) scale(1.06); }
-    66% { transform: translate3d(-8px, -8px, 0) rotate(-4deg) scale(0.98); }
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(-10deg) scale(1); }
+    25% { transform: translate3d(12px, -22px, 0) rotate(8deg) scale(1.12); }
+    55% { transform: translate3d(-10px, -10px, 0) rotate(-6deg) scale(0.96); }
+    80% { transform: translate3d(8px, -16px, 0) rotate(4deg) scale(1.08); }
   }
   @keyframes bday-drift-b {
-    0%, 100% { transform: translate3d(0, 0, 0) rotate(6deg); }
-    40% { transform: translate3d(-12px, -20px, 0) rotate(-10deg); }
-    75% { transform: translate3d(8px, -6px, 0) rotate(8deg); }
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(8deg) scale(1); }
+    35% { transform: translate3d(-14px, -24px, 0) rotate(-12deg) scale(1.1); }
+    70% { transform: translate3d(10px, -8px, 0) rotate(10deg) scale(0.97); }
   }
   @keyframes bday-wiggle {
-    0%, 100% { transform: rotate(-10deg) scale(1); }
-    50% { transform: rotate(12deg) scale(1.1); }
+    0%, 100% { transform: rotate(-14deg) scale(1); }
+    50% { transform: rotate(16deg) scale(1.16); }
+  }
+  @keyframes bday-bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(-18px) scale(1.12); }
+    60% { transform: translateY(-8px) scale(1.04); }
   }
   @keyframes bday-twinkle {
-    0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.85; }
-    50% { transform: rotate(18deg) scale(1.18); opacity: 1; }
+    0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.8; }
+    50% { transform: rotate(22deg) scale(1.3); opacity: 1; }
   }
   @keyframes bday-orb-drift {
-    0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.7; }
-    50% { transform: translate3d(18px, -22px, 0) scale(1.12); opacity: 1; }
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.75; }
+    50% { transform: translate3d(22px, -28px, 0) scale(1.18); opacity: 1; }
+  }
+  @keyframes bday-balloon {
+    0%, 100% { transform: translateY(0) rotate(-4deg); }
+    50% { transform: translateY(-28px) rotate(5deg); }
+  }
+  @keyframes bday-spark {
+    0%, 100% { opacity: 0.25; transform: scale(0.7) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1.25) rotate(18deg); }
+  }
+  @keyframes bday-emoji-hop {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-6px) scale(1.12); }
+  }
+  @keyframes bday-btn-pulse {
+    0%, 100% { box-shadow: 0 10px 24px color-mix(in srgb, var(--bday-accent) 32%, transparent); transform: scale(1); }
+    50% { box-shadow: 0 14px 32px color-mix(in srgb, var(--bday-accent) 48%, transparent); transform: scale(1.02); }
   }
   @keyframes bday-fall {
     0% {
-      transform: translate3d(0, -8%, 0) rotate(0deg);
+      transform: translate3d(0, -10%, 0) rotate(0deg);
       opacity: 0;
     }
-    8% { opacity: 0.72; }
-    45% {
-      transform: translate3d(var(--bday-sway, 18px), 48vh, 0) rotate(160deg);
-      opacity: 0.55;
+    6% { opacity: 0.95; }
+    40% {
+      transform: translate3d(var(--bday-sway, 22px), 42vh, 0) rotate(180deg);
+      opacity: 0.85;
     }
     100% {
-      transform: translate3d(calc(var(--bday-sway, 18px) * -0.55), 112vh, 0) rotate(340deg);
+      transform: translate3d(calc(var(--bday-sway, 22px) * -0.6), 115vh, 0) rotate(420deg);
       opacity: 0;
     }
   }
   @keyframes bday-chip-in {
-    from { opacity: 0; transform: translateY(10px) scale(0.86); }
+    from { opacity: 0; transform: translateY(12px) scale(0.8); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
   @keyframes bday-ok-pop {
-    from { opacity: 0; transform: translateY(6px) scale(0.92); }
+    from { opacity: 0; transform: translateY(8px) scale(0.88); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
   @keyframes bday-burst-piece {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
-    18% { opacity: 1; }
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    15% { opacity: 1; }
     100% {
       opacity: 0;
       transform: translate(
           calc(-50% + var(--bx, 0px)),
-          calc(-50% + var(--by, -80px))
+          calc(-50% + var(--by, -90px))
         )
-        scale(var(--bs, 1))
-        rotate(var(--br, 40deg));
+        scale(var(--bs, 1.1))
+        rotate(var(--br, 50deg));
     }
   }
 
@@ -281,9 +384,11 @@ const BIRTHDAY_CARD_CSS = `
     .bday-web .bday-wash, .bday-web .bday-stage, .bday-web .bday-bunting, .bday-web .bday-kicker, .bday-web .bday-kicker svg,
     .bday-web .bday-photo, .bday-web .bday-photo > img, .bday-web .bday-photo > .bday-fallback, .bday-web .bday-photo-glow,
     .bday-web .bday-title, .bday-web .bday-who, .bday-web .bday-gender-note, .bday-web .bday-age, .bday-web .bday-wish,
-    .bday-web .bday-emoji, .bday-web .bday-cheer-form, .bday-web .bday-cheers, .bday-web .bday-chip, .bday-web .bday-ring,
-    .bday-web .bday-float, .bday-web .bday-float-slow, .bday-web .bday-wiggle, .bday-web .bday-orb-a, .bday-web .bday-orb-b,
-    .bday-web .bday-confetti span, .bday-web .bday-burst span, .bday-web .bday-cheer-ok, .bday-web .bday-cheer-btn {
+    .bday-web .bday-emoji, .bday-web .bday-emoji span, .bday-web .bday-cheer-form, .bday-web .bday-cheers, .bday-web .bday-chip,
+    .bday-web .bday-ring, .bday-web .bday-float, .bday-web .bday-float-slow, .bday-web .bday-wiggle, .bday-web .bday-bounce,
+    .bday-web .bday-orb-a, .bday-web .bday-orb-b, .bday-web .bday-orb-c, .bday-web .bday-balloon, .bday-web .bday-spark,
+    .bday-web .bday-confetti span, .bday-web .bday-dots i, .bday-web .bday-burst span, .bday-web .bday-cheer-ok,
+    .bday-web .bday-cheer-btn {
       animation: none !important;
       transition: none !important;
       opacity: 1 !important;
@@ -293,7 +398,11 @@ const BIRTHDAY_CARD_CSS = `
   }
 `;
 
-const BURST_PIECES = ['🎉', '✨', '💛', '🥳', '🎊', '⭐', '💖', '🎂', '🌸', '🎈', '💫', '🙌'] as const;
+const BURST_PIECES = [
+  '🎉', '✨', '💛', '🥳', '🎊', '⭐', '💖', '🎂', '🌸', '🎈', '💫', '🙌', '🎁', '🧁', '🌈', '😄',
+] as const;
+
+const HAPPY_EXTRA = ['🎊', '✨', '💛', '🥳', '🎈', '⭐', '🎁', '🌈'] as const;
 
 function paletteStyle(gender: CardGender): CSSProperties {
   const palette = CARD_PALETTES[gender];
@@ -379,6 +488,19 @@ export function BirthdayWebCard({
   const [cheerErr, setCheerErr] = useState<string | null>(null);
   const [celebrating, setCelebrating] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
+
+  useEffect(() => {
+    if (compact || when === 'yesterday') return;
+    const start = window.setTimeout(() => {
+      setBurstKey((k) => k + 1);
+      setCelebrating(true);
+    }, 450);
+    const end = window.setTimeout(() => setCelebrating(false), 1600);
+    return () => {
+      window.clearTimeout(start);
+      window.clearTimeout(end);
+    };
+  }, [compact, when, person.id]);
   const gender = normalizeCardGender(person.gender);
   const emoji = designEmoji(design, gender);
   const stickers = partyStickers(gender);
@@ -463,7 +585,7 @@ export function BirthdayWebCard({
       if (!result.already) {
         setBurstKey((k) => k + 1);
         setCelebrating(true);
-        window.setTimeout(() => setCelebrating(false), 1100);
+        window.setTimeout(() => setCelebrating(false), 1400);
       }
     } catch (error) {
       console.error(error);
@@ -474,18 +596,34 @@ export function BirthdayWebCard({
   };
 
   const confettiPieces = useMemo(() => {
-    const base = stickers.length > 0 ? stickers : ['🎉', '✨', '🎂'];
-    const count = compact ? 6 : fillPage ? 16 : 10;
+    const base = [...stickers, ...HAPPY_EXTRA];
+    const count = compact ? 8 : fillPage ? 28 : 16;
     return Array.from({ length: count }, (_, i) => ({
       sticker: base[i % base.length]!,
-      left: 4 + ((i * 13 + (i % 5) * 7) % 92),
-      top: -(6 + (i % 7) * 4),
-      size: 14 + (i % 6) * 3.5,
-      duration: 4.2 + (i % 7) * 0.55,
-      delay: (i % 10) * 0.32,
-      sway: `${(i % 2 === 0 ? 1 : -1) * (14 + (i % 5) * 8)}px`,
+      left: 2 + ((i * 11 + (i % 7) * 9) % 96),
+      top: -(4 + (i % 9) * 5),
+      size: 15 + (i % 7) * 3.2,
+      duration: 3.2 + (i % 8) * 0.42,
+      delay: (i % 12) * 0.22,
+      sway: `${(i % 2 === 0 ? 1 : -1) * (16 + (i % 6) * 10)}px`,
     }));
   }, [stickers, compact, fillPage]);
+
+  const paperDots = useMemo(() => {
+    if (compact) return [];
+    const colors = palette.confetti;
+    const count = fillPage ? 18 : 10;
+    return Array.from({ length: count }, (_, i) => ({
+      left: 3 + ((i * 17) % 94),
+      duration: 3.6 + (i % 6) * 0.5,
+      delay: (i % 9) * 0.28,
+      sway: `${(i % 2 === 0 ? -1 : 1) * (12 + (i % 5) * 9)}px`,
+      color: colors[i % colors.length]!,
+      round: i % 3 === 0,
+    }));
+  }, [compact, fillPage, palette.confetti]);
+
+  const emojiRow = stickers.slice(0, 6);
 
   return (
     <div
@@ -498,42 +636,61 @@ export function BirthdayWebCard({
     >
       <div className="bday-wash pointer-events-none absolute inset-0" />
       {!compact && (
-        <div className="bday-confetti pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-          {confettiPieces.map((piece, i) => (
-            <span
-              key={`fall-${piece.sticker}-${i}`}
-              className="absolute"
-              style={
-                {
-                  left: `${piece.left}%`,
-                  top: `${piece.top}%`,
-                  fontSize: piece.size,
-                  animationDuration: `${piece.duration}s`,
-                  animationDelay: `${piece.delay}s`,
-                  '--bday-sway': piece.sway,
-                } as CSSProperties
-              }
-            >
-              {piece.sticker}
-            </span>
-          ))}
-        </div>
+        <>
+          <div className="bday-confetti pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+            {confettiPieces.map((piece, i) => (
+              <span
+                key={`fall-${piece.sticker}-${i}`}
+                className="absolute"
+                style={
+                  {
+                    left: `${piece.left}%`,
+                    top: `${piece.top}%`,
+                    fontSize: piece.size,
+                    animationDuration: `${piece.duration}s`,
+                    animationDelay: `${piece.delay}s`,
+                    '--bday-sway': piece.sway,
+                  } as CSSProperties
+                }
+              >
+                {piece.sticker}
+              </span>
+            ))}
+          </div>
+          <div className="bday-dots pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+            {paperDots.map((dot, i) => (
+              <i
+                key={`dot-${i}`}
+                style={
+                  {
+                    left: `${dot.left}%`,
+                    background: dot.color,
+                    borderRadius: dot.round ? '999px' : '2px',
+                    animationDuration: `${dot.duration}s`,
+                    animationDelay: `${dot.delay}s`,
+                    '--bday-sway': dot.sway,
+                  } as CSSProperties
+                }
+              />
+            ))}
+          </div>
+        </>
       )}
       {burstKey > 0 && (
         <div key={burstKey} className="bday-burst pointer-events-none absolute inset-0 z-30 overflow-hidden" aria-hidden>
           {BURST_PIECES.map((piece, i) => {
             const angle = (i / BURST_PIECES.length) * Math.PI * 2;
-            const dist = 72 + (i % 4) * 28;
+            const dist = 90 + (i % 5) * 34;
             return (
               <span
                 key={`${piece}-${i}`}
                 style={
                   {
-                    animationDelay: `${i * 0.03}s`,
+                    animationDelay: `${i * 0.025}s`,
                     '--bx': `${Math.cos(angle) * dist}px`,
-                    '--by': `${Math.sin(angle) * dist - 24}px`,
-                    '--bs': `${0.85 + (i % 3) * 0.2}`,
-                    '--br': `${(i % 2 === 0 ? 1 : -1) * (28 + i * 12)}deg`,
+                    '--by': `${Math.sin(angle) * dist - 30}px`,
+                    '--bs': `${0.95 + (i % 4) * 0.18}`,
+                    '--br': `${(i % 2 === 0 ? 1 : -1) * (36 + i * 14)}deg`,
                   } as CSSProperties
                 }
               >
@@ -543,34 +700,56 @@ export function BirthdayWebCard({
           })}
         </div>
       )}
-      <span className="bday-float pointer-events-none absolute left-[6%] top-[14%] text-4xl" aria-hidden>
+      <span className="bday-bounce pointer-events-none absolute left-[5%] top-[12%] text-4xl" aria-hidden>
         {stickers[0]}
       </span>
-      <span className="bday-float-slow pointer-events-none absolute right-[7%] top-[18%] text-4xl" aria-hidden>
+      <span className="bday-float-slow pointer-events-none absolute right-[6%] top-[15%] text-4xl" aria-hidden>
         {stickers[1]}
       </span>
       {!compact && (
         <>
-          <span className="bday-wiggle pointer-events-none absolute left-[10%] top-[38%] text-3xl" aria-hidden>
+          <span className="bday-wiggle pointer-events-none absolute left-[9%] top-[36%] text-3xl" aria-hidden>
             {stickers[2]}
           </span>
-          <span className="bday-float pointer-events-none absolute right-[9%] top-[40%] text-3xl" aria-hidden>
+          <span className="bday-bounce pointer-events-none absolute right-[8%] top-[38%] text-3xl" style={{ animationDelay: '0.35s' }} aria-hidden>
             {stickers[3]}
           </span>
-          <span className="bday-float-slow pointer-events-none absolute left-[8%] bottom-[20%] text-3xl" aria-hidden>
+          <span className="bday-float pointer-events-none absolute left-[7%] bottom-[18%] text-3xl" aria-hidden>
             {stickers[4]}
           </span>
-          <span className="bday-wiggle pointer-events-none absolute right-[11%] bottom-[18%] text-3xl" aria-hidden>
+          <span className="bday-wiggle pointer-events-none absolute right-[10%] bottom-[16%] text-3xl" aria-hidden>
             {stickers[5]}
           </span>
-          <span className="bday-float pointer-events-none absolute left-[18%] top-[8%] text-2xl" aria-hidden>
-            {stickers[6]}
+          <span className="bday-bounce pointer-events-none absolute left-[16%] top-[7%] text-2xl" style={{ animationDelay: '0.7s' }} aria-hidden>
+            {stickers[6] || '✨'}
           </span>
-          <span className="bday-float-slow pointer-events-none absolute right-[20%] top-[10%] text-2xl" aria-hidden>
-            {stickers[7]}
+          <span className="bday-float-slow pointer-events-none absolute right-[18%] top-[9%] text-2xl" aria-hidden>
+            {stickers[7] || '🎈'}
           </span>
+          <span className="bday-bounce pointer-events-none absolute left-[42%] top-[4%] text-2xl" style={{ animationDelay: '0.2s' }} aria-hidden>
+            🥳
+          </span>
+          <span className="bday-wiggle pointer-events-none absolute right-[40%] top-[6%] text-xl" aria-hidden>
+            💛
+          </span>
+          <span
+            className="bday-balloon pointer-events-none absolute left-[12%] top-[48%]"
+            style={{ background: palette.confetti[0], animationDelay: '0.2s' }}
+            aria-hidden
+          />
+          <span
+            className="bday-balloon pointer-events-none absolute right-[11%] top-[52%]"
+            style={{ background: palette.confetti[2], animationDelay: '1.1s', width: '1.7rem', height: '2.2rem' }}
+            aria-hidden
+          />
+          <span
+            className="bday-balloon pointer-events-none absolute left-[78%] top-[22%]"
+            style={{ background: palette.confetti[1], animationDelay: '0.6s', width: '1.5rem', height: '2rem' }}
+            aria-hidden
+          />
           <span className="bday-orb bday-orb-a pointer-events-none absolute -left-16 top-24 h-44 w-44 rounded-full" />
           <span className="bday-orb bday-orb-b pointer-events-none absolute -right-12 bottom-28 h-52 w-52 rounded-full" />
+          <span className="bday-orb bday-orb-c pointer-events-none absolute left-[30%] -bottom-10 h-40 w-40 rounded-full" />
         </>
       )}
 
@@ -594,10 +773,22 @@ export function BirthdayWebCard({
           <div className="bday-photo relative mx-auto mt-6 w-fit">
             <div className="bday-photo-glow pointer-events-none absolute -inset-7 z-0 rounded-full" />
             <div className="bday-ring pointer-events-none absolute -inset-2.5 z-0 rounded-full" />
-            <span className="bday-wiggle pointer-events-none absolute -left-4 -top-3 z-20 text-2xl drop-shadow-sm" aria-hidden>
+            <span className="bday-spark" style={{ left: '-0.2rem', top: '8%', animationDelay: '0s' }} aria-hidden>
+              ✨
+            </span>
+            <span className="bday-spark" style={{ right: '-0.35rem', top: '18%', animationDelay: '0.4s' }} aria-hidden>
+              💫
+            </span>
+            <span className="bday-spark" style={{ left: '4%', bottom: '10%', animationDelay: '0.8s' }} aria-hidden>
+              ⭐
+            </span>
+            <span className="bday-spark" style={{ right: '6%', bottom: '16%', animationDelay: '1.1s' }} aria-hidden>
+              💛
+            </span>
+            <span className="bday-bounce pointer-events-none absolute -left-4 -top-3 z-20 text-2xl drop-shadow-sm" aria-hidden>
               {emoji[0]}
             </span>
-            <span className="bday-float pointer-events-none absolute -right-3 top-1 z-20 text-xl drop-shadow-sm" aria-hidden>
+            <span className="bday-wiggle pointer-events-none absolute -right-3 top-1 z-20 text-xl drop-shadow-sm" aria-hidden>
               {emoji[3]}
             </span>
             {photoSrc ? (
@@ -615,7 +806,7 @@ export function BirthdayWebCard({
                 {shownName.slice(0, 1).toUpperCase()}
               </div>
             )}
-            <span className="bday-float pointer-events-none absolute -bottom-1 -right-3 z-20 text-2xl drop-shadow-sm" aria-hidden>
+            <span className="bday-bounce pointer-events-none absolute -bottom-1 -right-3 z-20 text-2xl drop-shadow-sm" style={{ animationDelay: '0.45s' }} aria-hidden>
               {emoji[1]}
             </span>
             <span className="bday-wiggle pointer-events-none absolute -bottom-1 -left-3 z-20 text-xl drop-shadow-sm" aria-hidden>
@@ -652,9 +843,13 @@ export function BirthdayWebCard({
             {wish}
           </p>
 
-          <p className="bday-emoji mt-6 text-2xl tracking-[0.28em]" aria-hidden>
-            {stickers.slice(0, 6).join(' ')}
-          </p>
+          <div className="bday-emoji mt-6 text-2xl" aria-hidden>
+            {emojiRow.map((s, i) => (
+              <span key={`${s}-${i}`} style={{ animationDelay: `${i * 0.12}s` }}>
+                {s}
+              </span>
+            ))}
+          </div>
 
           {showCheer && (
             <form
