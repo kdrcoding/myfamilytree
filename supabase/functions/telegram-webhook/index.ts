@@ -1114,7 +1114,16 @@ Deno.serve(async (req) => {
 
     // Menu button taps in group (if someone has the keyboard)
     const groupMenu = parseMenuAction(text);
-    if (groupMenu && groupMenu !== 'lock' && groupMenu !== 'test' && groupMenu !== 'wish' && groupMenu !== 'me' && groupMenu !== 'find') {
+    if (
+      groupMenu &&
+      groupMenu !== 'lock' &&
+      groupMenu !== 'test' &&
+      groupMenu !== 'admin' &&
+      groupMenu !== 'back' &&
+      groupMenu !== 'wish' &&
+      groupMenu !== 'me' &&
+      groupMenu !== 'find'
+    ) {
       await runMenuAction(db, chatId, msg.from, groupMenu);
       return jsonResponse({ ok: true });
     }
