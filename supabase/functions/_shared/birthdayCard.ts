@@ -11,9 +11,12 @@ type Img = InstanceType<typeof Image>;
 
 const W = 1080;
 const H = 720;
-const PHOTO_SIZE = 220;
-const PHOTO_X = 430;
-const PHOTO_Y = 118;
+/** Bigger face — hero of the card, not a tiny memorial orb. */
+const PHOTO_SIZE = 288;
+const PHOTO_X = Math.round((W - PHOTO_SIZE) / 2);
+const PHOTO_Y = 78;
+const PHOTO_CX = Math.round(W / 2);
+const PHOTO_CY = PHOTO_Y + Math.round(PHOTO_SIZE / 2);
 
 function escapeXml(s: string): string {
   return s
@@ -224,7 +227,7 @@ async function decodePortrait(bytes: Uint8Array): Promise<Img | null> {
   try {
     const sized = coverSquare(img, PHOTO_SIZE);
     const cropCircle = (sized as { cropCircle?: (feather?: boolean, padding?: number) => Img }).cropCircle;
-    if (typeof cropCircle === 'function') cropCircle.call(sized, false, 2);
+    if (typeof cropCircle === 'function') cropCircle.call(sized, false, 0);
     else punchCircle(sized);
     return sized;
   } catch (err) {
@@ -248,28 +251,29 @@ async function fetchPhotoBytes(photoUrl?: string | null): Promise<Uint8Array | n
 type MotifSpot = { id: CardMotifId; x: number; y: number; w: number };
 
 function motifSpots(gender: CardGender, simple: boolean): MotifSpot[] {
-  const grow = simple ? 36 : 0;
+  // Keep motifs in the corners — never crowding the face (that “in the clouds” look).
+  const grow = simple ? 28 : 0;
   if (gender === 'female') {
     return [
-      { id: 'balloons', x: 18, y: 28, w: 280 + grow },
-      { id: 'balloons', x: 790 - grow, y: 18, w: 270 + grow },
-      { id: 'flowers', x: 12, y: 430, w: 300 + grow },
-      { id: 'flowers', x: 770 - grow, y: 420, w: 300 + grow },
+      { id: 'balloons', x: 8, y: 12, w: 220 + grow },
+      { id: 'balloons', x: 850 - grow, y: 8, w: 210 + grow },
+      { id: 'flowers', x: 8, y: 470, w: 240 + grow },
+      { id: 'flowers', x: 830 - grow, y: 460, w: 240 + grow },
     ];
   }
   if (gender === 'male') {
     return [
-      { id: 'coins', x: 16, y: 32, w: 250 + grow },
-      { id: 'coins', x: 810 - grow, y: 24, w: 250 + grow },
-      { id: 'cars', x: 8, y: 430, w: 360 + grow },
-      { id: 'cars', x: 710 - grow, y: 430, w: 360 + grow },
+      { id: 'coins', x: 8, y: 16, w: 200 + grow },
+      { id: 'coins', x: 860 - grow, y: 12, w: 200 + grow },
+      { id: 'cars', x: 4, y: 470, w: 280 + grow },
+      { id: 'cars', x: 780 - grow, y: 470, w: 280 + grow },
     ];
   }
   return [
-    { id: 'balloons', x: 16, y: 28, w: 240 + grow },
-    { id: 'coins', x: 820 - grow, y: 24, w: 230 + grow },
-    { id: 'flowers', x: 12, y: 440, w: 260 + grow },
-    { id: 'cars', x: 780 - grow, y: 430, w: 280 + grow },
+    { id: 'balloons', x: 8, y: 12, w: 200 + grow },
+    { id: 'coins', x: 860 - grow, y: 12, w: 190 + grow },
+    { id: 'flowers', x: 8, y: 480, w: 210 + grow },
+    { id: 'cars', x: 840 - grow, y: 470, w: 220 + grow },
   ];
 }
 
@@ -343,6 +347,50 @@ function paintFallbackCanvas(p: CardPalette): Img {
   return raster;
 }
 
+function partyConfetti(p: CardPalette): string {
+  // Opaque chips only — no soft haze / “heaven cloud” smudges.
+  const bits: string[] = [];
+  const colors = p.confetti;
+  const spots: [number, number, number, number][] = [
+    [120, 70, 14, 0],
+    [200, 110, 10, 1],
+    [880, 80, 12, 2],
+    [960, 120, 16, 3],
+    [140, 560, 12, 1],
+    [940, 540, 14, 0],
+    [300, 95, 8, 3],
+    [780, 100, 9, 2],
+  ];
+  for (const [x, y, r, ci] of spots) {
+    bits.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${colors[ci]}"/>`);
+  }
+  const rects: [number, number, number, number, number, number][] = [
+    [160, 160, 18, 8, 25, 0],
+    [900, 170, 16, 8, -20, 2],
+    [240, 540, 20, 8, 15, 1],
+    [820, 520, 18, 8, -12, 3],
+  ];
+  for (const [x, y, w, h, rot, ci] of rects) {
+    bits.push(
+      `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${colors[ci]}" transform="rotate(${rot} ${x + w / 2} ${y + h / 2})"/>`,
+    );
+  }
+  return bits.join('\n  ');
+}
+
+function cakeIcon(cx: number, cy: number, p: CardPalette): string {
+  return `
+    <rect x="${cx - 36}" y="${cy - 8}" width="72" height="44" rx="8" fill="${p.accent}"/>
+    <rect x="${cx - 28}" y="${cy - 28}" width="56" height="28" rx="6" fill="${p.accentSoft}"/>
+    <rect x="${cx - 8}" y="${cy - 48}" width="6" height="22" rx="2" fill="${p.confetti[1]}"/>
+    <rect x="${cx + 2}" y="${cy - 52}" width="6" height="26" rx="2" fill="${p.confetti[0]}"/>
+    <rect x="${cx + 12}" y="${cy - 46}" width="6" height="20" rx="2" fill="${p.confetti[2]}"/>
+    <circle cx="${cx - 5}" cy="${cy - 52}" r="5" fill="${p.confetti[3]}"/>
+    <circle cx="${cx + 5}" cy="${cy - 56}" r="5" fill="#fbbf24"/>
+    <circle cx="${cx + 15}" cy="${cy - 50}" r="5" fill="${p.confetti[1]}"/>
+  `;
+}
+
 function cardSvg(opts: {
   p: CardPalette;
   name: string;
@@ -354,63 +402,54 @@ function cardSvg(opts: {
 }): string {
   const { p, name, ageLine, portrait, simple, whoLine } = opts;
   const headline = opts.headline?.trim() || 'Tug‘ilgan kuningiz muborak';
+  const rOuter = Math.round(PHOTO_SIZE / 2) + 22;
+  const rMid = Math.round(PHOTO_SIZE / 2) + 12;
+  const rInner = Math.round(PHOTO_SIZE / 2) + 4;
   const photoBlock = portrait
     ? `
-      <circle cx="540" cy="228" r="128" fill="#fbbf24" opacity="0.55"/>
-      <circle cx="540" cy="228" r="118" fill="${p.accent}" opacity="0.35"/>
-      <circle cx="540" cy="228" r="110" fill="${p.accentSoft}"/>
-      <circle cx="540" cy="228" r="102" fill="#fff7ed"/>
+      <!-- Solid party frame (no soft halo — that looked memorial / cloudy) -->
+      <circle cx="${PHOTO_CX + 6}" cy="${PHOTO_CY + 8}" r="${rOuter}" fill="#0f172a"/>
+      <circle cx="${PHOTO_CX}" cy="${PHOTO_CY}" r="${rOuter}" fill="#fbbf24"/>
+      <circle cx="${PHOTO_CX}" cy="${PHOTO_CY}" r="${rMid}" fill="#ffffff"/>
+      <circle cx="${PHOTO_CX}" cy="${PHOTO_CY}" r="${rInner}" fill="${p.accent}"/>
+      <circle cx="${PHOTO_CX}" cy="${PHOTO_CY}" r="${Math.round(PHOTO_SIZE / 2)}" fill="#ffffff"/>
     `
     : `
-      <circle cx="540" cy="210" r="100" fill="#fbbf24" opacity="0.35"/>
-      <circle cx="540" cy="210" r="88" fill="${p.accent}"/>
-      <circle cx="540" cy="210" r="74" fill="${p.accentSoft}" opacity="0.55"/>
-      <ellipse cx="540" cy="198" rx="34" ry="30" fill="#fef3c7"/>
-      <rect x="520" y="222" width="40" height="28" rx="8" fill="#fef3c7"/>
-      <rect x="528" y="214" width="8" height="14" rx="2" fill="${p.confetti[1]}"/>
-      <rect x="540" y="210" width="8" height="16" rx="2" fill="${p.confetti[0]}"/>
-      <rect x="552" y="214" width="8" height="14" rx="2" fill="${p.confetti[2]}"/>
-      <circle cx="470" cy="150" r="18" fill="${p.confetti[0]}" opacity="0.9"/>
-      <circle cx="610" cy="145" r="16" fill="${p.confetti[2]}" opacity="0.9"/>
-      <circle cx="455" cy="250" r="12" fill="${p.confetti[3]}" opacity="0.85"/>
-      <circle cx="625" cy="255" r="14" fill="${p.confetti[1]}" opacity="0.85"/>
+      <circle cx="${PHOTO_CX + 6}" cy="${PHOTO_CY + 8}" r="118" fill="#0f172a"/>
+      <circle cx="${PHOTO_CX}" cy="${PHOTO_CY}" r="118" fill="#fbbf24"/>
+      <circle cx="${PHOTO_CX}" cy="${PHOTO_CY}" r="108" fill="#ffffff"/>
+      <circle cx="${PHOTO_CX}" cy="${PHOTO_CY}" r="98" fill="${p.accent}"/>
+      ${cakeIcon(PHOTO_CX, PHOTO_CY + 8, p)}
     `;
-  const nameY = portrait ? 390 : 360;
-  const ageY = (portrait ? 448 : 418) + (whoLine ? 28 : 0);
-  const extras = simple
-    ? ''
-    : `
-  <circle cx="96" cy="88" r="12" fill="${p.confetti[2]}" opacity="0.55"/>
-  <circle cx="984" cy="118" r="16" fill="${p.confetti[0]}" opacity="0.5"/>
-  <circle cx="110" cy="630" r="14" fill="${p.confetti[3]}" opacity="0.45"/>
-  <circle cx="970" cy="610" r="18" fill="${p.confetti[1]}" opacity="0.4"/>
-  <circle cx="180" cy="160" r="8" fill="${p.confetti[1]}" opacity="0.5"/>
-  <circle cx="900" cy="180" r="9" fill="${p.confetti[2]}" opacity="0.45"/>`;
+  const nameY = portrait ? 430 : 410;
+  const whoY = nameY + 34;
+  const ageY = (whoLine ? whoY + 36 : nameY + 40);
+  const extras = simple ? '' : partyConfetti(p);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="${p.bgA}"/>
-      <stop offset="50%" stop-color="${p.bgB}"/>
+      <stop offset="55%" stop-color="${p.bgB}"/>
       <stop offset="100%" stop-color="${p.bgC}"/>
     <\/linearGradient>
     <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="${p.cardA}"/>
-      <stop offset="100%" stop-color="${p.cardB}"/>
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="${p.cardA}"/>
     <\/linearGradient>
   <\/defs>
   <rect width="${W}" height="${H}" fill="url(#bg)"/>
   ${extras}
-  <rect x="46" y="40" width="988" height="640" rx="48" fill="url(#card)"/>
-  <rect x="46" y="40" width="988" height="22" rx="8" fill="${p.accent}"/>
-  <rect x="46" y="650" width="988" height="30" rx="8" fill="${p.accent}" opacity="0.85"/>
+  <rect x="40" y="36" width="1000" height="648" rx="40" fill="url(#card)"/>
+  <rect x="40" y="36" width="1000" height="18" rx="6" fill="${p.accent}"/>
+  <rect x="40" y="656" width="1000" height="28" rx="6" fill="${p.accent}"/>
   ${photoBlock}
-  <text x="540" y="${nameY - 48}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="${p.muted}">${headline}</text>
-  <text x="540" y="${nameY}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="52" font-weight="700" fill="${p.ink}">${name}</text>
-  ${whoLine ? `<text x="540" y="${nameY + 36}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" fill="${p.muted}">${whoLine}</text>` : ''}
-  <text x="540" y="${ageY}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" fill="${p.accent}">${ageLine}</text>
-  <text x="540" y="620" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" fill="${p.cardA}">Oq-Ariq OILASI · mehr bilan</text>
+  <text x="540" y="${nameY - 44}" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="26" font-weight="700" fill="${p.accent}" letter-spacing="1">${headline}</text>
+  <text x="540" y="${nameY}" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="54" font-weight="800" fill="${p.ink}">${name}</text>
+  ${whoLine ? `<text x="540" y="${whoY}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" fill="${p.muted}">${whoLine}</text>` : ''}
+  <text x="540" y="${ageY}" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="${p.accent}">${ageLine}</text>
+  <text x="540" y="674" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" font-weight="600" fill="#ffffff">Oq-Ariq OILASI · bayram!</text>
 <\/svg>`;
 }
 
