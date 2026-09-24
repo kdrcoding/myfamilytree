@@ -410,7 +410,9 @@ export function birthdayCaption(
 export const TG_BUTTONS = {
   openPage: '🎉 Bayram sahifasi',
   celebrate: '💛 Men tabriklayman',
+  writeWish: '✍️ Tilak yozish',
   fillDates: '📅 Sanalarni to‘ldirish',
+  openTree: '🌳 Daraxtni ochish',
 } as const;
 
 export function groupReadyText(): string {
@@ -661,11 +663,36 @@ export function botHealthAlertText(hours: number, lastOk: string | null): string
 }
 
 export function botWelcomeText(): string {
-  return 'Xush kelibsiz — <b>Oq-Ariq OILASI</b> tug‘ilgan kun tilaklari!\n\nKimningdir kuni bo‘lsa, guruhdagi <b>Men tabriklayman</b> tugmasini bosing. Ismingiz uning sahifasida qoladi.';
+  return [
+    'Xush kelibsiz — <b>Oq-Ariq OILASI</b> boti! 💚',
+    '',
+    '• <code>/today</code> — bugungi tug‘ilgan kunlar',
+    '• <code>/week</code> — 7 kun ichida',
+    '• <code>/wish</code> — tilak yozish (DM)',
+    '• <code>/find Ism</code> — oilada kim?',
+    '• <code>/tree</code> — daraxtni ko‘rish',
+    '• <code>/men Ism</code> — o‘zingizni ulang (tilaklar shaxsiy keladi)',
+    '',
+    'Guruhda <b>Men tabriklayman</b> / <b>Tilak yozish</b> tugmalaridan foydalaning.',
+  ].join('\n');
 }
 
 export function botHelpText(): string {
-  return 'Oq-Ariq tug‘ilgan kun boti\n• Tilaklar faqat oila guruhida (shaxsiy xabar yo‘q)\n• “Men tabriklayman” — ismingiz sahifada qoladi\n• Bayram sahifasi havolasi — parol kerak emas';
+  return [
+    '<b>Oq-Ariq bot buyruqlari</b>',
+    '',
+    '<code>/today</code> — bugun kimniki',
+    '<code>/week</code> — yaqin 7 kun',
+    '<code>/wish</code> yoki <code>/tilak</code> — tilak yozish',
+    '<code>/wish Ism</code> — shu kishiga tilak',
+    '<code>/find Ism</code> — ota-ona, farzandlar…',
+    '<code>/tree</code> — daraxt havolasi + qidiruv',
+    '<code>/men Ism</code> — Telegramni oila a’zosiga ulash',
+    '<code>/status</code> — bot holati (egaga ko‘proq)',
+    '<code>/test</code> — egaga: sinov xabar',
+    '',
+    'Tilak: agar odam botni ulagan bo‘lsa — shaxsiy xabar; bo‘lmasa guruh + sahifa.',
+  ].join('\n');
 }
 
 export function unknownStartText(): string {

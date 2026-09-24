@@ -743,6 +743,15 @@ Deno.serve(async (req) => {
             },
           ]);
         }
+        const wishPayload = `wish_${person.id}_${local.year}`;
+        if (bot && wishPayload.length <= 64) {
+          keyboard.push([
+            {
+              text: TG_BUTTONS.writeWish,
+              url: `https://t.me/${bot}?start=${wishPayload}`,
+            },
+          ]);
+        }
         if (datesUrl) {
           keyboard.push([{ text: TG_BUTTONS.fillDates, url: datesUrl }]);
         }

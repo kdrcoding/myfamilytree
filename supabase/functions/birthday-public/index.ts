@@ -197,6 +197,31 @@ async function loadCheers(
   }
 }
 
+async function loadWishes(
+  db: ServiceDb,
+  personId: string,
+  year: number,
+): Promise<{ name: string; message: string }[]> {
+  try {
+    const rows = await db.rest<{ from_display_name: string; message: string }[]>(
+      'telegram_birthday_wishes',
+      {
+        query: {
+          select: 'from_display_name,message,created_at',
+          person_id: `eq.${personId}`,
+          year: `eq.${year}`,
+          order: 'created_at.asc',
+          limit: '40',
+        },
+      },
+    );
+    return rows.map((w) => ({ name: w.from_display_name, message: w.message }));
+  } catch (err) {
+    console.warn('wishes unavailable', err);
+    return [];
+  }
+}
+
 async function postWebCheer(db: ServiceDb, body: Record<string, unknown>): Promise<Response> {
   const personId = typeof body.personId === 'string' ? body.personId.trim() : '';
   const name = typeof body.name === 'string' ? cleanCheerName(body.name) : null;
@@ -408,7 +433,10 @@ Deno.serve(async (req) => {
       console.warn('whoLine unavailable', err);
     }
 
-    const cheers = await loadCheers(db, personId, occurrence.year);
+    const [cheers, familyWishes] = await Promise.all([
+      loadCheers(db, personId, occurrence.year),
+      loadWishes(db, personId, occurrence.year),
+    ]);
 
     return jsonResponse({
       ok: true,
@@ -426,6 +454,7 @@ Deno.serve(async (req) => {
         whoLine,
       },
       cheers,
+      wishes: familyWishes,
     });
   } catch (error) {
     console.error(error);

@@ -25,6 +25,7 @@ export type PublicBirthday = {
     whoLine?: string | null;
   };
   cheers?: { name: string; username: string | null }[];
+  wishes?: { name: string; message: string }[];
 };
 
 export type MissingBirthdayPerson = {
