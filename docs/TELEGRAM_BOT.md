@@ -43,7 +43,23 @@ Private chat with **@forusbirthdaybot**:
 
 Flow: tap **✍️ Tilak yozish** on a birthday post (or `/wish`) → bot asks for text → saves wish → announces in the group → if the person linked themselves with `/men`, they also get a **private DM**. If not linked (or they blocked the bot), the group post still works — that’s fine.
 
-SQL: `supabase/migrations/20260924000001_telegram_wishes_and_dm_state.sql`
+### Private chat menu + password
+
+DM the bot → everyone except `TELEGRAM_OWNER_IDS` must send the **same family password as the website** once. Then a persistent reply keyboard appears (like other Telegram bots):
+
+| Button | Action |
+|--------|--------|
+| 🎂 Bugun | Birthdays today |
+| 📅 Hafta | Next 7 days |
+| ✍️ Tilak | Write a wish |
+| 🔎 Topish | Search a person |
+| 🌳 Daraxt | Open tree link |
+| 👤 Bu men | Link your Telegram identity |
+| ℹ️ Yordam / 📊 Holat | Help / status |
+| 🧪 Sinov | Owner only (`/test`) |
+| 🔒 Chiqish | Lock again (re-ask password) |
+
+SQL: `supabase/migrations/20260924000001_telegram_wishes_and_dm_state.sql` + `…_telegram_bot_unlocks.sql`
 
 ## 3. SQL migrations
 
@@ -53,6 +69,7 @@ Run in the Supabase SQL Editor (in order, if not already applied):
 2. `supabase/migrations/20260811000001_telegram_birthday_cheers.sql`
 3. `supabase/migrations/20260917120000_web_cheers_bot_health.sql` (web cheers + owner bot run log)
 4. `supabase/migrations/20260924000001_telegram_wishes_and_dm_state.sql` (DM wishes + `/find` state)
+5. `supabase/migrations/20260924000002_telegram_bot_unlocks.sql` (private-chat password unlock)
 
 ## Cron
 

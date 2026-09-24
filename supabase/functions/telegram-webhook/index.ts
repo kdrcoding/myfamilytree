@@ -22,17 +22,22 @@ import {
   unknownStartText,
 } from '../_shared/wishes.ts';
 import {
+  askFamilyPassword,
   claimCallbackData,
   clearDmState,
   findCallbackData,
   getDmState,
   isBotOwner,
+  isBotUnlocked,
   linkPerson,
   loadAllMembers,
   loadRels,
   loadSettings,
+  lockBot,
+  mainMenuKeyboard,
   parseClaimCallback,
   parseFindCallback,
+  parseMenuAction,
   parseWishStart,
   peopleBirthdaySoon,
   peopleWithBirthdayToday,
@@ -40,12 +45,16 @@ import {
   relativeButtons,
   saveAndDeliverWish,
   searchPeople,
+  sendMenu,
   sendText,
   setDmState,
   tgDisplayName,
   treeBrowseHelp,
+  unlockBot,
+  verifyFamilyPassword,
   wishStartPayload,
   escapeHtml,
+  type MenuAction,
   type TgUser,
 } from '../_shared/botChat.ts';
 
@@ -228,6 +237,269 @@ async function handleStatus(
   await sendText(chatId, lines.join('\n'));
 }
 
+async function handleToday(
+  db: ReturnType<typeof createServiceClient>,
+  chatId: number,
+): Promise<void> {
+  const settings = await loadSettings(db);
+  const members = await loadAllMembers(db);
+  const today = peopleWithBirthdayToday(members, settings.timezone);
+  if (today.length === 0) {
+    await sendText(chatId, 'Bugun tug‘ilgan kun yo‘q 🎈');
+    return;
+  }
+  const lines = ['🎂 <b>Bugun</b>', ''];
+  const keyboard: { text: string; callback_data: string }[][] = [];
+  const year = localParts(settings.timezone).year;
+  for (const row of today) {
+    const label = displayName(row.person);
+    lines.push(`• <b>${escapeHtml(label)}</b>${row.age != null ? ` — ${row.age} yosh` : ''}`);
+    const wishData = wishStartPayload(row.person.id, year);
+    if (wishData.length <= 64) {
+      keyboard.push([{ text: `✍️ ${label.slice(0, 24)}`, callback_data: wishData }]);
+    }
+  }
+  await sendText(chatId, lines.join('\n'), {
+    reply_markup: keyboard.length ? { inline_keyboard: keyboard } : undefined,
+  });
+}
+
+async function handleWeek(
+  db: ReturnType<typeof createServiceClient>,
+  chatId: number,
+): Promise<void> {
+  const settings = await loadSettings(db);
+  const members = await loadAllMembers(db);
+  const week = peopleBirthdaySoon(members, settings.timezone, 7);
+  if (week.length === 0) {
+    await sendText(chatId, 'Yaqin 7 kunda tug‘ilgan kun yo‘q.');
+    return;
+  }
+  const lines = ['📅 <b>7 kun ichida</b>', ''];
+  for (const row of week) {
+    const when = row.days === 0 ? 'bugun' : row.days === 1 ? 'ertaga' : `${row.days} kun`;
+    lines.push(
+      `• <b>${escapeHtml(displayName(row.person))}</b> — ${when}${row.age != null ? ` · ${row.age}` : ''}`,
+    );
+  }
+  await sendText(chatId, lines.join('\n'));
+}
+
+async function handleWishFlow(
+  db: ReturnType<typeof createServiceClient>,
+  chatId: number,
+  user: TgUser,
+  nameQuery = '',
+): Promise<void> {
+  const settings = await loadSettings(db);
+  const members = await loadAllMembers(db);
+  const q = nameQuery.trim();
+  const localYear = localParts(settings.timezone).year;
+
+  if (q.length >= 2) {
+    const hits = searchPeople(members, q, 6);
+    if (hits.length === 0) {
+      await sendText(chatId, `“${escapeHtml(q)}” topilmadi.`);
+      return;
+    }
+    if (hits.length === 1) {
+      await beginWish(db, chatId, user, hits[0]!, localYear);
+      return;
+    }
+    const keyboard = hits.map((p) => [
+      { text: displayName(p).slice(0, 40), callback_data: wishStartPayload(p.id, localYear) },
+    ]);
+    await sendText(chatId, 'Kimga tilak?', { reply_markup: { inline_keyboard: keyboard } });
+    return;
+  }
+
+  const today = peopleWithBirthdayToday(members, settings.timezone);
+  const soon = peopleBirthdaySoon(members, settings.timezone, 3);
+  const pool = [...today.map((t) => t.person)];
+  for (const s of soon) {
+    if (!pool.some((p) => p.id === s.person.id)) pool.push(s.person);
+  }
+  if (pool.length === 0) {
+    await sendText(
+      chatId,
+      'Hozir ochiq bayram yo‘q.\nIsm yozing yoki 🔎 Topish → keyin tilak.',
+    );
+    return;
+  }
+  if (pool.length === 1) {
+    await beginWish(db, chatId, user, pool[0]!, localYear);
+    return;
+  }
+  const keyboard = pool.slice(0, 8).map((p) => [
+    { text: displayName(p).slice(0, 40), callback_data: wishStartPayload(p.id, localYear) },
+  ]);
+  await sendText(chatId, 'Kimga tilak yozasiz?', {
+    reply_markup: { inline_keyboard: keyboard },
+  });
+}
+
+async function handleFindQuery(
+  db: ReturnType<typeof createServiceClient>,
+  chatId: number,
+  query: string,
+): Promise<void> {
+  const q = query.trim();
+  if (q.length < 2) {
+    await sendText(chatId, 'Masalan: <b>Aziza</b> yoki tugma: 🔎 Topish');
+    return;
+  }
+  const settings = await loadSettings(db);
+  const members = await loadAllMembers(db);
+  const rels = await loadRels(db);
+  const hits = searchPeople(members, q, 6);
+  if (hits.length === 0) {
+    await sendText(chatId, `“${escapeHtml(q)}” topilmadi.`);
+    return;
+  }
+  if (hits.length === 1) {
+    const person = hits[0]!;
+    const keyboard = [
+      ...relativeButtons(person, members, rels),
+      [
+        {
+          text: '✍️ Tilak yozish',
+          callback_data: wishStartPayload(person.id, localParts(settings.timezone).year),
+        },
+      ],
+    ];
+    await sendText(chatId, personCardText(person, members, rels, settings.timezone), {
+      reply_markup: keyboard.length ? { inline_keyboard: keyboard } : undefined,
+    });
+    return;
+  }
+  const keyboard = hits.map((p) => [
+    { text: displayName(p).slice(0, 40), callback_data: findCallbackData(p.id) },
+  ]);
+  await sendText(chatId, 'Bir nechta topildi — tanlang:', {
+    reply_markup: { inline_keyboard: keyboard },
+  });
+}
+
+async function handleMeQuery(
+  db: ReturnType<typeof createServiceClient>,
+  chatId: number,
+  query: string,
+): Promise<void> {
+  const q = query.trim();
+  if (q.length < 2) {
+    await sendText(
+      chatId,
+      'O‘zingizni ulang — tilaklar shaxsiy keladi.\nIsmingizni yozing (masalan: Sobirjon).',
+    );
+    return;
+  }
+  const members = await loadAllMembers(db);
+  const hits = searchPeople(members, q, 6);
+  if (hits.length === 0) {
+    await sendText(chatId, `“${escapeHtml(q)}” topilmadi. To‘liqroq yozing.`);
+    return;
+  }
+  const keyboard = hits.map((p) => [
+    {
+      text: `✅ Men — ${displayName(p).slice(0, 28)}`,
+      callback_data: claimCallbackData(p.id),
+    },
+  ]);
+  await sendText(chatId, 'Qaysi biri siz?', {
+    reply_markup: { inline_keyboard: keyboard },
+  });
+}
+
+async function runMenuAction(
+  db: ReturnType<typeof createServiceClient>,
+  chatId: number,
+  user: TgUser,
+  action: MenuAction,
+): Promise<void> {
+  switch (action) {
+    case 'today':
+      await handleToday(db, chatId);
+      return;
+    case 'week':
+      await handleWeek(db, chatId);
+      return;
+    case 'wish':
+      await handleWishFlow(db, chatId, user);
+      return;
+    case 'find':
+      await setDmState(db, user.id, 'find_await_name', {});
+      await sendText(chatId, '🔎 Kimni qidiramiz?\nIsm yozing:');
+      return;
+    case 'tree':
+      await sendText(chatId, treeBrowseHelp(), {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: TG_BUTTONS.openTree, url: `${publicAppUrl().replace(/\/$/, '')}/tree` }],
+          ],
+        },
+      });
+      return;
+    case 'me':
+      await setDmState(db, user.id, 'claim_await_name', {});
+      await sendText(chatId, '👤 O‘zingizni ulang.\nIsmingizni yozing:');
+      return;
+    case 'help':
+      await sendText(chatId, botHelpText(), {
+        reply_markup: mainMenuKeyboard(isBotOwner(user.id)),
+      });
+      return;
+    case 'status':
+      await handleStatus(db, chatId, user.id);
+      return;
+    case 'test':
+      await handleOwnerTest(db, chatId, user.id);
+      return;
+    case 'lock':
+      if (isBotOwner(user.id)) {
+        await sendText(chatId, 'Siz egasiz — parol shart emas. Menyu ochiq qoladi.', {
+          reply_markup: mainMenuKeyboard(true),
+        });
+        return;
+      }
+      await lockBot(db, user.id);
+      await clearDmState(db, user.id);
+      await sendText(
+        chatId,
+        '🔒 Chiqildi. Qayta kirish uchun oila parolini yuboring.',
+        { reply_markup: { remove_keyboard: true } },
+      );
+      return;
+  }
+}
+
+async function tryUnlockWithPassword(
+  db: ReturnType<typeof createServiceClient>,
+  chatId: number,
+  user: TgUser,
+  passwordCandidate: string,
+): Promise<boolean> {
+  if (!(await verifyFamilyPassword(passwordCandidate))) {
+    await sendText(chatId, '❌ Parol noto‘g‘ri. Saytdagi oila parolini yuboring.');
+    return false;
+  }
+  await unlockBot(db, user.id);
+  const dm = await getDmState(db, user.id);
+  const pending =
+    dm?.state === 'auth_pending_wish' && typeof dm.payload.personId === 'string'
+      ? {
+          personId: dm.payload.personId as string,
+          year: Number(dm.payload.year),
+        }
+      : null;
+  await clearDmState(db, user.id);
+  await sendMenu(chatId, user.id, '✅ Parol to‘g‘ri — menyu ochildi. Pastdagi tugmalarni bosing.');
+  if (pending && Number.isFinite(pending.year)) {
+    const person = await loadPerson(db, pending.personId);
+    if (person) await beginWish(db, chatId, user, person, pending.year);
+  }
+  return true;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -309,6 +581,19 @@ Deno.serve(async (req) => {
       // Claim identity
       const claimId = parseClaimCallback(data);
       if (claimId) {
+        const chatId = callback.message?.chat.id ?? callback.from.id;
+        if (
+          (callback.message?.chat.type === 'private' || !callback.message) &&
+          !(await isBotUnlocked(db, callback.from.id))
+        ) {
+          await telegramApi('answerCallbackQuery', {
+            callback_query_id: callback.id,
+            text: 'Avval oila parolini yuboring',
+            show_alert: true,
+          });
+          await askFamilyPassword(chatId);
+          return jsonResponse({ ok: true });
+        }
         const person = await loadPerson(db, claimId);
         if (!person) {
           await telegramApi('answerCallbackQuery', {
@@ -318,7 +603,6 @@ Deno.serve(async (req) => {
           });
           return jsonResponse({ ok: true });
         }
-        const chatId = callback.message?.chat.id ?? callback.from.id;
         try {
           await linkPerson(db, person.id, callback.from, chatId);
           await clearDmState(db, callback.from.id);
@@ -329,6 +613,7 @@ Deno.serve(async (req) => {
           await sendText(
             chatId,
             `✅ Endi siz <b>${escapeHtml(displayName(person))}</b> sifatida ulandingiz.\nTug‘ilgan kuningizda tilaklar shaxsiy xabar bilan kelishi mumkin.`,
+            { reply_markup: mainMenuKeyboard(isBotOwner(callback.from.id)) },
           );
         } catch (err) {
           console.error('claim link failed', err);
@@ -344,6 +629,19 @@ Deno.serve(async (req) => {
       // Find / browse tree
       const findId = parseFindCallback(data);
       if (findId) {
+        const chatId = callback.message?.chat.id ?? callback.from.id;
+        if (
+          (callback.message?.chat.type === 'private' || !callback.message) &&
+          !(await isBotUnlocked(db, callback.from.id))
+        ) {
+          await telegramApi('answerCallbackQuery', {
+            callback_query_id: callback.id,
+            text: 'Avval oila parolini yuboring',
+            show_alert: true,
+          });
+          await askFamilyPassword(chatId);
+          return jsonResponse({ ok: true });
+        }
         const person = await loadPerson(db, findId);
         if (!person) {
           await telegramApi('answerCallbackQuery', {
@@ -356,7 +654,6 @@ Deno.serve(async (req) => {
         const settings = await loadSettings(db);
         const members = await loadAllMembers(db);
         const rels = await loadRels(db);
-        const chatId = callback.message?.chat.id ?? callback.from.id;
         await telegramApi('answerCallbackQuery', { callback_query_id: callback.id });
         const keyboard = relativeButtons(person, members, rels);
         await sendText(chatId, personCardText(person, members, rels, settings.timezone), {
@@ -396,6 +693,19 @@ Deno.serve(async (req) => {
               ? { url: `https://t.me/${bot}?start=${wishStartPayload(person.id, wishPick.year)}` }
               : {}),
           });
+          return jsonResponse({ ok: true });
+        }
+        if (!(await isBotUnlocked(db, callback.from.id))) {
+          await setDmState(db, callback.from.id, 'auth_pending_wish', {
+            personId: person.id,
+            year: wishPick.year,
+          });
+          await telegramApi('answerCallbackQuery', {
+            callback_query_id: callback.id,
+            text: 'Avval oila parolini yuboring',
+            show_alert: true,
+          });
+          await askFamilyPassword(chatId);
           return jsonResponse({ ok: true });
         }
         await telegramApi('answerCallbackQuery', { callback_query_id: callback.id });
@@ -449,16 +759,98 @@ Deno.serve(async (req) => {
     const userId = msg.from.id;
     const isPrivate = msg.chat.type === 'private';
 
-    // Pending DM wizard (wish text)
+    // ——— Private chat: password gate (owner skips) ———
     if (isPrivate) {
+      let unlocked = await isBotUnlocked(db, userId);
+
+      const startEarly = /^\/start(?:@\w+)?(?:\s+(.+))?$/i.exec(text);
+      if (!unlocked && startEarly) {
+        const payload = (startEarly[1] || '').trim();
+        const cheer = parseCheerCallback(payload);
+        if (cheer) {
+          // One-shot cheer from group button — allowed without unlock
+          const person = await loadPerson(db, cheer.personId);
+          if (!person) {
+            await sendText(chatId, cheerNotFoundText());
+            return jsonResponse({ ok: true });
+          }
+          const display = tgDisplayName(msg.from);
+          let cheerResult: 'inserted' | 'existing' = 'inserted';
+          try {
+            cheerResult = await saveCheer(db, person, cheer.year, msg.from);
+          } catch (err) {
+            console.error('cheer save failed', err);
+            await sendText(chatId, 'Deyarli! Egadan birthday cheers SQL migratsiyasini so‘rang.');
+            return jsonResponse({ ok: false, error: 'cheers_table' });
+          }
+          if (cheerResult === 'existing') {
+            await sendText(chatId, cheerAlreadyText());
+          } else {
+            const page = birthdayPageUrl(person.id);
+            await sendText(
+              chatId,
+              cheerThanksText(escapeHtml(display), escapeHtml(displayName(person)), page),
+            );
+            try {
+              const settings = await loadSettings(db);
+              if (settings.group_chat_id) {
+                await sendText(
+                  settings.group_chat_id,
+                  cheerAnnounceText(escapeHtml(display), escapeHtml(displayName(person))),
+                );
+              }
+            } catch (err) {
+              console.error('cheer group announce failed', err);
+            }
+          }
+          await askFamilyPassword(chatId);
+          return jsonResponse({ ok: true, cheer: person.id });
+        }
+
+        const wish = parseWishStart(payload);
+        if (wish || /^wish$/i.test(payload)) {
+          if (wish) {
+            await setDmState(db, userId, 'auth_pending_wish', {
+              personId: wish.personId,
+              year: wish.year,
+            });
+          }
+          await askFamilyPassword(chatId);
+          return jsonResponse({ ok: true });
+        }
+
+        await askFamilyPassword(chatId);
+        return jsonResponse({ ok: true });
+      }
+
+      if (!unlocked) {
+        // Any non-command text is treated as password attempt
+        if (!text.startsWith('/')) {
+          await tryUnlockWithPassword(db, chatId, msg.from, text);
+          return jsonResponse({ ok: true });
+        }
+        // Locked users cannot use commands (except we already handled /start)
+        await askFamilyPassword(chatId);
+        return jsonResponse({ ok: true });
+      }
+
+      // Unlocked: wizards + menu buttons
+      const menuAction = parseMenuAction(text);
       const dm = await getDmState(db, userId);
+
+      if (menuAction) {
+        await clearDmState(db, userId);
+        await runMenuAction(db, chatId, msg.from, menuAction);
+        return jsonResponse({ ok: true });
+      }
+
       if (dm?.state === 'wish_await_text' && !text.startsWith('/')) {
         const personId = typeof dm.payload.personId === 'string' ? dm.payload.personId : '';
         const year = typeof dm.payload.year === 'number' ? dm.payload.year : Number(dm.payload.year);
         const person = personId ? await loadPerson(db, personId) : null;
         if (!person || !Number.isFinite(year)) {
           await clearDmState(db, userId);
-          await sendText(chatId, 'Sessiya eskirgan. Qayta: /wish');
+          await sendText(chatId, 'Sessiya eskirgan. Qayta: ✍️ Tilak');
           return jsonResponse({ ok: true });
         }
         if (text.trim().length < 2) {
@@ -480,7 +872,8 @@ Deno.serve(async (req) => {
             chatId,
             deliveredDm
               ? `✅ Tilak yuborildi — <b>${escapeHtml(displayName(person))}</b> shaxsiy xabar oldi (va guruhga ham).`
-              : `✅ Tilak saqlandi va guruhga yozildi.\n(Shaxsiy DM yo‘q — u hali botni <code>/men</code> bilan ulamagan yoki bloklagan. Hammasi joyida!)`,
+              : `✅ Tilak saqlandi va guruhga yozildi.\n(Shaxsiy DM yo‘q — u hali «👤 Bu men» bilan ulanmagan. Hammasi joyida!)`,
+            { reply_markup: mainMenuKeyboard(isBotOwner(userId)) },
           );
         } catch (err) {
           console.error(err);
@@ -488,109 +881,158 @@ Deno.serve(async (req) => {
         }
         return jsonResponse({ ok: true });
       }
+
+      if (dm?.state === 'find_await_name' && !text.startsWith('/')) {
+        await clearDmState(db, userId);
+        await handleFindQuery(db, chatId, text);
+        return jsonResponse({ ok: true });
+      }
+
+      if (dm?.state === 'claim_await_name' && !text.startsWith('/')) {
+        await clearDmState(db, userId);
+        await handleMeQuery(db, chatId, text);
+        return jsonResponse({ ok: true });
+      }
+
+      const startMatch = /^\/start(?:@\w+)?(?:\s+(.+))?$/i.exec(text);
+      if (startMatch) {
+        const payload = (startMatch[1] || '').trim();
+        const cheer = parseCheerCallback(payload);
+        if (cheer) {
+          const person = await loadPerson(db, cheer.personId);
+          if (!person) {
+            await sendText(chatId, cheerNotFoundText());
+            return jsonResponse({ ok: true });
+          }
+          const display = tgDisplayName(msg.from);
+          let cheerResult: 'inserted' | 'existing' = 'inserted';
+          try {
+            cheerResult = await saveCheer(db, person, cheer.year, msg.from);
+          } catch (err) {
+            console.error('cheer save failed', err);
+            await sendText(chatId, 'Deyarli! Egadan birthday cheers SQL migratsiyasini so‘rang.');
+            return jsonResponse({ ok: false, error: 'cheers_table' });
+          }
+          if (cheerResult === 'existing') {
+            await sendText(chatId, cheerAlreadyText(), {
+              reply_markup: mainMenuKeyboard(isBotOwner(userId)),
+            });
+            return jsonResponse({ ok: true, cheer: person.id, already: true });
+          }
+          const page = birthdayPageUrl(person.id);
+          await sendText(
+            chatId,
+            cheerThanksText(escapeHtml(display), escapeHtml(displayName(person)), page),
+            { reply_markup: mainMenuKeyboard(isBotOwner(userId)) },
+          );
+          try {
+            const settings = await loadSettings(db);
+            if (settings.group_chat_id && String(settings.group_chat_id) !== String(chatId)) {
+              await sendText(
+                settings.group_chat_id,
+                cheerAnnounceText(escapeHtml(display), escapeHtml(displayName(person))),
+              );
+            }
+          } catch (err) {
+            console.error('cheer group announce failed', err);
+          }
+          return jsonResponse({ ok: true, cheer: person.id });
+        }
+
+        const wish = parseWishStart(payload);
+        if (wish) {
+          const person = await loadPerson(db, wish.personId);
+          if (!person) {
+            await sendText(chatId, cheerNotFoundText());
+            return jsonResponse({ ok: true });
+          }
+          await beginWish(db, chatId, msg.from, person, wish.year);
+          return jsonResponse({ ok: true });
+        }
+
+        if (/^wish$/i.test(payload)) {
+          await handleWishFlow(db, chatId, msg.from);
+          return jsonResponse({ ok: true });
+        }
+
+        await sendMenu(chatId, userId, botWelcomeText());
+        return jsonResponse({ ok: true });
+      }
+
+      if (/^\/(cancel|bekor)(?:@\w+)?$/i.test(text)) {
+        await clearDmState(db, userId);
+        await sendText(chatId, 'Bekor qilindi.', {
+          reply_markup: mainMenuKeyboard(isBotOwner(userId)),
+        });
+        return jsonResponse({ ok: true });
+      }
+
+      if (/^\/help(?:@\w+)?$/i.test(text)) {
+        await runMenuAction(db, chatId, msg.from, 'help');
+        return jsonResponse({ ok: true });
+      }
+      if (/^\/status(?:@\w+)?$/i.test(text)) {
+        await runMenuAction(db, chatId, msg.from, 'status');
+        return jsonResponse({ ok: true });
+      }
+      if (/^\/test(?:@\w+)?$/i.test(text)) {
+        await runMenuAction(db, chatId, msg.from, 'test');
+        return jsonResponse({ ok: true });
+      }
+      if (/^\/(today|bugun)(?:@\w+)?$/i.test(text)) {
+        await runMenuAction(db, chatId, msg.from, 'today');
+        return jsonResponse({ ok: true });
+      }
+      if (/^\/(week|hafta)(?:@\w+)?$/i.test(text)) {
+        await runMenuAction(db, chatId, msg.from, 'week');
+        return jsonResponse({ ok: true });
+      }
+      if (/^\/(tree|daraxt)(?:@\w+)?$/i.test(text)) {
+        await runMenuAction(db, chatId, msg.from, 'tree');
+        return jsonResponse({ ok: true });
+      }
+
+      const findMatch = /^\/(?:find|kim|qidir)(?:@\w+)?(?:\s+(.+))?$/i.exec(text);
+      if (findMatch) {
+        const q = (findMatch[1] || '').trim();
+        if (q.length < 2) {
+          await runMenuAction(db, chatId, msg.from, 'find');
+          return jsonResponse({ ok: true });
+        }
+        await handleFindQuery(db, chatId, q);
+        return jsonResponse({ ok: true });
+      }
+
+      const menMatch = /^\/(?:men|iam|menman)(?:@\w+)?(?:\s+(.+))?$/i.exec(text);
+      if (menMatch) {
+        const q = (menMatch[1] || '').trim();
+        if (q.length < 2) {
+          await runMenuAction(db, chatId, msg.from, 'me');
+          return jsonResponse({ ok: true });
+        }
+        await handleMeQuery(db, chatId, q);
+        return jsonResponse({ ok: true });
+      }
+
+      const wishMatch = /^\/(?:wish|tilak)(?:@\w+)?(?:\s+(.+))?$/i.exec(text);
+      if (wishMatch) {
+        await handleWishFlow(db, chatId, msg.from, wishMatch[1] || '');
+        return jsonResponse({ ok: true });
+      }
+
+      // Plain name search
+      if (!text.startsWith('/') && text.length >= 2 && text.length <= 40) {
+        await handleFindQuery(db, chatId, text);
+        return jsonResponse({ ok: true });
+      }
+
+      return jsonResponse({ ok: true, userId });
     }
 
+    // ——— Group / other chats (no password; no reply keyboard required) ———
     const startMatch = /^\/start(?:@\w+)?(?:\s+(.+))?$/i.exec(text);
     if (startMatch) {
-      const payload = (startMatch[1] || '').trim();
-      const cheer = parseCheerCallback(payload);
-      if (cheer) {
-        const person = await loadPerson(db, cheer.personId);
-        if (!person) {
-          await sendText(chatId, cheerNotFoundText());
-          return jsonResponse({ ok: true });
-        }
-
-        const display = tgDisplayName(msg.from);
-        let cheerResult: 'inserted' | 'existing' = 'inserted';
-        try {
-          cheerResult = await saveCheer(db, person, cheer.year, msg.from);
-        } catch (err) {
-          console.error('cheer save failed', err);
-          await sendText(
-            chatId,
-            'Deyarli! Egadan birthday cheers SQL migratsiyasini so‘rang, keyin qayta bosing.',
-          );
-          return jsonResponse({ ok: false, error: 'cheers_table' });
-        }
-
-        if (cheerResult === 'existing') {
-          await sendText(chatId, cheerAlreadyText());
-          return jsonResponse({ ok: true, cheer: person.id, already: true });
-        }
-
-        const page = birthdayPageUrl(person.id);
-        await sendText(
-          chatId,
-          cheerThanksText(escapeHtml(display), escapeHtml(displayName(person)), page),
-        );
-
-        try {
-          const settings = await loadSettings(db);
-          if (settings.group_chat_id && String(settings.group_chat_id) !== String(chatId)) {
-            await sendText(
-              settings.group_chat_id,
-              cheerAnnounceText(escapeHtml(display), escapeHtml(displayName(person))),
-            );
-          }
-        } catch (err) {
-          console.error('cheer group announce failed', err);
-        }
-
-        return jsonResponse({ ok: true, cheer: person.id });
-      }
-
-      const wish = parseWishStart(payload);
-      if (wish) {
-        const person = await loadPerson(db, wish.personId);
-        if (!person) {
-          await sendText(chatId, cheerNotFoundText());
-          return jsonResponse({ ok: true });
-        }
-        await beginWish(db, chatId, msg.from, person, wish.year);
-        return jsonResponse({ ok: true });
-      }
-
-      if (!payload || /^wish$/i.test(payload)) {
-        if (/^wish$/i.test(payload)) {
-          // Deep-link from group “Tilak yozish” without a person — same as /wish
-          const settings = await loadSettings(db);
-          const members = await loadAllMembers(db);
-          const today = peopleWithBirthdayToday(members, settings.timezone);
-          const localYear = localParts(settings.timezone).year;
-          if (today.length === 1) {
-            await beginWish(db, chatId, msg.from, today[0]!.person, localYear);
-            return jsonResponse({ ok: true });
-          }
-          if (today.length > 1) {
-            const keyboard = today.map((row) => [
-              {
-                text: displayName(row.person).slice(0, 40),
-                callback_data: wishStartPayload(row.person.id, localYear),
-              },
-            ]);
-            await sendText(chatId, 'Kimga tilak?', {
-              reply_markup: { inline_keyboard: keyboard },
-            });
-            return jsonResponse({ ok: true });
-          }
-          await sendText(
-            chatId,
-            'Hozir ochiq bayram yo‘q. Ism bilan: <code>/wish Sobirjon</code>',
-          );
-          return jsonResponse({ ok: true });
-        }
-        await sendText(chatId, botWelcomeText());
-        return jsonResponse({ ok: true });
-      }
-
-      await sendText(chatId, unknownStartText());
-      return jsonResponse({ ok: true });
-    }
-
-    if (/^\/(cancel|bekor)(?:@\w+)?$/i.test(text)) {
-      await clearDmState(db, userId);
-      await sendText(chatId, 'Bekor qilindi.');
+      await sendText(chatId, botWelcomeText());
       return jsonResponse({ ok: true });
     }
 
@@ -599,241 +1041,37 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: true });
     }
 
+    if (/^\/(today|bugun)(?:@\w+)?$/i.test(text)) {
+      await handleToday(db, chatId);
+      return jsonResponse({ ok: true });
+    }
+
+    if (/^\/(week|hafta)(?:@\w+)?$/i.test(text)) {
+      await handleWeek(db, chatId);
+      return jsonResponse({ ok: true });
+    }
+
     if (/^\/status(?:@\w+)?$/i.test(text)) {
       await handleStatus(db, chatId, userId);
       return jsonResponse({ ok: true });
     }
 
-    if (/^\/test(?:@\w+)?$/i.test(text)) {
-      if (!isPrivate) {
-        await sendText(chatId, 'Sinovni botga shaxsiy yozing.');
-        return jsonResponse({ ok: true });
-      }
-      await handleOwnerTest(db, chatId, userId);
+    // Menu button taps in group (if someone has the keyboard)
+    const groupMenu = parseMenuAction(text);
+    if (groupMenu && groupMenu !== 'lock' && groupMenu !== 'test' && groupMenu !== 'wish' && groupMenu !== 'me' && groupMenu !== 'find') {
+      await runMenuAction(db, chatId, msg.from, groupMenu);
       return jsonResponse({ ok: true });
     }
-
-    if (/^\/(today|bugun)(?:@\w+)?$/i.test(text)) {
+    if (groupMenu === 'wish' || groupMenu === 'me' || groupMenu === 'find') {
       const settings = await loadSettings(db);
-      const members = await loadAllMembers(db);
-      const today = peopleWithBirthdayToday(members, settings.timezone);
-      if (today.length === 0) {
-        await sendText(chatId, 'Bugun tug‘ilgan kun yo‘q 🎈');
-        return jsonResponse({ ok: true });
-      }
-      const lines = ['🎂 <b>Bugun</b>', ''];
-      const keyboard: { text: string; callback_data: string }[][] = [];
-      for (const row of today) {
-        const label = displayName(row.person);
-        lines.push(
-          `• <b>${escapeHtml(label)}</b>${row.age != null ? ` — ${row.age} yosh` : ''}`,
-        );
-        const wishData = wishStartPayload(row.person.id, localParts(settings.timezone).year);
-        if (wishData.length <= 64) {
-          keyboard.push([{ text: `✍️ ${label.slice(0, 24)}`, callback_data: wishData }]);
-        }
-      }
-      await sendText(chatId, lines.join('\n'), {
-        reply_markup: keyboard.length ? { inline_keyboard: keyboard } : undefined,
-      });
+      const bot = settings.bot_username?.replace(/^@/, '');
+      await sendText(
+        chatId,
+        bot
+          ? `Buni botga shaxsiy yozing: https://t.me/${bot}`
+          : 'Buni botga shaxsiy chatda oching.',
+      );
       return jsonResponse({ ok: true });
-    }
-
-    if (/^\/(week|hafta)(?:@\w+)?$/i.test(text)) {
-      const settings = await loadSettings(db);
-      const members = await loadAllMembers(db);
-      const week = peopleBirthdaySoon(members, settings.timezone, 7);
-      if (week.length === 0) {
-        await sendText(chatId, 'Yaqin 7 kunda tug‘ilgan kun yo‘q.');
-        return jsonResponse({ ok: true });
-      }
-      const lines = ['📅 <b>7 kun ichida</b>', ''];
-      for (const row of week) {
-        const when =
-          row.days === 0 ? 'bugun' : row.days === 1 ? 'ertaga' : `${row.days} kun`;
-        lines.push(
-          `• <b>${escapeHtml(displayName(row.person))}</b> — ${when}${row.age != null ? ` · ${row.age}` : ''}`,
-        );
-      }
-      await sendText(chatId, lines.join('\n'));
-      return jsonResponse({ ok: true });
-    }
-
-    if (/^\/(tree|daraxt)(?:@\w+)?$/i.test(text)) {
-      await sendText(chatId, treeBrowseHelp(), {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: TG_BUTTONS.openTree, url: `${publicAppUrl().replace(/\/$/, '')}/tree` }],
-          ],
-        },
-      });
-      return jsonResponse({ ok: true });
-    }
-
-    const findMatch = /^\/(?:find|kim|qidir)(?:@\w+)?(?:\s+(.+))?$/i.exec(text);
-    if (findMatch) {
-      const q = (findMatch[1] || '').trim();
-      if (q.length < 2) {
-        await sendText(chatId, 'Masalan: <code>/find Aziza</code>');
-        return jsonResponse({ ok: true });
-      }
-      const settings = await loadSettings(db);
-      const members = await loadAllMembers(db);
-      const rels = await loadRels(db);
-      const hits = searchPeople(members, q, 6);
-      if (hits.length === 0) {
-        await sendText(chatId, `“${escapeHtml(q)}” topilmadi.`);
-        return jsonResponse({ ok: true });
-      }
-      if (hits.length === 1) {
-        const person = hits[0]!;
-        const keyboard = relativeButtons(person, members, rels);
-        await sendText(chatId, personCardText(person, members, rels, settings.timezone), {
-          reply_markup: keyboard.length ? { inline_keyboard: keyboard } : undefined,
-        });
-        return jsonResponse({ ok: true });
-      }
-      const keyboard = hits.map((p) => [
-        { text: displayName(p).slice(0, 40), callback_data: findCallbackData(p.id) },
-      ]);
-      await sendText(chatId, `Bir nechta topildi — tanlang:`, {
-        reply_markup: { inline_keyboard: keyboard },
-      });
-      return jsonResponse({ ok: true });
-    }
-
-    const menMatch = /^\/(?:men|iam|menman)(?:@\w+)?(?:\s+(.+))?$/i.exec(text);
-    if (menMatch) {
-      if (!isPrivate) {
-        await sendText(chatId, 'O‘zingizni ulash uchun botga shaxsiy yozing: /men Ism');
-        return jsonResponse({ ok: true });
-      }
-      const q = (menMatch[1] || '').trim();
-      if (q.length < 2) {
-        await sendText(
-          chatId,
-          'O‘zingizni ulang — tilaklar shaxsiy keladi.\nMasalan: <code>/men Sobirjon</code>',
-        );
-        return jsonResponse({ ok: true });
-      }
-      const members = await loadAllMembers(db);
-      const hits = searchPeople(members, q, 6);
-      if (hits.length === 0) {
-        await sendText(chatId, `“${escapeHtml(q)}” topilmadi. To‘liqroq yozing.`);
-        return jsonResponse({ ok: true });
-      }
-      const keyboard = hits.map((p) => [
-        {
-          text: `✅ Men — ${displayName(p).slice(0, 28)}`,
-          callback_data: claimCallbackData(p.id),
-        },
-      ]);
-      await sendText(chatId, 'Qaysi biri siz?', {
-        reply_markup: { inline_keyboard: keyboard },
-      });
-      return jsonResponse({ ok: true });
-    }
-
-    const wishMatch = /^\/(?:wish|tilak)(?:@\w+)?(?:\s+(.+))?$/i.exec(text);
-    if (wishMatch) {
-      if (!isPrivate) {
-        const settings = await loadSettings(db);
-        const bot = settings.bot_username?.replace(/^@/, '');
-        await sendText(
-          chatId,
-          bot
-            ? `Tilak yozish uchun botga shaxsiy yozing: https://t.me/${bot}?start=wish`
-            : 'Tilak yozish uchun botga shaxsiy /wish yozing.',
-        );
-        return jsonResponse({ ok: true });
-      }
-      const settings = await loadSettings(db);
-      const members = await loadAllMembers(db);
-      const q = (wishMatch[1] || '').trim();
-      const localYear = new Date().getFullYear();
-
-      if (q.length >= 2) {
-        const hits = searchPeople(members, q, 6);
-        if (hits.length === 0) {
-          await sendText(chatId, `“${escapeHtml(q)}” topilmadi.`);
-          return jsonResponse({ ok: true });
-        }
-        if (hits.length === 1) {
-          await beginWish(db, chatId, msg.from, hits[0]!, localYear);
-          return jsonResponse({ ok: true });
-        }
-        const keyboard = hits.map((p) => [
-          {
-            text: displayName(p).slice(0, 40),
-            callback_data: wishStartPayload(p.id, localYear),
-          },
-        ]);
-        await sendText(chatId, 'Kimga tilak?', {
-          reply_markup: { inline_keyboard: keyboard },
-        });
-        return jsonResponse({ ok: true });
-      }
-
-      const today = peopleWithBirthdayToday(members, settings.timezone);
-      const soon = peopleBirthdaySoon(members, settings.timezone, 3);
-      const pool = [...today.map((t) => t.person)];
-      for (const s of soon) {
-        if (!pool.some((p) => p.id === s.person.id)) pool.push(s.person);
-      }
-      if (pool.length === 0) {
-        await sendText(
-          chatId,
-          'Hozir ochiq bayram yo‘q. Ism bilan yozing: <code>/wish Sobirjon</code>',
-        );
-        return jsonResponse({ ok: true });
-      }
-      if (pool.length === 1) {
-        await beginWish(db, chatId, msg.from, pool[0]!, localYear);
-        return jsonResponse({ ok: true });
-      }
-      const keyboard = pool.slice(0, 8).map((p) => [
-        {
-          text: displayName(p).slice(0, 40),
-          callback_data: wishStartPayload(p.id, localYear),
-        },
-      ]);
-      await sendText(chatId, 'Kimga tilak yozasiz?', {
-        reply_markup: { inline_keyboard: keyboard },
-      });
-      return jsonResponse({ ok: true });
-    }
-
-    // Plain name search in private chat (tree browse without slash)
-    if (isPrivate && !text.startsWith('/') && text.length >= 2 && text.length <= 40) {
-      const settings = await loadSettings(db);
-      const members = await loadAllMembers(db);
-      const hits = searchPeople(members, text, 5);
-      if (hits.length === 1) {
-        const rels = await loadRels(db);
-        const person = hits[0]!;
-        const keyboard = [
-          ...relativeButtons(person, members, rels),
-          [
-            {
-              text: '✍️ Tilak yozish',
-              callback_data: wishStartPayload(person.id, localParts(settings.timezone).year),
-            },
-          ],
-        ];
-        await sendText(chatId, personCardText(person, members, rels, settings.timezone), {
-          reply_markup: { inline_keyboard: keyboard },
-        });
-        return jsonResponse({ ok: true });
-      }
-      if (hits.length > 1) {
-        const keyboard = hits.map((p) => [
-          { text: displayName(p).slice(0, 40), callback_data: findCallbackData(p.id) },
-        ]);
-        await sendText(chatId, 'Bir nechta odam — tanlang:', {
-          reply_markup: { inline_keyboard: keyboard },
-        });
-        return jsonResponse({ ok: true });
-      }
     }
 
     if (msg.chat.type === 'group' || msg.chat.type === 'supergroup') {

@@ -43,6 +43,157 @@ export function isBotOwner(userId: number): boolean {
   return ids.includes(String(userId));
 }
 
+/** Same SHA-256 as the website family password / FAMILY_PASSWORD_HASH. */
+const DEFAULT_EDITOR_HASH =
+  '7fcc57f15a0a35995b1ef5fe78808863346e806aa2b86128c48c0133749c7586';
+
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i)! ^ b.charCodeAt(i)!;
+  return diff === 0;
+}
+
+export async function verifyFamilyPassword(password: string): Promise<boolean> {
+  const trimmed = password.trim();
+  if (!trimmed || trimmed.length > 200) return false;
+  const expected = (Deno.env.get('FAMILY_PASSWORD_HASH') || DEFAULT_EDITOR_HASH).toLowerCase();
+  const got = (await sha256Hex(trimmed)).toLowerCase();
+  return timingSafeEqual(got, expected);
+}
+
+export async function isBotUnlocked(db: ServiceDb, userId: number): Promise<boolean> {
+  if (isBotOwner(userId)) return true;
+  try {
+    const rows = await db.rest<{ telegram_user_id: number }[]>('telegram_bot_unlocks', {
+      query: {
+        select: 'telegram_user_id',
+        telegram_user_id: `eq.${userId}`,
+        limit: '1',
+      },
+    });
+    return Array.isArray(rows) && rows.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+export async function unlockBot(db: ServiceDb, userId: number): Promise<void> {
+  await db.rest('telegram_bot_unlocks', {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+    query: { on_conflict: 'telegram_user_id' },
+    body: JSON.stringify({
+      telegram_user_id: userId,
+      unlocked_at: new Date().toISOString(),
+    }),
+  });
+}
+
+export async function lockBot(db: ServiceDb, userId: number): Promise<void> {
+  try {
+    await db.rest('telegram_bot_unlocks', {
+      method: 'DELETE',
+      query: { telegram_user_id: `eq.${userId}` },
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Reply-keyboard labels (exact match when user taps). */
+export const MENU = {
+  today: '🎂 Bugun',
+  week: '📅 Hafta',
+  wish: '✍️ Tilak',
+  find: '🔎 Topish',
+  tree: '🌳 Daraxt',
+  me: '👤 Bu men',
+  help: 'ℹ️ Yordam',
+  status: '📊 Holat',
+  test: '🧪 Sinov',
+  lock: '🔒 Chiqish',
+} as const;
+
+export type MenuAction =
+  | 'today'
+  | 'week'
+  | 'wish'
+  | 'find'
+  | 'tree'
+  | 'me'
+  | 'help'
+  | 'status'
+  | 'test'
+  | 'lock';
+
+export function parseMenuAction(text: string): MenuAction | null {
+  const t = text.trim();
+  for (const [key, label] of Object.entries(MENU) as [MenuAction, string][]) {
+    if (t === label) return key;
+  }
+  return null;
+}
+
+export function mainMenuKeyboard(isOwner: boolean): Record<string, unknown> {
+  const rows: { text: string }[][] = [
+    [{ text: MENU.today }, { text: MENU.week }],
+    [{ text: MENU.wish }, { text: MENU.find }],
+    [{ text: MENU.tree }, { text: MENU.me }],
+    [{ text: MENU.help }, { text: MENU.status }],
+  ];
+  if (isOwner) rows.push([{ text: MENU.test }]);
+  rows.push([{ text: MENU.lock }]);
+  return {
+    keyboard: rows,
+    resize_keyboard: true,
+    is_persistent: true,
+  };
+}
+
+export function passwordAskKeyboard(): Record<string, unknown> {
+  return { remove_keyboard: true };
+}
+
+export async function sendMenu(
+  chatId: number | string,
+  userId: number,
+  message?: string,
+): Promise<void> {
+  const owner = isBotOwner(userId);
+  await sendText(
+    chatId,
+    message ||
+      [
+        '✅ Ochildi — pastdagi tugmalardan foydalaning.',
+        '',
+        '🎂 Bugun · 📅 Hafta · ✍️ Tilak',
+        '🔎 Topish · 🌳 Daraxt · 👤 Bu men',
+      ].join('\n'),
+    { reply_markup: mainMenuKeyboard(owner) },
+  );
+}
+
+export async function askFamilyPassword(chatId: number | string): Promise<void> {
+  await sendText(
+    chatId,
+    [
+      '🔐 <b>Oila boti</b>',
+      '',
+      'Bu shaxsiy chat faqat oila uchun.',
+      'Saytdagi <b>oila parolini</b> yuboring (bir marta).',
+      '',
+      'Egaga parol so‘ralmaydi.',
+    ].join('\n'),
+    { reply_markup: passwordAskKeyboard() },
+  );
+}
+
 export async function sendText(
   chatId: number | string,
   text: string,

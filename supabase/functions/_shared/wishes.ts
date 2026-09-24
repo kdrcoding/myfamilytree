@@ -666,32 +666,33 @@ export function botWelcomeText(): string {
   return [
     'Xush kelibsiz — <b>Oq-Ariq OILASI</b> boti! 💚',
     '',
-    '• <code>/today</code> — bugungi tug‘ilgan kunlar',
-    '• <code>/week</code> — 7 kun ichida',
-    '• <code>/wish</code> — tilak yozish (DM)',
-    '• <code>/find Ism</code> — oilada kim?',
-    '• <code>/tree</code> — daraxtni ko‘rish',
-    '• <code>/men Ism</code> — o‘zingizni ulang (tilaklar shaxsiy keladi)',
+    'Pastdagi tugmalar eng oson yo‘l:',
+    '• 🎂 Bugun · 📅 Hafta · ✍️ Tilak',
+    '• 🔎 Topish · 🌳 Daraxt · 👤 Bu men',
     '',
-    'Guruhda <b>Men tabriklayman</b> / <b>Tilak yozish</b> tugmalaridan foydalaning.',
+    'Yoki buyruq: <code>/today</code> <code>/week</code> <code>/wish</code> <code>/find</code>',
+    '',
+    'Guruhda <b>Men tabriklayman</b> / <b>Tilak yozish</b> tugmalari ham bor.',
   ].join('\n');
 }
 
 export function botHelpText(): string {
   return [
-    '<b>Oq-Ariq bot buyruqlari</b>',
+    '<b>Oq-Ariq bot</b>',
     '',
-    '<code>/today</code> — bugun kimniki',
-    '<code>/week</code> — yaqin 7 kun',
-    '<code>/wish</code> yoki <code>/tilak</code> — tilak yozish',
-    '<code>/wish Ism</code> — shu kishiga tilak',
-    '<code>/find Ism</code> — ota-ona, farzandlar…',
-    '<code>/tree</code> — daraxt havolasi + qidiruv',
-    '<code>/men Ism</code> — Telegramni oila a’zosiga ulash',
-    '<code>/status</code> — bot holati (egaga ko‘proq)',
-    '<code>/test</code> — egaga: sinov xabar',
+    '<b>Tugmalar</b> (shaxsiy chatda):',
+    '🎂 Bugun — kimniki bugun',
+    '📅 Hafta — yaqin 7 kun',
+    '✍️ Tilak — tilak yozish',
+    '🔎 Topish — ism bilan qidirish',
+    '🌳 Daraxt — saytdagi daraxt',
+    '👤 Bu men — o‘zingizni ulang (tilaklar DM)',
+    '📊 Holat — bot holati',
+    '🔒 Chiqish — qayta parol so‘rash',
     '',
-    'Tilak: agar odam botni ulagan bo‘lsa — shaxsiy xabar; bo‘lmasa guruh + sahifa.',
+    '<b>Buyruqlar</b>: <code>/today</code> <code>/week</code> <code>/wish</code> <code>/find Ism</code> <code>/men Ism</code>',
+    '',
+    'Shaxsiy chat: avval saytdagi oila paroli (egaga kerak emas).',
   ].join('\n');
 }
 
