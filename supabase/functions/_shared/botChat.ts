@@ -200,18 +200,21 @@ export async function sendMenu(
   chatId: number | string,
   userId: number,
   message?: string,
+  tipHtml?: string,
 ): Promise<void> {
   const owner = isBotOwner(userId);
-  await sendText(
-    chatId,
-    message ||
-      [
-        '✅ Menyu — kam tugma:',
+  const lines = message
+    ? [message]
+    : [
+        '✅ <b>Oila boti</b>',
+        tipHtml || '',
+        '',
         '🎂 Bugun · 📅 Hafta · ✍️ Tilak',
         '🔎 Topish · 👤 Bu men · ℹ️ Yordam',
-      ].join('\n'),
-    { reply_markup: mainMenuKeyboard(owner) },
-  );
+      ].filter((line, i, arr) => !(line === '' && (i === 0 || arr[i - 1] === '')));
+  await sendText(chatId, lines.join('\n'), {
+    reply_markup: mainMenuKeyboard(owner),
+  });
 }
 
 export async function askFamilyPassword(chatId: number | string): Promise<void> {
@@ -514,6 +517,33 @@ export function peopleBirthdaySoon(
     out.push({ person: m, days, age: ageTurning(md, year) });
   }
   return out.sort((a, b) => a.days - b.days);
+}
+
+/** Human label: bugun / ertaga / N kun */
+export function whenInDaysUz(days: number): string {
+  if (days <= 0) return 'bugun';
+  if (days === 1) return 'ertaga';
+  return `${days} kun`;
+}
+
+/** Snapshot line for the main menu (what’s happening with birthdays). */
+export function birthdayMenuTip(
+  members: FamilyMemberRow[],
+  tz: string,
+): string {
+  const today = peopleWithBirthdayToday(members, tz);
+  if (today.length === 1) {
+    return `🎉 Bugun: <b>${escapeHtml(displayName(today[0]!.person))}</b> — tilak yozish mumkin`;
+  }
+  if (today.length > 1) {
+    return `🎉 Bugun <b>${today.length}</b> ta tug‘ilgan kun — ✍️ Tilak bosing`;
+  }
+  const soon = peopleBirthdaySoon(members, tz, 14);
+  if (soon.length > 0) {
+    const n = soon[0]!;
+    return `⏭ Keyingi: <b>${escapeHtml(displayName(n.person))}</b> — ${whenInDaysUz(n.days)}`;
+  }
+  return '🎈 Yaqin tug‘ilgan kun yo‘q — ism bilan tilak yozishingiz mumkin';
 }
 
 export function wishStartPayload(personId: string, year: number): string {

@@ -56,6 +56,8 @@ import {
   unlockBot,
   verifyFamilyPassword,
   wishStartPayload,
+  whenInDaysUz,
+  birthdayMenuTip,
   escapeHtml,
   type MenuAction,
   type TgUser,
@@ -247,13 +249,38 @@ async function handleToday(
   const settings = await loadSettings(db);
   const members = await loadAllMembers(db);
   const today = peopleWithBirthdayToday(members, settings.timezone);
+  const year = localParts(settings.timezone).year;
+
   if (today.length === 0) {
-    await sendText(chatId, 'Bugun tug‘ilgan kun yo‘q 🎈');
+    const soon = peopleBirthdaySoon(members, settings.timezone, 21);
+    if (soon.length === 0) {
+      await sendText(
+        chatId,
+        '🎈 Bugun tug‘ilgan kun yo‘q.\nYaqin sanalar ham yo‘q — ✍️ Tilakda ism yozib yuborishingiz mumkin.',
+      );
+      return;
+    }
+    const lines = ['🎈 <b>Bugun bayram yo‘q</b>', '', '<b>Keyingilar:</b>'];
+    const keyboard: { text: string; callback_data: string }[][] = [];
+    for (const row of soon.slice(0, 5)) {
+      const label = displayName(row.person);
+      lines.push(
+        `• <b>${escapeHtml(label)}</b> — ${whenInDaysUz(row.days)}${row.age != null ? ` · ${row.age}` : ''}`,
+      );
+      const wishData = wishStartPayload(row.person.id, year);
+      if (wishData.length <= 64) {
+        keyboard.push([{ text: `✍️ ${label.slice(0, 22)}`, callback_data: wishData }]);
+      }
+    }
+    lines.push('', 'Erta tilak yozish mumkin — tugmani bosing.');
+    await sendText(chatId, lines.join('\n'), {
+      reply_markup: { inline_keyboard: keyboard },
+    });
     return;
   }
+
   const lines = ['🎂 <b>Bugun</b>', ''];
   const keyboard: { text: string; callback_data: string }[][] = [];
-  const year = localParts(settings.timezone).year;
   for (const row of today) {
     const label = displayName(row.person);
     lines.push(`• <b>${escapeHtml(label)}</b>${row.age != null ? ` — ${row.age} yosh` : ''}`);
@@ -274,18 +301,48 @@ async function handleWeek(
   const settings = await loadSettings(db);
   const members = await loadAllMembers(db);
   const week = peopleBirthdaySoon(members, settings.timezone, 7);
+  const year = localParts(settings.timezone).year;
+
   if (week.length === 0) {
-    await sendText(chatId, 'Yaqin 7 kunda tug‘ilgan kun yo‘q.');
+    const later = peopleBirthdaySoon(members, settings.timezone, 30);
+    if (later.length === 0) {
+      await sendText(chatId, '📅 Yaqin oyda ham tug‘ilgan kun topilmadi.');
+      return;
+    }
+    const lines = ['📅 <b>7 kunda yo‘q — keyingi 30 kun:</b>', ''];
+    const keyboard: { text: string; callback_data: string }[][] = [];
+    for (const row of later.slice(0, 6)) {
+      const label = displayName(row.person);
+      lines.push(
+        `• <b>${escapeHtml(label)}</b> — ${whenInDaysUz(row.days)}${row.age != null ? ` · ${row.age}` : ''}`,
+      );
+      const wishData = wishStartPayload(row.person.id, year);
+      if (wishData.length <= 64) {
+        keyboard.push([{ text: `✍️ ${label.slice(0, 22)}`, callback_data: wishData }]);
+      }
+    }
+    await sendText(chatId, lines.join('\n'), {
+      reply_markup: keyboard.length ? { inline_keyboard: keyboard } : undefined,
+    });
     return;
   }
+
   const lines = ['📅 <b>7 kun ichida</b>', ''];
+  const keyboard: { text: string; callback_data: string }[][] = [];
   for (const row of week) {
-    const when = row.days === 0 ? 'bugun' : row.days === 1 ? 'ertaga' : `${row.days} kun`;
+    const label = displayName(row.person);
     lines.push(
-      `• <b>${escapeHtml(displayName(row.person))}</b> — ${when}${row.age != null ? ` · ${row.age}` : ''}`,
+      `• <b>${escapeHtml(label)}</b> — ${whenInDaysUz(row.days)}${row.age != null ? ` · ${row.age}` : ''}`,
     );
+    const wishData = wishStartPayload(row.person.id, year);
+    if (wishData.length <= 64 && keyboard.length < 6) {
+      keyboard.push([{ text: `✍️ ${label.slice(0, 22)}`, callback_data: wishData }]);
+    }
   }
-  await sendText(chatId, lines.join('\n'));
+  lines.push('', 'Tilak: pastdagi tugma yoki ✍️ Tilak');
+  await sendText(chatId, lines.join('\n'), {
+    reply_markup: keyboard.length ? { inline_keyboard: keyboard } : undefined,
+  });
 }
 
 async function handleWishFlow(
@@ -302,7 +359,10 @@ async function handleWishFlow(
   if (q.length >= 2) {
     const hits = searchPeople(members, q, 6);
     if (hits.length === 0) {
-      await sendText(chatId, `“${escapeHtml(q)}” topilmadi.`);
+      await sendText(
+        chatId,
+        `“${escapeHtml(q)}” topilmadi.\nBoshqa ism yozing yoki 📅 Haftani oching.`,
+      );
       return;
     }
     if (hits.length === 1) {
@@ -310,34 +370,80 @@ async function handleWishFlow(
       return;
     }
     const keyboard = hits.map((p) => [
-      { text: displayName(p).slice(0, 40), callback_data: wishStartPayload(p.id, localYear) },
+      { text: pickLabel(p), callback_data: wishStartPayload(p.id, localYear) },
     ]);
-    await sendText(chatId, 'Kimga tilak?', { reply_markup: { inline_keyboard: keyboard } });
+    await sendText(chatId, 'Kimga tilak? Tanlang:', {
+      reply_markup: { inline_keyboard: keyboard },
+    });
     return;
   }
 
+  // Prefer today → next 3 days → next 14 days (early wishes OK)
   const today = peopleWithBirthdayToday(members, settings.timezone);
-  const soon = peopleBirthdaySoon(members, settings.timezone, 3);
-  const pool = [...today.map((t) => t.person)];
-  for (const s of soon) {
-    if (!pool.some((p) => p.id === s.person.id)) pool.push(s.person);
+  const soon3 = peopleBirthdaySoon(members, settings.timezone, 3);
+  const soon14 = peopleBirthdaySoon(members, settings.timezone, 14);
+
+  const pool: { person: (typeof members)[0]; days: number }[] = [];
+  const seen = new Set<string>();
+  for (const row of today) {
+    if (seen.has(row.person.id)) continue;
+    seen.add(row.person.id);
+    pool.push({ person: row.person, days: 0 });
+  }
+  for (const row of soon3) {
+    if (seen.has(row.person.id)) continue;
+    seen.add(row.person.id);
+    pool.push({ person: row.person, days: row.days });
   }
   if (pool.length === 0) {
+    for (const row of soon14) {
+      if (seen.has(row.person.id)) continue;
+      seen.add(row.person.id);
+      pool.push({ person: row.person, days: row.days });
+    }
+  }
+
+  if (pool.length === 0) {
+    await setDmState(db, user.id, 'wish_await_name', {});
     await sendText(
       chatId,
-      'Hozir ochiq bayram yo‘q.\nIsm yozing yoki 🔎 Topish → keyin tilak.',
+      [
+        '✍️ <b>Tilak</b>',
+        '',
+        'Hozir yaqin bayram yo‘q — lekin ism bilan yozishingiz mumkin.',
+        '',
+        'Kimga tilak? Ism yozing (masalan: <b>Aziza</b>):',
+      ].join('\n'),
     );
     return;
   }
-  if (pool.length === 1) {
-    await beginWish(db, chatId, user, pool[0]!, localYear);
-    return;
+
+  if (pool.length === 1 && pool[0]!.days <= 3) {
+    const only = pool[0]!;
+    if (only.days === 0) {
+      await beginWish(db, chatId, user, only.person, localYear);
+      return;
+    }
   }
-  const keyboard = pool.slice(0, 8).map((p) => [
-    { text: displayName(p).slice(0, 40), callback_data: wishStartPayload(p.id, localYear) },
+
+  const lines =
+    pool[0]!.days === 0
+      ? ['✍️ <b>Kimga tilak?</b> (bugun / yaqin)', '']
+      : [
+          '✍️ <b>Tilak</b>',
+          '',
+          'Bugun ochiq bayram yo‘q — lekin yaqinlar uchun erta tilak yozishingiz mumkin:',
+          '',
+        ];
+  const kb = pool.slice(0, 8).map((row) => [
+    {
+      text: `${pickLabel(row.person).slice(0, 26)}${row.days > 0 ? ` (${whenInDaysUz(row.days)})` : ''}`,
+      callback_data: wishStartPayload(row.person.id, localYear),
+    },
   ]);
-  await sendText(chatId, 'Kimga tilak yozasiz?', {
-    reply_markup: { inline_keyboard: keyboard },
+  await setDmState(db, user.id, 'wish_await_name', {});
+  await sendText(chatId, lines.join('\n') + 'Yoki ism yozing:', {
+    reply_markup: { inline_keyboard: kb },
   });
 }
 
@@ -488,9 +594,17 @@ async function runMenuAction(
       }
       await sendAdminMenu(chatId);
       return;
-    case 'back':
-      await sendMenu(chatId, user.id, '◀️ Asosiy menyu');
+    case 'back': {
+      const settings = await loadSettings(db);
+      const members = await loadAllMembers(db);
+      await sendMenu(
+        chatId,
+        user.id,
+        '◀️ Asosiy menyu',
+        birthdayMenuTip(members, settings.timezone),
+      );
       return;
+    }
     case 'lock':
       if (isBotOwner(user.id)) {
         await sendText(chatId, 'Siz egasiz — parol shart emas. Menyu ochiq qoladi.', {
@@ -529,7 +643,16 @@ async function tryUnlockWithPassword(
         }
       : null;
   await clearDmState(db, user.id);
-  await sendMenu(chatId, user.id, '✅ Parol to‘g‘ri — menyu ochildi. Pastdagi tugmalarni bosing.');
+  {
+    const settings = await loadSettings(db);
+    const members = await loadAllMembers(db);
+    await sendMenu(
+      chatId,
+      user.id,
+      '✅ Parol to‘g‘ri — menyu ochildi.',
+      birthdayMenuTip(members, settings.timezone),
+    );
+  }
   if (pending && Number.isFinite(pending.year)) {
     const person = await loadPerson(db, pending.personId);
     if (person) await beginWish(db, chatId, user, person, pending.year);
@@ -944,6 +1067,12 @@ Deno.serve(async (req) => {
         return jsonResponse({ ok: true });
       }
 
+      if (dm?.state === 'wish_await_name' && !text.startsWith('/')) {
+        await clearDmState(db, userId);
+        await handleWishFlow(db, chatId, msg.from, text);
+        return jsonResponse({ ok: true });
+      }
+
       if (dm?.state === 'claim_await_name' && !text.startsWith('/')) {
         await clearDmState(db, userId);
         await handleMeQuery(db, chatId, text);
@@ -1011,7 +1140,12 @@ Deno.serve(async (req) => {
           return jsonResponse({ ok: true });
         }
 
-        await sendMenu(chatId, userId, botWelcomeText());
+        await sendMenu(
+          chatId,
+          userId,
+          botWelcomeText(),
+          birthdayMenuTip(await loadAllMembers(db), (await loadSettings(db)).timezone),
+        );
         return jsonResponse({ ok: true });
       }
 

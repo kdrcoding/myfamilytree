@@ -669,25 +669,21 @@ export function botWelcomeText(): string {
     'Pastdagi tugmalar:',
     '🎂 Bugun · 📅 Hafta · ✍️ Tilak',
     '🔎 Topish · 👤 Bu men · ℹ️ Yordam',
-    '',
-    '<b>👤 Bu men</b> — ismingizni yozing, o‘xshashlarni tanlang.',
   ].join('\n');
 }
 
 export function botHelpText(): string {
   return [
-    '<b>Oq-Ariq bot</b> — kam tugma, oson:',
+    '<b>Oq-Ariq bot</b>',
     '',
-    '🎂 Bugun · 📅 Hafta — tug‘ilgan kunlar',
-    '✍️ Tilak — tilak yozish',
-    '🔎 Topish — kim bu?',
-    '👤 Bu men — o‘zingizni ulang (ism yozing → tanlang)',
-    'ℹ️ Yordam — daraxt + holat',
-    '🔒 Chiqish — qayta parol',
+    '🎂 Bugun — bugungi bayram (yo‘q bo‘lsa keyingilarni ko‘rsatadi)',
+    '📅 Hafta — 7 kun + tilak tugmalari',
+    '✍️ Tilak — bugun/yaqin uchun, yoki ism bilan erta tilak',
+    '🔎 Topish — oilada kim?',
+    '👤 Bu men — o‘zingizni ulang',
+    'ℹ️ Yordam · 🔒 Chiqish',
     '',
-    'Egaga: <b>⚙️ Admin</b> — sinov, holat, daraxt (alohida menyu).',
-    '',
-    'Qidiruv: <b>Kadir</b> yoki <b>Kadir Ravshanov</b> — o‘xshashlarni topadi.',
+    'Egaga: <b>⚙️ Admin</b>',
   ].join('\n');
 }
 
