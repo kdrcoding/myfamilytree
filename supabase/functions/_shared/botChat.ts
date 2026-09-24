@@ -8,6 +8,7 @@ import {
   localParts,
   monthDay,
   prettyPersonName,
+  shiftLocalDate,
   telegramApi,
   DEFAULT_FAMILY_TIMEZONE,
   type FamilyMemberRow,
@@ -203,16 +204,18 @@ export async function sendMenu(
   tipHtml?: string,
 ): Promise<void> {
   const owner = isBotOwner(userId);
-  const lines = message
-    ? [message]
-    : [
-        '✅ <b>Oila boti</b>',
-        tipHtml || '',
-        '',
-        '🎂 Bugun · 📅 Hafta · ✍️ Tilak',
-        '🔎 Topish · 👤 Bu men · ℹ️ Yordam',
-      ].filter((line, i, arr) => !(line === '' && (i === 0 || arr[i - 1] === '')));
-  await sendText(chatId, lines.join('\n'), {
+  const lines: string[] = [];
+  if (message?.trim()) lines.push(message.trim());
+  else lines.push('✅ <b>Oila boti</b>');
+  if (tipHtml?.trim()) lines.push(tipHtml.trim());
+  if (!message?.trim()) {
+    lines.push(
+      '',
+      '🎂 Bugun · 📅 Hafta · ✍️ Tilak',
+      '🔎 Topish · 👤 Bu men · ℹ️ Yordam',
+    );
+  }
+  await sendText(chatId, lines.filter(Boolean).join('\n'), {
     reply_markup: mainMenuKeyboard(owner),
   });
 }
@@ -499,22 +502,17 @@ export function peopleBirthdaySoon(
   members: FamilyMemberRow[],
   tz: string,
   withinDays = 7,
-): { person: FamilyMemberRow; days: number; age: number | null }[] {
+): { person: FamilyMemberRow; days: number; age: number | null; year: number }[] {
   const local = localParts(tz);
-  const out: { person: FamilyMemberRow; days: number; age: number | null }[] = [];
+  const out: { person: FamilyMemberRow; days: number; age: number | null; year: number }[] = [];
   for (const m of members) {
     if (m.is_deceased || m.death_date) continue;
     const md = monthDay(m.birth_date);
     if (!md) continue;
     const days = daysUntilBirthday(md, local);
     if (days < 0 || days > withinDays) continue;
-    const year =
-      days === 0
-        ? local.year
-        : local.month > md.month || (local.month === md.month && local.day > md.day)
-          ? local.year + 1
-          : local.year;
-    out.push({ person: m, days, age: ageTurning(md, year) });
+    const year = shiftLocalDate(local, days).year;
+    out.push({ person: m, days, age: ageTurning(md, year), year });
   }
   return out.sort((a, b) => a.days - b.days);
 }

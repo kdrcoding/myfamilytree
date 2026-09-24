@@ -249,7 +249,7 @@ async function handleToday(
   const settings = await loadSettings(db);
   const members = await loadAllMembers(db);
   const today = peopleWithBirthdayToday(members, settings.timezone);
-  const year = localParts(settings.timezone).year;
+  const yearNow = localParts(settings.timezone).year;
 
   if (today.length === 0) {
     const soon = peopleBirthdaySoon(members, settings.timezone, 21);
@@ -267,7 +267,7 @@ async function handleToday(
       lines.push(
         `• <b>${escapeHtml(label)}</b> — ${whenInDaysUz(row.days)}${row.age != null ? ` · ${row.age}` : ''}`,
       );
-      const wishData = wishStartPayload(row.person.id, year);
+      const wishData = wishStartPayload(row.person.id, row.year);
       if (wishData.length <= 64) {
         keyboard.push([{ text: `✍️ ${label.slice(0, 22)}`, callback_data: wishData }]);
       }
@@ -284,7 +284,7 @@ async function handleToday(
   for (const row of today) {
     const label = displayName(row.person);
     lines.push(`• <b>${escapeHtml(label)}</b>${row.age != null ? ` — ${row.age} yosh` : ''}`);
-    const wishData = wishStartPayload(row.person.id, year);
+    const wishData = wishStartPayload(row.person.id, yearNow);
     if (wishData.length <= 64) {
       keyboard.push([{ text: `✍️ ${label.slice(0, 24)}`, callback_data: wishData }]);
     }
@@ -301,7 +301,6 @@ async function handleWeek(
   const settings = await loadSettings(db);
   const members = await loadAllMembers(db);
   const week = peopleBirthdaySoon(members, settings.timezone, 7);
-  const year = localParts(settings.timezone).year;
 
   if (week.length === 0) {
     const later = peopleBirthdaySoon(members, settings.timezone, 30);
@@ -316,7 +315,7 @@ async function handleWeek(
       lines.push(
         `• <b>${escapeHtml(label)}</b> — ${whenInDaysUz(row.days)}${row.age != null ? ` · ${row.age}` : ''}`,
       );
-      const wishData = wishStartPayload(row.person.id, year);
+      const wishData = wishStartPayload(row.person.id, row.year);
       if (wishData.length <= 64) {
         keyboard.push([{ text: `✍️ ${label.slice(0, 22)}`, callback_data: wishData }]);
       }
@@ -334,7 +333,7 @@ async function handleWeek(
     lines.push(
       `• <b>${escapeHtml(label)}</b> — ${whenInDaysUz(row.days)}${row.age != null ? ` · ${row.age}` : ''}`,
     );
-    const wishData = wishStartPayload(row.person.id, year);
+    const wishData = wishStartPayload(row.person.id, row.year);
     if (wishData.length <= 64 && keyboard.length < 6) {
       keyboard.push([{ text: `✍️ ${label.slice(0, 22)}`, callback_data: wishData }]);
     }
@@ -354,11 +353,12 @@ async function handleWishFlow(
   const settings = await loadSettings(db);
   const members = await loadAllMembers(db);
   const q = nameQuery.trim();
-  const localYear = localParts(settings.timezone).year;
+  const yearNow = localParts(settings.timezone).year;
 
   if (q.length >= 2) {
     const hits = searchPeople(members, q, 6);
     if (hits.length === 0) {
+      await setDmState(db, user.id, 'wish_await_name', {});
       await sendText(
         chatId,
         `“${escapeHtml(q)}” topilmadi.\nBoshqa ism yozing yoki 📅 Haftani oching.`,
@@ -366,11 +366,11 @@ async function handleWishFlow(
       return;
     }
     if (hits.length === 1) {
-      await beginWish(db, chatId, user, hits[0]!, localYear);
+      await beginWish(db, chatId, user, hits[0]!, yearNow);
       return;
     }
     const keyboard = hits.map((p) => [
-      { text: pickLabel(p), callback_data: wishStartPayload(p.id, localYear) },
+      { text: pickLabel(p), callback_data: wishStartPayload(p.id, yearNow) },
     ]);
     await sendText(chatId, 'Kimga tilak? Tanlang:', {
       reply_markup: { inline_keyboard: keyboard },
@@ -383,23 +383,23 @@ async function handleWishFlow(
   const soon3 = peopleBirthdaySoon(members, settings.timezone, 3);
   const soon14 = peopleBirthdaySoon(members, settings.timezone, 14);
 
-  const pool: { person: (typeof members)[0]; days: number }[] = [];
+  const pool: { person: (typeof members)[0]; days: number; year: number }[] = [];
   const seen = new Set<string>();
   for (const row of today) {
     if (seen.has(row.person.id)) continue;
     seen.add(row.person.id);
-    pool.push({ person: row.person, days: 0 });
+    pool.push({ person: row.person, days: 0, year: yearNow });
   }
   for (const row of soon3) {
     if (seen.has(row.person.id)) continue;
     seen.add(row.person.id);
-    pool.push({ person: row.person, days: row.days });
+    pool.push({ person: row.person, days: row.days, year: row.year });
   }
   if (pool.length === 0) {
     for (const row of soon14) {
       if (seen.has(row.person.id)) continue;
       seen.add(row.person.id);
-      pool.push({ person: row.person, days: row.days });
+      pool.push({ person: row.person, days: row.days, year: row.year });
     }
   }
 
@@ -418,12 +418,9 @@ async function handleWishFlow(
     return;
   }
 
-  if (pool.length === 1 && pool[0]!.days <= 3) {
-    const only = pool[0]!;
-    if (only.days === 0) {
-      await beginWish(db, chatId, user, only.person, localYear);
-      return;
-    }
+  if (pool.length === 1 && pool[0]!.days === 0) {
+    await beginWish(db, chatId, user, pool[0]!.person, pool[0]!.year);
+    return;
   }
 
   const lines =
@@ -438,11 +435,11 @@ async function handleWishFlow(
   const kb = pool.slice(0, 8).map((row) => [
     {
       text: `${pickLabel(row.person).slice(0, 26)}${row.days > 0 ? ` (${whenInDaysUz(row.days)})` : ''}`,
-      callback_data: wishStartPayload(row.person.id, localYear),
+      callback_data: wishStartPayload(row.person.id, row.year),
     },
   ]);
   await setDmState(db, user.id, 'wish_await_name', {});
-  await sendText(chatId, lines.join('\n') + 'Yoki ism yozing:', {
+  await sendText(chatId, `${lines.join('\n')}Yoki ism yozing:`, {
     reply_markup: { inline_keyboard: kb },
   });
 }
