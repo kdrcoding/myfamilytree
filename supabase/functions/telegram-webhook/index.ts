@@ -34,6 +34,7 @@ import {
   loadRels,
   loadSettings,
   lockBot,
+  adminMenuKeyboard,
   mainMenuKeyboard,
   parseClaimCallback,
   parseFindCallback,
@@ -46,6 +47,7 @@ import {
   relativeButtons,
   saveAndDeliverWish,
   searchPeople,
+  sendAdminMenu,
   sendMenu,
   sendText,
   setDmState,
@@ -467,9 +469,27 @@ async function runMenuAction(
       return;
     case 'status':
       await handleStatus(db, chatId, user.id);
+      if (isBotOwner(user.id)) {
+        await sendText(chatId, '⚙️ Admin ochiq.', { reply_markup: adminMenuKeyboard() });
+      }
       return;
     case 'test':
+      if (!isBotOwner(user.id)) {
+        await sendText(chatId, 'Bu faqat admin uchun.');
+        return;
+      }
       await handleOwnerTest(db, chatId, user.id);
+      await sendText(chatId, '⚙️ Admin ochiq.', { reply_markup: adminMenuKeyboard() });
+      return;
+    case 'admin':
+      if (!isBotOwner(user.id)) {
+        await sendText(chatId, 'Bu faqat admin uchun.');
+        return;
+      }
+      await sendAdminMenu(chatId);
+      return;
+    case 'back':
+      await sendMenu(chatId, user.id, '◀️ Asosiy menyu');
       return;
     case 'lock':
       if (isBotOwner(user.id)) {

@@ -685,6 +685,8 @@ export function botHelpText(): string {
     'ℹ️ Yordam — daraxt + holat',
     '🔒 Chiqish — qayta parol',
     '',
+    'Egaga: <b>⚙️ Admin</b> — sinov, holat, daraxt (alohida menyu).',
+    '',
     'Qidiruv: <b>Kadir</b> yoki <b>Kadir Ravshanov</b> — o‘xshashlarni topadi.',
   ].join('\n');
 }

@@ -119,6 +119,8 @@ export const MENU = {
   status: '📊 Holat',
   test: '🧪 Sinov',
   lock: '🔒 Chiqish',
+  admin: '⚙️ Admin',
+  back: '◀️ Orqaga',
 } as const;
 
 export type MenuAction =
@@ -131,7 +133,9 @@ export type MenuAction =
   | 'help'
   | 'status'
   | 'test'
-  | 'lock';
+  | 'lock'
+  | 'admin'
+  | 'back';
 
 export function parseMenuAction(text: string): MenuAction | null {
   const t = text.trim();
@@ -142,19 +146,50 @@ export function parseMenuAction(text: string): MenuAction | null {
 }
 
 export function mainMenuKeyboard(isOwner: boolean): Record<string, unknown> {
-  // Keep it short — fewer taps, less clutter (like a simple bot menu).
+  // Family menu stays short; owner gets one Admin button that opens extra options.
   const rows: { text: string }[][] = [
     [{ text: MENU.today }, { text: MENU.week }],
     [{ text: MENU.wish }, { text: MENU.find }],
     [{ text: MENU.me }, { text: MENU.help }],
+    [{ text: MENU.lock }],
   ];
-  if (isOwner) rows.push([{ text: MENU.test }, { text: MENU.lock }]);
-  else rows.push([{ text: MENU.lock }]);
+  if (isOwner) {
+    rows[3] = [{ text: MENU.admin }, { text: MENU.lock }];
+  }
   return {
     keyboard: rows,
     resize_keyboard: true,
     is_persistent: true,
   };
+}
+
+/** Owner-only second page — opens when they tap ⚙️ Admin. */
+export function adminMenuKeyboard(): Record<string, unknown> {
+  return {
+    keyboard: [
+      [{ text: MENU.test }, { text: MENU.status }],
+      [{ text: MENU.tree }, { text: MENU.help }],
+      [{ text: MENU.back }],
+    ],
+    resize_keyboard: true,
+    is_persistent: true,
+  };
+}
+
+export async function sendAdminMenu(chatId: number | string): Promise<void> {
+  await sendText(
+    chatId,
+    [
+      '⚙️ <b>Admin</b>',
+      '',
+      '🧪 Sinov — guruhga sinov xabar',
+      '📊 Holat — bot holati',
+      '🌳 Daraxt — sayt daraxti',
+      '',
+      '◀️ Orqaga — asosiy menyu',
+    ].join('\n'),
+    { reply_markup: adminMenuKeyboard() },
+  );
 }
 
 export function passwordAskKeyboard(): Record<string, unknown> {
