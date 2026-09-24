@@ -42,6 +42,7 @@ import {
   peopleBirthdaySoon,
   peopleWithBirthdayToday,
   personCardText,
+  pickLabel,
   relativeButtons,
   saveAndDeliverWish,
   searchPeople,
@@ -345,7 +346,7 @@ async function handleFindQuery(
 ): Promise<void> {
   const q = query.trim();
   if (q.length < 2) {
-    await sendText(chatId, 'Masalan: <b>Aziza</b> yoki tugma: 🔎 Topish');
+    await sendText(chatId, 'Masalan: <b>Kadir</b> yoki <b>Kadir Ravshanov</b>');
     return;
   }
   const settings = await loadSettings(db);
@@ -353,7 +354,10 @@ async function handleFindQuery(
   const rels = await loadRels(db);
   const hits = searchPeople(members, q, 6);
   if (hits.length === 0) {
-    await sendText(chatId, `“${escapeHtml(q)}” topilmadi.`);
+    await sendText(
+      chatId,
+      `“${escapeHtml(q)}” topilmadi.\nFaqat ism yoki familiya bilan urinib ko‘ring.`,
+    );
     return;
   }
   if (hits.length === 1) {
@@ -362,7 +366,7 @@ async function handleFindQuery(
       ...relativeButtons(person, members, rels),
       [
         {
-          text: '✍️ Tilak yozish',
+          text: '✍️ Tilak',
           callback_data: wishStartPayload(person.id, localParts(settings.timezone).year),
         },
       ],
@@ -373,9 +377,9 @@ async function handleFindQuery(
     return;
   }
   const keyboard = hits.map((p) => [
-    { text: displayName(p).slice(0, 40), callback_data: findCallbackData(p.id) },
+    { text: pickLabel(p), callback_data: findCallbackData(p.id) },
   ]);
-  await sendText(chatId, 'Bir nechta topildi — tanlang:', {
+  await sendText(chatId, `“${escapeHtml(q)}” — o‘xshashlar. Qaysi biri?`, {
     reply_markup: { inline_keyboard: keyboard },
   });
 }
@@ -389,25 +393,33 @@ async function handleMeQuery(
   if (q.length < 2) {
     await sendText(
       chatId,
-      'O‘zingizni ulang — tilaklar shaxsiy keladi.\nIsmingizni yozing (masalan: Sobirjon).',
+      'O‘zingizni ulang — tilaklar shaxsiy keladi.\nIsm yozing: <b>Kadir</b> yoki <b>Kadir Ravshanov</b>',
     );
     return;
   }
   const members = await loadAllMembers(db);
   const hits = searchPeople(members, q, 6);
   if (hits.length === 0) {
-    await sendText(chatId, `“${escapeHtml(q)}” topilmadi. To‘liqroq yozing.`);
+    await sendText(
+      chatId,
+      `“${escapeHtml(q)}” topilmadi.\nFaqat ism yoki familiya yozing — o‘xshashlarni ko‘rsataman.`,
+    );
     return;
   }
+  // Always ask them to tap who they are (even if one match) — clear + safe.
   const keyboard = hits.map((p) => [
     {
-      text: `✅ Men — ${displayName(p).slice(0, 28)}`,
+      text: `✅ Men — ${pickLabel(p).slice(0, 28)}`,
       callback_data: claimCallbackData(p.id),
     },
   ]);
-  await sendText(chatId, 'Qaysi biri siz?', {
-    reply_markup: { inline_keyboard: keyboard },
-  });
+  await sendText(
+    chatId,
+    hits.length === 1
+      ? `Topildi — shu sizmisiz?\nBosing:`
+      : `“${escapeHtml(q)}” — o‘xshash odamlar.\n<b>Qaysi biri siz?</b> Bosing:`,
+    { reply_markup: { inline_keyboard: keyboard } },
+  );
 }
 
 async function runMenuAction(
@@ -445,7 +457,12 @@ async function runMenuAction(
       return;
     case 'help':
       await sendText(chatId, botHelpText(), {
-        reply_markup: mainMenuKeyboard(isBotOwner(user.id)),
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: TG_BUTTONS.openTree, url: `${publicAppUrl().replace(/\/$/, '')}/tree` }],
+            [{ text: '📊 Holat', callback_data: 'menu_status' }],
+          ],
+        },
       });
       return;
     case 'status':
@@ -519,6 +536,25 @@ Deno.serve(async (req) => {
     const callback = update.callback_query;
     if (callback?.data && callback.from) {
       const data = callback.data.trim();
+
+      if (data === 'menu_status') {
+        const chatId = callback.message?.chat.id ?? callback.from.id;
+        if (
+          (callback.message?.chat.type === 'private' || !callback.message) &&
+          !(await isBotUnlocked(db, callback.from.id))
+        ) {
+          await telegramApi('answerCallbackQuery', {
+            callback_query_id: callback.id,
+            text: 'Avval oila parolini yuboring',
+            show_alert: true,
+          });
+          await askFamilyPassword(chatId);
+          return jsonResponse({ ok: true });
+        }
+        await telegramApi('answerCallbackQuery', { callback_query_id: callback.id });
+        await handleStatus(db, chatId, callback.from.id);
+        return jsonResponse({ ok: true });
+      }
 
       // Cheer (existing)
       const cheerParsed = parseCheerCallback(data);

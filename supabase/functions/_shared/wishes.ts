@@ -666,33 +666,26 @@ export function botWelcomeText(): string {
   return [
     'Xush kelibsiz — <b>Oq-Ariq OILASI</b> boti! 💚',
     '',
-    'Pastdagi tugmalar eng oson yo‘l:',
-    '• 🎂 Bugun · 📅 Hafta · ✍️ Tilak',
-    '• 🔎 Topish · 🌳 Daraxt · 👤 Bu men',
+    'Pastdagi tugmalar:',
+    '🎂 Bugun · 📅 Hafta · ✍️ Tilak',
+    '🔎 Topish · 👤 Bu men · ℹ️ Yordam',
     '',
-    'Yoki buyruq: <code>/today</code> <code>/week</code> <code>/wish</code> <code>/find</code>',
-    '',
-    'Guruhda <b>Men tabriklayman</b> / <b>Tilak yozish</b> tugmalari ham bor.',
+    '<b>👤 Bu men</b> — ismingizni yozing, o‘xshashlarni tanlang.',
   ].join('\n');
 }
 
 export function botHelpText(): string {
   return [
-    '<b>Oq-Ariq bot</b>',
+    '<b>Oq-Ariq bot</b> — kam tugma, oson:',
     '',
-    '<b>Tugmalar</b> (shaxsiy chatda):',
-    '🎂 Bugun — kimniki bugun',
-    '📅 Hafta — yaqin 7 kun',
+    '🎂 Bugun · 📅 Hafta — tug‘ilgan kunlar',
     '✍️ Tilak — tilak yozish',
-    '🔎 Topish — ism bilan qidirish',
-    '🌳 Daraxt — saytdagi daraxt',
-    '👤 Bu men — o‘zingizni ulang (tilaklar DM)',
-    '📊 Holat — bot holati',
-    '🔒 Chiqish — qayta parol so‘rash',
+    '🔎 Topish — kim bu?',
+    '👤 Bu men — o‘zingizni ulang (ism yozing → tanlang)',
+    'ℹ️ Yordam — daraxt + holat',
+    '🔒 Chiqish — qayta parol',
     '',
-    '<b>Buyruqlar</b>: <code>/today</code> <code>/week</code> <code>/wish</code> <code>/find Ism</code> <code>/men Ism</code>',
-    '',
-    'Shaxsiy chat: avval saytdagi oila paroli (egaga kerak emas).',
+    'Qidiruv: <b>Kadir</b> yoki <b>Kadir Ravshanov</b> — o‘xshashlarni topadi.',
   ].join('\n');
 }
 

@@ -7,6 +7,7 @@ import {
   displayName,
   localParts,
   monthDay,
+  prettyPersonName,
   telegramApi,
   DEFAULT_FAMILY_TIMEZONE,
   type FamilyMemberRow,
@@ -141,14 +142,14 @@ export function parseMenuAction(text: string): MenuAction | null {
 }
 
 export function mainMenuKeyboard(isOwner: boolean): Record<string, unknown> {
+  // Keep it short — fewer taps, less clutter (like a simple bot menu).
   const rows: { text: string }[][] = [
     [{ text: MENU.today }, { text: MENU.week }],
     [{ text: MENU.wish }, { text: MENU.find }],
-    [{ text: MENU.tree }, { text: MENU.me }],
-    [{ text: MENU.help }, { text: MENU.status }],
+    [{ text: MENU.me }, { text: MENU.help }],
   ];
-  if (isOwner) rows.push([{ text: MENU.test }]);
-  rows.push([{ text: MENU.lock }]);
+  if (isOwner) rows.push([{ text: MENU.test }, { text: MENU.lock }]);
+  else rows.push([{ text: MENU.lock }]);
   return {
     keyboard: rows,
     resize_keyboard: true,
@@ -170,10 +171,9 @@ export async function sendMenu(
     chatId,
     message ||
       [
-        '✅ Ochildi — pastdagi tugmalardan foydalaning.',
-        '',
+        '✅ Menyu — kam tugma:',
         '🎂 Bugun · 📅 Hafta · ✍️ Tilak',
-        '🔎 Topish · 🌳 Daraxt · 👤 Bu men',
+        '🔎 Topish · 👤 Bu men · ℹ️ Yordam',
       ].join('\n'),
     { reply_markup: mainMenuKeyboard(owner) },
   );
@@ -327,29 +327,119 @@ function normalizeSearch(s: string): string {
     .toLowerCase()
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[''`ʻʼ]/g, '')
+    .replace(/['`ʻʼ']/g, '')
+    .replace(/[.]/g, ' ')
+    .replace(/[^a-z0-9\u0400-\u04ff\s-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
+function searchBlob(m: FamilyMemberRow): string {
+  const parts = [
+    m.first_name,
+    m.last_name,
+    m.nickname || '',
+    `${m.first_name} ${m.last_name}`,
+    displayName(m),
+  ];
+  return normalizeSearch(parts.filter(Boolean).join(' '));
+}
+
+function editDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  const mLen = a.length;
+  const n = b.length;
+  if (Math.abs(mLen - n) > 2) return 99;
+  const prev = new Array(n + 1);
+  const cur = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= mLen; i++) {
+    cur[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(cur[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    for (let j = 0; j <= n; j++) prev[j] = cur[j];
+  }
+  return prev[n];
+}
+
+function tokenScore(haystack: string, token: string): number {
+  if (!token || token.length < 2) return 0;
+  const words = haystack.split(' ').filter(Boolean);
+  if (words.some((w) => w === token)) return 50;
+  if (words.some((w) => w.startsWith(token) || token.startsWith(w))) return 35;
+  if (haystack.includes(token)) return 22;
+  if (token.length >= 4) {
+    for (const w of words) {
+      if (w.length < 3) continue;
+      if (Math.abs(w.length - token.length) > 2) continue;
+      if (editDistance(w, token) <= 1) return 18;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Find people by first/last/nickname. Multi-word queries like
+ * "kadir ravshanov" match nickname + last even when displayName is only "Kadir".
+ */
 export function searchPeople(members: FamilyMemberRow[], query: string, limit = 8): FamilyMemberRow[] {
   const q = normalizeSearch(query);
   if (q.length < 2) return [];
+  const tokens = q.split(' ').filter((t) => t.length >= 2);
+  if (tokens.length === 0) return [];
+
   const scored = members
     .filter((m) => !m.is_deceased && !m.death_date)
     .map((m) => {
-      const full = normalizeSearch(displayName(m));
+      const blob = searchBlob(m);
       const first = normalizeSearch(m.first_name);
+      const last = normalizeSearch(m.last_name || '');
       const nick = normalizeSearch(m.nickname || '');
+      const full = normalizeSearch(`${m.first_name} ${m.last_name}`);
+      const shown = normalizeSearch(displayName(m));
+
       let score = 0;
-      if (full === q || first === q || nick === q) score = 100;
-      else if (full.startsWith(q) || first.startsWith(q) || nick.startsWith(q)) score = 80;
-      else if (full.includes(q) || first.includes(q) || nick.includes(q)) score = 50;
+      if (shown === q || full === q || nick === q || first === q) score += 120;
+      else if (shown.startsWith(q) || full.startsWith(q)) score += 90;
+
+      let matchedTokens = 0;
+      for (const t of tokens) {
+        const s = Math.max(
+          tokenScore(blob, t),
+          nick === t ? 55 : 0,
+          last === t ? 55 : 0,
+          first === t ? 50 : 0,
+        );
+        if (s > 0) {
+          matchedTokens++;
+          score += s;
+        }
+      }
+
+      if (tokens.length > 1 && matchedTokens < tokens.length) {
+        if (!(matchedTokens >= 2 && score >= 70)) score = 0;
+      } else if (tokens.length === 1 && matchedTokens === 0) {
+        score = 0;
+      }
+
       return { m, score };
     })
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score || displayName(a.m).localeCompare(displayName(b.m)));
+
   return scored.slice(0, limit).map((x) => x.m);
+}
+
+/** Short picker label: Nickname · Last (tell similar people apart). */
+export function pickLabel(m: FamilyMemberRow): string {
+  const nick = m.nickname?.trim();
+  const last = m.last_name?.trim();
+  const first = m.first_name?.trim();
+  if (nick && last) return (`${prettyPersonName(nick)} · ${prettyPersonName(last)}`).slice(0, 40);
+  if (nick && first) return (`${prettyPersonName(first)} “${prettyPersonName(nick)}”`).slice(0, 40);
+  return displayName(m).slice(0, 40);
 }
 
 export function peopleWithBirthdayToday(
