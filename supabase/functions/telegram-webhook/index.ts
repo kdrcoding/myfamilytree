@@ -148,6 +148,22 @@ async function beginWish(
   person: FamilyMemberRow,
   year: number,
 ): Promise<void> {
+  const settings = await loadSettings(db);
+  const today = peopleWithBirthdayToday([person], settings.timezone);
+  if (today.length === 0) {
+    const page = birthdayPageUrl(person.id);
+    await sendText(
+      chatId,
+      [
+        `ℹ️ Tilak faqat <b>bugungi</b> tug‘ilgan kun uchun.`,
+        `<b>${escapeHtml(displayName(person))}</b> bugun bayram qilmayapti.`,
+        '',
+        `Bayram sahifasi (agar ochiq bo‘lsa): ${page}`,
+      ].join('\n'),
+    );
+    return;
+  }
+
   const link = await findPersonLink(db, person.id);
   if (!link) {
     const page = birthdayPageUrl(person.id);
@@ -1082,6 +1098,7 @@ Deno.serve(async (req) => {
             from: msg.from,
             message: text,
             groupChatId: settings.group_chat_id,
+            timezone: settings.timezone,
           });
           await clearDmState(db, userId);
           await sendText(
@@ -1093,7 +1110,17 @@ Deno.serve(async (req) => {
           );
         } catch (err) {
           console.error(err);
-          await sendText(chatId, 'Tilak saqlanmadi. Birozdan keyin qayta urinib ko‘ring.');
+          const msgText = err instanceof Error ? err.message : String(err);
+          if (msgText === 'not_birthday_today') {
+            await clearDmState(db, userId);
+            await sendText(
+              chatId,
+              'Tilak faqat tug‘ilgan kun kuni yuboriladi. Bugun bu odamning bayrami emas.',
+              { reply_markup: mainMenuKeyboard(isBotOwner(userId)) },
+            );
+          } else {
+            await sendText(chatId, 'Tilak saqlanmadi. Birozdan keyin qayta urinib ko‘ring.');
+          }
         }
         return jsonResponse({ ok: true });
       }

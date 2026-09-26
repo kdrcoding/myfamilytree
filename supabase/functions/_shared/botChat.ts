@@ -5,6 +5,7 @@ import {
   ageTurning,
   daysUntilBirthday,
   displayName,
+  isBirthdayToday,
   localParts,
   monthDay,
   prettyPersonName,
@@ -492,7 +493,8 @@ export function peopleWithBirthdayToday(
   for (const m of members) {
     if (m.is_deceased || m.death_date) continue;
     const md = monthDay(m.birth_date);
-    if (!md || md.month !== local.month || md.day !== local.day) continue;
+    // Use isBirthdayToday (Feb 29 → Feb 28) so bot menus match cron posts.
+    if (!md || !isBirthdayToday(md, local)) continue;
     out.push({ person: m, age: ageTurning(md, local.year) });
   }
   return out;
@@ -541,7 +543,7 @@ export function birthdayMenuTip(
     const n = soon[0]!;
     return `⏭ Keyingi: <b>${escapeHtml(displayName(n.person))}</b> — ${whenInDaysUz(n.days)}`;
   }
-  return '🎈 Yaqin tug‘ilgan kun yo‘q — ism bilan tilak yozishingiz mumkin';
+  return '🎈 Yaqin tug‘ilgan kun yo‘q — tilak faqat bayram kuni';
 }
 
 export function wishStartPayload(personId: string, year: number): string {
@@ -628,10 +630,18 @@ export async function saveAndDeliverWish(opts: {
   from: TgUser;
   message: string;
   groupChatId: string | null;
+  /** Family timezone — wishes only deliver on the birthday day. */
+  timezone?: string;
 }): Promise<{ deliveredDm: boolean }> {
   const text = opts.message.trim().slice(0, 500);
   const fromName = tgDisplayName(opts.from);
   const honoree = displayName(opts.person);
+  const tz = opts.timezone || DEFAULT_FAMILY_TIMEZONE;
+  const md = monthDay(opts.person.birth_date);
+  const local = localParts(tz);
+  if (!md || !isBirthdayToday(md, local)) {
+    throw new Error('not_birthday_today');
+  }
 
   let deliveredDm = false;
   const link = await findPersonLink(opts.db, opts.person.id);
