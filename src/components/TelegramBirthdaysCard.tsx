@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Activity, Copy, ExternalLink, Eye, Link2, Send, MessageCircle } from 'lucide-react';
+import { Activity, ExternalLink, Send, MessageCircle } from 'lucide-react';
 import { useFamily } from '../context/FamilyContext';
 import { useToast } from '../context/ToastContext';
 import { useLanguage, useT } from '../i18n/useT';
@@ -16,11 +16,7 @@ import {
   botOpenUrl,
   fetchTelegramBotRuns,
   fetchTelegramSettings,
-  mintDatesFillLink,
-  previewUpcomingReminder,
   runBirthdayTest,
-  sendMissingDatesNow,
-  sendUpcomingReminderNow,
   updateTelegramSettings,
   type TelegramBotRun,
   type TelegramSettings,
@@ -60,9 +56,6 @@ export function TelegramBirthdaysCard() {
   const [busy, setBusy] = useState(false);
   const [testPersonId, setTestPersonId] = useState('');
   const [unavailable, setUnavailable] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewText, setPreviewText] = useState('');
-  const [previewCaption, setPreviewCaption] = useState<string | null>(null);
   const [filledWeek, setFilledWeek] = useState(0);
 
   const refresh = async () => {
@@ -421,218 +414,8 @@ export function TelegramBirthdaysCard() {
           >
             <Send className="h-4 w-4" aria-hidden /> {t('telegram.testSend')}
           </button>
-          <button
-            type="button"
-            className="btn-secondary !min-h-10"
-            disabled={busy}
-            onClick={() => {
-              void (async () => {
-                setBusy(true);
-                try {
-                  const result = await mintDatesFillLink();
-                  if (!result.ok || !result.url) {
-                    toast(result.error || t('telegram.datesLinkFailed'), 'error');
-                    return;
-                  }
-                  await navigator.clipboard.writeText(result.url);
-                  toast(t('telegram.datesLinkCopied'), 'success');
-                } catch (error) {
-                  console.error(error);
-                  toast(t('telegram.datesLinkFailed'), 'error');
-                } finally {
-                  setBusy(false);
-                }
-              })();
-            }}
-          >
-            <Copy className="h-4 w-4" aria-hidden /> {t('telegram.copyDatesLink')}
-          </button>
-          <button
-            type="button"
-            className="btn-secondary !min-h-10"
-            disabled={busy || !settings.group_chat_id || missingCount === 0}
-            onClick={() => {
-              void (async () => {
-                setBusy(true);
-                try {
-                  const result = await sendMissingDatesNow();
-                  if (!result.ok && !result.sent) {
-                    toast(
-                      result.error ||
-                        (result.skipped
-                          ? t('telegram.testSkipped', { reason: result.skipped })
-                          : t('telegram.sendDatesFailed')),
-                      'error',
-                    );
-                  } else {
-                    toast(t('telegram.sendDatesOk', { n: result.count ?? 0 }), 'success');
-                  }
-                  await refresh();
-                } catch (error) {
-                  console.error(error);
-                  toast(t('telegram.sendDatesFailed'), 'error');
-                } finally {
-                  setBusy(false);
-                }
-              })();
-            }}
-          >
-            <Link2 className="h-4 w-4" aria-hidden /> {t('telegram.sendDatesNow')}
-          </button>
-          <button
-            type="button"
-            className="btn-secondary !min-h-10"
-            disabled={busy}
-            onClick={() => {
-              void (async () => {
-                setBusy(true);
-                try {
-                  const result = await previewUpcomingReminder();
-                  if (!result.ok || !result.text) {
-                    toast(result.error || t('telegram.previewFailed'), 'error');
-                    return;
-                  }
-                  setPreviewText(result.text);
-                  setPreviewCaption(result.caption ?? null);
-                  setPreviewOpen(true);
-                } catch (error) {
-                  console.error(error);
-                  toast(t('telegram.previewFailed'), 'error');
-                } finally {
-                  setBusy(false);
-                }
-              })();
-            }}
-          >
-            <Eye className="h-4 w-4" aria-hidden /> {t('telegram.previewReminder')}
-          </button>
-          <button
-            type="button"
-            className="btn-secondary !min-h-10"
-            disabled={busy || !settings.group_chat_id}
-            onClick={() => {
-              void (async () => {
-                setBusy(true);
-                try {
-                  const result = await sendUpcomingReminderNow();
-                  if (!result.ok && !result.sent) {
-                    toast(
-                      result.error ||
-                        (result.skipped
-                          ? t('telegram.testSkipped', { reason: result.skipped })
-                          : t('telegram.sendUpcomingFailed')),
-                      'error',
-                    );
-                  } else {
-                    toast(
-                      t('telegram.sendUpcomingOk', {
-                        n: result.count ?? 0,
-                        photo: result.photoSent ? t('telegram.sendUpcomingPhotoYes') : t('telegram.sendUpcomingPhotoNo'),
-                      }),
-                      'success',
-                    );
-                  }
-                  await refresh();
-                } catch (error) {
-                  console.error(error);
-                  toast(t('telegram.sendUpcomingFailed'), 'error');
-                } finally {
-                  setBusy(false);
-                }
-              })();
-            }}
-          >
-            <Send className="h-4 w-4" aria-hidden /> {t('telegram.sendUpcomingNow')}
-          </button>
         </div>
-        <p className="text-xs leading-relaxed text-stone-500 dark:text-stone-400">
-          {t('telegram.datesLinkHint')}
-        </p>
       </div>
-
-      {previewOpen && (
-        <div
-          className="fixed inset-0 z-[80] flex items-end justify-center bg-stone-950/50 p-3 sm:items-center"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="tg-preview-title"
-          onClick={() => setPreviewOpen(false)}
-        >
-          <div
-            className="max-h-[85dvh] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-200 bg-white p-4 shadow-xl dark:border-stone-700 dark:bg-stone-900"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 id="tg-preview-title" className="text-sm font-semibold">
-              {t('telegram.previewTitle')}
-            </h3>
-            <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{t('telegram.previewIntro')}</p>
-            {previewCaption && (
-              <div className="mt-3">
-                <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-stone-500">
-                  {t('telegram.previewCaption')}
-                </p>
-                <pre className="mt-1 whitespace-pre-wrap rounded-xl border border-stone-200 bg-stone-50 p-3 text-xs leading-relaxed text-stone-800 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200">
-                  {previewCaption}
-                </pre>
-              </div>
-            )}
-            <div className="mt-3">
-              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-stone-500">
-                {t('telegram.previewList')}
-              </p>
-              <pre className="mt-1 whitespace-pre-wrap rounded-xl border border-stone-200 bg-stone-50 p-3 text-xs leading-relaxed text-stone-800 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200">
-                {previewText.replace(/<\/?b>/g, '')}
-              </pre>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button type="button" className="btn-secondary !min-h-10" onClick={() => setPreviewOpen(false)}>
-                {t('telegram.previewClose')}
-              </button>
-              <button
-                type="button"
-                className="btn-primary !min-h-10"
-                disabled={busy || !settings.group_chat_id}
-                onClick={() => {
-                  void (async () => {
-                    setBusy(true);
-                    try {
-                      const result = await sendUpcomingReminderNow();
-                      if (!result.ok && !result.sent) {
-                        toast(
-                          result.error ||
-                            (result.skipped
-                              ? t('telegram.testSkipped', { reason: result.skipped })
-                              : t('telegram.sendUpcomingFailed')),
-                          'error',
-                        );
-                      } else {
-                        toast(
-                          t('telegram.sendUpcomingOk', {
-                            n: result.count ?? 0,
-                            photo: result.photoSent
-                              ? t('telegram.sendUpcomingPhotoYes')
-                              : t('telegram.sendUpcomingPhotoNo'),
-                          }),
-                          'success',
-                        );
-                        setPreviewOpen(false);
-                      }
-                      await refresh();
-                    } catch (error) {
-                      console.error(error);
-                      toast(t('telegram.sendUpcomingFailed'), 'error');
-                    } finally {
-                      setBusy(false);
-                    }
-                  })();
-                }}
-              >
-                <Send className="h-4 w-4" aria-hidden /> {t('telegram.sendUpcomingNow')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }

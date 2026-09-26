@@ -174,6 +174,10 @@ async function maybeSendMissingDates(opts: {
   local: { year: number; month: number; day: number; hour: number; weekday: string };
   force: boolean;
 }): Promise<{ sent: boolean; skipped?: string; count?: number; url?: string }> {
+  // Family asked: no fill-dates / missing-dates group posts — birthday day only.
+  void opts;
+  return { sent: false, skipped: 'disabled' };
+
   const names = opts.members
     .filter((m) => !m.is_deceased && !m.death_date && !monthDay(m.birth_date))
     .map((m) => displayName(m));
@@ -282,6 +286,10 @@ async function maybeSendUpcoming(opts: {
   text?: string;
   caption?: string;
 }> {
+  // Family asked: no weekend / “in N days” reminders or early wishes — birthday day only.
+  void opts;
+  return { sent: false, skipped: 'disabled' };
+
   // Test birthday sends should not also fire the weekly reminder.
   if (opts.force && !opts.ownerSend) return { sent: false, skipped: 'force' };
 
@@ -691,10 +699,6 @@ Deno.serve(async (req) => {
 
     const bot = (settings.bot_username || '').replace(/^@/, '');
     const results: { personId: string; group: boolean; error?: string; skipped?: string }[] = [];
-    const missingCount = members.filter(
-      (m) => !m.is_deceased && !m.death_date && !monthDay(m.birth_date),
-    ).length;
-    const datesUrl = missingCount > 0 ? await missingDatesPageUrl() : null;
 
     for (const person of celebrating) {
       const skipClaim = Boolean(force);
@@ -751,9 +755,6 @@ Deno.serve(async (req) => {
               url: `https://t.me/${bot}?start=${wishPayload}`,
             },
           ]);
-        }
-        if (datesUrl) {
-          keyboard.push([{ text: TG_BUTTONS.fillDates, url: datesUrl }]);
         }
 
         let groupOk = false;

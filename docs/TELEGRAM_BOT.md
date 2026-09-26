@@ -84,14 +84,12 @@ On `/bday/<personId>` (today only), relatives can enter a name and congratulate
 without Telegram; the name is stored and announced in the group as
 **“{ism} (saytdan) — {kimni}ni tabriklamoqda!”**
 
-## Weekend / Monday reminder
+## Group posts (birthday day only)
 
-Once per ISO week (Sat–Mon window), the bot posts:
-
-1. A **photo card** for the next person up (short wish + “coming soon” subtitle)
-2. An HTML **list** of birthdays in the next 7 days
-
-Owner **Settings → Telegram** can **Preview** the exact text or **Send now** without waiting for the weekend.
+Cron posts **only on the person’s birthday**, from **08:00 Asia/Tashkent**
+onward that day (GitHub Actions may lag; `telegram_birthday_sent` prevents
+duplicates). No weekend “coming soon” reminders, no missing-dates / fill-dates
+group posts, and no fill-dates button on birthday cards.
 
 ## 4. Deploy Edge Functions
 
